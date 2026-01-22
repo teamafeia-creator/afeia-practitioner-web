@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { SESSION_COOKIE } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -74,6 +75,13 @@ function LoginForm() {
         <Button type="submit" className="w-full" loading={loading}>
           Se connecter
         </Button>
+
+        <div className="text-xs text-warmgray">
+          Pas encore de compte ?{' '}
+          <Link href="/signup" className="text-teal hover:underline">
+            Créer un compte
+          </Link>
+        </div>
 
         <div className="text-xs text-warmgray leading-relaxed">
           <span className="font-medium text-marine">Note MVP :</span> cette demo accepte n importe quels identifiants non vides.
