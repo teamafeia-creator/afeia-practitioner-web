@@ -90,15 +90,25 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
     setInviteLoading(true);
     try {
       await createAnamneseInstance(patient.id);
-      const result: SendQuestionnaireCodeResponse = await sendQuestionnaireCode(patient.id);
-      setInviteSuccess(`Code envoyé à ${result.sentToEmail}.`);
-      setCodeExpiresAt(result.expiresAt);
+      const result = await sendQuestionnaireCode(patient.id);
+      const resolved = resolveQuestionnaireResponse(result);
+      setInviteSuccess(`Code envoyé à ${resolved.sentToEmail}.`);
+      setCodeExpiresAt(resolved.expiresAt);
       setAnamneseStatus('PENDING');
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : 'Impossible d\'envoyer le questionnaire.');
     } finally {
       setInviteLoading(false);
     }
+  }
+
+  function resolveQuestionnaireResponse(
+    response: SendQuestionnaireCodeResponse | { error?: string }
+  ): SendQuestionnaireCodeResponse {
+    if ('sentToEmail' in response && 'expiresAt' in response) {
+      return response;
+    }
+    throw new Error(response.error ?? 'Impossible d\'envoyer le questionnaire.');
   }
 
   return (

@@ -81,15 +81,25 @@ export default function NewPatientPage() {
 
       if (sendAnamnese) {
         await createAnamneseInstance(patientId);
-        const result: SendQuestionnaireCodeResponse = await sendQuestionnaireCode(patientId);
-        setInviteSuccess(`Code envoyé à ${result.sentToEmail}.`);
-        setCodeExpiresAt(result.expiresAt);
+        const result = await sendQuestionnaireCode(patientId);
+        const resolved = resolveQuestionnaireResponse(result);
+        setInviteSuccess(`Code envoyé à ${resolved.sentToEmail}.`);
+        setCodeExpiresAt(resolved.expiresAt);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
+  }
+
+  function resolveQuestionnaireResponse(
+    response: SendQuestionnaireCodeResponse | { error?: string }
+  ): SendQuestionnaireCodeResponse {
+    if ('sentToEmail' in response && 'expiresAt' in response) {
+      return response;
+    }
+    throw new Error(response.error ?? 'Impossible d\'envoyer le questionnaire.');
   }
 
   return (
