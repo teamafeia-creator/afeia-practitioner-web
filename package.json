@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "auth:smoke": "node scripts/auth-smoke-test.mjs"
+    "auth:smoke": "node scripts/auth-smoke-test.mjs",
+    "questionnaire:smoke": "node scripts/questionnaire-code-smoke-test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.91.0",

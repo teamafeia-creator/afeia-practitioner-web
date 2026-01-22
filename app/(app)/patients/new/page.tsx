@@ -6,10 +6,23 @@ import { Button } from '../../../../components/ui/Button';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/Card';
 import { Input } from '../../../../components/ui/Input';
 import { createPatientRecord } from '../../../../services/patients';
-import { createPatientInvite, generateInviteToken } from '../../../../services/invites';
 import { createAnamneseInstance } from '../../../../services/anamnese';
+import { sendQuestionnaireCode } from '../../../../services/questionnaire';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+});
+
+function formatDate(value?: string | null) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return DATE_TIME_FORMATTER.format(date);
+}
 
 export default function NewPatientPage() {
   const [name, setName] = useState('');
@@ -21,16 +34,16 @@ export default function NewPatientPage() {
   const [sendAnamnese, setSendAnamnese] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
 
-  const hasInvite = useMemo(() => Boolean(inviteLink), [inviteLink]);
+  const hasInvite = useMemo(() => Boolean(inviteSuccess), [inviteSuccess]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
-    setCopied(false);
-    setInviteLink(null);
+    setInviteSuccess(null);
+    setCodeExpiresAt(null);
 
     if (!name.trim()) {
       setError('Le nom du patient est obligatoire.');
@@ -56,7 +69,7 @@ export default function NewPatientPage() {
 
     setLoading(true);
     try {
-      const { patientId, practitionerId } = await createPatientRecord({
+      const { patientId } = await createPatientRecord({
         name: name.trim(),
         email: trimmedEmail || undefined,
         city: city.trim() || undefined,
@@ -68,17 +81,9 @@ export default function NewPatientPage() {
 
       if (sendAnamnese) {
         await createAnamneseInstance(patientId);
-        const token = await generateInviteToken();
-
-        await createPatientInvite({
-          practitionerId,
-          patientId,
-          token,
-          email: trimmedEmail
-        });
-
-        const link = `${window.location.origin}/invite?token=${token}`;
-        setInviteLink(link);
+        const result = await sendQuestionnaireCode(patientId);
+        setInviteSuccess(`Code envoyé à ${result.sentToEmail}.`);
+        setCodeExpiresAt(result.expiresAt);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
@@ -87,22 +92,12 @@ export default function NewPatientPage() {
     }
   }
 
-  async function copyInvite() {
-    if (!inviteLink) return;
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-    } catch (err) {
-      setCopied(false);
-    }
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-charcoal">Ajouter un patient</h1>
-          <p className="text-sm text-warmgray">Créez le dossier et partagez un lien unique.</p>
+          <p className="text-sm text-warmgray">Créez le dossier et envoyez un code sécurisé.</p>
         </div>
         <Link href="/patients">
           <Button variant="secondary">Retour</Button>
@@ -174,7 +169,7 @@ export default function NewPatientPage() {
                 onChange={(event) => setSendAnamnese(event.target.checked)}
                 className="h-4 w-4 rounded border-warmgray/40 text-teal focus:ring-teal/40"
               />
-              Envoyer questionnaire Anamnèse (obligatoire à la première connexion)
+              Envoyer le code questionnaire Anamnèse (obligatoire à la première connexion)
             </label>
 
             {error ? (
@@ -193,18 +188,15 @@ export default function NewPatientPage() {
       {hasInvite ? (
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold">Lien d&apos;invitation</h2>
+            <h2 className="text-sm font-semibold">Code envoyé</h2>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-warmgray">Envoyez ce lien au patient.</p>
-            <div className="rounded-xl border border-warmgray/30 bg-white px-4 py-3 text-sm text-marine break-all">
-              {inviteLink}
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button type="button" variant="secondary" onClick={copyInvite}>
-                Copier le lien
-              </Button>
-              {copied ? <span className="text-sm text-teal">Lien copié.</span> : null}
+            <p className="text-sm text-warmgray">{inviteSuccess}</p>
+            {codeExpiresAt ? (
+              <p className="text-xs text-warmgray">Expire à {formatDate(codeExpiresAt, true)}.</p>
+            ) : null}
+            <div className="rounded-xl border border-warmgray/20 bg-sable/40 p-3 text-sm text-marine">
+              Le code est valable 30 minutes et utilisable une seule fois.
             </div>
           </CardContent>
         </Card>
