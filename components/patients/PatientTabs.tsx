@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { SmallLineChart } from '../charts/SmallLineChart';
 import { createAnamneseInstance } from '../../services/anamnese';
-import { sendQuestionnaireCode } from '../../services/questionnaire';
+import { sendQuestionnaireCode, type SendQuestionnaireCodeResponse } from '../../services/questionnaire';
 import type { PatientDetail } from '../../services/patients';
 
 const TABS = ['Infos', 'Questionnaire', 'Messages', 'Rendez-vous', 'Circular'] as const;
@@ -90,7 +90,7 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
     setInviteLoading(true);
     try {
       await createAnamneseInstance(patient.id);
-      const result = await sendQuestionnaireCode(patient.id);
+      const result: SendQuestionnaireCodeResponse = await sendQuestionnaireCode(patient.id);
       setInviteSuccess(`Code envoyé à ${result.sentToEmail}.`);
       setCodeExpiresAt(result.expiresAt);
       setAnamneseStatus('PENDING');

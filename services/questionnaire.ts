@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 
-type SendQuestionnaireCodeResponse = {
+export type SendQuestionnaireCodeResponse = {
   ok: boolean;
   expiresAt: string;
   sentToEmail: string;
