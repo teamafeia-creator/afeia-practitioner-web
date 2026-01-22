@@ -1,37 +1,23 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Card } from '../../components/ui/Card';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const from = useMemo(() => searchParams.get('from') || '/dashboard', [searchParams]);
-
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      if (data.session) {
-        router.replace(from);
-      }
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [from, router]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,23 +26,37 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      if (!email.trim() || !password.trim()) {
-        setError('Merci de renseigner un email et un mot de passe.');
+      if (!email.trim() || !password.trim() || !fullName.trim()) {
+        setError('Merci de renseigner votre nom, votre email et un mot de passe.');
+        return;
+      }
+      if (password !== confirmation) {
+        setError('Les mots de passe ne correspondent pas.');
         return;
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
       });
 
-      if (signInError) {
-        setError(signInError.message);
+      if (signUpError) {
+        setError(signUpError.message);
         return;
       }
 
-      setMessage('Connexion réussie. Redirection en cours…');
-      router.replace(from);
+      if (data.session) {
+        setMessage('Inscription réussie. Redirection vers votre espace…');
+        router.replace('/dashboard');
+        return;
+      }
+
+      setMessage('Inscription réussie ! Vérifiez votre email pour confirmer votre compte.');
     } finally {
       setLoading(false);
     }
@@ -69,17 +69,26 @@ export default function LoginPage() {
           <Image src="/afeia_symbol.svg" alt="AFEIA" width={36} height={36} />
           <div>
             <div className="text-2xl font-semibold tracking-tight">Afeia</div>
-            <div className="text-sm text-warmgray">Espace Naturopathe</div>
+            <div className="text-sm text-warmgray">Créer un compte</div>
           </div>
         </div>
 
         <Card className="p-6">
-          <h1 className="text-xl font-semibold text-charcoal">Connexion</h1>
+          <h1 className="text-xl font-semibold text-charcoal">Inscription praticien</h1>
           <p className="text-sm text-warmgray mt-1">
-            Accédez à vos dossiers, consultations, plans et données Circular.
+            Rejoignez votre espace sécurisé pour gérer vos patients.
           </p>
 
           <form onSubmit={onSubmit} className="mt-5 space-y-4">
+            <Input
+              label="Nom complet"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Claire Martin"
+              autoComplete="name"
+              required
+            />
             <Input
               label="Email"
               type="email"
@@ -95,13 +104,22 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              autoComplete="current-password"
+              autoComplete="new-password"
+              required
+            />
+            <Input
+              label="Confirmer le mot de passe"
+              type="password"
+              value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="new-password"
               required
             />
 
             {error ? (
               <div role="alert" className="rounded-xl border border-gold/30 bg-gold/10 p-3 text-sm">
-                <div className="font-medium">Impossible de vous connecter</div>
+                <div className="font-medium">Impossible de créer le compte</div>
                 <div className="text-marine mt-1">{error}</div>
               </div>
             ) : null}
@@ -113,23 +131,17 @@ export default function LoginPage() {
             ) : null}
 
             <Button type="submit" className="w-full" loading={loading}>
-              Se connecter
+              Créer mon compte
             </Button>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-warmgray">
-              <Link href="/signup" className="text-teal hover:underline">
-                Créer un compte
-              </Link>
-              <Link href="/reset-password" className="text-teal hover:underline">
-                Mot de passe oublié
+            <div className="text-xs text-warmgray">
+              Déjà un compte ?{' '}
+              <Link href="/login" className="text-teal hover:underline">
+                Se connecter
               </Link>
             </div>
           </form>
         </Card>
-
-        <div className="mt-4 text-xs text-warmgray text-center">
-          RGPD : hébergement UE, RBAC strict, audit trail. Afeia ne remplace jamais un médecin.
-        </div>
       </div>
     </main>
   );

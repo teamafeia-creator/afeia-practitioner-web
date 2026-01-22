@@ -4,7 +4,7 @@
 
 -- 1. Table des praticiens (naturopathes)
 CREATE TABLE practitioners (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -138,6 +138,30 @@ CREATE TABLE notifications (
 );
 
 -- ============================================
+-- Trigger : créer automatiquement un profil praticien
+-- ============================================
+CREATE OR REPLACE FUNCTION public.handle_new_practitioner()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.practitioners (id, email, full_name)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', '')
+  );
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE PROCEDURE public.handle_new_practitioner();
+
+-- ============================================
 -- Index pour de meilleures performances
 -- ============================================
 CREATE INDEX idx_patients_practitioner ON patients(practitioner_id);
@@ -164,11 +188,29 @@ ALTER TABLE wearable_insights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- Politique : les praticiens voient uniquement leurs propres données
-CREATE POLICY "Practitioners see own data" ON practitioners
-  FOR ALL USING (auth.uid() = id);
+CREATE POLICY "Practitioners can select own profile" ON practitioners
+  FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Practitioners see own patients" ON patients
-  FOR ALL USING (practitioner_id = auth.uid());
+CREATE POLICY "Practitioners can insert own profile" ON practitioners
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Practitioners can update own profile" ON practitioners
+  FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Practitioners can delete own profile" ON practitioners
+  FOR DELETE USING (auth.uid() = id);
+
+CREATE POLICY "Practitioners can select own patients" ON patients
+  FOR SELECT USING (practitioner_id = auth.uid());
+
+CREATE POLICY "Practitioners can insert own patients" ON patients
+  FOR INSERT WITH CHECK (practitioner_id = auth.uid());
+
+CREATE POLICY "Practitioners can update own patients" ON patients
+  FOR UPDATE USING (practitioner_id = auth.uid()) WITH CHECK (practitioner_id = auth.uid());
+
+CREATE POLICY "Practitioners can delete own patients" ON patients
+  FOR DELETE USING (practitioner_id = auth.uid());
 
 CREATE POLICY "Access own patient anamneses" ON anamneses
   FOR ALL USING (patient_id IN (SELECT id FROM patients WHERE practitioner_id = auth.uid()));

@@ -2,10 +2,10 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { Button } from '../ui/Button';
-import { SESSION_COOKIE } from '../../lib/auth';
+import { supabase } from '../../lib/supabase';
 
 const NAV = [
   { href: '/dashboard', label: 'Tableau de bord' },
@@ -17,13 +17,58 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const active = useMemo(() => NAV.find((n) => pathname.startsWith(n.href))?.href ?? '/dashboard', [pathname]);
 
-  function logout() {
-    // expire cookie
-    document.cookie = `${SESSION_COOKIE}=; Path=/; Max-Age=0`;
-    router.push('/login');
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSession() {
+      const { data } = await supabase.auth.getSession();
+      if (!isMounted) return;
+
+      if (!data.session) {
+        router.replace(`/login?from=${encodeURIComponent(pathname)}`);
+        setCheckingAuth(false);
+        return;
+      }
+
+      setUserEmail(data.session.user.email ?? null);
+      setCheckingAuth(false);
+    }
+
+    loadSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
+      if (!session) {
+        setUserEmail(null);
+        router.replace('/login');
+        return;
+      }
+      setUserEmail(session.user.email ?? null);
+    });
+
+    return () => {
+      isMounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, [pathname, router]);
+
+  async function logout() {
+    await supabase.auth.signOut();
+    setUserEmail(null);
+    router.replace('/login');
+  }
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-sable flex items-center justify-center">
+        <div className="text-warmgray">Chargement…</div>
+      </div>
+    );
   }
 
   return (
@@ -90,7 +135,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
             <div className="border-t border-black/5 p-4">
               <div className="text-xs text-warmgray">Connecté en tant que</div>
-              <div className="text-sm font-semibold text-charcoal">Naturopathe</div>
+              <div className="text-sm font-semibold text-charcoal">{userEmail ?? 'Naturopathe'}</div>
               <div className="mt-3">
                 <Button variant="secondary" className="w-full" onClick={logout}>
                   Déconnexion
