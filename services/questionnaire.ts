@@ -6,7 +6,9 @@ type SendQuestionnaireCodeResponse = {
   sentToEmail: string;
 };
 
-export async function sendQuestionnaireCode(patientId: string) {
+export async function sendQuestionnaireCode(
+  patientId: string
+): Promise<SendQuestionnaireCodeResponse> {
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session) {
     throw new Error('Veuillez vous reconnecter pour envoyer le code.');
