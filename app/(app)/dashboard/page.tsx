@@ -33,7 +33,7 @@ export default function DashboardPage() {
     month: 'long'
   });
 
-  const premiumPatients = patients.filter((p) => p.is_premium);
+  const premiumPatients = patients.filter((p) => p.status === 'premium' || p.is_premium);
 
   if (loading) {
     return (
@@ -110,8 +110,8 @@ export default function DashboardPage() {
                       </Link>
                       <p className="truncate text-xs text-warmgray">{p.city} • {p.age} ans</p>
                     </div>
-                    <Badge variant={p.is_premium ? 'premium' : 'info'}>
-                      {p.is_premium ? 'Premium' : 'Standard'}
+                    <Badge variant={p.status === 'premium' || p.is_premium ? 'premium' : 'info'}>
+                      {p.status === 'premium' || p.is_premium ? 'Premium' : 'Standard'}
                     </Badge>
                   </li>
                 ))}
@@ -142,7 +142,7 @@ export default function DashboardPage() {
                   <div key={p.id} className="rounded-xl bg-sable/60 p-3 ring-1 ring-black/5">
                     <div className="flex items-center justify-between">
                       <Link className="text-sm font-medium text-charcoal hover:underline" href={`/patients/${p.id}`}>{p.name}</Link>
-                      <Badge variant="premium">Premium</Badge>
+                    <Badge variant="premium">Premium</Badge>
                     </div>
                     <p className="mt-1 text-xs text-warmgray">{p.city}</p>
                   </div>

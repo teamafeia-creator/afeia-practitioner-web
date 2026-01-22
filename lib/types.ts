@@ -16,7 +16,11 @@ export type Patient = {
   email?: string;
   age?: number;
   city?: string;
-  is_premium: boolean;
+  status?: 'standard' | 'premium';
+  is_premium?: boolean;
+  circular_enabled?: boolean;
+  circular_connected?: boolean;
+  last_circular_sync_at?: string;
   created_at: string;
   updated_at: string;
 };
@@ -84,10 +88,10 @@ export type JournalEntry = {
 export type Message = {
   id: string;
   patient_id: string;
-  sender: 'patient' | 'praticien';
-  text: string;
-  sent_at: string;
-  read_at?: string;
+  sender_role: 'patient' | 'practitioner';
+  body: string;
+  created_at: string;
+  read_by_practitioner: boolean;
 };
 
 export type WearableSummary = {

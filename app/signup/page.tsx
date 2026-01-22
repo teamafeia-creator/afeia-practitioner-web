@@ -40,7 +40,8 @@ export default function SignUpPage() {
         password,
         options: {
           data: {
-            full_name: fullName
+            full_name: fullName,
+            role: 'practitioner'
           }
         }
       });

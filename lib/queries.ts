@@ -100,7 +100,7 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
     .from('messages')
     .select('*')
     .eq('patient_id', id)
-    .order('sent_at', { ascending: true });
+    .order('created_at', { ascending: true });
 
   // Récupérer les données wearable
   const { data: wearable_summaries } = await supabase
