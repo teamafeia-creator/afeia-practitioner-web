@@ -278,10 +278,9 @@ export async function createPatientRecord(input: CreatePatientInput) {
   return { patientId: data.id, practitionerId: userData.user.id };
 }
 
-function normalizeSenderRole(value?: string | null) {
+function normalizeSenderRole(value?: string | null): PatientMessage['senderRole'] {
   if (value === 'patient' || value === 'practitioner') return value;
   if (value === 'praticien') return 'practitioner';
-  if (value === 'patient') return 'patient';
   return 'patient';
 }
 
