@@ -49,9 +49,11 @@ export default function NewPatientPage() {
     }
 
     const parsedAge = age ? Number(age) : null;
-    if (age && (Number.isNaN(parsedAge) || parsedAge < 0)) {
-      setError('Merci de renseigner un âge valide.');
-      return;
+    if (age) {
+      if (Number.isNaN(parsedAge) || parsedAge < 0) {
+        setError('Merci de renseigner un âge valide.');
+        return;
+      }
     }
 
     setLoading(true);
