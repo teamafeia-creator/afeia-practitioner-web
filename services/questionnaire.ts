@@ -25,9 +25,26 @@ export async function sendQuestionnaireCode(patientId: string) {
     | { error?: string }
     | null;
 
-  if (!response.ok || !payload || 'error' in payload) {
-    throw new Error(payload && 'error' in payload && payload.error ? payload.error : 'Erreur lors de l’envoi.');
+  if (!response.ok || !payload) {
+    const message = payload && 'error' in payload && payload.error ? payload.error : 'Erreur lors de l’envoi.';
+    throw new Error(message);
+  }
+
+  if (!isSendQuestionnaireCodeResponse(payload)) {
+    const message = 'error' in payload && payload.error ? payload.error : 'Erreur lors de l’envoi.';
+    throw new Error(message);
   }
 
   return payload;
+}
+
+function isSendQuestionnaireCodeResponse(
+  payload: SendQuestionnaireCodeResponse | { error?: string }
+): payload is SendQuestionnaireCodeResponse {
+  return (
+    'ok' in payload &&
+    payload.ok === true &&
+    typeof payload.expiresAt === 'string' &&
+    typeof payload.sentToEmail === 'string'
+  );
 }
