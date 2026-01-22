@@ -14,22 +14,45 @@ export async function createPatientInvite({
   practitionerId,
   patientId,
   token,
-  expiresAt
+  expiresAt,
+  email
 }: {
   practitionerId: string;
   patientId: string;
   token: string;
   expiresAt: string;
+  email?: string;
 }) {
+  let inviteEmail = email?.trim() ?? '';
+
+  if (!inviteEmail) {
+    const { data, error } = await supabase
+      .from('patients')
+      .select('email')
+      .eq('id', patientId)
+      .single();
+
+    if (error) {
+      throw new Error('Impossible de récupérer l’email du patient.');
+    }
+
+    inviteEmail = data?.email?.trim() ?? '';
+  }
+
+  if (!inviteEmail) {
+    throw new Error('Un email valide est requis pour créer une invitation patient.');
+  }
+
   const { error } = await supabase.from('patient_invites').insert({
     practitioner_id: practitionerId,
     patient_id: patientId,
     token,
-    expires_at: expiresAt
+    expires_at: expiresAt,
+    email: inviteEmail
   });
 
   if (error) {
-    throw new Error(error.message ?? 'Impossible de créer le lien d\'invitation.');
+    throw new Error('Impossible de créer le lien d\'invitation.');
   }
 }
 
