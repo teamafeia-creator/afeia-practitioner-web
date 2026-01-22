@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  @apply bg-white text-charcoal;
+}
+
+/* Subtle background orbs (Hero-like) */
+.bg-orbs {
+  background:
+    radial-gradient(800px 600px at 10% 10%, rgba(42, 128, 128, 0.10), transparent 60%),
+    radial-gradient(700px 500px at 90% 20%, rgba(133, 0, 79, 0.06), transparent 55%),
+    radial-gradient(900px 700px at 50% 100%, rgba(255, 154, 61, 0.06), transparent 55%);
+}
+
+/* Focus ring utility for non-inputs */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-teal/30 focus:ring-offset-2;
+}
