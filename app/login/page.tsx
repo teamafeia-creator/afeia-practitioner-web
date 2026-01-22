@@ -5,7 +5,7 @@ import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { SESSION_COOKIE } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
@@ -31,8 +31,18 @@ function LoginForm() {
         return;
       }
 
-      document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Lax`;
-      router.push(from);
+      const normalizedEmail = email.trim().toLowerCase();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password
+      });
+
+      if (signInError) {
+        setError(signInError.message);
+        return;
+      }
+
+      router.replace(from);
     } finally {
       setLoading(false);
     }
