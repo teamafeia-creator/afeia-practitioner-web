@@ -51,7 +51,9 @@ export default function DashboardPage() {
           <p className="text-sm text-warmgray">{today} — apercu rapide</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => alert('Création patient (a venir)')}>+ Nouveau patient</Button>
+          <Link href="/patients/new">
+            <Button variant="secondary">+ Nouveau patient</Button>
+          </Link>
           <Button variant="cta" onClick={() => alert('Agenda / prise de RDV (a venir)')}>Prise de RDV</Button>
         </div>
       </div>

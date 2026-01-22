@@ -9,6 +9,8 @@ import { createPatientRecord } from '../../../../services/patients';
 import { createPatientInvite, generateInviteToken } from '../../../../services/invites';
 import { createAnamneseInstance } from '../../../../services/anamnese';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function NewPatientPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -28,41 +30,56 @@ export default function NewPatientPage() {
     event.preventDefault();
     setError(null);
     setCopied(false);
+    setInviteLink(null);
 
     if (!name.trim()) {
       setError('Le nom du patient est obligatoire.');
       return;
     }
 
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && !EMAIL_REGEX.test(trimmedEmail)) {
+      setError('Merci de renseigner un email valide.');
+      return;
+    }
+
+    if (sendAnamnese && !trimmedEmail) {
+      setError('Email requis pour envoyer le questionnaire.');
+      return;
+    }
+
+    const parsedAge = age ? Number(age) : null;
+    if (age && (Number.isNaN(parsedAge) || parsedAge < 0)) {
+      setError('Merci de renseigner un âge valide.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const parsedAge = age ? Number(age) : null;
       const { patientId, practitionerId } = await createPatientRecord({
         name: name.trim(),
-        email: email.trim() || undefined,
+        email: trimmedEmail || undefined,
         city: city.trim() || undefined,
-        age: Number.isNaN(parsedAge) ? null : parsedAge,
+        age: parsedAge !== null && !Number.isNaN(parsedAge) ? parsedAge : null,
         status: isPremium ? 'premium' : 'standard',
+        isPremium,
         circularEnabled
-      });
-
-      const token = generateInviteToken();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      await createPatientInvite({
-        practitionerId,
-        patientId,
-        token,
-        expiresAt,
-        email: email.trim() || undefined
       });
 
       if (sendAnamnese) {
         await createAnamneseInstance(patientId);
-      }
+        const token = await generateInviteToken();
 
-      const link = `${window.location.origin}/invite?token=${token}`;
-      setInviteLink(link);
+        await createPatientInvite({
+          practitionerId,
+          patientId,
+          token,
+          email: trimmedEmail
+        });
+
+        const link = `${window.location.origin}/invite?token=${token}`;
+        setInviteLink(link);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
     } finally {
