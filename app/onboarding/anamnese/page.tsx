@@ -43,7 +43,7 @@ export default function AnamnesePage() {
       if (!mounted) return;
 
       if (!sessionData.session) {
-        setError('Merci de vous connecter via votre lien d\'invitation.');
+        setError('Merci de vous connecter via votre lien d’invitation.');
         setLoading(false);
         return;
       }
@@ -174,7 +174,7 @@ export default function AnamnesePage() {
               ))}
 
               <Button type="submit" className="w-full" loading={submitting}>
-                Envoyer l\'anamnèse
+                Envoyer l’anamnèse
               </Button>
             </form>
           ) : null}
