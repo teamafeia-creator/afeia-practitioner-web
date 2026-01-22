@@ -48,12 +48,10 @@ export default function NewPatientPage() {
       return;
     }
 
-    const parsedAge = age ? Number(age) : null;
-    if (age) {
-      if (Number.isNaN(parsedAge) || parsedAge < 0) {
-        setError('Merci de renseigner un âge valide.');
-        return;
-      }
+    const parsedAge = age ? Number(age) : undefined;
+    if (parsedAge !== undefined && (Number.isNaN(parsedAge) || parsedAge < 0)) {
+      setError('Merci de renseigner un âge valide.');
+      return;
     }
 
     setLoading(true);
@@ -62,7 +60,7 @@ export default function NewPatientPage() {
         name: name.trim(),
         email: trimmedEmail || undefined,
         city: city.trim() || undefined,
-        age: parsedAge !== null && !Number.isNaN(parsedAge) ? parsedAge : null,
+        age: parsedAge !== undefined && !Number.isNaN(parsedAge) ? parsedAge : null,
         status: isPremium ? 'premium' : 'standard',
         isPremium,
         circularEnabled
