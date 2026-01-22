@@ -35,8 +35,9 @@ export default function SignUpPage() {
         return;
       }
 
+      const normalizedEmail = email.trim().toLowerCase();
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
         options: {
           data: {
