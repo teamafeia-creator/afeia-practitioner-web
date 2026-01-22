@@ -1,13 +1,15 @@
 import { supabase } from '../lib/supabase';
 
-export function generateInviteToken() {
-  if (typeof crypto === 'undefined') {
-    throw new Error('Le navigateur ne supporte pas la génération de token sécurisée.');
+export async function generateInviteToken() {
+  const response = await fetch('/api/invites/token', { method: 'GET', cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error('Impossible de générer un token sécurisé.');
   }
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
+  const data = (await response.json()) as { token?: string };
+  if (!data.token) {
+    throw new Error('Token invalide.');
+  }
+  return data.token;
 }
 
 export async function createPatientInvite({
@@ -17,12 +19,21 @@ export async function createPatientInvite({
   expiresAt,
   email
 }: {
-  practitionerId: string;
+  practitionerId?: string;
   patientId: string;
   token: string;
-  expiresAt: string;
+  expiresAt?: string;
   email?: string;
 }) {
+  let resolvedPractitionerId = practitionerId;
+  if (!resolvedPractitionerId) {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) {
+      throw new Error('Veuillez vous reconnecter pour envoyer l’invitation.');
+    }
+    resolvedPractitionerId = data.user.id;
+  }
+
   let inviteEmail = email?.trim() ?? '';
 
   if (!inviteEmail) {
@@ -43,16 +54,21 @@ export async function createPatientInvite({
     throw new Error('Un email valide est requis pour créer une invitation patient.');
   }
 
-  const { error } = await supabase.from('patient_invites').insert({
-    practitioner_id: practitionerId,
+  const payload: Record<string, string> = {
+    practitioner_id: resolvedPractitionerId,
     patient_id: patientId,
     token,
-    expires_at: expiresAt,
     email: inviteEmail
-  });
+  };
+
+  if (expiresAt) {
+    payload.expires_at = expiresAt;
+  }
+
+  const { error } = await supabase.from('patient_invites').insert(payload);
 
   if (error) {
-    throw new Error('Impossible de créer le lien d\'invitation.');
+    throw new Error(error.message ?? 'Impossible de créer le lien d\'invitation.');
   }
 }
 

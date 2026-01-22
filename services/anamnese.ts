@@ -3,10 +3,16 @@ import { supabase } from '../lib/supabase';
 export type AnamneseAnswers = Record<string, string>;
 
 export async function createAnamneseInstance(patientId: string) {
-  const { error } = await supabase.from('anamnese_instances').insert({
-    patient_id: patientId,
-    status: 'PENDING'
-  });
+  const { error } = await supabase.from('anamnese_instances').upsert(
+    {
+      patient_id: patientId,
+      status: 'PENDING',
+      updated_at: new Date().toISOString()
+    },
+    {
+      onConflict: 'patient_id'
+    }
+  );
 
   if (error) {
     throw new Error(error.message ?? 'Impossible de créer l\'anamnèse.');
