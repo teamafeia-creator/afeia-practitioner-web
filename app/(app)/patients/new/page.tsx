@@ -53,7 +53,8 @@ export default function NewPatientPage() {
         practitionerId,
         patientId,
         token,
-        expiresAt
+        expiresAt,
+        email: email.trim() || undefined
       });
 
       if (sendAnamnese) {
