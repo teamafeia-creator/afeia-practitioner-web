@@ -3,7 +3,6 @@
 import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-
 import { SESSION_COOKIE } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -30,7 +29,6 @@ function LoginForm() {
         return;
       }
 
-      // MVP demo: cookie “session” simulé
       document.cookie = `${SESSION_COOKIE}=1; path=/; SameSite=Lax`;
       router.push(from);
     } finally {
@@ -77,8 +75,7 @@ function LoginForm() {
         </Button>
 
         <div className="text-xs text-warmgray leading-relaxed">
-          <span className="font-medium text-marine">Note MVP :</span> cette demo accepte n importe quels identifiants non
-          vides.
+          <span className="font-medium text-marine">Note MVP :</span> cette demo accepte n importe quels identifiants non vides.
         </div>
       </form>
     </Card>
