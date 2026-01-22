@@ -60,6 +60,9 @@ afeia-practitioner-web/
 │   │   ├── plans/         # Plans d'accompagnement
 │   │   └── settings/      # Paramètres
 │   ├── login/             # Page de connexion
+│   ├── signup/            # Page d'inscription
+│   ├── reset-password/    # Réinitialisation du mot de passe
+│   ├── logout/            # Déconnexion
 │   └── layout.tsx         # Layout racine
 ├── components/            # Composants React
 │   ├── ui/               # Composants UI de base
@@ -67,7 +70,6 @@ afeia-practitioner-web/
 │   ├── patients/         # Composants spécifiques patients
 │   └── charts/           # Graphiques
 ├── lib/                   # Utilitaires et configurations
-│   ├── auth.ts           # Helpers authentification
 │   ├── mock.ts           # Données de test (temporaire)
 │   └── cn.ts             # Utilitaire Tailwind
 └── public/               # Assets statiques
