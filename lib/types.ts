@@ -14,9 +14,9 @@ export type Patient = {
   id: string;
   practitioner_id: string;
   name: string;
-  email?: string;
-  age?: number;
-  city?: string;
+  email?: string | null;
+  age?: number | null;
+  city?: string | null;
   consultation_reason?: string | null;
   status?: 'standard' | 'premium';
   is_premium: boolean;
