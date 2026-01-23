@@ -113,6 +113,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   const [messageText, setMessageText] = useState('');
   const [messageLoading, setMessageLoading] = useState(false);
   const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
+  const [calendlyError, setCalendlyError] = useState<string | null>(null);
 
   const isPremium = patient.is_premium;
   const wearableSummaries = useMemo(
@@ -139,9 +140,17 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   useEffect(() => {
     let active = true;
     async function loadCalendly() {
-      const url = await getPractitionerCalendlyUrl();
-      if (!active) return;
-      setCalendlyUrl(url);
+      try {
+        console.log('[patient-tabs] loading calendly url');
+        const url = await getPractitionerCalendlyUrl();
+        if (!active) return;
+        setCalendlyUrl(url);
+        setCalendlyError(null);
+      } catch (error) {
+        if (!active) return;
+        console.error('[patient-tabs] failed to load calendly url', error);
+        setCalendlyError(error instanceof Error ? error.message : 'Erreur inconnue.');
+      }
     }
     loadCalendly();
     return () => {
@@ -211,19 +220,21 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              'rounded-full px-3 py-1.5 text-sm ring-1 ring-black/10 transition',
-              tab === t ? 'bg-teal text-white ring-teal/30' : 'bg-white hover:bg-sable'
-            )}
-          >
-            {t}
-          </button>
-        ))}
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="flex flex-nowrap gap-2">
+          {TABS.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                'whitespace-nowrap rounded-full px-3 py-1.5 text-sm ring-1 ring-black/10 transition',
+                tab === t ? 'bg-teal text-white ring-teal/30' : 'bg-white hover:bg-sable'
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
 
       {tab === 'Profil' && (
@@ -244,6 +255,9 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 </div>
               </div>
               <CalendlyButton patient={patient} calendlyUrl={calendlyUrl} />
+              {calendlyError ? (
+                <p className="text-xs text-aubergine">Erreur Calendly : {calendlyError}</p>
+              ) : null}
             </CardContent>
           </Card>
 
@@ -273,7 +287,12 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 />
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <Button variant="primary" onClick={handleSaveAnamnese} loading={saving}>
+                <Button
+                  variant="primary"
+                  onClick={handleSaveAnamnese}
+                  loading={saving}
+                  className="w-full sm:w-auto"
+                >
                   Enregistrer les modifications
                 </Button>
                 {saveStatus ? <span className="text-sm text-marine">{saveStatus}</span> : null}
@@ -335,7 +354,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 {ANAMNESE_FIELDS.map((field) => (
                   <div key={field.key} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
                     <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
-                    <p className="mt-2 text-sm text-marine whitespace-pre-line">
+                    <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
                       {patient.anamnese?.[field.key] || '—'}
                     </p>
                   </div>
@@ -436,7 +455,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                         <span>{entry.energy ?? '—'}</span>
                       </div>
                     </div>
-                    <p className="mt-2 text-sm text-marine whitespace-pre-line">{entry.text || '—'}</p>
+                    <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">{entry.text || '—'}</p>
                     <div className="mt-3">{renderAdherence(entry)}</div>
                   </div>
                 ))}
@@ -462,13 +481,13 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   <div
                     key={message.id}
                     className={cn(
-                      'max-w-[78%] rounded-2xl px-4 py-2 text-sm ring-1 ring-black/5',
+                      'max-w-[90%] rounded-2xl px-4 py-2 text-sm ring-1 ring-black/5 sm:max-w-[78%]',
                       message.sender === 'patient'
                         ? 'bg-sable text-marine'
                         : 'ml-auto bg-teal text-white'
                     )}
                   >
-                    <p>{message.text || '—'}</p>
+                    <p className="break-words">{message.text || '—'}</p>
                     <p
                       className={cn(
                         'mt-1 text-[11px] opacity-80',
@@ -489,7 +508,12 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 onChange={(event) => setMessageText(event.target.value)}
                 rows={4}
               />
-              <Button variant="primary" onClick={handleSendMessage} loading={messageLoading}>
+              <Button
+                variant="primary"
+                onClick={handleSendMessage}
+                loading={messageLoading}
+                className="w-full sm:w-auto"
+              >
                 Envoyer
               </Button>
             </div>

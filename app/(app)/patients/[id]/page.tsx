@@ -79,12 +79,13 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link href="/patients" className="text-sm text-teal hover:underline">
           Retour à la liste des patients
         </Link>
         <Button
           variant="danger"
+          className="w-full sm:w-auto"
           onClick={() => {
             setConfirmText('');
             setShowDeleteModal(true);
@@ -125,6 +126,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   onClick={async () => {
                     setDeleting(true);
                     try {
+                      console.log('[patients] deleting from detail', { patientId: patient.id });
                       await deletePatient(patient.id);
                       setToast({
                         title: 'Patient supprimé',

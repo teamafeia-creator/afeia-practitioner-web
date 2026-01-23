@@ -7,6 +7,7 @@ CREATE TABLE practitioners (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
+  calendly_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -20,6 +21,7 @@ CREATE TABLE patients (
   age INTEGER,
   city TEXT,
   is_premium BOOLEAN DEFAULT FALSE,
+  deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

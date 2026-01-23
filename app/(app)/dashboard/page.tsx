@@ -14,6 +14,8 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState<(Notification & { patient?: Patient })[]>([]);
   const [loading, setLoading] = useState(true);
   const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
+  const [calendlyLoading, setCalendlyLoading] = useState(true);
+  const [calendlyError, setCalendlyError] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     title: string;
     description?: string;
@@ -23,13 +25,23 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const [patientsData, notificationsData] = await Promise.all([
-        getPatients(),
-        getNotifications()
-      ]);
-      setPatients(patientsData);
-      setNotifications(notificationsData);
-      setLoading(false);
+      try {
+        const [patientsData, notificationsData] = await Promise.all([
+          getPatients(),
+          getNotifications()
+        ]);
+        setPatients(patientsData);
+        setNotifications(notificationsData);
+      } catch (error) {
+        console.error('[dashboard] failed to load data', error);
+        setToast({
+          title: 'Erreur de chargement',
+          description: error instanceof Error ? error.message : 'Impossible de charger le tableau de bord.',
+          variant: 'error'
+        });
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, []);
@@ -37,9 +49,22 @@ export default function DashboardPage() {
   useEffect(() => {
     let active = true;
     async function loadCalendly() {
-      const url = await getPractitionerCalendlyUrl();
-      if (!active) return;
-      setCalendlyUrl(url);
+      setCalendlyLoading(true);
+      setCalendlyError(null);
+      try {
+        console.log('[dashboard] loading calendly url');
+        const url = await getPractitionerCalendlyUrl();
+        if (!active) return;
+        setCalendlyUrl(url);
+      } catch (error) {
+        if (!active) return;
+        console.error('[dashboard] failed to load calendly url', error);
+        setCalendlyError(error instanceof Error ? error.message : 'Erreur inconnue.');
+      } finally {
+        if (active) {
+          setCalendlyLoading(false);
+        }
+      }
     }
     loadCalendly();
     return () => {
@@ -48,6 +73,24 @@ export default function DashboardPage() {
   }, []);
 
   function handleOpenCalendly() {
+    if (calendlyLoading) {
+      setToast({
+        title: 'Chargement en cours',
+        description: 'Le lien Calendly est en cours de récupération.',
+        variant: 'info'
+      });
+      return;
+    }
+
+    if (calendlyError) {
+      setToast({
+        title: 'Lien Calendly indisponible',
+        description: calendlyError,
+        variant: 'error'
+      });
+      return;
+    }
+
     if (!calendlyUrl) {
       setToast({
         title: 'Lien Calendly manquant',
@@ -83,15 +126,56 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-semibold text-charcoal">Tableau de bord</h1>
           <p className="text-sm text-warmgray">{today} — apercu rapide</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Link href="/patients/new">
-            <Button variant="secondary">+ Nouveau patient</Button>
+            <Button variant="secondary" className="w-full sm:w-auto">
+              + Nouveau patient
+            </Button>
           </Link>
-          <Button variant="cta" onClick={handleOpenCalendly}>
+          <Button
+            variant="cta"
+            onClick={handleOpenCalendly}
+            loading={calendlyLoading}
+            className="w-full sm:w-auto"
+          >
             Prise de rendez-vous
           </Button>
         </div>
       </div>
+      {calendlyError ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-gold/30 bg-gold/10 p-4 text-sm text-marine sm:flex-row sm:items-center sm:justify-between">
+          <span>Erreur Calendly : {calendlyError}</span>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setCalendlyError(null);
+              setCalendlyLoading(true);
+              getPractitionerCalendlyUrl()
+                .then((url) => {
+                  setCalendlyUrl(url);
+                })
+                .catch((error) => {
+                  console.error('[dashboard] retry calendly failed', error);
+                  setCalendlyError(error instanceof Error ? error.message : 'Erreur inconnue.');
+                })
+                .finally(() => setCalendlyLoading(false));
+            }}
+            className="w-full sm:w-auto"
+          >
+            Réessayer
+          </Button>
+        </div>
+      ) : null}
+      {!calendlyLoading && !calendlyError && !calendlyUrl ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-teal/20 bg-teal/5 p-4 text-sm text-marine sm:flex-row sm:items-center sm:justify-between">
+          <span>Ajoutez votre lien Calendly dans Paramètres pour activer la prise de RDV.</span>
+          <Link href="/settings" className="w-full sm:w-auto">
+            <Button variant="secondary" className="w-full sm:w-auto">
+              Aller aux paramètres
+            </Button>
+          </Link>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Notifications */}

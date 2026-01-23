@@ -93,6 +93,7 @@ export function CalendlyButton({ patient, calendlyUrl }: CalendlyButtonProps) {
     }
 
     setOpening(true);
+    console.log('[calendly] open widget', { calendlyUrl, patientId: patient.id });
     window.Calendly.initPopupWidget({
       url: calendlyUrl,
       prefill: {
@@ -111,7 +112,7 @@ export function CalendlyButton({ patient, calendlyUrl }: CalendlyButtonProps) {
 
   return (
     <div className="space-y-2">
-      <Button variant="cta" onClick={handleOpenCalendly} loading={opening}>
+      <Button variant="cta" onClick={handleOpenCalendly} loading={opening} className="w-full sm:w-auto">
         Prendre rendez-vous
       </Button>
       {error ? <p className="text-xs text-aubergine">{error}</p> : null}

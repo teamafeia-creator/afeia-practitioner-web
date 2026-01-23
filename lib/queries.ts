@@ -15,11 +15,26 @@ import type {
   PatientWithUnreadCounts
 } from './types';
 
+type SupabaseErrorLike = {
+  message?: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+};
+
+function describeSupabaseError(error: SupabaseErrorLike | null | undefined) {
+  if (!error) return 'Erreur inconnue.';
+  const parts = [error.message, error.details, error.hint].filter(Boolean);
+  const code = error.code ? `code: ${error.code}` : null;
+  return [...parts, code].filter(Boolean).join(' | ');
+}
+
 // ============================================
 // PATIENTS
 // ============================================
 
 export async function getPatients(): Promise<Patient[]> {
+  console.log('[patients] fetch start');
   const { data, error } = await supabase
     .from('patients')
     .select('*')
@@ -28,12 +43,14 @@ export async function getPatients(): Promise<Patient[]> {
   
   if (error) {
     console.error('Error fetching patients:', error);
-    return [];
+    throw new Error(describeSupabaseError(error));
   }
+  console.log('[patients] fetch success', { count: data?.length ?? 0 });
   return data || [];
 }
 
 export async function getPatientsWithUnreadCounts(): Promise<PatientWithUnreadCounts[]> {
+  console.log('[patients] fetch with counts start');
   const { data: patients, error } = await supabase
     .from('patients')
     .select('*')
@@ -42,7 +59,7 @@ export async function getPatientsWithUnreadCounts(): Promise<PatientWithUnreadCo
 
   if (error) {
     console.error('Error fetching patients with counts:', error);
-    return [];
+    throw new Error(describeSupabaseError(error));
   }
 
   const safePatients = patients || [];
@@ -79,6 +96,12 @@ export async function getPatientsWithUnreadCounts(): Promise<PatientWithUnreadCo
     console.error('Error fetching consultations:', consultationsResult.error);
   }
 
+  console.log('[patients] fetch with counts success', {
+    count: safePatients.length,
+    unreadMessagesCount: messagesResult.data?.length ?? 0,
+    unreadNotificationsCount: notificationsResult.data?.length ?? 0
+  });
+
   const unreadMessagesMap = (messagesResult.data ?? []).reduce<Record<string, number>>((acc, row) => {
     acc[row.patient_id] = (acc[row.patient_id] ?? 0) + 1;
     return acc;
@@ -107,6 +130,7 @@ export async function getPatientsWithUnreadCounts(): Promise<PatientWithUnreadCo
 
 export async function getPatientById(id: string): Promise<PatientWithDetails | null> {
   // Récupérer le patient
+  console.log('[patients] fetch detail start', { patientId: id });
   const { data: patient, error: patientError } = await supabase
     .from('patients')
     .select('*')
@@ -118,6 +142,7 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
     console.error('Error fetching patient:', patientError);
     return null;
   }
+  console.log('[patients] fetch detail success', { patientId: id });
 
   // Récupérer l'anamnèse
   const { data: anamnese } = await supabase
@@ -421,6 +446,7 @@ export async function deletePatient(patientId: string): Promise<void> {
     throw new Error('Veuillez vous reconnecter pour supprimer ce patient.');
   }
 
+  console.log('[patients] delete start', { patientId, practitionerId: userData.user.id });
   const { data, error } = await supabase
     .from('patients')
     .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
@@ -431,12 +457,13 @@ export async function deletePatient(patientId: string): Promise<void> {
 
   if (error) {
     console.error('Error deleting patient:', error);
-    throw new Error(error.message ?? 'Impossible de supprimer ce patient.');
+    throw new Error(describeSupabaseError(error));
   }
 
   if (!data || data.length === 0) {
     throw new Error('Suppression impossible pour ce patient.');
   }
+  console.log('[patients] delete success', { patientId });
 }
 
 // ============================================
@@ -447,9 +474,10 @@ export async function getPractitionerCalendlyUrl(): Promise<string | null> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
     console.error('Error fetching user:', userError);
-    return null;
+    throw new Error(describeSupabaseError(userError));
   }
 
+  console.log('[calendly] fetch url start', { practitionerId: userData.user.id });
   const { data, error } = await supabase
     .from('practitioners')
     .select('calendly_url')
@@ -458,9 +486,10 @@ export async function getPractitionerCalendlyUrl(): Promise<string | null> {
 
   if (error) {
     console.error('Error fetching practitioner calendly URL:', error);
-    return null;
+    throw new Error(describeSupabaseError(error));
   }
 
+  console.log('[calendly] fetch url success', { calendlyUrl: data?.calendly_url ?? null });
   return data?.calendly_url ?? null;
 }
 
@@ -471,6 +500,10 @@ export async function updatePractitionerCalendlyUrl(calendlyUrl: string | null):
     throw new Error('Veuillez vous reconnecter pour enregistrer ce lien.');
   }
 
+  console.log('[calendly] update start', {
+    practitionerId: userData.user.id,
+    calendlyUrl
+  });
   const { data, error } = await supabase
     .from('practitioners')
     .update({ calendly_url: calendlyUrl, updated_at: new Date().toISOString() })
@@ -479,10 +512,11 @@ export async function updatePractitionerCalendlyUrl(calendlyUrl: string | null):
 
   if (error) {
     console.error('Error updating practitioner calendly URL:', error);
-    throw new Error(error.message ?? 'Impossible d’enregistrer le lien Calendly.');
+    throw new Error(describeSupabaseError(error));
   }
 
   if (!data || data.length === 0) {
     throw new Error('Impossible d’enregistrer le lien Calendly.');
   }
+  console.log('[calendly] update success', { practitionerId: userData.user.id });
 }
