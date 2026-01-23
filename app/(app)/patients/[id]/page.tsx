@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PatientTabs } from '../../../../components/patients/PatientTabs';
+import { Badge } from '../../../../components/ui/Badge';
 import { Button } from '../../../../components/ui/Button';
 import { Input } from '../../../../components/ui/Input';
 import { Toast } from '../../../../components/ui/Toast';
@@ -58,8 +59,30 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-warmgray">Chargement...</div>
+      <div className="space-y-6">
+        <div className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <div className="h-7 w-40 rounded-full bg-sable animate-pulse" />
+              <div className="h-4 w-56 rounded-full bg-sable/70 animate-pulse" />
+            </div>
+            <div className="flex gap-2">
+              <div className="h-9 w-36 rounded-full bg-sable/70 animate-pulse" />
+              <div className="h-9 w-24 rounded-full bg-sable/70 animate-pulse" />
+            </div>
+          </div>
+        </div>
+        <div className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+          <div className="h-10 w-full rounded-full bg-sable/70 animate-pulse" />
+          <div className="mt-4 space-y-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={`tab-skeleton-${index}`}
+                className="h-20 rounded-2xl bg-sable/60 ring-1 ring-black/5 animate-pulse"
+              />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -78,21 +101,43 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Link href="/patients" className="text-sm text-teal hover:underline">
-          Retour à la liste des patients
-        </Link>
-        <Button
-          variant="danger"
-          className="w-full sm:w-auto"
-          onClick={() => {
-            setConfirmText('');
-            setShowDeleteModal(true);
-          }}
-        >
-          Supprimer
-        </Button>
+    <div className="space-y-6">
+      <Link href="/patients" className="text-sm text-teal hover:underline">
+        Retour à la liste des patients
+      </Link>
+      <div className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-black/5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold text-charcoal">{patient.name}</h1>
+              <Badge variant={patient.is_premium ? 'premium' : 'info'}>
+                {patient.is_premium ? 'Premium' : 'Standard'}
+              </Badge>
+            </div>
+            <div className="flex flex-wrap gap-3 text-sm text-warmgray">
+              <span>{patient.age ? `${patient.age} ans` : 'Âge non renseigné'}</span>
+              <span>{patient.city ?? 'Ville non renseignée'}</span>
+              <span>{patient.email ?? 'Email non renseigné'}</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {patient.email ? (
+              <Link href="/patient/login" target="_blank" rel="noreferrer">
+                <Button variant="secondary">Voir côté patient</Button>
+              </Link>
+            ) : null}
+            <Button
+              variant="danger"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                setConfirmText('');
+                setShowDeleteModal(true);
+              }}
+            >
+              Supprimer
+            </Button>
+          </div>
+        </div>
       </div>
       <PatientTabs patient={patient} />
       {showDeleteModal ? (

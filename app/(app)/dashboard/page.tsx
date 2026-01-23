@@ -110,6 +110,9 @@ export default function DashboardPage() {
   });
 
   const premiumPatients = patients.filter((p) => p.is_premium);
+  const recentPatients = [...patients].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   if (loading) {
     return (
@@ -274,28 +277,49 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Raccourcis */}
+      {/* Patients à préparer */}
       <Card>
         <CardHeader>
           <div>
-            <h2 className="text-sm font-semibold">Raccourcis</h2>
-            <p className="text-xs text-warmgray">Actions rapides</p>
+            <h2 className="text-sm font-semibold">🧠 Patients à préparer</h2>
+            <p className="text-xs text-warmgray">Suivez les dossiers récents avant vos consultations.</p>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="rounded-xl bg-sable/60 p-4 ring-1 ring-black/5">
-              <p className="text-sm font-semibold text-charcoal">Preparer une seance</p>
-              <p className="mt-1 text-sm text-warmgray">Analyser anamnese et dernieres entrees avant consultation.</p>
+          {recentPatients.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-black/10 bg-sable/50 p-6 text-center">
+              <p className="text-sm font-medium text-charcoal">Aucun patient à préparer</p>
+              <p className="mt-2 text-xs text-warmgray">
+                Ajoutez un patient pour alimenter la préparation.
+              </p>
             </div>
-            <div className="rounded-xl bg-sable/60 p-4 ring-1 ring-black/5">
-              <p className="text-sm font-semibold text-charcoal">Envoyer un message</p>
-              <p className="mt-1 text-sm text-warmgray">Ton neutre, doux, non medicalisant.</p>
+          ) : (
+            <div className="space-y-3">
+              {recentPatients.slice(0, 5).map((patient) => (
+                <Link
+                  key={patient.id}
+                  href={`/patients/${patient.id}?tab=Profil`}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 ring-1 ring-black/5 transition hover:bg-sable/60"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-charcoal">{patient.name}</p>
+                    <p className="truncate text-xs text-warmgray">
+                      Créé le {new Date(patient.created_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                  <Badge variant={patient.is_premium ? 'premium' : 'info'}>
+                    {patient.is_premium ? 'Premium' : 'Standard'}
+                  </Badge>
+                </Link>
+              ))}
             </div>
-            <div className="rounded-xl bg-sable/60 p-4 ring-1 ring-black/5">
-              <p className="text-sm font-semibold text-charcoal">Publier un plan</p>
-              <p className="mt-1 text-sm text-warmgray">Versionner, publier, et suivre l adhesion au quotidien.</p>
-            </div>
+          )}
+          <div className="mt-4">
+            <Link href="/patients" className="inline-block w-full">
+              <Button variant="secondary" className="w-full">
+                Voir tous les patients
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
