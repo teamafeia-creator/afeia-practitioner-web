@@ -31,6 +31,21 @@ export async function submitAnamnese(patientId: string, answers: AnamneseAnswers
   if (error) {
     throw new Error(error.message ?? 'Impossible d\'enregistrer l\'anamnèse.');
   }
+
+  const { error: patientAnamnesisError } = await supabase
+    .from('patient_anamnesis')
+    .upsert(
+      {
+        patient_id: patientId,
+        answers,
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: 'patient_id' }
+    );
+
+  if (patientAnamnesisError) {
+    throw new Error(patientAnamnesisError.message ?? 'Impossible d\'enregistrer l\'anamnèse.');
+  }
 }
 
 export async function fetchAnamneseStatus(patientId: string) {
