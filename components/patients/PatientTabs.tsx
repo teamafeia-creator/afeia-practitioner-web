@@ -62,8 +62,8 @@ function buildJournalForm(entry?: JournalEntry): Partial<JournalEntry> {
   return {
     id: entry?.id,
     date: entry?.date ?? today,
-    mood: entry?.mood ?? null,
-    energy: entry?.energy ?? null,
+    mood: entry?.mood ?? undefined,
+    energy: entry?.energy ?? undefined,
     text: entry?.text ?? '',
     adherence_hydratation: entry?.adherence_hydratation ?? false,
     adherence_respiration: entry?.adherence_respiration ?? false,
