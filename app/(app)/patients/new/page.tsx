@@ -18,10 +18,10 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   minute: '2-digit'
 });
 
-function formatDate(value?: string | null) {
+function formatDate(value?: string | null, withTime = true) {
   if (!value) return '—';
   const date = new Date(value);
-  return DATE_TIME_FORMATTER.format(date);
+  return withTime ? DATE_TIME_FORMATTER.format(date) : DATE_TIME_FORMATTER.format(date);
 }
 
 export default function NewPatientPage() {
