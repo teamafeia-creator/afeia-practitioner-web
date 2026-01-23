@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
+import { supabase } from '@/lib/supabase'
 
 const tabs = [
   { id: 'overview', label: "📋 Vue d'ensemble", href: '' },
@@ -19,7 +19,6 @@ const tabs = [
 
 export default function PatientOverviewPage() {
   const params = useParams()
-  const supabase = createClientComponentClient()
 
   const [patient, setPatient] = useState<any>(null)
   const [nextConsultation, setNextConsultation] = useState<any>(null)
