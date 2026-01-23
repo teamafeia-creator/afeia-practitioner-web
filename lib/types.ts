@@ -14,9 +14,10 @@ export type Patient = {
   id: string;
   practitioner_id: string;
   name: string;
-  email?: string;
-  age?: number;
-  city?: string;
+  email?: string | null;
+  age?: number | null;
+  city?: string | null;
+  consultation_reason?: string | null;
   status?: 'standard' | 'premium';
   is_premium: boolean;
   deleted_at?: string | null;
@@ -52,6 +53,18 @@ export type Consultation = {
   patient_id: string;
   date: string;
   notes?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Appointment = {
+  id: string;
+  patient_id: string;
+  practitioner_id: string;
+  starts_at: string;
+  ends_at?: string | null;
+  status: 'scheduled' | 'cancelled' | 'completed';
+  notes?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -155,6 +168,7 @@ export type PatientWithDetails = Patient & {
   patient_anamnesis?: PatientAnamnesis | null;
   practitioner_note?: PractitionerNote | null;
   consultations?: Consultation[];
+  appointments?: Appointment[];
   plan?: Plan & {
     versions?: (PlanVersion & {
       sections?: PlanSection[];
