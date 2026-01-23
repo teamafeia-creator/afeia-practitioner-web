@@ -1,336 +1,293 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
-import { Badge } from '../../../components/ui/Badge';
-import { Button } from '../../../components/ui/Button';
-import { Toast } from '../../../components/ui/Toast';
-import { getPatients, getNotifications, getPractitionerCalendlyUrl } from '../../../lib/queries';
-import type { Patient, Notification } from '../../../lib/types';
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { colors } from '@/lib/colors'
+import { supabase } from '@/lib/supabase'
+import type { Consultation, Patient } from '@/lib/types'
+
+type ConsultationWithPatient = Consultation & {
+  patients?: Pick<Patient, 'id' | 'name' | 'is_premium' | 'status'> | null
+}
+
+type RecentActivityItem = {
+  type: 'journal' | 'message' | 'circular'
+  patient: string
+  time: string
+  icon: string
+}
 
 export default function DashboardPage() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [notifications, setNotifications] = useState<(Notification & { patient?: Patient })[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
-  const [calendlyLoading, setCalendlyLoading] = useState(true);
-  const [calendlyError, setCalendlyError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{
-    title: string;
-    description?: string;
-    variant?: 'success' | 'error' | 'info';
-  } | null>(null);
+  const [stats, setStats] = useState({ total: 0, premium: 0, appointments: 0, messages: 0 })
+  const [upcomingAppointments, setUpcomingAppointments] = useState<ConsultationWithPatient[]>([])
+  const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const [patientsData, notificationsData] = await Promise.all([
-          getPatients(),
-          getNotifications()
-        ]);
-        setPatients(patientsData);
-        setNotifications(notificationsData);
-      } catch (error) {
-        console.error('[dashboard] failed to load data', error);
-        setToast({
-          title: 'Erreur de chargement',
-          description: error instanceof Error ? error.message : 'Impossible de charger le tableau de bord.',
-          variant: 'error'
-        });
-      } finally {
-        setLoading(false);
+    loadDashboardData()
+  }, [])
+
+  const loadDashboardData = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setLoading(false)
+        return
       }
-    }
-    loadData();
-  }, []);
 
-  useEffect(() => {
-    let active = true;
-    async function loadCalendly() {
-      setCalendlyLoading(true);
-      setCalendlyError(null);
-      try {
-        console.log('[dashboard] loading calendly url');
-        const url = await getPractitionerCalendlyUrl();
-        if (!active) return;
-        setCalendlyUrl(url);
-      } catch (error) {
-        if (!active) return;
-        console.error('[dashboard] failed to load calendly url', error);
-        setCalendlyError(error instanceof Error ? error.message : 'Erreur inconnue.');
-      } finally {
-        if (active) {
-          setCalendlyLoading(false);
-        }
+      // Patients
+      const { data: patients } = await supabase
+        .from('patients')
+        .select('id, is_premium, status')
+        .eq('practitioner_id', user!.id)
+        .is('deleted_at', null)
+
+      const premiumCount = patients?.filter((p) => p.is_premium || p.status === 'premium').length || 0
+      const patientIds = patients?.map((patient) => patient.id) ?? []
+
+      if (patientIds.length === 0) {
+        setStats({
+          total: 0,
+          premium: 0,
+          appointments: 0,
+          messages: 0,
+        })
+        setUpcomingAppointments([])
+        setRecentActivity([])
+        setLoading(false)
+        return
       }
-    }
-    loadCalendly();
-    return () => {
-      active = false;
-    };
-  }, []);
 
-  function handleOpenCalendly() {
-    if (calendlyLoading) {
-      setToast({
-        title: 'Chargement en cours',
-        description: 'Le lien Calendly est en cours de récupération.',
-        variant: 'info'
-      });
-      return;
-    }
+      const now = new Date()
+      const weekEnd = new Date()
+      weekEnd.setDate(now.getDate() + 7)
 
-    if (calendlyError) {
-      setToast({
-        title: 'Lien Calendly indisponible',
-        description: calendlyError,
-        variant: 'error'
-      });
-      return;
-    }
+      // Consultations à venir
+      const { data: consultations } = await supabase
+        .from('consultations')
+        .select('*, patients(name, is_premium)')
+        .in('patient_id', patientIds)
+        .gte('date', now.toISOString())
+        .order('date', { ascending: true })
+        .limit(5)
 
-    if (!calendlyUrl) {
-      setToast({
-        title: 'Lien Calendly manquant',
-        description: 'Ajoutez votre lien dans Paramètres pour activer la prise de RDV.',
-        variant: 'info'
-      });
-      return;
-    }
+      const { data: weekConsultations } = await supabase
+        .from('consultations')
+        .select('id')
+        .in('patient_id', patientIds)
+        .gte('date', now.toISOString())
+        .lte('date', weekEnd.toISOString())
 
-    window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
+      // Messages non lus
+      const { data: messages } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('sender_role', 'patient')
+        .is('read_by_practitioner', false)
+        .in('patient_id', patientIds)
+
+      setStats({
+        total: patients?.length || 0,
+        premium: premiumCount,
+        appointments: weekConsultations?.length || 0,
+        messages: messages?.length || 0,
+      })
+
+      setUpcomingAppointments(consultations || [])
+
+      // Activité récente simulée (à adapter selon vos besoins)
+      setRecentActivity([
+        { type: 'journal', patient: 'Marie Dupont', time: '2h', icon: '📝' },
+        { type: 'message', patient: 'Julie Bernard', time: '5h', icon: '💬' },
+        { type: 'circular', patient: 'Laura Petit', time: '1j', icon: '💍' },
+      ])
+    } catch (err) {
+      console.error('Erreur chargement dashboard:', err)
+    } finally {
+      setLoading(false)
+    }
   }
-
-  const today = new Date().toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long'
-  });
-
-  const premiumPatients = patients.filter((p) => p.is_premium);
-  const recentPatients = [...patients].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-warmgray">Chargement...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
+            style={{ borderColor: colors.teal.main }}
+          ></div>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Tableau de bord</h1>
-          <p className="text-sm text-warmgray">{today} — apercu rapide</p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Link href="/patients/new">
-            <Button variant="secondary" className="w-full sm:w-auto">
-              + Nouveau patient
-            </Button>
-          </Link>
-          <Button
-            variant="cta"
-            onClick={handleOpenCalendly}
-            loading={calendlyLoading}
-            className="w-full sm:w-auto"
-          >
-            Prise de rendez-vous
-          </Button>
-        </div>
-      </div>
-      {calendlyError ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-gold/30 bg-gold/10 p-4 text-sm text-marine sm:flex-row sm:items-center sm:justify-between">
-          <span>Erreur Calendly : {calendlyError}</span>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setCalendlyError(null);
-              setCalendlyLoading(true);
-              getPractitionerCalendlyUrl()
-                .then((url) => {
-                  setCalendlyUrl(url);
-                })
-                .catch((error) => {
-                  console.error('[dashboard] retry calendly failed', error);
-                  setCalendlyError(error instanceof Error ? error.message : 'Erreur inconnue.');
-                })
-                .finally(() => setCalendlyLoading(false));
-            }}
-            className="w-full sm:w-auto"
-          >
-            Réessayer
-          </Button>
-        </div>
-      ) : null}
-      {!calendlyLoading && !calendlyError && !calendlyUrl ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-teal/20 bg-teal/5 p-4 text-sm text-marine sm:flex-row sm:items-center sm:justify-between">
-          <span>Ajoutez votre lien Calendly dans Paramètres pour activer la prise de RDV.</span>
-          <Link href="/settings" className="w-full sm:w-auto">
-            <Button variant="secondary" className="w-full sm:w-auto">
-              Aller aux paramètres
-            </Button>
-          </Link>
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <div>
-              <h2 className="text-sm font-semibold">Notifications</h2>
-              <p className="text-xs text-warmgray">Questionnaires, Circular, messages</p>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {notifications.length === 0 ? (
-              <p className="text-sm text-warmgray">Aucune notification</p>
-            ) : (
-              <ul className="space-y-3">
-                {notifications.slice(0, 5).map((n) => (
-                  <li key={n.id} className="flex items-start gap-3 rounded-xl bg-sable/60 p-3 ring-1 ring-black/5">
-                    <div className={`mt-1 h-2 w-2 rounded-full ${n.level === 'attention' ? 'bg-gold' : 'bg-teal'}`} />
-                    <div className="min-w-0">
-                      <p className="text-sm text-charcoal">{n.title}</p>
-                      <p className="text-xs text-warmgray">{n.description}</p>
-                      {n.patient_id && (
-                        <Link className="mt-1 inline-block text-xs text-teal hover:underline" href={`/patients/${n.patient_id}`}>
-                          Ouvrir le dossier
-                        </Link>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Patients */}
-        <Card>
-          <CardHeader>
-            <div>
-              <h2 className="text-sm font-semibold">Patients</h2>
-              <p className="text-xs text-warmgray">{patients.length} patient(s) au total</p>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {patients.length === 0 ? (
-              <p className="text-sm text-warmgray">Aucun patient</p>
-            ) : (
-              <ul className="space-y-3">
-                {patients.slice(0, 4).map((p) => (
-                  <li key={p.id} className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 ring-1 ring-black/5">
-                    <div className="min-w-0">
-                      <Link className="truncate text-sm font-medium text-charcoal hover:underline" href={`/patients/${p.id}`}>
-                        {p.name}
-                      </Link>
-                      <p className="truncate text-xs text-warmgray">{p.city} • {p.age} ans</p>
-                    </div>
-                    <Badge variant={p.is_premium ? 'premium' : 'info'}>
-                      {p.is_premium ? 'Premium' : 'Standard'}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-4">
-              <Link href="/patients" className="inline-block w-full">
-                <Button variant="secondary" className="w-full">Voir tous les patients</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Premium (Circular) */}
-        <Card>
-          <CardHeader>
-            <div>
-              <h2 className="text-sm font-semibold">Premium (Circular)</h2>
-              <p className="text-xs text-warmgray">Sommeil - HRV - Activite</p>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {premiumPatients.length === 0 ? (
-              <p className="text-sm text-warmgray">Aucun patient premium</p>
-            ) : (
-              <div className="space-y-3">
-                {premiumPatients.slice(0, 3).map((p) => (
-                  <div key={p.id} className="rounded-xl bg-sable/60 p-3 ring-1 ring-black/5">
-                    <div className="flex items-center justify-between">
-                      <Link className="text-sm font-medium text-charcoal hover:underline" href={`/patients/${p.id}`}>{p.name}</Link>
-                      <Badge variant="premium">Premium</Badge>
-                    </div>
-                    <p className="mt-1 text-xs text-warmgray">{p.city}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-white">
+      {/* En-tête */}
+      <div className="p-6 border-b">
+        <h1 className="text-3xl font-bold mb-2" style={{ color: colors.teal.deep }}>
+          Tableau de bord
+        </h1>
+        <p className="text-gray-600">
+          {new Date().toLocaleDateString('fr-FR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          })}{' '}
+          — aperçu rapide
+        </p>
       </div>
 
-      {/* Patients à préparer */}
-      <Card>
-        <CardHeader>
-          <div>
-            <h2 className="text-sm font-semibold">🧠 Patients à préparer</h2>
-            <p className="text-xs text-warmgray">Suivez les dossiers récents avant vos consultations.</p>
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4">
+          <div
+            className="rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+            style={{ backgroundColor: colors.sand }}
+          >
+            <div className="text-4xl font-bold mb-2" style={{ color: colors.teal.main }}>
+              {stats.total}
+            </div>
+            <div className="text-sm" style={{ color: colors.gray.charcoal }}>
+              Patients actifs
+            </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          {recentPatients.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-black/10 bg-sable/50 p-6 text-center">
-              <p className="text-sm font-medium text-charcoal">Aucun patient à préparer</p>
-              <p className="mt-2 text-xs text-warmgray">
-                Ajoutez un patient pour alimenter la préparation.
-              </p>
+
+          <div
+            className="rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
+            style={{ backgroundColor: colors.aubergine.light }}
+          >
+            <div
+              className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold rounded-bl-lg"
+              style={{ backgroundColor: colors.aubergine.main, color: 'white' }}
+            >
+              ✨ Premium
             </div>
-          ) : (
+            <div className="text-4xl font-bold mb-2" style={{ color: colors.aubergine.main }}>
+              {stats.premium}
+            </div>
+            <div className="text-sm" style={{ color: colors.gray.charcoal }}>
+              Patients Premium
+            </div>
+          </div>
+
+          <div
+            className="rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+            style={{ backgroundColor: colors.sand }}
+          >
+            <div className="text-4xl font-bold mb-2" style={{ color: colors.teal.main }}>
+              {stats.appointments}
+            </div>
+            <div className="text-sm" style={{ color: colors.gray.charcoal }}>
+              RDV cette semaine
+            </div>
+          </div>
+
+          <div
+            className="rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+            style={{ backgroundColor: colors.sand }}
+          >
+            <div className="text-4xl font-bold mb-2" style={{ color: colors.gold }}>
+              {stats.messages}
+            </div>
+            <div className="text-sm" style={{ color: colors.gray.charcoal }}>
+              Nouveaux messages
+            </div>
+          </div>
+        </div>
+
+        {/* Prochaines consultations */}
+        <div
+          className="rounded-2xl p-6 shadow-sm"
+          style={{
+            backgroundColor: colors.sand,
+            borderTop: `4px solid`,
+            borderImage: colors.gradientTealAubergine,
+            borderImageSlice: 1,
+          }}
+        >
+          <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
+            📅 Prochaines consultations
+          </h2>
+
+          {upcomingAppointments.length > 0 ? (
             <div className="space-y-3">
-              {recentPatients.slice(0, 5).map((patient) => (
-                <Link
-                  key={patient.id}
-                  href={`/patients/${patient.id}?tab=Profil`}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 ring-1 ring-black/5 transition hover:bg-sable/60"
+              {upcomingAppointments.map((appt: any) => (
+                <div
+                  key={appt.id}
+                  className="bg-white rounded-lg p-4 border-l-4 hover:shadow-md transition-shadow"
+                  style={{ borderColor: colors.teal.main }}
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-charcoal">{patient.name}</p>
-                    <p className="truncate text-xs text-warmgray">
-                      Créé le {new Date(patient.created_at).toLocaleDateString('fr-FR')}
-                    </p>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold" style={{ color: colors.gray.charcoal }}>
+                          {new Date(appt.date).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'long',
+                          })}{' '}
+                          •{' '}
+                          {new Date(appt.date).toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        {appt.patients?.is_premium && (
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                            style={{
+                              backgroundColor: colors.aubergine.light,
+                              color: colors.aubergine.main,
+                            }}
+                          >
+                            ✨ Premium
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-semibold mb-1">👤 {appt.patients?.name}</p>
+                      <p className="text-sm" style={{ color: colors.gray.warm }}>
+                        {appt.notes || 'Consultation de suivi'}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/consultations/${appt.id}`}
+                      className="px-4 py-2 rounded-lg font-semibold text-white hover:shadow-md transition-all"
+                      style={{ backgroundColor: colors.gold }}
+                    >
+                      ▶ Démarrer
+                    </Link>
                   </div>
-                  <Badge variant={patient.is_premium ? 'premium' : 'info'}>
-                    {patient.is_premium ? 'Premium' : 'Standard'}
-                  </Badge>
-                </Link>
+                </div>
               ))}
             </div>
+          ) : (
+            <p style={{ color: colors.gray.warm }}>Aucune consultation programmée</p>
           )}
-          <div className="mt-4">
-            <Link href="/patients" className="inline-block w-full">
-              <Button variant="secondary" className="w-full">
-                Voir tous les patients
-              </Button>
-            </Link>
+        </div>
+
+        {/* Activité récente */}
+        <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
+          <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
+            🔔 Activité récente
+          </h2>
+
+          <div className="space-y-2">
+            {recentActivity.map((activity, index) => (
+              <div key={index} className="flex items-center gap-3 text-sm">
+                <span className="text-2xl">{activity.icon}</span>
+                <span style={{ color: colors.gray.charcoal }}>
+                  <strong>{activity.patient}</strong> a rempli son journal
+                </span>
+                <span style={{ color: colors.gray.warm }}>(il y a {activity.time})</span>
+              </div>
+            ))}
           </div>
-        </CardContent>
-      </Card>
-      {toast ? (
-        <Toast
-          title={toast.title}
-          description={toast.description}
-          variant={toast.variant}
-          onClose={() => setToast(null)}
-        />
-      ) : null}
+        </div>
+      </div>
     </div>
-  );
+  )
 }
