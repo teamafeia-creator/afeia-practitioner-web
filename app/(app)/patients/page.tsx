@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { getPatientsWithUnreadCounts } from '../../../lib/queries';
+import { Toast } from '../../../components/ui/Toast';
+import { deletePatient, getPatientsWithUnreadCounts } from '../../../lib/queries';
 import type { PatientWithUnreadCounts } from '../../../lib/types';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
@@ -25,6 +26,15 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<PatientWithUnreadCounts | null>(null);
+  const [toast, setToast] = useState<{
+    title: string;
+    description?: string;
+    variant?: 'success' | 'error' | 'info';
+  } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -32,11 +42,13 @@ export default function PatientsPage() {
       setLoading(true);
       setError(null);
       try {
+        console.log('[patients] loading list');
         const data = await getPatientsWithUnreadCounts();
         if (!isMounted) return;
         setPatients(data);
       } catch (err) {
         if (!isMounted) return;
+        console.error('[patients] failed to load list', err);
         setError(err instanceof Error ? err.message : 'Impossible de charger les patients.');
       } finally {
         if (isMounted) {
@@ -113,15 +125,16 @@ export default function PatientsPage() {
                 <div>Dernière consultation</div>
               </div>
               {filteredPatients.map((patient) => (
-                <Link
+                <div
                   key={patient.id}
-                  href={`/patients/${patient.id}`}
-                  className="rounded-xl bg-white p-4 ring-1 ring-black/5 hover:bg-sable/30 transition"
+                  className="rounded-xl bg-white p-4 ring-1 ring-black/5 transition hover:bg-sable/30"
                 >
-                  <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_1fr_1fr]">
-                    <div>
-                      <p className="font-medium text-charcoal">{patient.name}</p>
-                      <p className="text-sm text-warmgray">
+                  <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] md:items-center">
+                    <div className="min-w-0">
+                      <Link href={`/patients/${patient.id}`} className="font-medium text-charcoal hover:underline">
+                        {patient.name}
+                      </Link>
+                      <p className="text-sm text-warmgray break-words">
                         {[patient.age ? `${patient.age} ans` : null, patient.city]
                           .filter(Boolean)
                           .join(' • ') || '—'}
@@ -149,13 +162,98 @@ export default function PatientsPage() {
                     <div className="text-sm text-marine">
                       {formatDate(patient.lastConsultationAt)}
                     </div>
+                    <div className="flex justify-end">
+                      <Button
+                        variant="danger"
+                        className="w-full md:w-auto"
+                        onClick={() => {
+                          setSelectedPatient(patient);
+                          setConfirmText('');
+                          setShowDeleteModal(true);
+                        }}
+                      >
+                        Supprimer
+                      </Button>
+                    </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+      {showDeleteModal && selectedPatient ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
+            <h2 className="text-lg font-semibold text-charcoal">Supprimer ce patient</h2>
+            <p className="mt-2 text-sm text-warmgray">
+              Cette action est irréversible. Tapez <strong>SUPPRIMER</strong> pour confirmer la suppression de{' '}
+              <strong>{selectedPatient.name}</strong>.
+            </p>
+            <div className="mt-4 space-y-3">
+              <Input
+                placeholder="SUPPRIMER"
+                value={confirmText}
+                onChange={(event) => setConfirmText(event.target.value)}
+              />
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setConfirmText('');
+                    setSelectedPatient(null);
+                    setShowDeleteModal(false);
+                  }}
+                  disabled={deleting}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  variant="danger"
+                  loading={deleting}
+                  disabled={confirmText.trim().toUpperCase() !== 'SUPPRIMER'}
+                  onClick={async () => {
+                    if (!selectedPatient) return;
+                    setDeleting(true);
+                    try {
+                      console.log('[patients] deleting from list', { patientId: selectedPatient.id });
+                      await deletePatient(selectedPatient.id);
+                      setPatients((prev) => prev.filter((p) => p.id !== selectedPatient.id));
+                      setToast({
+                        title: 'Patient supprimé',
+                        description: `${selectedPatient.name} a été retiré du CRM.`,
+                        variant: 'success'
+                      });
+                      setShowDeleteModal(false);
+                      setSelectedPatient(null);
+                    } catch (deleteError) {
+                      console.error('Failed to delete patient', deleteError);
+                      setToast({
+                        title: 'Suppression impossible',
+                        description:
+                          deleteError instanceof Error ? deleteError.message : 'Erreur inconnue.',
+                        variant: 'error'
+                      });
+                    } finally {
+                      setDeleting(false);
+                    }
+                  }}
+                >
+                  Confirmer la suppression
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {toast ? (
+        <Toast
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      ) : null}
     </div>
   );
 }

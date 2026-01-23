@@ -25,11 +25,25 @@ export default function SettingsPage() {
     let active = true;
     async function loadCalendly() {
       setLoadingCalendly(true);
-      const url = await getPractitionerCalendlyUrl();
-      if (!active) return;
-      setInitialCalendlyUrl(url);
-      setCalendlyInput(url ?? '');
-      setLoadingCalendly(false);
+      try {
+        console.log('[settings] loading calendly url');
+        const url = await getPractitionerCalendlyUrl();
+        if (!active) return;
+        setInitialCalendlyUrl(url);
+        setCalendlyInput(url ?? '');
+      } catch (error) {
+        if (!active) return;
+        console.error('[settings] failed to load calendly url', error);
+        setToast({
+          title: 'Impossible de charger votre lien Calendly',
+          description: error instanceof Error ? error.message : 'Erreur inconnue.',
+          variant: 'error'
+        });
+      } finally {
+        if (active) {
+          setLoadingCalendly(false);
+        }
+      }
     }
     loadCalendly();
     return () => {
@@ -66,7 +80,9 @@ export default function SettingsPage() {
 
     setSavingCalendly(true);
     try {
+      console.log('[settings] saving calendly url', { normalized });
       await updatePractitionerCalendlyUrl(normalized);
+      console.log('[settings] saved calendly url', { normalized });
       setInitialCalendlyUrl(normalized);
       setCalendlyInput(normalized ?? '');
       setToast({
@@ -119,7 +135,12 @@ export default function SettingsPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant="cta" onClick={handleSaveCalendly} loading={savingCalendly}>
+              <Button
+                variant="cta"
+                onClick={handleSaveCalendly}
+                loading={savingCalendly}
+                disabled={loadingCalendly}
+              >
                 Enregistrer
               </Button>
               <Button variant="secondary" onClick={() => alert('📄 Documents pro (à brancher)')}>Gérer mes documents</Button>
