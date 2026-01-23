@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '../../../../components/ui/Button';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/Card';
@@ -25,6 +26,7 @@ function formatDate(value?: string | null, withTime = true) {
 }
 
 export default function NewPatientPage() {
+  const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
@@ -78,6 +80,7 @@ export default function NewPatientPage() {
         isPremium,
         circularEnabled
       });
+      router.refresh();
 
       if (sendAnamnese) {
         await createAnamneseInstance(patientId);

@@ -292,9 +292,11 @@ export async function getPlanById(id: string): Promise<(Plan & {
 // ============================================
 
 export async function sendMessage(patientId: string, text: string, sender: 'patient' | 'praticien'): Promise<Message | null> {
+  const now = new Date().toISOString();
+  const senderRole = sender === 'praticien' ? 'practitioner' : sender;
   const { data, error } = await supabase
     .from('messages')
-    .insert({ patient_id: patientId, text, sender })
+    .insert({ patient_id: patientId, text, body: text, sender, sender_role: senderRole, sent_at: now, created_at: now })
     .select()
     .single();
   
@@ -353,10 +355,18 @@ export async function getUnreadNotificationsCount(patientId: string): Promise<nu
 // PATIENTS - CREATE/UPDATE
 // ============================================
 
-export async function createPatient(patient: Omit<Patient, 'id' | 'created_at' | 'updated_at'>): Promise<Patient | null> {
+export async function createPatient(
+  patient: Omit<Patient, 'id' | 'created_at' | 'updated_at' | 'practitioner_id'>
+): Promise<Patient | null> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    console.error('Error fetching user:', userError);
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('patients')
-    .insert(patient)
+    .insert({ ...patient, practitioner_id: userData.user.id })
     .select()
     .single();
   
