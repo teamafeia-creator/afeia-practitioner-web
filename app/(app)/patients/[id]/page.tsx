@@ -1,88 +1,71 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
-import { supabase } from '@/lib/supabase'
+import { getPatientById } from '@/lib/queries'
+import { PatientTabs } from '@/components/patients/PatientTabs'
+import type { Consultation, JournalEntry, PatientWithDetails } from '@/lib/types'
 
-const tabs = [
-  { id: 'overview', label: "📋 Vue d'ensemble", href: '' },
-  { id: 'profile', label: 'Profil', href: '/profile' },
-  { id: 'appointments', label: 'Rendez-vous', href: '/appointments' },
-  { id: 'anamnesis', label: 'Anamnèse', href: '/anamnesis' },
-  { id: 'circular', label: 'Circular', href: '/circular' },
-  { id: 'journal', label: 'Journal', href: '/journal' },
-  { id: 'notes', label: 'Notes', href: '/notes' },
-  { id: 'messages', label: 'Messages', href: '/messages' },
-]
+type RecentJournalEntry = Pick<JournalEntry, 'id' | 'date' | 'mood' | 'energy' | 'text'> &
+  Pick<JournalEntry, 'adherence_hydratation' | 'adherence_respiration' | 'adherence_mouvement' | 'adherence_plantes'>
 
-export default function PatientOverviewPage() {
-  const params = useParams()
+const getNextConsultation = (consultations: Consultation[]) => {
+  const now = new Date()
+  return consultations
+    .filter((consultation) => new Date(consultation.date) >= now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+}
 
-  const [patient, setPatient] = useState<any>(null)
-  const [nextConsultation, setNextConsultation] = useState<any>(null)
-  const [activePlan, setActivePlan] = useState<any>(null)
-  const [recentActivity, setRecentActivity] = useState<any[]>([])
+export default function PatientOverviewPage({ params }: { params: { id: string } }) {
+  const [patient, setPatient] = useState<PatientWithDetails | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const loadPatientData = useCallback(async () => {
-    try {
-      // Patient
-      const { data: patientData } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('id', params.id)
-        .single()
+  useEffect(() => {
+    let active = true
 
-      setPatient(patientData)
+    const loadPatient = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await getPatientById(params.id)
+        if (!active) return
+        if (!data) {
+          setError('Patient introuvable.')
+          setPatient(null)
+        } else {
+          setPatient(data)
+        }
+      } catch (err) {
+        if (!active) return
+        setError(err instanceof Error ? err.message : 'Impossible de charger le dossier patient.')
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
 
-      // Prochaine consultation
-      const { data: nextAppt } = await supabase
-        .from('consultations')
-        .select('*')
-        .eq('patient_id', params.id)
-        .gte('date', new Date().toISOString())
-        .order('date', { ascending: true })
-        .limit(1)
-        .maybeSingle()
+    loadPatient()
 
-      setNextConsultation(nextAppt)
-
-      // Plan actif
-      const { data: plan } = await supabase
-        .from('plans')
-        .select(
-          `
-          *,
-          supplement_items(*)
-        `
-        )
-        .eq('patient_id', params.id)
-        .eq('is_active', true)
-        .maybeSingle()
-
-      setActivePlan(plan)
-
-      // Activité récente (Daily logs)
-      const { data: logs } = await supabase
-        .from('daily_logs')
-        .select('*')
-        .eq('patient_id', params.id)
-        .order('log_date', { ascending: false })
-        .limit(3)
-
-      setRecentActivity(logs || [])
-    } catch (err) {
-      console.error('Erreur chargement patient:', err)
-    } finally {
-      setLoading(false)
+    return () => {
+      active = false
     }
   }, [params.id])
 
-  useEffect(() => {
-    loadPatientData()
-  }, [loadPatientData])
+  const nextConsultation = useMemo(() => {
+    if (!patient?.consultations) return null
+    return getNextConsultation(patient.consultations)
+  }, [patient?.consultations])
+
+  const recentJournalEntries: RecentJournalEntry[] = useMemo(() => {
+    return (patient?.journal_entries ?? []).slice(0, 3)
+  }, [patient?.journal_entries])
+
+  const latestPlanVersion = useMemo(() => {
+    return patient?.plan?.versions?.[0]
+  }, [patient?.plan?.versions])
 
   if (loading) {
     return (
@@ -95,10 +78,15 @@ export default function PatientOverviewPage() {
     )
   }
 
-  if (!patient) {
+  if (error || !patient) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Patient introuvable</p>
+      <div className="space-y-4">
+        <div className="rounded-xl border p-4 text-sm" style={{ borderColor: colors.gold }}>
+          {error ?? 'Patient introuvable.'}
+        </div>
+        <Link href="/patients" className="text-sm hover:underline" style={{ color: colors.teal.main }}>
+          Retour à la liste des patients
+        </Link>
       </div>
     )
   }
@@ -133,45 +121,22 @@ export default function PatientOverviewPage() {
                 </span>
               )}
             </div>
-            <div className="flex gap-4 text-sm" style={{ color: colors.gray.warm }}>
+            <div className="flex flex-wrap gap-4 text-sm" style={{ color: colors.gray.warm }}>
               {patient.age && <span>{patient.age} ans</span>}
               {patient.city && <span>• {patient.city}</span>}
-              {patient.pathology && <span>• {patient.pathology}</span>}
+              {patient.consultation_reason && <span>• {patient.consultation_reason}</span>}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation à onglets */}
-      <div className="border-b overflow-x-auto">
-        <div className="flex gap-6 px-6">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.id}
-              href={`/patients/${params.id}${tab.href}`}
-              className={`py-4 px-2 font-medium border-b-2 transition-colors whitespace-nowrap ${
-                tab.id === 'overview'
-                  ? 'border-current'
-                  : 'border-transparent hover:border-current'
-              }`}
-              style={{
-                color: tab.id === 'overview' ? colors.teal.main : colors.gray.warm,
-              }}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Contenu - Vue d'ensemble */}
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Résumé patient */}
         <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
           <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
             📋 Résumé patient
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
                 Email
@@ -182,20 +147,36 @@ export default function PatientOverviewPage() {
             </div>
             <div>
               <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
-                Téléphone
+                Ville
               </p>
               <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
-                {patient.phone || 'Non renseigné'}
+                {patient.city || 'Non renseignée'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
+                Âge
+              </p>
+              <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
+                {patient.age ? `${patient.age} ans` : 'Non renseigné'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
+                Téléphone
+              </p>
+              {/* NOTE: le champ téléphone n'existe pas dans la table patients. */}
+              <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
+                Non renseigné
               </p>
             </div>
             <div>
               <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
                 Date de naissance
               </p>
+              {/* NOTE: le champ date de naissance n'existe pas dans la table patients. */}
               <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
-                {patient.date_of_birth
-                  ? new Date(patient.date_of_birth).toLocaleDateString('fr-FR')
-                  : 'Non renseignée'}
+                Non renseignée
               </p>
             </div>
             <div>
@@ -206,15 +187,6 @@ export default function PatientOverviewPage() {
                 {patient.is_premium || patient.status === 'premium' ? 'Premium' : 'Standard'}
               </p>
             </div>
-          </div>
-          <div className="mt-4 pt-4 border-t" style={{ borderColor: 'white' }}>
-            <Link
-              href={`/patients/${params.id}/profile`}
-              className="text-sm font-semibold hover:underline"
-              style={{ color: colors.teal.main }}
-            >
-              → Voir le profil complet
-            </Link>
           </div>
         </div>
 
@@ -243,25 +215,11 @@ export default function PatientOverviewPage() {
                 minute: '2-digit',
               })}
             </p>
-            <div className="flex gap-3 mt-4">
-              <Link
-                href={`/patients/${params.id}/appointments`}
-                className="px-4 py-2 rounded-lg border-2 font-semibold hover:shadow-md transition-all"
-                style={{
-                  borderColor: colors.teal.main,
-                  color: colors.teal.main,
-                }}
-              >
-                Modifier
-              </Link>
-              <Link
-                href={`/patients/${params.id}/appointments`}
-                className="text-sm font-semibold hover:underline self-center"
-                style={{ color: colors.teal.main }}
-              >
-                → Voir tous les rendez-vous
-              </Link>
-            </div>
+            {nextConsultation.notes && (
+              <p className="text-sm" style={{ color: colors.gray.warm }}>
+                {nextConsultation.notes}
+              </p>
+            )}
           </div>
         ) : (
           <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
@@ -269,71 +227,77 @@ export default function PatientOverviewPage() {
               📅 Rendez-vous
             </h2>
             <p style={{ color: colors.gray.warm }}>Aucun rendez-vous programmé</p>
-            <Link
-              href={`/patients/${params.id}/appointments`}
-              className="inline-block mt-4 px-4 py-2 rounded-lg font-semibold text-white hover:shadow-md transition-all"
-              style={{ backgroundColor: colors.gold }}
-            >
-              + Programmer un rendez-vous
-            </Link>
           </div>
         )}
 
         {/* Activité récente */}
-        {recentActivity.length > 0 && (
-          <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
-            <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-              🔔 Activité récente
-            </h2>
+        <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
+          <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
+            🔔 Activité récente
+          </h2>
+          {recentJournalEntries.length > 0 ? (
             <div className="space-y-3">
-              {recentActivity.map((log: any) => (
-                <div key={log.id} className="bg-white rounded-lg p-4">
+              {recentJournalEntries.map((entry) => (
+                <div key={entry.id} className="bg-white rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm font-semibold" style={{ color: colors.gray.charcoal }}>
-                      {new Date(log.log_date).toLocaleDateString('fr-FR', {
+                      {new Date(entry.date).toLocaleDateString('fr-FR', {
                         day: 'numeric',
                         month: 'long',
                       })}
                     </span>
-                  </div>
-                  <div className="flex gap-4 text-sm">
-                    <span style={{ color: log.good_nutrition ? colors.sage : colors.gray.warm }}>
-                      Nutrition {log.good_nutrition ? '✅' : '⚠️'}
+                    <span className="text-xs" style={{ color: colors.gray.warm }}>
+                      Humeur: {entry.mood || 'Non renseignée'}
                     </span>
-                    <span style={{ color: log.good_sleep ? colors.sage : colors.gray.warm }}>
-                      Sommeil {log.good_sleep ? '✅' : '⚠️'}
-                    </span>
-                    <span style={{ color: log.good_mood ? colors.sage : colors.gray.warm }}>
-                      Humeur {log.good_mood ? '✅' : '⚠️'}
-                    </span>
-                    <span
-                      style={{ color: log.supplements_taken ? colors.sage : colors.gray.warm }}
-                    >
-                      Compléments {log.supplements_taken ? '✅' : '⚠️'}
+                    <span className="text-xs" style={{ color: colors.gray.warm }}>
+                      Énergie: {entry.energy || 'Non renseignée'}
                     </span>
                   </div>
-                  {log.note_for_practitioner && (
-                    <p className="text-sm mt-2 italic" style={{ color: colors.gray.warm }}>
-                      &quot;{log.note_for_practitioner}&quot;
+                  {entry.text && (
+                    <p className="text-sm" style={{ color: colors.gray.warm }}>
+                      {entry.text}
                     </p>
                   )}
+                  <div className="flex flex-wrap gap-3 text-sm mt-3">
+                    <span
+                      style={{
+                        color: entry.adherence_hydratation ? colors.sage : colors.gray.warm,
+                      }}
+                    >
+                      Hydratation {entry.adherence_hydratation ? '✅' : '⚠️'}
+                    </span>
+                    <span
+                      style={{
+                        color: entry.adherence_respiration ? colors.sage : colors.gray.warm,
+                      }}
+                    >
+                      Respiration {entry.adherence_respiration ? '✅' : '⚠️'}
+                    </span>
+                    <span
+                      style={{
+                        color: entry.adherence_mouvement ? colors.sage : colors.gray.warm,
+                      }}
+                    >
+                      Mouvement {entry.adherence_mouvement ? '✅' : '⚠️'}
+                    </span>
+                    <span
+                      style={{
+                        color: entry.adherence_plantes ? colors.sage : colors.gray.warm,
+                      }}
+                    >
+                      Plantes {entry.adherence_plantes ? '✅' : '⚠️'}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="mt-4 pt-4 border-t" style={{ borderColor: 'white' }}>
-              <Link
-                href={`/patients/${params.id}/journal`}
-                className="text-sm font-semibold hover:underline"
-                style={{ color: colors.teal.main }}
-              >
-                → Voir le journal complet
-              </Link>
-            </div>
-          </div>
-        )}
+          ) : (
+            <p style={{ color: colors.gray.warm }}>Aucune entrée récente</p>
+          )}
+        </div>
 
         {/* Plan actif */}
-        {activePlan ? (
+        {patient.plan ? (
           <div
             className="rounded-2xl p-6 shadow-sm"
             style={{
@@ -344,44 +308,16 @@ export default function PatientOverviewPage() {
             }}
           >
             <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-              💊 Plan de compléments actif
+              💊 Plan de compléments
             </h2>
-            <p className="text-lg font-semibold mb-4" style={{ color: colors.gray.charcoal }}>
-              {activePlan.plan_name || 'Plan personnalisé'}
+            <p className="text-lg font-semibold mb-1" style={{ color: colors.gray.charcoal }}>
+              {latestPlanVersion?.title || 'Plan personnalisé'}
             </p>
-            {activePlan.start_date && (
-              <p className="text-sm mb-4" style={{ color: colors.gray.warm }}>
-                Du {new Date(activePlan.start_date).toLocaleDateString('fr-FR')}
-                {activePlan.end_date &&
-                  ` au ${new Date(activePlan.end_date).toLocaleDateString('fr-FR')}`}
-              </p>
-            )}
-
-            {activePlan.supplement_items && activePlan.supplement_items.length > 0 && (
-              <div className="space-y-2 mb-4">
-                {activePlan.supplement_items.slice(0, 3).map((item: any) => (
-                  <div key={item.id} className="text-sm flex items-center gap-2">
-                    <span>•</span>
-                    <span style={{ color: colors.gray.charcoal }}>
-                      <strong>{item.name}</strong> - {item.frequency}
-                    </span>
-                  </div>
-                ))}
-                {activePlan.supplement_items.length > 3 && (
-                  <p className="text-sm italic" style={{ color: colors.gray.warm }}>
-                    + {activePlan.supplement_items.length - 3} autres compléments
-                  </p>
-                )}
-              </div>
-            )}
-
-            <Link
-              href={`/patients/${params.id}/plans`}
-              className="inline-block text-sm font-semibold hover:underline"
-              style={{ color: colors.teal.main }}
-            >
-              → Voir le plan complet
-            </Link>
+            <p className="text-sm" style={{ color: colors.gray.warm }}>
+              {latestPlanVersion?.sections
+                ? `${latestPlanVersion.sections.length} section(s) au total`
+                : 'Sections à configurer'}
+            </p>
           </div>
         ) : (
           <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
@@ -389,15 +325,16 @@ export default function PatientOverviewPage() {
               💊 Plan de compléments
             </h2>
             <p style={{ color: colors.gray.warm }}>Aucun plan actif</p>
-            <Link
-              href={`/patients/${params.id}/plans`}
-              className="inline-block mt-4 px-4 py-2 rounded-lg font-semibold text-white hover:shadow-md transition-all"
-              style={{ backgroundColor: colors.gold }}
-            >
-              + Créer un plan
-            </Link>
           </div>
         )}
+
+        {/* Détails patient */}
+        <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
+          <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
+            🧾 Dossier complet
+          </h2>
+          <PatientTabs patient={patient} />
+        </div>
       </div>
     </div>
   )

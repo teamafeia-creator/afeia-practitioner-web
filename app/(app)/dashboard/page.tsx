@@ -4,11 +4,23 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
 import { supabase } from '@/lib/supabase'
+import type { Consultation, Patient } from '@/lib/types'
+
+type ConsultationWithPatient = Consultation & {
+  patients?: Pick<Patient, 'id' | 'name' | 'is_premium' | 'status'> | null
+}
+
+type RecentActivityItem = {
+  type: 'journal' | 'message' | 'circular'
+  patient: string
+  time: string
+  icon: string
+}
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({ total: 0, premium: 0, appointments: 0, messages: 0 })
-  const [upcomingAppointments, setUpcomingAppointments] = useState([])
-  const [recentActivity, setRecentActivity] = useState([])
+  const [upcomingAppointments, setUpcomingAppointments] = useState<ConsultationWithPatient[]>([])
+  const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -21,7 +33,12 @@ export default function DashboardPage() {
         data: { user },
       } = await supabase.auth.getUser()
 
-      // Stats
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      // Patients
       const { data: patients } = await supabase
         .from('patients')
         .select('id, is_premium, status')
@@ -29,15 +46,40 @@ export default function DashboardPage() {
         .is('deleted_at', null)
 
       const premiumCount = patients?.filter((p) => p.is_premium || p.status === 'premium').length || 0
+      const patientIds = patients?.map((patient) => patient.id) ?? []
+
+      if (patientIds.length === 0) {
+        setStats({
+          total: 0,
+          premium: 0,
+          appointments: 0,
+          messages: 0,
+        })
+        setUpcomingAppointments([])
+        setRecentActivity([])
+        setLoading(false)
+        return
+      }
+
+      const now = new Date()
+      const weekEnd = new Date()
+      weekEnd.setDate(now.getDate() + 7)
 
       // Consultations à venir
       const { data: consultations } = await supabase
         .from('consultations')
         .select('*, patients(name, is_premium)')
-        .eq('practitioner_id', user!.id)
-        .gte('date', new Date().toISOString())
+        .in('patient_id', patientIds)
+        .gte('date', now.toISOString())
         .order('date', { ascending: true })
         .limit(5)
+
+      const { data: weekConsultations } = await supabase
+        .from('consultations')
+        .select('id')
+        .in('patient_id', patientIds)
+        .gte('date', now.toISOString())
+        .lte('date', weekEnd.toISOString())
 
       // Messages non lus
       const { data: messages } = await supabase
@@ -45,11 +87,12 @@ export default function DashboardPage() {
         .select('id')
         .eq('sender_role', 'patient')
         .is('read_by_practitioner', false)
+        .in('patient_id', patientIds)
 
       setStats({
         total: patients?.length || 0,
         premium: premiumCount,
-        appointments: consultations?.length || 0,
+        appointments: weekConsultations?.length || 0,
         messages: messages?.length || 0,
       })
 
