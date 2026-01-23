@@ -3,6 +3,7 @@ import type {
   Patient, 
   Anamnese, 
   Consultation, 
+  Appointment,
   Plan, 
   PlanVersion, 
   PlanSection,
@@ -258,6 +259,12 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
     .eq('patient_id', id)
     .order('date', { ascending: false });
 
+  const { data: appointments } = await supabase
+    .from('appointments')
+    .select('*')
+    .eq('patient_id', id)
+    .order('starts_at', { ascending: false });
+
   // Récupérer le plan avec ses versions et sections
   const { data: plan } = await supabase
     .from('plans')
@@ -338,6 +345,7 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
     ...patient,
     anamnese: anamnese || undefined,
     consultations: consultations || [],
+    appointments: appointments || [],
     plan: planWithVersions || undefined,
     patient_anamnesis:
       patientAnamnesis ||
@@ -553,7 +561,7 @@ export async function updateAnamnese(
   return updated;
 }
 
-export async function updatePatient(id: string, updates: Partial<Patient>): Promise<Patient | null> {
+export async function updatePatient(id: string, updates: Partial<Patient>): Promise<Patient> {
   const { data, error } = await supabase
     .from('patients')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -564,7 +572,43 @@ export async function updatePatient(id: string, updates: Partial<Patient>): Prom
   
   if (error) {
     console.error('Error updating patient:', error);
-    return null;
+    throw new Error(describeSupabaseError(error));
+  }
+  return data;
+}
+
+export async function createAppointment({
+  patientId,
+  startsAt,
+  endsAt,
+  notes
+}: {
+  patientId: string;
+  startsAt: string;
+  endsAt?: string | null;
+  notes?: string | null;
+}): Promise<Appointment> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    throw new Error('Veuillez vous reconnecter pour planifier un rendez-vous.');
+  }
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .insert({
+      patient_id: patientId,
+      practitioner_id: userData.user.id,
+      starts_at: startsAt,
+      ends_at: endsAt,
+      notes: notes ?? null,
+      status: 'scheduled'
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Error creating appointment:', error);
+    throw new Error(describeSupabaseError(error));
   }
   return data;
 }
