@@ -41,6 +41,7 @@ export async function createPatientInvite({
       .from('patients')
       .select('email')
       .eq('id', patientId)
+      .is('deleted_at', null)
       .single();
 
     if (error) {

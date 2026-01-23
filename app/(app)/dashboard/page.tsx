@@ -5,13 +5,20 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
-import { getPatients, getNotifications } from '../../../lib/queries';
+import { Toast } from '../../../components/ui/Toast';
+import { getPatients, getNotifications, getPractitionerCalendlyUrl } from '../../../lib/queries';
 import type { Patient, Notification } from '../../../lib/types';
 
 export default function DashboardPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [notifications, setNotifications] = useState<(Notification & { patient?: Patient })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    title: string;
+    description?: string;
+    variant?: 'success' | 'error' | 'info';
+  } | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -26,6 +33,32 @@ export default function DashboardPage() {
     }
     loadData();
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    async function loadCalendly() {
+      const url = await getPractitionerCalendlyUrl();
+      if (!active) return;
+      setCalendlyUrl(url);
+    }
+    loadCalendly();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function handleOpenCalendly() {
+    if (!calendlyUrl) {
+      setToast({
+        title: 'Lien Calendly manquant',
+        description: 'Ajoutez votre lien dans Paramètres pour activer la prise de RDV.',
+        variant: 'info'
+      });
+      return;
+    }
+
+    window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
+  }
 
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
@@ -54,7 +87,9 @@ export default function DashboardPage() {
           <Link href="/patients/new">
             <Button variant="secondary">+ Nouveau patient</Button>
           </Link>
-          <Button variant="cta" onClick={() => alert('Agenda / prise de RDV (a venir)')}>Prise de RDV</Button>
+          <Button variant="cta" onClick={handleOpenCalendly}>
+            Prise de rendez-vous
+          </Button>
         </div>
       </div>
 
@@ -180,6 +215,14 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      {toast ? (
+        <Toast
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { Textarea } from '../ui/Textarea';
 import { SmallLineChart } from '../charts/SmallLineChart';
 import { CalendlyButton } from '../calendly/CalendlyButton';
 import {
+  getPractitionerCalendlyUrl,
   markMessagesAsRead,
   sendMessage,
   updateAnamnese
@@ -111,6 +112,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   const [messages, setMessages] = useState<Message[]>(patient.messages ?? []);
   const [messageText, setMessageText] = useState('');
   const [messageLoading, setMessageLoading] = useState(false);
+  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
 
   const isPremium = patient.is_premium;
   const wearableSummaries = useMemo(
@@ -119,7 +121,6 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   );
   const wearableInsights = patient.wearable_insights ?? [];
   const journalEntries = patient.journal_entries ?? [];
-  const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_LINK ?? null;
   const lastConsultation = patient.consultations?.[0]?.date ?? null;
 
   const lastSevenSummaries = useMemo(
@@ -134,6 +135,19 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   useEffect(() => {
     setMessages(patient.messages ?? []);
   }, [patient.messages]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadCalendly() {
+      const url = await getPractitionerCalendlyUrl();
+      if (!active) return;
+      setCalendlyUrl(url);
+    }
+    loadCalendly();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;

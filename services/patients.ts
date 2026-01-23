@@ -148,6 +148,7 @@ export async function fetchPatientsOverview(): Promise<PatientOverview[]> {
   const { data: patients, error } = await supabase
     .from('patients')
     .select('id, name, age, city, status, circular_enabled, last_circular_sync_at')
+    .is('deleted_at', null)
     .order('name');
 
   if (error || !patients) {
@@ -291,6 +292,7 @@ export async function fetchPatientDetail(patientId: string): Promise<PatientDeta
       'id, name, email, age, city, status, is_premium, circular_enabled, circular_connected, last_circular_sync_at, created_at, updated_at'
     )
     .eq('id', patientId)
+    .is('deleted_at', null)
     .single();
 
   if (patientError || !patient) {
