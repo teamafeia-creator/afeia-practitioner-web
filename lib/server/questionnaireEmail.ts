@@ -24,7 +24,7 @@ export function buildQuestionnaireCodeEmail({
 }: QuestionnaireEmailParams): QuestionnaireEmailContent {
   const greetingName = patientName?.trim() ? `Bonjour ${patientName.trim()},` : 'Bonjour,';
   const subject = 'Votre code d’accès au questionnaire AFEIA';
-  const from = 'Team AFEIA <no-reply@afeia.app>';
+  const from = 'Team AFEIA <team.afeia@gmail.com>';
 
   const html = `
     <div style="font-family: Arial, sans-serif; color: #1F2A37; line-height: 1.5;">
