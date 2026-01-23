@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { fetchPatientsOverview, type PatientOverview } from '../../../services/patients';
+import { getPatientsWithUnreadCounts } from '../../../lib/queries';
+import type { PatientWithUnreadCounts } from '../../../lib/types';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
@@ -20,7 +21,7 @@ function formatDate(value: string | null) {
 }
 
 export default function PatientsPage() {
-  const [patients, setPatients] = useState<PatientOverview[]>([]);
+  const [patients, setPatients] = useState<PatientWithUnreadCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -30,10 +31,18 @@ export default function PatientsPage() {
     async function loadData() {
       setLoading(true);
       setError(null);
-      const data = await fetchPatientsOverview();
-      if (!isMounted) return;
-      setPatients(data);
-      setLoading(false);
+      try {
+        const data = await getPatientsWithUnreadCounts();
+        if (!isMounted) return;
+        setPatients(data);
+      } catch (err) {
+        if (!isMounted) return;
+        setError(err instanceof Error ? err.message : 'Impossible de charger les patients.');
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
     loadData();
     return () => {
@@ -68,7 +77,7 @@ export default function PatientsPage() {
         </div>
         <div className="flex gap-2">
           <Link href="/patients/new">
-            <Button variant="cta">Ajouter un patient</Button>
+            <Button variant="cta">+ Nouveau patient</Button>
           </Link>
         </div>
       </div>
@@ -93,59 +102,56 @@ export default function PatientsPage() {
         </CardHeader>
         <CardContent>
           {filteredPatients.length === 0 ? (
-            <p className="text-sm text-warmgray">Aucun patient trouve</p>
+            <p className="text-sm text-warmgray">Aucun patient trouvé</p>
           ) : (
             <div className="space-y-3">
-              <div className="hidden grid-cols-[2fr_1fr_1fr_1fr_2fr] gap-4 text-xs font-semibold text-warmgray md:grid">
+              <div className="hidden grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 text-xs font-semibold text-warmgray md:grid">
                 <div>Patient</div>
                 <div>Statut</div>
+                <div>Messages non lus</div>
+                <div>Notifications</div>
                 <div>Dernière consultation</div>
-                <div>Prochain RDV</div>
-                <div>Signaux</div>
               </div>
-              {filteredPatients.map((patient) => {
-                const hasCircular = patient.circularEnabled;
-                const lastSync = patient.lastCircularSyncAt ? new Date(patient.lastCircularSyncAt) : null;
-                const circularActive =
-                  !!lastSync &&
-                  new Date().getTime() - lastSync.getTime() < 1000 * 60 * 60 * 48;
-                const anamneseState = patient.anamneseStatus === 'PENDING' ? 'À faire' : 'OK';
-
-                return (
-                  <Link
-                    key={patient.id}
-                    href={`/patients/${patient.id}`}
-                    className="rounded-xl bg-white p-4 ring-1 ring-black/5 hover:bg-sable/30 transition"
-                  >
-                    <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_1fr_2fr]">
-                      <div>
-                        <p className="font-medium text-charcoal">{patient.name}</p>
-                        <p className="text-sm text-warmgray">
-                          {[patient.age ? `${patient.age} ans` : null, patient.city].filter(Boolean).join(' • ') || '—'}
-                        </p>
-                      </div>
-                      <div className="flex items-center">
-                        <Badge variant={patient.status === 'premium' ? 'premium' : 'info'}>
-                          {patient.status === 'premium' ? 'Premium' : 'Standard'}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-marine">{formatDate(patient.lastConsultationAt)}</div>
-                      <div className="text-sm text-marine">{formatDate(patient.nextAppointmentAt)}</div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {hasCircular ? (
-                          <Badge variant={circularActive ? 'success' : 'attention'}>
-                            Circular · {circularActive ? 'Actif' : 'Inactif'}
-                          </Badge>
-                        ) : null}
-                        {patient.unreadMessages > 0 ? (
-                          <Badge variant="new">{patient.unreadMessages} msg</Badge>
-                        ) : null}
-                        <span className="text-xs text-warmgray">Etat client : {anamneseState}</span>
-                      </div>
+              {filteredPatients.map((patient) => (
+                <Link
+                  key={patient.id}
+                  href={`/patients/${patient.id}`}
+                  className="rounded-xl bg-white p-4 ring-1 ring-black/5 hover:bg-sable/30 transition"
+                >
+                  <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_1fr_1fr]">
+                    <div>
+                      <p className="font-medium text-charcoal">{patient.name}</p>
+                      <p className="text-sm text-warmgray">
+                        {[patient.age ? `${patient.age} ans` : null, patient.city]
+                          .filter(Boolean)
+                          .join(' • ') || '—'}
+                      </p>
                     </div>
-                  </Link>
-                );
-              })}
+                    <div className="flex items-center">
+                      <Badge variant={patient.is_premium ? 'premium' : 'info'}>
+                        {patient.is_premium ? 'Premium' : 'Standard'}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-marine">
+                      {patient.unreadMessages > 0 ? (
+                        <Badge variant="new">{patient.unreadMessages} non lus</Badge>
+                      ) : (
+                        <span className="text-warmgray">0</span>
+                      )}
+                    </div>
+                    <div className="text-sm text-marine">
+                      {patient.unreadNotifications > 0 ? (
+                        <Badge variant="attention">{patient.unreadNotifications} non vues</Badge>
+                      ) : (
+                        <span className="text-warmgray">0</span>
+                      )}
+                    </div>
+                    <div className="text-sm text-marine">
+                      {formatDate(patient.lastConsultationAt)}
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
         </CardContent>

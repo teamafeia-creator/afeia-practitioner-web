@@ -11,7 +11,8 @@ import type {
   WearableSummary, 
   WearableInsight,
   Notification,
-  PatientWithDetails
+  PatientWithDetails,
+  PatientWithUnreadCounts
 } from './types';
 
 // ============================================
@@ -29,6 +30,77 @@ export async function getPatients(): Promise<Patient[]> {
     return [];
   }
   return data || [];
+}
+
+export async function getPatientsWithUnreadCounts(): Promise<PatientWithUnreadCounts[]> {
+  const { data: patients, error } = await supabase
+    .from('patients')
+    .select('*')
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching patients with counts:', error);
+    return [];
+  }
+
+  const safePatients = patients || [];
+  const patientIds = safePatients.map((patient) => patient.id);
+  if (patientIds.length === 0) {
+    return [];
+  }
+
+  const [messagesResult, notificationsResult, consultationsResult] = await Promise.all([
+    supabase
+      .from('messages')
+      .select('patient_id')
+      .in('patient_id', patientIds)
+      .eq('sender', 'patient')
+      .is('read_at', null),
+    supabase
+      .from('notifications')
+      .select('patient_id')
+      .in('patient_id', patientIds)
+      .eq('read', false),
+    supabase
+      .from('consultations')
+      .select('patient_id, date')
+      .in('patient_id', patientIds)
+  ]);
+
+  if (messagesResult.error) {
+    console.error('Error fetching unread messages:', messagesResult.error);
+  }
+  if (notificationsResult.error) {
+    console.error('Error fetching unread notifications:', notificationsResult.error);
+  }
+  if (consultationsResult.error) {
+    console.error('Error fetching consultations:', consultationsResult.error);
+  }
+
+  const unreadMessagesMap = (messagesResult.data ?? []).reduce<Record<string, number>>((acc, row) => {
+    acc[row.patient_id] = (acc[row.patient_id] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const unreadNotificationsMap = (notificationsResult.data ?? []).reduce<Record<string, number>>((acc, row) => {
+    acc[row.patient_id] = (acc[row.patient_id] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const lastConsultationMap = (consultationsResult.data ?? []).reduce<Record<string, string>>((acc, row) => {
+    const existing = acc[row.patient_id];
+    if (!existing || new Date(row.date) > new Date(existing)) {
+      acc[row.patient_id] = row.date;
+    }
+    return acc;
+  }, {});
+
+  return safePatients.map((patient) => ({
+    ...patient,
+    unreadMessages: unreadMessagesMap[patient.id] ?? 0,
+    unreadNotifications: unreadNotificationsMap[patient.id] ?? 0,
+    lastConsultationAt: lastConsultationMap[patient.id] ?? null
+  }));
 }
 
 export async function getPatientById(id: string): Promise<PatientWithDetails | null> {
@@ -233,6 +305,50 @@ export async function sendMessage(patientId: string, text: string, sender: 'pati
   return data;
 }
 
+export async function markMessagesAsRead(patientId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('patient_id', patientId)
+    .eq('sender', 'patient')
+    .is('read_at', null);
+
+  if (error) {
+    console.error('Error marking messages as read:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function getUnreadMessagesCount(patientId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('patient_id', patientId)
+    .eq('sender', 'patient')
+    .is('read_at', null);
+
+  if (error) {
+    console.error('Error counting unread messages:', error);
+    return 0;
+  }
+  return count ?? 0;
+}
+
+export async function getUnreadNotificationsCount(patientId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('patient_id', patientId)
+    .eq('read', false);
+
+  if (error) {
+    console.error('Error counting unread notifications:', error);
+    return 0;
+  }
+  return count ?? 0;
+}
+
 // ============================================
 // PATIENTS - CREATE/UPDATE
 // ============================================
@@ -249,6 +365,24 @@ export async function createPatient(patient: Omit<Patient, 'id' | 'created_at' |
     return null;
   }
   return data;
+}
+
+export async function updateAnamnese(
+  patientId: string,
+  data: { motif?: string | null; objectifs?: string | null }
+): Promise<Anamnese | null> {
+  const { data: updated, error } = await supabase
+    .from('anamneses')
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq('patient_id', patientId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating anamnese:', error);
+    return null;
+  }
+  return updated;
 }
 
 export async function updatePatient(id: string, updates: Partial<Patient>): Promise<Patient | null> {
