@@ -17,6 +17,7 @@ export type Patient = {
   email?: string;
   age?: number;
   city?: string;
+  status?: 'standard' | 'premium';
   is_premium: boolean;
   deleted_at?: string | null;
   created_at: string;
@@ -34,6 +35,14 @@ export type Anamnese = {
   stress?: string;
   complement?: string;
   allergies?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PatientAnamnesis = {
+  id: string;
+  patient_id: string;
+  answers?: Record<string, string> | null;
   created_at: string;
   updated_at: string;
 };
@@ -125,6 +134,15 @@ export type Notification = {
   created_at: string;
 };
 
+export type PractitionerNote = {
+  id: string;
+  patient_id: string;
+  practitioner_id: string;
+  content?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type PatientWithUnreadCounts = Patient & {
   unreadMessages: number;
   unreadNotifications: number;
@@ -134,6 +152,8 @@ export type PatientWithUnreadCounts = Patient & {
 // Types enrichis (avec relations)
 export type PatientWithDetails = Patient & {
   anamnese?: Anamnese;
+  patient_anamnesis?: PatientAnamnesis | null;
+  practitioner_note?: PractitionerNote | null;
   consultations?: Consultation[];
   plan?: Plan & {
     versions?: (PlanVersion & {

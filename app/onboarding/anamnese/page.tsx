@@ -7,17 +7,7 @@ import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Textarea } from '../../../components/ui/Textarea';
 import { submitAnamnese } from '../../../services/anamnese';
-
-const QUESTIONS = [
-  { key: 'motif', label: 'Motif de consultation' },
-  { key: 'objectifs', label: 'Objectifs' },
-  { key: 'alimentation', label: 'Habitudes alimentaires' },
-  { key: 'digestion', label: 'Digestion' },
-  { key: 'sommeil', label: 'Sommeil' },
-  { key: 'stress', label: 'Stress' },
-  { key: 'complement', label: 'Compléments' },
-  { key: 'allergies', label: 'Allergies' }
-];
+import { ANAMNESIS_SECTIONS } from '../../../lib/anamnesis';
 
 type AnamneseStatus = 'PENDING' | 'COMPLETED' | null;
 
@@ -161,16 +151,43 @@ export default function AnamnesePage() {
 
           {isPending ? (
             <form onSubmit={onSubmit} className="space-y-4">
-              {QUESTIONS.map((question) => (
-                <label key={question.key} className="block text-sm text-charcoal">
-                  <span className="font-medium">{question.label}</span>
-                  <Textarea
-                    value={answers[question.key] ?? ''}
-                    onChange={(event) => updateAnswer(question.key, event.target.value)}
-                    placeholder="Votre réponse..."
-                    className="mt-2"
-                  />
-                </label>
+              {ANAMNESIS_SECTIONS.map((section) => (
+                <div key={section.id} className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-charcoal">{section.title}</h3>
+                    {section.description ? (
+                      <p className="text-xs text-warmgray">{section.description}</p>
+                    ) : null}
+                  </div>
+                  <div className="grid gap-4">
+                    {section.questions.map((question) => (
+                      <label key={question.key} className="block text-sm text-charcoal">
+                        <span className="font-medium">{question.label}</span>
+                        {question.type === 'choice' ? (
+                          <select
+                            value={answers[question.key] ?? ''}
+                            onChange={(event) => updateAnswer(question.key, event.target.value)}
+                            className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                          >
+                            <option value="">Sélectionner</option>
+                            {question.options?.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Textarea
+                            value={answers[question.key] ?? ''}
+                            onChange={(event) => updateAnswer(question.key, event.target.value)}
+                            placeholder={question.placeholder ?? 'Votre réponse...'}
+                            className="mt-2"
+                          />
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               ))}
 
               <Button type="submit" className="w-full" loading={submitting}>
