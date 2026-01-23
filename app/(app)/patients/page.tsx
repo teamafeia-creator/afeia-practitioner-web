@@ -98,8 +98,31 @@ export default function PatientsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-warmgray">Chargement...</div>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="space-y-2">
+            <div className="h-7 w-40 rounded-full bg-sable animate-pulse" />
+            <div className="h-4 w-32 rounded-full bg-sable/70 animate-pulse" />
+          </div>
+          <div className="h-10 w-40 rounded-full bg-sable animate-pulse" />
+        </div>
+        <div className="h-10 w-full max-w-md rounded-xl bg-sable/70 animate-pulse" />
+        <Card>
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="h-4 w-28 rounded-full bg-sable/70 animate-pulse" />
+              <div className="h-4 w-36 rounded-full bg-sable/70 animate-pulse" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div
+                key={`skeleton-row-${index}`}
+                className="h-16 rounded-2xl bg-sable/60 ring-1 ring-black/5 animate-pulse"
+              />
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -137,14 +160,32 @@ export default function PatientsPage() {
 
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold">CRM patients</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">CRM patients</h2>
+              <p className="text-xs text-warmgray">{totalCount} patients</p>
+            </div>
+            <div className="text-xs font-medium text-warmgray">
+              Page {page} / {pageCount}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {patients.length === 0 ? (
-            <p className="text-sm text-warmgray">Aucun patient trouvé</p>
+            <div className="rounded-2xl border border-dashed border-black/10 bg-sable/50 p-6 text-center">
+              <p className="text-sm font-medium text-charcoal">Aucun patient trouvé</p>
+              <p className="mt-2 text-xs text-warmgray">
+                Commencez par créer un premier patient pour alimenter votre CRM.
+              </p>
+              <div className="mt-4">
+                <Link href="/patients/new">
+                  <Button variant="primary">Créer un patient</Button>
+                </Link>
+              </div>
+            </div>
           ) : (
             <div className="space-y-3">
-              <div className="hidden grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 text-xs font-semibold text-warmgray md:grid">
+              <div className="hidden grid-cols-[2.2fr_0.9fr_1fr_1fr_1.2fr_120px] gap-4 text-xs font-semibold text-warmgray md:grid">
                 <div>Patient</div>
                 <div>Statut</div>
                 <div>Messages non lus</div>
@@ -155,11 +196,24 @@ export default function PatientsPage() {
               {patients.map((patient) => (
                 <div
                   key={patient.id}
-                  className="rounded-xl bg-white p-4 ring-1 ring-black/5 transition hover:bg-sable/30"
+                  className="min-h-[84px] cursor-pointer rounded-xl bg-white p-4 ring-1 ring-black/5 transition hover:bg-sable/30"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => router.push(`/patients/${patient.id}`)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      router.push(`/patients/${patient.id}`);
+                    }
+                  }}
                 >
-                  <div className="grid gap-4 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] md:items-center">
+                  <div className="grid gap-4 md:grid-cols-[2.2fr_0.9fr_1fr_1fr_1.2fr_120px] md:items-center">
                     <div className="min-w-0">
-                      <Link href={`/patients/${patient.id}`} className="font-medium text-charcoal hover:underline">
+                      <Link
+                        href={`/patients/${patient.id}`}
+                        className="font-medium text-charcoal hover:underline"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         {patient.name}
                       </Link>
                       <p className="text-sm text-warmgray break-words">
@@ -190,34 +244,32 @@ export default function PatientsPage() {
                     <div className="text-sm text-marine">
                       {formatDate(patient.lastConsultationAt)}
                     </div>
-                    <div className="flex flex-col gap-2 md:flex-row md:justify-end md:gap-2">
-                      <div className="flex flex-wrap gap-2 md:hidden">
-                        <Button
-                          variant="secondary"
-                          className="w-full"
-                          onClick={() =>
-                            setOpenActionMenuId((prev) => (prev === patient.id ? null : patient.id))
-                          }
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-end md:gap-2">
+                      <div className="flex flex-wrap items-center gap-2 md:hidden">
+                        <Link href={`/patients/${patient.id}`} onClick={(event) => event.stopPropagation()}>
+                          <Button variant="secondary" className="w-full">
+                            Voir
+                          </Button>
+                        </Link>
+                        <button
+                          type="button"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-sm text-warmgray transition hover:bg-sable"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setOpenActionMenuId((prev) => (prev === patient.id ? null : patient.id));
+                          }}
+                          aria-label="Ouvrir les actions"
                         >
-                          Actions
-                        </Button>
+                          ⋯
+                        </button>
                         {openActionMenuId === patient.id ? (
-                          <div className="w-full rounded-xl border border-black/10 bg-white p-3 shadow-soft">
+                          <div className="w-full rounded-xl border border-black/10 bg-white p-3 shadow-soft z-10">
                             <div className="flex flex-col gap-2">
-                              <Link href={`/patients/${patient.id}`}>
-                                <Button variant="secondary" className="w-full">
-                                  Voir
-                                </Button>
-                              </Link>
-                              <Link href={`/patients/${patient.id}`}>
-                                <Button variant="primary" className="w-full">
-                                  Éditer
-                                </Button>
-                              </Link>
                               <Button
                                 variant="danger"
                                 className="w-full"
-                                onClick={() => {
+                                onClick={(event) => {
+                                  event.stopPropagation();
                                   setSelectedPatient(patient);
                                   setConfirmText('');
                                   setShowDeleteModal(true);
@@ -230,23 +282,40 @@ export default function PatientsPage() {
                           </div>
                         ) : null}
                       </div>
-                      <div className="hidden items-center justify-end gap-2 md:flex">
-                        <Link href={`/patients/${patient.id}`}>
+                      <div className="relative hidden items-center justify-end gap-2 md:flex">
+                        <Link href={`/patients/${patient.id}`} onClick={(event) => event.stopPropagation()}>
                           <Button variant="secondary">Voir</Button>
                         </Link>
-                        <Link href={`/patients/${patient.id}`}>
-                          <Button variant="primary">Éditer</Button>
-                        </Link>
-                        <Button
-                          variant="danger"
-                          onClick={() => {
-                            setSelectedPatient(patient);
-                            setConfirmText('');
-                            setShowDeleteModal(true);
+                        <button
+                          type="button"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-sm text-warmgray transition hover:bg-sable"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setOpenActionMenuId((prev) => (prev === patient.id ? null : patient.id));
                           }}
+                          aria-label="Ouvrir les actions"
                         >
-                          Supprimer
-                        </Button>
+                          ⋯
+                        </button>
+                        {openActionMenuId === patient.id ? (
+                          <div
+                            className="absolute right-0 top-11 z-10 w-44 rounded-xl border border-black/10 bg-white p-3 text-sm shadow-soft"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              className="w-full rounded-lg px-3 py-2 text-left text-sm text-charcoal transition hover:bg-sable"
+                              onClick={() => {
+                                setSelectedPatient(patient);
+                                setConfirmText('');
+                                setShowDeleteModal(true);
+                                setOpenActionMenuId(null);
+                              }}
+                            >
+                              Supprimer
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { cn } from '../../lib/cn';
 import { Badge } from '../ui/Badge';
 import { Card, CardContent, CardHeader } from '../ui/Card';
@@ -38,6 +39,37 @@ const TABS = [
 
 type Tab = (typeof TABS)[number];
 
+const TAB_META: Record<Tab, { title: string; description: string }> = {
+  Profil: {
+    title: 'Profil patient',
+    description: 'Coordonnées clés et informations administratives.'
+  },
+  'Rendez-vous': {
+    title: 'Rendez-vous',
+    description: 'Historique et planification des consultations.'
+  },
+  Anamnèse: {
+    title: 'Anamnèse',
+    description: 'Questionnaire santé et habitudes de vie.'
+  },
+  Circular: {
+    title: 'Circular',
+    description: 'Synthèse sommeil, HRV et activité.'
+  },
+  Journal: {
+    title: 'Journal',
+    description: 'Suivi quotidien du ressenti du patient.'
+  },
+  'Notes consultation': {
+    title: 'Notes consultation',
+    description: 'Notes internes réservées au praticien.'
+  },
+  Messages: {
+    title: 'Messages',
+    description: 'Conversation directe avec le patient.'
+  }
+};
+
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
   month: 'short',
@@ -58,9 +90,15 @@ function formatDate(value?: string | null, withTime = false) {
   return withTime ? DATE_TIME_FORMATTER.format(date) : DATE_FORMATTER.format(date);
 }
 
-function formatAnswer(value?: string | null) {
-  if (!value) return 'Non renseigné';
-  return value;
+function renderValue(value?: string | null, fallback = 'Non renseigné') {
+  if (!value || value.trim() === '') {
+    return <span className="italic text-warmgray">{fallback}</span>;
+  }
+  return <span className="text-marine">{value}</span>;
+}
+
+function renderAnswer(value?: string | null) {
+  return renderValue(value);
 }
 
 function formatDateTimeLocal(value?: Date) {
@@ -71,6 +109,43 @@ function formatDateTimeLocal(value?: Date) {
 
 function normalizeProfileValue(value: string) {
   return value.trim();
+}
+
+function areRecordsEqual(
+  first: Record<string, string>,
+  second: Record<string, string>
+) {
+  const keys = new Set([...Object.keys(first), ...Object.keys(second)]);
+  for (const key of keys) {
+    if ((first[key] ?? '').trim() !== (second[key] ?? '').trim()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function areJournalEntriesEqual(
+  first: Partial<JournalEntry>,
+  second: Partial<JournalEntry>
+) {
+  return (
+    (first.date ?? '') === (second.date ?? '') &&
+    (first.mood ?? '') === (second.mood ?? '') &&
+    (first.energy ?? '') === (second.energy ?? '') &&
+    (first.text ?? '') === (second.text ?? '') &&
+    Boolean(first.adherence_hydratation) === Boolean(second.adherence_hydratation) &&
+    Boolean(first.adherence_respiration) === Boolean(second.adherence_respiration) &&
+    Boolean(first.adherence_mouvement) === Boolean(second.adherence_mouvement) &&
+    Boolean(first.adherence_plantes) === Boolean(second.adherence_plantes)
+  );
+}
+
+function EditBanner({ label }: { label: string }) {
+  return (
+    <div className="mt-4 rounded-xl border border-teal/30 bg-teal/10 px-3 py-2 text-xs font-medium text-teal">
+      ✏️ Mode édition activé — {label}
+    </div>
+  );
 }
 
 function buildJournalForm(entry?: JournalEntry): Partial<JournalEntry> {
@@ -138,7 +213,12 @@ function renderInsight(insight: WearableInsight) {
 
 export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   const [patientState, setPatientState] = useState<PatientWithDetails>(patient);
-  const [tab, setTab] = useState<Tab>('Profil');
+  const searchParams = useSearchParams();
+  const initialTab = useMemo<Tab>(() => {
+    const requested = searchParams.get('tab');
+    return TABS.includes(requested as Tab) ? (requested as Tab) : 'Profil';
+  }, [searchParams]);
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [profileEditing, setProfileEditing] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -184,6 +264,18 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   );
   const wearableInsights = patientState.wearable_insights ?? [];
   const journalEntries = patientState.journal_entries ?? [];
+  const initialJournal = useMemo(
+    () => buildJournalForm(journalEntries[0]),
+    [journalEntries]
+  );
+  const initialAnamnesis = useMemo(
+    () => patientState.patient_anamnesis?.answers ?? {},
+    [patientState.patient_anamnesis]
+  );
+  const initialNote = useMemo(
+    () => patientState.practitioner_note?.content ?? '',
+    [patientState.practitioner_note]
+  );
 
   const initialProfile = useMemo(
     () => ({
@@ -207,6 +299,18 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     );
   }, [initialProfile, profileForm]);
 
+  const isAnamnesisDirty = useMemo(() => {
+    return !areRecordsEqual(anamnesisAnswers, initialAnamnesis);
+  }, [anamnesisAnswers, initialAnamnesis]);
+
+  const isJournalDirty = useMemo(() => {
+    return !areJournalEntriesEqual(journalForm, initialJournal);
+  }, [journalForm, initialJournal]);
+
+  const isNoteDirty = useMemo(() => {
+    return noteContent.trim() !== initialNote.trim();
+  }, [noteContent, initialNote]);
+
   const sortedAppointments = useMemo(() => {
     return [...appointments].sort(
       (a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()
@@ -225,6 +329,8 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       .sort((a, b) => a.starts.getTime() - b.starts.getTime())[0];
   }, [sortedAppointments]);
 
+  const activeMeta = TAB_META[tab];
+
   useEffect(() => {
     setPatientState(patient);
     setProfileForm({
@@ -240,7 +346,14 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     setJournalForm(buildJournalForm(patient.journal_entries?.[0]));
     setAppointments(patient.appointments ?? []);
     setProfileEditing(false);
+    setAnamnesisEditing(false);
+    setJournalEditing(false);
+    setNoteEditing(false);
   }, [patient]);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     let active = true;
@@ -463,32 +576,23 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold text-charcoal">{patientState.name}</h1>
-            <Badge variant={isPremium ? 'premium' : 'info'}>
-              {isPremium ? 'Premium' : 'Standard'}
-            </Badge>
-          </div>
-          <p className="text-sm text-warmgray">
-            {[patientState.age ? `${patientState.age} ans` : null, patientState.city]
-              .filter(Boolean)
-              .join(' • ') || '—'}
-          </p>
-        </div>
+    <div className="space-y-5">
+      <div className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-black/5">
+        <h2 className="text-sm font-semibold text-charcoal">{activeMeta.title}</h2>
+        <p className="text-xs text-warmgray">{activeMeta.description}</p>
       </div>
 
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <div className="flex flex-nowrap gap-2">
+        <div className="flex flex-nowrap items-end gap-6 border-b border-black/10 pb-2">
           {TABS.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                'whitespace-nowrap rounded-full px-3 py-1.5 text-sm ring-1 ring-black/10 transition',
-                tab === t ? 'bg-teal text-white ring-teal/30' : 'bg-white hover:bg-sable'
+                'whitespace-nowrap pb-2 text-sm font-medium transition',
+                tab === t
+                  ? 'border-b-2 border-teal text-teal'
+                  : 'border-b-2 border-transparent text-warmgray hover:text-teal'
               )}
             >
               {t}
@@ -518,9 +622,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 ) : null}
               </div>
               {profileEditing ? (
-                <div className="mt-4 rounded-xl border border-teal/30 bg-teal/10 px-3 py-2 text-xs font-medium text-teal">
-                  ✏️ Mode édition activé — Pensez à enregistrer vos modifications.
-                </div>
+                <EditBanner label="Pensez à enregistrer vos modifications." />
               ) : null}
             </CardHeader>
             <CardContent className="space-y-4">
@@ -573,21 +675,21 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Nom</p>
-                    <p className="mt-1 text-sm text-marine">{patientState.name || '—'}</p>
+                    <p className="mt-1 text-sm">{renderValue(patientState.name)}</p>
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Email</p>
-                    <p className="mt-1 text-sm text-marine">{patientState.email || '—'}</p>
+                    <p className="mt-1 text-sm">{renderValue(patientState.email)}</p>
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Âge</p>
-                    <p className="mt-1 text-sm text-marine">
-                      {patientState.age ? `${patientState.age} ans` : '—'}
+                    <p className="mt-1 text-sm">
+                      {renderValue(patientState.age ? `${patientState.age} ans` : null)}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Ville</p>
-                    <p className="mt-1 text-sm text-marine">{patientState.city || '—'}</p>
+                    <p className="mt-1 text-sm">{renderValue(patientState.city)}</p>
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Statut</p>
@@ -632,6 +734,9 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           >
             <CardHeader>
               <h2 className="text-sm font-semibold">Motif de consultation</h2>
+              {profileEditing ? (
+                <EditBanner label="Modifiez le motif avant d’enregistrer." />
+              ) : null}
             </CardHeader>
             <CardContent>
               {profileEditing ? (
@@ -648,7 +753,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 />
               ) : (
                 <p className="text-sm text-marine whitespace-pre-line">
-                  {formatAnswer(patientState.consultation_reason)}
+                  {renderAnswer(patientState.consultation_reason)}
                 </p>
               )}
             </CardContent>
@@ -703,7 +808,21 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   </div>
                 ) : (
                   <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                    À planifier.
+                    <p>À planifier.</p>
+                    <Button
+                      variant="secondary"
+                      className="mt-3"
+                      onClick={() => {
+                        setAppointmentForm({
+                          startsAt: formatDateTimeLocal(new Date()),
+                          durationMinutes: '60',
+                          notes: ''
+                        });
+                        setAppointmentModalOpen(true);
+                      }}
+                    >
+                      Planifier un rendez-vous
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -754,7 +873,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       )}
 
       {tab === 'Anamnèse' && (
-        <Card>
+        <Card className={cn(anamnesisEditing ? 'border-2 border-teal/30 bg-teal/5' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Anamnèse</h2>
@@ -764,6 +883,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 </Button>
               ) : null}
             </div>
+            {anamnesisEditing ? <EditBanner label="Pensez à sauvegarder vos réponses." /> : null}
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -814,7 +934,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                           )
                         ) : (
                           <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
-                            {formatAnswer(anamnesisAnswers[question.key])}
+                            {renderAnswer(anamnesisAnswers[question.key])}
                           </p>
                         )}
                       </div>
@@ -825,13 +945,18 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
             </div>
             {anamnesisEditing ? (
               <div className="mt-6 flex flex-wrap gap-2">
-                <Button variant="primary" onClick={handleSaveAnamnesisQuestionnaire} loading={anamnesisSaving}>
+                <Button
+                  variant="primary"
+                  onClick={handleSaveAnamnesisQuestionnaire}
+                  loading={anamnesisSaving}
+                  disabled={!isAnamnesisDirty || anamnesisSaving}
+                >
                   Enregistrer
                 </Button>
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    setAnamnesisAnswers(patientState.patient_anamnesis?.answers ?? {});
+                    setAnamnesisAnswers(initialAnamnesis);
                     setAnamnesisEditing(false);
                   }}
                   disabled={anamnesisSaving}
@@ -854,18 +979,26 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardHeader>
           <CardContent>
             {!isPremium ? (
-              <div className="space-y-3 rounded-2xl bg-sable p-5 text-sm text-marine ring-1 ring-black/5">
-                <p className="text-sm font-medium text-charcoal">Fonctionnalité Premium</p>
-                <p>
-                  Proposez l’offre Premium à votre client afin d’avoir accès à cette fonctionnalité.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="cta" onClick={handleUpgradePremium} loading={premiumLoading}>
-                    Passer ce patient en Premium
-                  </Button>
-                  <Button variant="secondary" onClick={() => setTab('Profil')}>
-                    En savoir plus
-                  </Button>
+              <div className="relative overflow-hidden rounded-2xl border border-dashed border-teal/30 bg-teal/5 p-6 text-sm text-marine">
+                <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-teal shadow-soft">
+                  🔒 Premium
+                </div>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 text-charcoal">
+                    <span className="text-lg">🌀</span>
+                    <p className="text-sm font-semibold">Fonctionnalité Circular verrouillée</p>
+                  </div>
+                  <p>
+                    Proposez l’offre Premium à votre client afin d’avoir accès à cette fonctionnalité.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="cta" onClick={handleUpgradePremium} loading={premiumLoading}>
+                      Passer en Premium
+                    </Button>
+                    <Button variant="secondary" onClick={() => setTab('Profil')}>
+                      En savoir plus
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : wearableSummaries.length === 0 ? (
@@ -925,7 +1058,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       )}
 
       {tab === 'Journal' && (
-        <Card>
+        <Card className={cn(journalEditing ? 'border-2 border-teal/30 bg-teal/5' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Journal</h2>
@@ -935,6 +1068,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 </Button>
               ) : null}
             </div>
+            {journalEditing ? <EditBanner label="Enregistrez vos modifications du journal." /> : null}
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -962,7 +1096,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                         <option value="🙁">🙁</option>
                       </select>
                     ) : (
-                      <p className="mt-2 text-sm text-marine">{journalForm.mood ?? 'Non renseigné'}</p>
+                      <p className="mt-2 text-sm">{renderValue(journalForm.mood)}</p>
                     )}
                   </div>
                   <div>
@@ -984,7 +1118,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                         <option value="Élevé">Élevé</option>
                       </select>
                     ) : (
-                      <p className="mt-2 text-sm text-marine">{journalForm.energy ?? 'Non renseigné'}</p>
+                      <p className="mt-2 text-sm">{renderValue(journalForm.energy)}</p>
                     )}
                   </div>
                 </div>
@@ -999,8 +1133,8 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                       rows={4}
                     />
                   ) : (
-                    <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
-                      {journalForm.text ? journalForm.text : 'Non renseigné'}
+                    <p className="mt-2 text-sm whitespace-pre-line break-words">
+                      {renderValue(journalForm.text)}
                     </p>
                   )}
                 </div>
@@ -1024,7 +1158,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                               [item.key]: event.target.value === 'Oui'
                             }))
                           }
-                          className="rounded-lg border border-warmgray/30 bg-white px-2 py-1 text-xs text-charcoal"
+                          className="rounded-lg border border-warmgray/30 bg-white px-2 py-1 text-xs text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                         >
                           <option value="Oui">Oui</option>
                           <option value="Non">Non</option>
@@ -1041,13 +1175,18 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
 
               {journalEditing ? (
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="primary" onClick={handleSaveJournal} loading={journalSaving}>
+                  <Button
+                    variant="primary"
+                    onClick={handleSaveJournal}
+                    loading={journalSaving}
+                    disabled={!isJournalDirty || journalSaving}
+                  >
                     Enregistrer
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={() => {
-                      setJournalForm(buildJournalForm(journalEntries[0]));
+                      setJournalForm(initialJournal);
                       setJournalEditing(false);
                     }}
                     disabled={journalSaving}
@@ -1061,7 +1200,17 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 <p className="text-xs uppercase tracking-wide text-warmgray">Historique</p>
                 {journalEntries.length === 0 ? (
                   <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                    Aucune entrée de journal.
+                    <p>Aucune entrée de journal.</p>
+                    <Button
+                      variant="secondary"
+                      className="mt-3"
+                      onClick={() => {
+                        setJournalForm(buildJournalForm(undefined));
+                        setJournalEditing(true);
+                      }}
+                    >
+                      Ajouter une entrée
+                    </Button>
                   </div>
                 ) : (
                   <div className="grid gap-3">
@@ -1069,13 +1218,13 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                       <div key={entry.id} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
-                          <div className="flex items-center gap-2 text-sm text-marine">
-                            <span>{entry.mood ?? '—'}</span>
-                            <span>{entry.energy ?? '—'}</span>
+                          <div className="flex items-center gap-2 text-sm">
+                            {renderValue(entry.mood)}
+                            {renderValue(entry.energy)}
                           </div>
                         </div>
-                        <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
-                          {entry.text || 'Non renseigné'}
+                        <p className="mt-2 text-sm whitespace-pre-line break-words">
+                          {renderValue(entry.text)}
                         </p>
                         <div className="mt-3">{renderAdherence(entry)}</div>
                       </div>
@@ -1089,7 +1238,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       )}
 
       {tab === 'Notes consultation' && (
-        <Card>
+        <Card className={cn(noteEditing ? 'border-2 border-teal/30 bg-teal/5' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Notes privées de consultation</h2>
@@ -1099,6 +1248,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 </Button>
               ) : null}
             </div>
+            {noteEditing ? <EditBanner label="Enregistrez vos notes confidentielles." /> : null}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
@@ -1112,19 +1262,24 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 rows={6}
               />
             ) : (
-              <div className="rounded-2xl bg-white p-4 text-sm text-marine ring-1 ring-black/5 whitespace-pre-line">
-                {noteContent ? noteContent : 'Non renseigné'}
+              <div className="rounded-2xl bg-white p-4 text-sm ring-1 ring-black/5 whitespace-pre-line">
+                {renderValue(noteContent)}
               </div>
             )}
             {noteEditing ? (
               <div className="flex flex-wrap gap-2">
-                <Button variant="primary" onClick={handleSaveNote} loading={noteSaving}>
+                <Button
+                  variant="primary"
+                  onClick={handleSaveNote}
+                  loading={noteSaving}
+                  disabled={!isNoteDirty || noteSaving}
+                >
                   Enregistrer
                 </Button>
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    setNoteContent(patientState.practitioner_note?.content ?? '');
+                    setNoteContent(initialNote);
                     setNoteEditing(false);
                   }}
                   disabled={noteSaving}
