@@ -55,7 +55,7 @@ export default function ActivatePage() {
           Bienvenue sur AFEIA 👋
         </h1>
         <p className="text-gray-600 text-center mb-8">
-          Entrez votre code d'activation
+          Entrez votre code d&apos;activation
         </p>
 
         <input
@@ -83,7 +83,7 @@ export default function ActivatePage() {
 
         <div className="text-center mt-4">
           <a href="/patient/login" className="text-blue-600 text-sm hover:underline">
-            J'ai déjà un compte
+            J&apos;ai déjà un compte
           </a>
         </div>
       </div>
