@@ -37,6 +37,7 @@ export async function POST(
     .from('patients')
     .select('id, email, name, practitioner_id')
     .eq('id', patientId)
+    .is('deleted_at', null)
     .single();
 
   if (patientError || !patient) {

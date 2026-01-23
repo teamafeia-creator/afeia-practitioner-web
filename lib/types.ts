@@ -5,6 +5,7 @@ export type Practitioner = {
   id: string;
   email: string;
   full_name: string;
+  calendly_url?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -17,6 +18,7 @@ export type Patient = {
   age?: number;
   city?: string;
   is_premium: boolean;
+  deleted_at?: string | null;
   created_at: string;
   updated_at: string;
 };

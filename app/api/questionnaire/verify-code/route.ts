@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
   const supabase = createSupabaseAdminClient();
 
-  const patientQuery = supabase.from('patients').select('id, email');
+  const patientQuery = supabase.from('patients').select('id, email').is('deleted_at', null);
   const patientResult = rawPatientId
     ? await patientQuery.eq('id', rawPatientId).maybeSingle()
     : await patientQuery.eq('email', rawEmail).maybeSingle();

@@ -23,6 +23,7 @@ export async function getPatients(): Promise<Patient[]> {
   const { data, error } = await supabase
     .from('patients')
     .select('*')
+    .is('deleted_at', null)
     .order('name');
   
   if (error) {
@@ -36,6 +37,7 @@ export async function getPatientsWithUnreadCounts(): Promise<PatientWithUnreadCo
   const { data: patients, error } = await supabase
     .from('patients')
     .select('*')
+    .is('deleted_at', null)
     .order('name');
 
   if (error) {
@@ -109,6 +111,7 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
     .from('patients')
     .select('*')
     .eq('id', id)
+    .is('deleted_at', null)
     .single();
   
   if (patientError || !patient) {
@@ -400,6 +403,7 @@ export async function updatePatient(id: string, updates: Partial<Patient>): Prom
     .from('patients')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .is('deleted_at', null)
     .select()
     .single();
   
@@ -408,4 +412,77 @@ export async function updatePatient(id: string, updates: Partial<Patient>): Prom
     return null;
   }
   return data;
+}
+
+export async function deletePatient(patientId: string): Promise<void> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    console.error('Error fetching user:', userError);
+    throw new Error('Veuillez vous reconnecter pour supprimer ce patient.');
+  }
+
+  const { data, error } = await supabase
+    .from('patients')
+    .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', patientId)
+    .eq('practitioner_id', userData.user.id)
+    .is('deleted_at', null)
+    .select('id');
+
+  if (error) {
+    console.error('Error deleting patient:', error);
+    throw new Error(error.message ?? 'Impossible de supprimer ce patient.');
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error('Suppression impossible pour ce patient.');
+  }
+}
+
+// ============================================
+// PRACTITIONERS
+// ============================================
+
+export async function getPractitionerCalendlyUrl(): Promise<string | null> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    console.error('Error fetching user:', userError);
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('practitioners')
+    .select('calendly_url')
+    .eq('id', userData.user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching practitioner calendly URL:', error);
+    return null;
+  }
+
+  return data?.calendly_url ?? null;
+}
+
+export async function updatePractitionerCalendlyUrl(calendlyUrl: string | null): Promise<void> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    console.error('Error fetching user:', userError);
+    throw new Error('Veuillez vous reconnecter pour enregistrer ce lien.');
+  }
+
+  const { data, error } = await supabase
+    .from('practitioners')
+    .update({ calendly_url: calendlyUrl, updated_at: new Date().toISOString() })
+    .eq('id', userData.user.id)
+    .select('id');
+
+  if (error) {
+    console.error('Error updating practitioner calendly URL:', error);
+    throw new Error(error.message ?? 'Impossible d’enregistrer le lien Calendly.');
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error('Impossible d’enregistrer le lien Calendly.');
+  }
 }
