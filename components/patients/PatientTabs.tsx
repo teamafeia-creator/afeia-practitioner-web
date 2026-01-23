@@ -263,11 +263,11 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     [patientState.wearable_summaries]
   );
   const wearableInsights = patientState.wearable_insights ?? [];
-  const journalEntries = patientState.journal_entries ?? [];
-  const initialJournal = useMemo(
-    () => buildJournalForm(journalEntries[0]),
-    [journalEntries]
+  const journalEntries = useMemo(
+    () => patientState.journal_entries ?? [],
+    [patientState.journal_entries]
   );
+  const initialJournal = useMemo(() => buildJournalForm(journalEntries[0]), [journalEntries]);
   const initialAnamnesis = useMemo(
     () => patientState.patient_anamnesis?.answers ?? {},
     [patientState.patient_anamnesis]
