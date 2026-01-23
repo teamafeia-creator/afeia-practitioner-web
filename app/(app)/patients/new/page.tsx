@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from '../../../../components/ui/Card';
 import { Input } from '../../../../components/ui/Input';
 import { createPatientRecord } from '../../../../services/patients';
 import { createAnamneseInstance } from '../../../../services/anamnese';
-import { sendQuestionnaireCode, type SendQuestionnaireCodeResponse } from '../../../../services/questionnaire';
+import { sendQuestionnaireCode } from '../../../../services/questionnaire';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
@@ -81,8 +81,7 @@ export default function NewPatientPage() {
 
       if (sendAnamnese) {
         await createAnamneseInstance(patientId);
-        const { sentToEmail, expiresAt } =
-          (await sendQuestionnaireCode(patientId)) as SendQuestionnaireCodeResponse;
+        const { sentToEmail, expiresAt } = await sendQuestionnaireCode(patientId);
         setInviteSuccess(`Code envoyé à ${sentToEmail}.`);
         setCodeExpiresAt(expiresAt);
       }

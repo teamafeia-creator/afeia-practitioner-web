@@ -22,31 +22,34 @@ export async function sendQuestionnaireCode(
     }
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | SendQuestionnaireCodeResponse
-    | { error?: string }
-    | null;
+  const payload = (await response.json().catch(() => null)) as unknown;
 
-  if (!response.ok || !payload) {
-    const message = payload && 'error' in payload && payload.error ? payload.error : 'Erreur lors de l’envoi.';
+  if (!response.ok) {
+    const message =
+      payload && typeof payload === 'object' && 'error' in payload && typeof payload.error === 'string'
+        ? payload.error
+        : 'Erreur lors de l’envoi.';
     throw new Error(message);
   }
 
   if (!isSendQuestionnaireCodeResponse(payload)) {
-    const message = 'error' in payload && payload.error ? payload.error : 'Erreur lors de l’envoi.';
-    throw new Error(message);
+    throw new Error('Erreur lors de l’envoi.');
   }
 
   return payload;
 }
 
 function isSendQuestionnaireCodeResponse(
-  payload: SendQuestionnaireCodeResponse | { error?: string }
+  payload: unknown
 ): payload is SendQuestionnaireCodeResponse {
-  return (
-    'ok' in payload &&
-    payload.ok === true &&
-    typeof payload.expiresAt === 'string' &&
-    typeof payload.sentToEmail === 'string'
+  return Boolean(
+    payload &&
+      typeof payload === 'object' &&
+      'ok' in payload &&
+      (payload as SendQuestionnaireCodeResponse).ok === true &&
+      'expiresAt' in payload &&
+      typeof (payload as SendQuestionnaireCodeResponse).expiresAt === 'string' &&
+      'sentToEmail' in payload &&
+      typeof (payload as SendQuestionnaireCodeResponse).sentToEmail === 'string'
   );
 }
