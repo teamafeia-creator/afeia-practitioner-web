@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { SmallLineChart } from '../charts/SmallLineChart';
 import { createAnamneseInstance } from '../../services/anamnese';
-import { createPatientInvite, generateInviteToken } from '../../services/invites';
+import { sendQuestionnaireCode } from '../../services/questionnaire';
 import type { PatientDetail } from '../../services/patients';
 
 const TABS = ['Infos', 'Questionnaire', 'Messages', 'Rendez-vous', 'Circular'] as const;
@@ -54,10 +54,10 @@ function formatDate(value?: string | null, withTime = false) {
 
 export function PatientTabs({ patient }: { patient: PatientDetail }) {
   const [tab, setTab] = useState<Tab>('Infos');
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
   const [anamneseStatus, setAnamneseStatus] = useState(patient.anamnese.status);
 
   const isPremium = patient.status === 'premium' || patient.isPremium;
@@ -80,8 +80,7 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
 
   async function handleSendAnamnese() {
     setInviteError(null);
-    setInviteLink(null);
-    setCopied(false);
+    setInviteSuccess(null);
 
     if (!patient.email) {
       setInviteError('Email requis pour envoyer le questionnaire.');
@@ -91,28 +90,14 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
     setInviteLoading(true);
     try {
       await createAnamneseInstance(patient.id);
-      const token = await generateInviteToken();
-      await createPatientInvite({
-        patientId: patient.id,
-        token,
-        email: patient.email
-      });
-      setInviteLink(`${window.location.origin}/invite?token=${token}`);
+      const { sentToEmail, expiresAt } = await sendQuestionnaireCode(patient.id);
+      setInviteSuccess(`Code envoyé à ${sentToEmail}.`);
+      setCodeExpiresAt(expiresAt);
       setAnamneseStatus('PENDING');
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : 'Impossible d\'envoyer le questionnaire.');
     } finally {
       setInviteLoading(false);
-    }
-  }
-
-  async function copyInvite() {
-    if (!inviteLink) return;
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      setCopied(true);
-    } catch (err) {
-      setCopied(false);
     }
   }
 
@@ -193,7 +178,9 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-sm font-semibold">Anamnèse</h2>
               <Button variant="secondary" onClick={handleSendAnamnese} loading={inviteLoading}>
-                {anamneseStatus ? 'Renvoyer le questionnaire' : 'Envoyer le questionnaire'}
+                {codeExpiresAt || anamneseStatus === 'PENDING'
+                  ? 'Renvoyer un code'
+                  : 'Envoyer le code questionnaire'}
               </Button>
             </div>
           </CardHeader>
@@ -215,20 +202,20 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
               </div>
             ) : null}
 
-            {inviteLink ? (
-              <div className="space-y-2">
-                <p className="text-sm text-warmgray">Lien d&apos;invitation :</p>
-                <div className="rounded-xl border border-warmgray/30 bg-white px-4 py-3 text-sm text-marine break-all">
-                  {inviteLink}
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button type="button" variant="secondary" onClick={copyInvite}>
-                    Copier le lien
-                  </Button>
-                  {copied ? <span className="text-sm text-teal">Lien copié.</span> : null}
-                </div>
+            {inviteSuccess ? (
+              <div className="rounded-xl border border-teal/20 bg-teal/5 p-3 text-sm text-marine">
+                <p>{inviteSuccess}</p>
+                {codeExpiresAt ? (
+                  <p className="mt-1 text-xs text-warmgray">
+                    Expire à {formatDate(codeExpiresAt, true)}.
+                  </p>
+                ) : null}
               </div>
             ) : null}
+
+            <div className="rounded-xl border border-warmgray/20 bg-sable/40 p-3 text-sm text-marine">
+              Le code est valable 30 minutes et utilisable une seule fois.
+            </div>
 
             {hasAnswers ? (
               <div className="grid gap-4 md:grid-cols-2">
