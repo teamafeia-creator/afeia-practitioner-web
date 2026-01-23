@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PatientTabs } from '../../../../components/patients/PatientTabs';
-import { fetchPatientDetail, type PatientDetail } from '../../../../services/patients';
+import { getPatientById } from '../../../../lib/queries';
+import type { PatientWithDetails } from '../../../../lib/types';
 
 export default function PatientDetailPage({ params }: { params: { id: string } }) {
-  const [patient, setPatient] = useState<PatientDetail | null>(null);
+  const [patient, setPatient] = useState<PatientWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +18,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchPatientDetail(params.id);
+        const data = await getPatientById(params.id);
         if (!active) return;
         if (!data) {
           setError('Patient introuvable.');

@@ -1,36 +1,42 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { Badge } from '../ui/Badge';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { Textarea } from '../ui/Textarea';
 import { SmallLineChart } from '../charts/SmallLineChart';
-import { createAnamneseInstance } from '../../services/anamnese';
-import { sendQuestionnaireCode } from '../../services/questionnaire';
-import type { PatientDetail } from '../../services/patients';
+import {
+  markMessagesAsRead,
+  sendMessage,
+  updateAnamnese
+} from '../../lib/queries';
+import type {
+  JournalEntry,
+  Message,
+  PatientWithDetails,
+  WearableInsight,
+  WearableSummary
+} from '../../lib/types';
 
-const TABS = ['Infos', 'Questionnaire', 'Messages', 'Rendez-vous', 'Circular'] as const;
+const TABS = ['Profil', 'Anamnèse', 'Circular', 'Journal', 'Messages'] as const;
 
 type Tab = (typeof TABS)[number];
 
-type AnswerEntry = {
-  key: string;
+type AnamneseField = {
+  key: keyof NonNullable<PatientWithDetails['anamnese']>;
   label: string;
-  value: string;
 };
 
-const QUESTION_LABELS: Record<string, string> = {
-  motif: 'Motif de consultation',
-  objectifs: 'Objectifs',
-  alimentation: 'Habitudes alimentaires',
-  digestion: 'Digestion',
-  sommeil: 'Sommeil',
-  stress: 'Stress',
-  complement: 'Compléments',
-  allergies: 'Allergies'
-};
+const ANAMNESE_FIELDS: AnamneseField[] = [
+  { key: 'alimentation', label: 'Habitudes alimentaires' },
+  { key: 'digestion', label: 'Digestion' },
+  { key: 'sommeil', label: 'Sommeil' },
+  { key: 'stress', label: 'Stress' },
+  { key: 'complement', label: 'Compléments' },
+  { key: 'allergies', label: 'Allergies' }
+];
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
@@ -52,53 +58,124 @@ function formatDate(value?: string | null, withTime = false) {
   return withTime ? DATE_TIME_FORMATTER.format(date) : DATE_FORMATTER.format(date);
 }
 
-export function PatientTabs({ patient }: { patient: PatientDetail }) {
-  const [tab, setTab] = useState<Tab>('Infos');
-  const [inviteError, setInviteError] = useState<string | null>(null);
-  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
-  const [inviteLoading, setInviteLoading] = useState(false);
-  const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
-  const [anamneseStatus, setAnamneseStatus] = useState(patient.anamnese.status);
+function getLastSevenDays(summaries: WearableSummary[]): WearableSummary[] {
+  const sorted = [...summaries].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  return sorted.slice(-7);
+}
 
-  const isPremium = patient.status === 'premium' || patient.isPremium;
-  const answerEntries = useMemo<AnswerEntry[]>(() => {
-    const answers = patient.anamnese.answers ?? {};
-    return Object.entries(answers)
-      .map(([key, value]) => ({
-        key,
-        label: QUESTION_LABELS[key] ?? key,
-        value
-      }))
-      .filter((entry) => entry.value?.trim());
-  }, [patient.anamnese.answers]);
+function renderAdherence(entry: JournalEntry) {
+  return (
+    <div className="flex flex-wrap gap-2 text-xs text-warmgray">
+      <span>
+        Hydratation : <strong className="text-marine">{entry.adherence_hydratation ? 'Oui' : 'Non'}</strong>
+      </span>
+      <span>
+        Respiration : <strong className="text-marine">{entry.adherence_respiration ? 'Oui' : 'Non'}</strong>
+      </span>
+      <span>
+        Mouvement : <strong className="text-marine">{entry.adherence_mouvement ? 'Oui' : 'Non'}</strong>
+      </span>
+      <span>
+        Plantes : <strong className="text-marine">{entry.adherence_plantes ? 'Oui' : 'Non'}</strong>
+      </span>
+    </div>
+  );
+}
 
-  const hasAnswers = answerEntries.length > 0;
+function renderInsight(insight: WearableInsight) {
+  return (
+    <div key={insight.id} className="rounded-2xl bg-sable p-4 ring-1 ring-black/5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs uppercase tracking-wide text-warmgray">Insight {insight.type ?? ''}</span>
+        <Badge variant={insight.level === 'attention' ? 'attention' : 'info'}>
+          {insight.level ?? 'info'}
+        </Badge>
+      </div>
+      <p className="mt-2 text-sm text-marine">{insight.message ?? '—'}</p>
+      <p className="mt-2 text-xs text-warmgray">
+        Suggestion : {insight.suggested_action ?? '—'}
+      </p>
+    </div>
+  );
+}
 
-  const wearableSummaries = patient.wearableSummaries;
-  const sleepSeries = wearableSummaries.map((summary) => summary.sleepDuration ?? 0);
-  const hrvSeries = wearableSummaries.map((summary) => summary.hrvAvg ?? 0);
+export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
+  const [tab, setTab] = useState<Tab>('Profil');
+  const [motif, setMotif] = useState(patient.anamnese?.motif ?? '');
+  const [objectifs, setObjectifs] = useState(patient.anamnese?.objectifs ?? '');
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [messages, setMessages] = useState<Message[]>(patient.messages ?? []);
+  const [messageText, setMessageText] = useState('');
+  const [messageLoading, setMessageLoading] = useState(false);
 
-  async function handleSendAnamnese() {
-    setInviteError(null);
-    setInviteSuccess(null);
+  const isPremium = patient.is_premium;
+  const wearableSummaries = useMemo(
+    () => patient.wearable_summaries ?? [],
+    [patient.wearable_summaries]
+  );
+  const wearableInsights = patient.wearable_insights ?? [];
+  const journalEntries = patient.journal_entries ?? [];
 
-    if (!patient.email) {
-      setInviteError('Email requis pour envoyer le questionnaire.');
-      return;
+  const lastSevenSummaries = useMemo(
+    () => getLastSevenDays(wearableSummaries),
+    [wearableSummaries]
+  );
+
+  const sleepSeries = lastSevenSummaries.map((summary) => summary.sleep_duration ?? 0);
+  const hrvSeries = lastSevenSummaries.map((summary) => summary.hrv_avg ?? 0);
+  const activitySeries = lastSevenSummaries.map((summary) => summary.activity_level ?? 0);
+
+  useEffect(() => {
+    setMessages(patient.messages ?? []);
+  }, [patient.messages]);
+
+  useEffect(() => {
+    let active = true;
+    async function markRead() {
+      const success = await markMessagesAsRead(patient.id);
+      if (!active || !success) return;
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.sender === 'patient' && !message.read_at
+            ? { ...message, read_at: new Date().toISOString() }
+            : message
+        )
+      );
     }
+    markRead();
+    return () => {
+      active = false;
+    };
+  }, [patient.id]);
 
-    setInviteLoading(true);
-    try {
-      await createAnamneseInstance(patient.id);
-      const { sentToEmail, expiresAt } = await sendQuestionnaireCode(patient.id);
-      setInviteSuccess(`Code envoyé à ${sentToEmail}.`);
-      setCodeExpiresAt(expiresAt);
-      setAnamneseStatus('PENDING');
-    } catch (err) {
-      setInviteError(err instanceof Error ? err.message : 'Impossible d\'envoyer le questionnaire.');
-    } finally {
-      setInviteLoading(false);
+  async function handleSaveAnamnese() {
+    setSaveStatus(null);
+    setSaving(true);
+    const updated = await updateAnamnese(patient.id, {
+      motif: motif.trim() || null,
+      objectifs: objectifs.trim() || null
+    });
+    if (updated) {
+      setSaveStatus('Modifications enregistrées.');
+    } else {
+      setSaveStatus('Impossible d\'enregistrer les modifications.');
     }
+    setSaving(false);
+  }
+
+  async function handleSendMessage() {
+    const trimmed = messageText.trim();
+    if (!trimmed) return;
+    setMessageLoading(true);
+    const created = await sendMessage(patient.id, trimmed, 'praticien');
+    if (created) {
+      setMessages((prev) => [...prev, created]);
+      setMessageText('');
+    }
+    setMessageLoading(false);
   }
 
   return (
@@ -110,16 +187,10 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
             <Badge variant={isPremium ? 'premium' : 'info'}>
               {isPremium ? 'Premium' : 'Standard'}
             </Badge>
-            {patient.circularEnabled ? <Badge variant="success">Circular actif</Badge> : null}
           </div>
           <p className="text-sm text-warmgray">
             {[patient.age ? `${patient.age} ans` : null, patient.city].filter(Boolean).join(' • ') || '—'}
           </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/plans" className="text-sm text-teal hover:underline">
-            Voir les plans
-          </Link>
         </div>
       </div>
 
@@ -138,164 +209,99 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
         ))}
       </div>
 
-      {tab === 'Infos' && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Fiche patient</h2>
-              <div className="flex flex-wrap gap-2">
-                {anamneseStatus === 'PENDING' ? <Badge variant="new">Questionnaire</Badge> : null}
-                {patient.messages.length > 0 ? (
-                  <Badge variant="attention">{patient.messages.length} msg</Badge>
-                ) : null}
+      {tab === 'Profil' && (
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Profil</h2>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-warmgray">Motif</p>
+                <Textarea
+                  className="mt-2"
+                  value={motif}
+                  onChange={(event) => setMotif(event.target.value)}
+                  placeholder="Motif de consultation"
+                  rows={3}
+                />
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl bg-sable p-4 ring-1 ring-black/5">
-                <p className="text-xs uppercase tracking-wide text-warmgray">Contact</p>
-                <p className="mt-2 text-sm text-marine">Email : {patient.email ?? '—'}</p>
-                <p className="mt-1 text-sm text-marine">Ville : {patient.city ?? '—'}</p>
-                <p className="mt-1 text-sm text-marine">Âge : {patient.age ?? '—'}</p>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-warmgray">Objectifs</p>
+                <Textarea
+                  className="mt-2"
+                  value={objectifs}
+                  onChange={(event) => setObjectifs(event.target.value)}
+                  placeholder="Objectifs du patient"
+                  rows={3}
+                />
               </div>
-              <div className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
-                <p className="text-xs uppercase tracking-wide text-warmgray">Suivi</p>
-                <p className="mt-2 text-sm text-marine">
-                  Dernière synchro Circular : {formatDate(patient.lastCircularSyncAt)}
-                </p>
-                <p className="mt-1 text-sm text-marine">Créé le : {formatDate(patient.createdAt)}</p>
-                <p className="mt-1 text-sm text-marine">Mis à jour : {formatDate(patient.updatedAt)}</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="primary" onClick={handleSaveAnamnese} loading={saving}>
+                  Enregistrer les modifications
+                </Button>
+                {saveStatus ? <span className="text-sm text-marine">{saveStatus}</span> : null}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Tendances Circular (7 derniers jours)</h2>
+            </CardHeader>
+            <CardContent>
+              {lastSevenSummaries.length === 0 ? (
+                <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+                  Aucune donnée Circular disponible.
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+                    <p className="text-xs uppercase tracking-wide text-warmgray">Sommeil (h)</p>
+                    <p className="mt-2 text-sm text-marine">
+                      Dernière valeur : {lastSevenSummaries.at(-1)?.sleep_duration?.toFixed(1) ?? '—'}
+                    </p>
+                    <SmallLineChart values={sleepSeries} />
+                  </div>
+                  <div className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+                    <p className="text-xs uppercase tracking-wide text-warmgray">HRV (ms)</p>
+                    <p className="mt-2 text-sm text-marine">
+                      Dernière valeur : {lastSevenSummaries.at(-1)?.hrv_avg ?? '—'}
+                    </p>
+                    <SmallLineChart values={hrvSeries} />
+                  </div>
+                  <div className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+                    <p className="text-xs uppercase tracking-wide text-warmgray">Activité (score)</p>
+                    <p className="mt-2 text-sm text-marine">
+                      Dernière valeur : {lastSevenSummaries.at(-1)?.activity_level ?? '—'}
+                    </p>
+                    <SmallLineChart values={activitySeries} />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      {tab === 'Questionnaire' && (
+      {tab === 'Anamnèse' && (
         <Card>
           <CardHeader>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-sm font-semibold">Anamnèse</h2>
-              <Button variant="secondary" onClick={handleSendAnamnese} loading={inviteLoading}>
-                {codeExpiresAt || anamneseStatus === 'PENDING'
-                  ? 'Renvoyer un code'
-                  : 'Envoyer le code questionnaire'}
-              </Button>
-            </div>
+            <h2 className="text-sm font-semibold">Anamnèse</h2>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm text-warmgray">
-              Statut :{' '}
-              <span className="font-medium text-marine">
-                {anamneseStatus === 'PENDING'
-                  ? 'À compléter'
-                  : anamneseStatus === 'COMPLETED'
-                    ? 'Complétée'
-                    : 'Non envoyée'}
-              </span>
-            </div>
-
-            {inviteError ? (
-              <div className="rounded-xl border border-gold/30 bg-gold/10 p-3 text-sm text-marine">
-                {inviteError}
-              </div>
-            ) : null}
-
-            {inviteSuccess ? (
-              <div className="rounded-xl border border-teal/20 bg-teal/5 p-3 text-sm text-marine">
-                <p>{inviteSuccess}</p>
-                {codeExpiresAt ? (
-                  <p className="mt-1 text-xs text-warmgray">
-                    Expire à {formatDate(codeExpiresAt, true)}.
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-
-            <div className="rounded-xl border border-warmgray/20 bg-sable/40 p-3 text-sm text-marine">
-              Le code est valable 30 minutes et utilisable une seule fois.
-            </div>
-
-            {hasAnswers ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                {answerEntries.map((entry) => (
-                  <div key={entry.key} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
-                    <p className="text-xs uppercase tracking-wide text-warmgray">{entry.label}</p>
-                    <p className="mt-2 text-sm text-marine whitespace-pre-line">{entry.value}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
+          <CardContent>
+            {ANAMNESE_FIELDS.every((field) => !patient.anamnese?.[field.key]) ? (
               <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
                 Aucun détail d&apos;anamnèse disponible pour le moment.
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {tab === 'Messages' && (
-        <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold">Messagerie</h2>
-          </CardHeader>
-          <CardContent>
-            {patient.messages.length === 0 ? (
-              <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                Aucun message pour le moment.
-              </div>
             ) : (
-              <div className="space-y-3">
-                {patient.messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      'max-w-[78%] rounded-2xl px-4 py-2 text-sm ring-1 ring-black/5',
-                      message.senderRole === 'patient'
-                        ? 'bg-sable text-marine'
-                        : 'ml-auto bg-teal text-white'
-                    )}
-                  >
-                    <p>{message.text || '—'}</p>
-                    <p
-                      className={cn(
-                        'mt-1 text-[11px] opacity-80',
-                        message.senderRole === 'patient' ? 'text-warmgray' : 'text-white/80'
-                      )}
-                    >
-                      {formatDate(message.sentAt, true)}
+              <div className="grid gap-4 md:grid-cols-2">
+                {ANAMNESE_FIELDS.map((field) => (
+                  <div key={field.key} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+                    <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
+                    <p className="mt-2 text-sm text-marine whitespace-pre-line">
+                      {patient.anamnese?.[field.key] || '—'}
                     </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {tab === 'Rendez-vous' && (
-        <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold">Rendez-vous</h2>
-          </CardHeader>
-          <CardContent>
-            {patient.appointments.length === 0 ? (
-              <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                Aucun rendez-vous planifié.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {patient.appointments.map((appointment) => (
-                  <div key={appointment.id} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-medium text-charcoal">
-                        {formatDate(appointment.startAt, true)}
-                      </p>
-                      <Badge variant={appointment.status === 'done' ? 'success' : 'info'}>
-                        {appointment.status}
-                      </Badge>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -309,17 +315,13 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">Circular</h2>
-              {patient.circularEnabled ? (
-                <Badge variant="premium">Actif</Badge>
-              ) : (
-                <Badge variant="attention">Non activé</Badge>
-              )}
+              {isPremium ? <Badge variant="premium">Actif</Badge> : <Badge variant="attention">Non activé</Badge>}
             </div>
           </CardHeader>
           <CardContent>
-            {!patient.circularEnabled ? (
+            {!isPremium ? (
               <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                Option Premium : sommeil, HRV, activité. Synchronisation 1×/jour + à l’ouverture.
+                Données Circular non activées.
               </div>
             ) : wearableSummaries.length === 0 ? (
               <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
@@ -327,21 +329,6 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
-                    <p className="text-xs uppercase tracking-wide text-warmgray">Sommeil (h)</p>
-                    <p className="mt-2 text-sm text-marine">
-                      Dernière valeur : {wearableSummaries[0]?.sleepDuration?.toFixed(1) ?? '—'}
-                    </p>
-                    <SmallLineChart values={sleepSeries} />
-                  </div>
-                  <div className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
-                    <p className="text-xs uppercase tracking-wide text-warmgray">HRV (ms)</p>
-                    <p className="mt-2 text-sm text-marine">Dernière valeur : {wearableSummaries[0]?.hrvAvg ?? '—'}</p>
-                    <SmallLineChart values={hrvSeries} />
-                  </div>
-                </div>
-
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[640px] text-sm">
                     <thead>
@@ -356,16 +343,18 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
                     </thead>
                     <tbody>
                       {wearableSummaries.map((summary) => (
-                        <tr key={summary.date} className="border-t border-black/5">
-                          <td className="py-2">{summary.date}</td>
+                        <tr key={summary.id} className="border-t border-black/5">
+                          <td className="py-2">{formatDate(summary.date)}</td>
                           <td className="py-2">
-                            {summary.sleepDuration !== null ? `${summary.sleepDuration.toFixed(1)} h` : '—'}
+                            {summary.sleep_duration != null
+                              ? `${summary.sleep_duration.toFixed(1)} h`
+                              : '—'}
                           </td>
-                          <td className="py-2">{summary.sleepScore ?? '—'}</td>
-                          <td className="py-2">{summary.hrvAvg ?? '—'}</td>
-                          <td className="py-2">{summary.activityLevel ?? '—'}</td>
+                          <td className="py-2">{summary.sleep_score ?? '—'}</td>
+                          <td className="py-2">{summary.hrv_avg ?? '—'}</td>
+                          <td className="py-2">{summary.activity_level ?? '—'}</td>
                           <td className="py-2">
-                            {summary.completeness !== null
+                            {summary.completeness != null
                               ? `${Math.round(summary.completeness * 100)}%`
                               : '—'}
                           </td>
@@ -375,26 +364,99 @@ export function PatientTabs({ patient }: { patient: PatientDetail }) {
                   </table>
                 </div>
 
-                {patient.wearableInsights.length > 0 ? (
+                {wearableInsights.length > 0 ? (
                   <div className="grid gap-3 md:grid-cols-2">
-                    {patient.wearableInsights.map((insight) => (
-                      <div key={insight.id} className="rounded-2xl bg-sable p-4 ring-1 ring-black/5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs uppercase tracking-wide text-warmgray">Insight</span>
-                          <Badge variant={insight.level === 'attention' ? 'attention' : 'info'}>
-                            {insight.level ?? 'info'}
-                          </Badge>
-                        </div>
-                        <p className="mt-2 text-sm text-marine">{insight.message ?? '—'}</p>
-                        <p className="mt-2 text-xs text-warmgray">
-                          Suggestion : {insight.suggestedAction ?? '—'}
-                        </p>
-                      </div>
-                    ))}
+                    {wearableInsights.map((insight) => renderInsight(insight))}
                   </div>
-                ) : null}
+                ) : (
+                  <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+                    Aucun insight Circular disponible.
+                  </div>
+                )}
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'Journal' && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-sm font-semibold">Journal</h2>
+          </CardHeader>
+          <CardContent>
+            {journalEntries.length === 0 ? (
+              <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+                Aucune entrée de journal.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {journalEntries.map((entry) => (
+                  <div key={entry.id} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
+                      <div className="flex items-center gap-2 text-sm text-marine">
+                        <span>{entry.mood ?? '—'}</span>
+                        <span>{entry.energy ?? '—'}</span>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm text-marine whitespace-pre-line">{entry.text || '—'}</p>
+                    <div className="mt-3">{renderAdherence(entry)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'Messages' && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-sm font-semibold">Messages</h2>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {messages.length === 0 ? (
+              <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+                Aucun message pour le moment.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      'max-w-[78%] rounded-2xl px-4 py-2 text-sm ring-1 ring-black/5',
+                      message.sender === 'patient'
+                        ? 'bg-sable text-marine'
+                        : 'ml-auto bg-teal text-white'
+                    )}
+                  >
+                    <p>{message.text || '—'}</p>
+                    <p
+                      className={cn(
+                        'mt-1 text-[11px] opacity-80',
+                        message.sender === 'patient' ? 'text-warmgray' : 'text-white/80'
+                      )}
+                    >
+                      {formatDate(message.sent_at, true)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <Textarea
+                placeholder="Écrire un message au patient..."
+                value={messageText}
+                onChange={(event) => setMessageText(event.target.value)}
+                rows={4}
+              />
+              <Button variant="primary" onClick={handleSendMessage} loading={messageLoading}>
+                Envoyer
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

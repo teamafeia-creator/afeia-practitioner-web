@@ -123,6 +123,12 @@ export type Notification = {
   created_at: string;
 };
 
+export type PatientWithUnreadCounts = Patient & {
+  unreadMessages: number;
+  unreadNotifications: number;
+  lastConsultationAt: string | null;
+};
+
 // Types enrichis (avec relations)
 export type PatientWithDetails = Patient & {
   anamnese?: Anamnese;
