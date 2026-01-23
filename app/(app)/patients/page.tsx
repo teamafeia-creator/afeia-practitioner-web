@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
 import { supabase } from '@/lib/supabase'
+import type { Patient } from '@/lib/types'
 
 export default function PatientsPage() {
-  const [patients, setPatients] = useState([])
+  const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
