@@ -354,7 +354,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                           <td className="py-2">{summary.hrv_avg ?? '—'}</td>
                           <td className="py-2">{summary.activity_level ?? '—'}</td>
                           <td className="py-2">
-                            {summary.completeness !== null
+                            {summary.completeness != null
                               ? `${Math.round(summary.completeness * 100)}%`
                               : '—'}
                           </td>
