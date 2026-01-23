@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Textarea';
 import { SmallLineChart } from '../charts/SmallLineChart';
+import { CalendlyButton } from '../calendly/CalendlyButton';
 import {
   markMessagesAsRead,
   sendMessage,
@@ -118,6 +119,8 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   );
   const wearableInsights = patient.wearable_insights ?? [];
   const journalEntries = patient.journal_entries ?? [];
+  const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_LINK ?? null;
+  const lastConsultation = patient.consultations?.[0]?.date ?? null;
 
   const lastSevenSummaries = useMemo(
     () => getLastSevenDays(wearableSummaries),
@@ -211,6 +214,25 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
 
       {tab === 'Profil' && (
         <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Rendez-vous</h2>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-warmgray">Dernier RDV</p>
+                  <p className="mt-1 text-sm text-marine">{formatDate(lastConsultation)}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-warmgray">Prochain RDV</p>
+                  <p className="mt-1 text-sm text-marine">À planifier</p>
+                </div>
+              </div>
+              <CalendlyButton patient={patient} calendlyUrl={calendlyUrl} />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Profil</h2>
