@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { supabase } from '@/lib/supabase'
 
 export default function CreatePlanPage() {
   const router = useRouter()
-  const supabase = createClientComponentClient()
   const [creating, setCreating] = useState(false)
 
   const createDemoPlan = async () => {

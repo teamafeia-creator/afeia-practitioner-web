@@ -1,11 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 export default function PatientDemoPage() {
-  const supabase = createClientComponentClient()
   const [patient, setPatient] = useState<any>(null)
   const [plan, setPlan] = useState<any>(null)
   const [loading, setLoading] = useState(true)
