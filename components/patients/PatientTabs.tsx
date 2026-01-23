@@ -112,7 +112,10 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   const [messageLoading, setMessageLoading] = useState(false);
 
   const isPremium = patient.is_premium;
-  const wearableSummaries = patient.wearable_summaries ?? [];
+  const wearableSummaries = useMemo(
+    () => patient.wearable_summaries ?? [],
+    [patient.wearable_summaries]
+  );
   const wearableInsights = patient.wearable_insights ?? [];
   const journalEntries = patient.journal_entries ?? [];
 
@@ -343,7 +346,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                         <tr key={summary.id} className="border-t border-black/5">
                           <td className="py-2">{formatDate(summary.date)}</td>
                           <td className="py-2">
-                            {summary.sleep_duration !== null
+                            {summary.sleep_duration != null
                               ? `${summary.sleep_duration.toFixed(1)} h`
                               : '—'}
                           </td>
