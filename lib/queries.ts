@@ -6,6 +6,7 @@ import type {
   Plan, 
   PlanVersion, 
   PlanSection,
+  Appointment,
   JournalEntry, 
   Message, 
   WearableSummary, 
@@ -553,7 +554,7 @@ export async function updateAnamnese(
   return updated;
 }
 
-export async function updatePatient(id: string, updates: Partial<Patient>): Promise<Patient | null> {
+export async function updatePatient(id: string, updates: Partial<Patient>): Promise<Patient> {
   const { data, error } = await supabase
     .from('patients')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -564,8 +565,66 @@ export async function updatePatient(id: string, updates: Partial<Patient>): Prom
   
   if (error) {
     console.error('Error updating patient:', error);
-    return null;
+    throw new Error(describeSupabaseError(error));
   }
+  if (!data) {
+    throw new Error('Impossible de mettre à jour le patient.');
+  }
+  return data;
+}
+
+export async function getAppointmentsForPatient(patientId: string): Promise<Appointment[]> {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('starts_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching appointments:', error);
+    throw new Error(describeSupabaseError(error));
+  }
+
+  return data || [];
+}
+
+export async function createAppointment({
+  patientId,
+  startsAt,
+  endsAt,
+  notes,
+  status = 'scheduled'
+}: {
+  patientId: string;
+  startsAt: string;
+  endsAt?: string | null;
+  notes?: string | null;
+  status?: Appointment['status'];
+}): Promise<Appointment> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    console.error('Error fetching user:', userError);
+    throw new Error('Veuillez vous reconnecter pour planifier un rendez-vous.');
+  }
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .insert({
+      patient_id: patientId,
+      practitioner_id: userData.user.id,
+      starts_at: startsAt,
+      ends_at: endsAt ?? null,
+      status,
+      notes: notes ?? null
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Error creating appointment:', error);
+    throw new Error(describeSupabaseError(error));
+  }
+
   return data;
 }
 

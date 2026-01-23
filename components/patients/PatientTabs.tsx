@@ -5,16 +5,16 @@ import { cn } from '../../lib/cn';
 import { Badge } from '../ui/Badge';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import { Toast } from '../ui/Toast';
 import { SmallLineChart } from '../charts/SmallLineChart';
-import { CalendlyButton } from '../calendly/CalendlyButton';
 import {
-  getPractitionerCalendlyUrl,
+  createAppointment,
   markMessagesAsRead,
   sendMessage,
-  updateAnamnese,
   updatePatient,
+  getAppointmentsForPatient,
   upsertJournalEntry,
   upsertPatientAnamnesis,
   upsertPractitionerNote
@@ -23,12 +23,13 @@ import { ANAMNESIS_SECTIONS } from '../../lib/anamnesis';
 import type {
   JournalEntry,
   Message,
+  Appointment,
   PatientWithDetails,
   WearableInsight,
   WearableSummary
 } from '../../lib/types';
 
-const TABS = ['Profil', 'Anamnèse', 'Circular', 'Journal', 'Notes consultation', 'Messages'] as const;
+const TABS = ['Profil', 'Rendez-vous', 'Anamnèse', 'Circular', 'Journal', 'Notes consultation', 'Messages'] as const;
 
 type Tab = (typeof TABS)[number];
 
@@ -55,6 +56,13 @@ function formatDate(value?: string | null, withTime = false) {
 function formatAnswer(value?: string) {
   if (!value) return 'Non renseigné';
   return value;
+}
+
+function formatValue(value?: string | number | null, emptyLabel = 'Non renseigné') {
+  if (value === null || value === undefined || value === '') {
+    return emptyLabel;
+  }
+  return String(value);
 }
 
 function buildJournalForm(entry?: JournalEntry): Partial<JournalEntry> {
@@ -118,10 +126,15 @@ function renderInsight(insight: WearableInsight) {
 export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   const [patientState, setPatientState] = useState<PatientWithDetails>(patient);
   const [tab, setTab] = useState<Tab>('Profil');
-  const [motif, setMotif] = useState(patient.anamnese?.motif ?? '');
-  const [objectifs, setObjectifs] = useState(patient.anamnese?.objectifs ?? '');
-  const [saveStatus, setSaveStatus] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [profileEditing, setProfileEditing] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: patient.name ?? '',
+    email: patient.email ?? '',
+    age: patient.age?.toString() ?? '',
+    city: patient.city ?? '',
+    consultationReason: patient.consultation_reason ?? ''
+  });
   const [messages, setMessages] = useState<Message[]>(patient.messages ?? []);
   const [messageText, setMessageText] = useState('');
   const [messageLoading, setMessageLoading] = useState(false);
@@ -137,8 +150,16 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteContent, setNoteContent] = useState(patient.practitioner_note?.content ?? '');
   const [premiumLoading, setPremiumLoading] = useState(false);
-  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
-  const [calendlyError, setCalendlyError] = useState<string | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [appointmentsError, setAppointmentsError] = useState<string | null>(null);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [appointmentSaving, setAppointmentSaving] = useState(false);
+  const [appointmentForm, setAppointmentForm] = useState({
+    startsAt: '',
+    durationMinutes: '60',
+    notes: ''
+  });
   const [toast, setToast] = useState<{
     title: string;
     description?: string;
@@ -152,12 +173,57 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   );
   const wearableInsights = patientState.wearable_insights ?? [];
   const journalEntries = patientState.journal_entries ?? [];
-  const lastConsultation = patientState.consultations?.[0]?.date ?? null;
 
   const lastSevenSummaries = useMemo(
     () => getLastSevenDays(wearableSummaries),
     [wearableSummaries]
   );
+
+  const profileSnapshot = useMemo(
+    () => ({
+      name: patientState.name ?? '',
+      email: patientState.email ?? '',
+      age: patientState.age?.toString() ?? '',
+      city: patientState.city ?? '',
+      consultationReason: patientState.consultation_reason ?? ''
+    }),
+    [patientState]
+  );
+
+  const normalizedProfileForm = useMemo(
+    () => ({
+      name: profileForm.name.trim(),
+      email: profileForm.email.trim(),
+      age: profileForm.age.trim(),
+      city: profileForm.city.trim(),
+      consultationReason: profileForm.consultationReason.trim()
+    }),
+    [profileForm]
+  );
+
+  const normalizedProfileSnapshot = useMemo(
+    () => ({
+      name: profileSnapshot.name.trim(),
+      email: profileSnapshot.email.trim(),
+      age: profileSnapshot.age.trim(),
+      city: profileSnapshot.city.trim(),
+      consultationReason: profileSnapshot.consultationReason.trim()
+    }),
+    [profileSnapshot]
+  );
+
+  const isProfileDirty = useMemo(
+    () => JSON.stringify(normalizedProfileForm) !== JSON.stringify(normalizedProfileSnapshot),
+    [normalizedProfileForm, normalizedProfileSnapshot]
+  );
+
+  const upcomingAppointment = useMemo(() => {
+    const now = Date.now();
+    return [...appointments]
+      .filter((appointment) => appointment.status === 'scheduled')
+      .filter((appointment) => new Date(appointment.starts_at).getTime() >= now)
+      .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())[0];
+  }, [appointments]);
 
   const sleepSeries = lastSevenSummaries.map((summary) => summary.sleep_duration ?? 0);
   const hrvSeries = lastSevenSummaries.map((summary) => summary.hrv_avg ?? 0);
@@ -165,34 +231,21 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
 
   useEffect(() => {
     setPatientState(patient);
-    setMotif(patient.anamnese?.motif ?? '');
-    setObjectifs(patient.anamnese?.objectifs ?? '');
+    setProfileForm({
+      name: patient.name ?? '',
+      email: patient.email ?? '',
+      age: patient.age?.toString() ?? '',
+      city: patient.city ?? '',
+      consultationReason: patient.consultation_reason ?? ''
+    });
+    setProfileEditing(false);
     setMessages(patient.messages ?? []);
     setAnamnesisAnswers(patient.patient_anamnesis?.answers ?? {});
     setNoteContent(patient.practitioner_note?.content ?? '');
     setJournalForm(buildJournalForm(patient.journal_entries?.[0]));
+    setAppointments([]);
+    setAppointmentsError(null);
   }, [patient]);
-
-  useEffect(() => {
-    let active = true;
-    async function loadCalendly() {
-      try {
-        console.log('[patient-tabs] loading calendly url');
-        const url = await getPractitionerCalendlyUrl();
-        if (!active) return;
-        setCalendlyUrl(url);
-        setCalendlyError(null);
-      } catch (error) {
-        if (!active) return;
-        console.error('[patient-tabs] failed to load calendly url', error);
-        setCalendlyError(error instanceof Error ? error.message : 'Erreur inconnue.');
-      }
-    }
-    loadCalendly();
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -213,30 +266,154 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     };
   }, [patient.id]);
 
-  async function handleSaveAnamnese() {
-    setSaveStatus(null);
-    setSaving(true);
-    const updated = await updateAnamnese(patient.id, {
-      motif: motif.trim() || null,
-      objectifs: objectifs.trim() || null
-    });
-    if (updated) {
-      setPatientState((prev) => ({ ...prev, anamnese: updated }));
-      setSaveStatus('Modifications enregistrées.');
-      setToast({
-        title: 'Profil mis à jour',
-        description: 'Le motif et les objectifs ont été enregistrés.',
-        variant: 'success'
+  useEffect(() => {
+    if (tab !== 'Rendez-vous') return;
+    let active = true;
+    setAppointmentsLoading(true);
+    setAppointmentsError(null);
+    getAppointmentsForPatient(patient.id)
+      .then((data) => {
+        if (!active) return;
+        setAppointments(data);
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.error('[patient-tabs] failed to load appointments', error);
+        setAppointmentsError(
+          error instanceof Error ? error.message : 'Impossible de charger les rendez-vous.'
+        );
+      })
+      .finally(() => {
+        if (active) {
+          setAppointmentsLoading(false);
+        }
       });
-    } else {
-      setSaveStatus('Impossible d\'enregistrer les modifications.');
+    return () => {
+      active = false;
+    };
+  }, [patient.id, tab]);
+
+  async function handleSaveProfile() {
+    if (!isProfileDirty) return;
+    const trimmedName = profileForm.name.trim();
+    if (!trimmedName) {
       setToast({
-        title: 'Erreur de sauvegarde',
-        description: 'Impossible d’enregistrer les modifications.',
+        title: 'Nom requis',
+        description: 'Veuillez renseigner le nom du patient avant d’enregistrer.',
         variant: 'error'
       });
+      return;
     }
-    setSaving(false);
+
+    const ageValue = profileForm.age.trim();
+    const parsedAge = ageValue ? Number(ageValue) : null;
+    if (ageValue && Number.isNaN(parsedAge)) {
+      setToast({
+        title: 'Âge invalide',
+        description: 'Merci de saisir un âge valide (nombre).',
+        variant: 'error'
+      });
+      return;
+    }
+
+    setProfileSaving(true);
+    try {
+      const updated = await updatePatient(patient.id, {
+        name: trimmedName,
+        email: profileForm.email.trim() || null,
+        age: parsedAge ?? null,
+        city: profileForm.city.trim() || null,
+        consultation_reason: profileForm.consultationReason.trim() || null
+      });
+      setPatientState((prev) => ({ ...prev, ...updated }));
+      setProfileForm({
+        name: updated.name ?? '',
+        email: updated.email ?? '',
+        age: updated.age?.toString() ?? '',
+        city: updated.city ?? '',
+        consultationReason: updated.consultation_reason ?? ''
+      });
+      setProfileEditing(false);
+      setToast({
+        title: 'Profil mis à jour',
+        description: 'Les informations patient ont été enregistrées.',
+        variant: 'success'
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur de sauvegarde',
+        description: error instanceof Error ? error.message : 'Impossible d’enregistrer le profil.',
+        variant: 'error'
+      });
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  async function handleScheduleAppointment() {
+    if (!appointmentForm.startsAt) {
+      setToast({
+        title: 'Date requise',
+        description: 'Merci de sélectionner une date et une heure pour le rendez-vous.',
+        variant: 'error'
+      });
+      return;
+    }
+
+    const startsAtDate = new Date(appointmentForm.startsAt);
+    if (Number.isNaN(startsAtDate.getTime())) {
+      setToast({
+        title: 'Date invalide',
+        description: 'La date de rendez-vous est invalide.',
+        variant: 'error'
+      });
+      return;
+    }
+
+    const durationValue = appointmentForm.durationMinutes.trim();
+    const durationMinutes = durationValue ? Number(durationValue) : null;
+    if (durationValue && (!durationMinutes || durationMinutes <= 0)) {
+      setToast({
+        title: 'Durée invalide',
+        description: 'Merci d’indiquer une durée valide en minutes.',
+        variant: 'error'
+      });
+      return;
+    }
+
+    const endsAt = durationMinutes
+      ? new Date(startsAtDate.getTime() + durationMinutes * 60000).toISOString()
+      : null;
+
+    setAppointmentSaving(true);
+    try {
+      const created = await createAppointment({
+        patientId: patient.id,
+        startsAt: startsAtDate.toISOString(),
+        endsAt,
+        notes: appointmentForm.notes.trim() || null
+      });
+      setAppointments((prev) =>
+        [...prev, created].sort(
+          (a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()
+        )
+      );
+      setShowAppointmentModal(false);
+      setAppointmentForm({ startsAt: '', durationMinutes: '60', notes: '' });
+      setToast({
+        title: 'Rendez-vous planifié',
+        description: 'Le rendez-vous a été enregistré avec succès.',
+        variant: 'success'
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur de planification',
+        description: error instanceof Error ? error.message : 'Impossible de planifier le rendez-vous.',
+        variant: 'error'
+      });
+    } finally {
+      setAppointmentSaving(false);
+    }
   }
 
   async function handleSaveAnamnesisQuestionnaire() {
@@ -331,9 +508,6 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     setPremiumLoading(true);
     try {
       const updated = await updatePatient(patient.id, { is_premium: true, status: 'premium' });
-      if (!updated) {
-        throw new Error('Impossible de passer le patient en Premium.');
-      }
       setPatientState((prev) => ({ ...prev, ...updated }));
       setToast({
         title: 'Patient Premium',
@@ -400,66 +574,144 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
 
       {tab === 'Profil' && (
         <div className="space-y-4">
-          <Card>
+          <Card className={profileEditing ? 'border-2 border-teal/30 bg-teal/5' : undefined}>
             <CardHeader>
-              <h2 className="text-sm font-semibold">Rendez-vous</h2>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold">Informations patient</h2>
+                {!profileEditing ? (
+                  <Button variant="secondary" onClick={() => setProfileEditing(true)}>
+                    ✏️ Modifier le profil
+                  </Button>
+                ) : null}
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
+            <CardContent className="space-y-4">
+              {profileEditing ? (
+                <div className="rounded-xl border border-teal/20 bg-teal/10 px-3 py-2 text-xs text-teal">
+                  ✏️ Mode édition activé — Pensez à enregistrer vos modifications.
+                </div>
+              ) : null}
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-warmgray">Dernier RDV</p>
-                  <p className="mt-1 text-sm text-marine">{formatDate(lastConsultation)}</p>
+                  <p className="text-xs uppercase tracking-wide text-warmgray">Nom</p>
+                  {profileEditing ? (
+                    <Input
+                      className="mt-2"
+                      value={profileForm.name}
+                      onChange={(event) =>
+                        setProfileForm((prev) => ({ ...prev, name: event.target.value }))
+                      }
+                      placeholder="Nom du patient"
+                    />
+                  ) : (
+                    <p className="mt-2 text-sm text-marine">{formatValue(patientState.name, '—')}</p>
+                  )}
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-warmgray">Prochain RDV</p>
-                  <p className="mt-1 text-sm text-marine">À planifier</p>
+                  <p className="text-xs uppercase tracking-wide text-warmgray">Email</p>
+                  {profileEditing ? (
+                    <Input
+                      className="mt-2"
+                      type="email"
+                      value={profileForm.email}
+                      onChange={(event) =>
+                        setProfileForm((prev) => ({ ...prev, email: event.target.value }))
+                      }
+                      placeholder="email@exemple.com"
+                    />
+                  ) : (
+                    <p className="mt-2 text-sm text-marine">{formatValue(patientState.email, 'Non renseigné')}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-warmgray">Âge</p>
+                  {profileEditing ? (
+                    <Input
+                      className="mt-2"
+                      type="number"
+                      min={0}
+                      value={profileForm.age}
+                      onChange={(event) =>
+                        setProfileForm((prev) => ({ ...prev, age: event.target.value }))
+                      }
+                      placeholder="Âge"
+                    />
+                  ) : (
+                    <p className="mt-2 text-sm text-marine">{formatValue(patientState.age, '—')}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-warmgray">Ville</p>
+                  {profileEditing ? (
+                    <Input
+                      className="mt-2"
+                      value={profileForm.city}
+                      onChange={(event) =>
+                        setProfileForm((prev) => ({ ...prev, city: event.target.value }))
+                      }
+                      placeholder="Ville"
+                    />
+                  ) : (
+                    <p className="mt-2 text-sm text-marine">{formatValue(patientState.city, 'Non renseigné')}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-warmgray">Statut</p>
+                  <div className="mt-2">
+                    <Badge variant={isPremium ? 'premium' : 'info'}>
+                      {isPremium ? 'Premium' : 'Standard'}
+                    </Badge>
+                  </div>
                 </div>
               </div>
-              <CalendlyButton patient={patientState} calendlyUrl={calendlyUrl} />
-              {calendlyError ? (
-                <p className="text-xs text-aubergine">Erreur Calendly : {calendlyError}</p>
-              ) : null}
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={profileEditing ? 'border-2 border-teal/30 bg-teal/5' : undefined}>
             <CardHeader>
-              <h2 className="text-sm font-semibold">Profil</h2>
+              <h2 className="text-sm font-semibold">Motif de consultation</h2>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-warmgray">Motif</p>
+            <CardContent>
+              {profileEditing ? (
                 <Textarea
-                  className="mt-2"
-                  value={motif}
-                  onChange={(event) => setMotif(event.target.value)}
-                  placeholder="Motif de consultation"
-                  rows={3}
+                  className="mt-1"
+                  value={profileForm.consultationReason}
+                  onChange={(event) =>
+                    setProfileForm((prev) => ({ ...prev, consultationReason: event.target.value }))
+                  }
+                  placeholder="Motif principal, contexte, attentes..."
+                  rows={4}
                 />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-warmgray">Objectifs</p>
-                <Textarea
-                  className="mt-2"
-                  value={objectifs}
-                  onChange={(event) => setObjectifs(event.target.value)}
-                  placeholder="Objectifs du patient"
-                  rows={3}
-                />
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  variant="primary"
-                  onClick={handleSaveAnamnese}
-                  loading={saving}
-                  className="w-full sm:w-auto"
-                >
-                  Enregistrer les modifications
-                </Button>
-                {saveStatus ? <span className="text-sm text-marine">{saveStatus}</span> : null}
-              </div>
+              ) : (
+                <p className="text-sm text-marine whitespace-pre-line break-words">
+                  {formatValue(patientState.consultation_reason, 'Non renseigné')}
+                </p>
+              )}
             </CardContent>
           </Card>
+
+          {profileEditing ? (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                onClick={handleSaveProfile}
+                loading={profileSaving}
+                disabled={!isProfileDirty}
+              >
+                Enregistrer
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setProfileForm(profileSnapshot);
+                  setProfileEditing(false);
+                }}
+                disabled={profileSaving}
+              >
+                Annuler
+              </Button>
+            </div>
+          ) : null}
 
           <Card>
             <CardHeader>
@@ -493,6 +745,103 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     </p>
                     <SmallLineChart values={activitySeries} />
                   </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {tab === 'Rendez-vous' && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-charcoal">Rendez-vous</h2>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setAppointmentForm({ startsAt: '', durationMinutes: '60', notes: '' });
+                setShowAppointmentModal(true);
+              }}
+            >
+              📅 Planifier un rendez-vous
+            </Button>
+          </div>
+
+          {appointmentsError ? (
+            <div className="rounded-xl border border-gold/30 bg-gold/10 p-4 text-sm text-marine">
+              {appointmentsError}
+            </div>
+          ) : null}
+
+          <Card>
+            <CardHeader>
+              <h3 className="text-sm font-semibold">Prochain rendez-vous</h3>
+            </CardHeader>
+            <CardContent>
+              {appointmentsLoading ? (
+                <p className="text-sm text-warmgray">Chargement...</p>
+              ) : upcomingAppointment ? (
+                <div className="space-y-2 text-sm text-marine">
+                  <p className="font-medium text-charcoal">
+                    {formatDate(upcomingAppointment.starts_at, true)}
+                  </p>
+                  {upcomingAppointment.ends_at ? (
+                    <p className="text-xs text-warmgray">
+                      Fin prévue : {formatDate(upcomingAppointment.ends_at, true)}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-sm text-marine">À planifier</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h3 className="text-sm font-semibold">Historique</h3>
+            </CardHeader>
+            <CardContent>
+              {appointmentsLoading ? (
+                <p className="text-sm text-warmgray">Chargement...</p>
+              ) : appointments.length === 0 ? (
+                <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+                  Aucun rendez-vous enregistré.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {appointments.map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white p-4 ring-1 ring-black/5"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-charcoal">
+                          {formatDate(appointment.starts_at, true)}
+                        </p>
+                        {appointment.notes ? (
+                          <p className="mt-1 text-xs text-warmgray whitespace-pre-line">
+                            {appointment.notes}
+                          </p>
+                          ) : null}
+                      </div>
+                      <Badge
+                        variant={
+                          appointment.status === 'scheduled'
+                            ? 'info'
+                            : appointment.status === 'completed'
+                              ? 'success'
+                              : 'attention'
+                        }
+                      >
+                        {appointment.status === 'scheduled'
+                          ? 'À venir'
+                          : appointment.status === 'completed'
+                            ? 'Terminé'
+                            : 'Annulé'}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
@@ -939,6 +1288,65 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardContent>
         </Card>
       )}
+      {showAppointmentModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-soft">
+            <h2 className="text-lg font-semibold text-charcoal">Planifier un rendez-vous</h2>
+            <p className="mt-2 text-sm text-warmgray">
+              Renseignez la date, l’heure et la durée estimée du rendez-vous.
+            </p>
+            <div className="mt-4 space-y-4">
+              <Input
+                label="Date et heure de début"
+                type="datetime-local"
+                value={appointmentForm.startsAt}
+                onChange={(event) =>
+                  setAppointmentForm((prev) => ({ ...prev, startsAt: event.target.value }))
+                }
+              />
+              <Input
+                label="Durée (en minutes)"
+                type="number"
+                min={15}
+                step={5}
+                value={appointmentForm.durationMinutes}
+                onChange={(event) =>
+                  setAppointmentForm((prev) => ({ ...prev, durationMinutes: event.target.value }))
+                }
+              />
+              <div>
+                <p className="text-xs font-medium text-warmgray">Notes internes</p>
+                <Textarea
+                  className="mt-1 min-h-[120px]"
+                  value={appointmentForm.notes}
+                  onChange={(event) =>
+                    setAppointmentForm((prev) => ({ ...prev, notes: event.target.value }))
+                  }
+                  placeholder="Informations utiles, préparations, suivi..."
+                  rows={4}
+                />
+              </div>
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowAppointmentModal(false)}
+                  disabled={appointmentSaving}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleScheduleAppointment}
+                  loading={appointmentSaving}
+                  disabled={!appointmentForm.startsAt}
+                >
+                  Enregistrer
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {toast ? (
         <Toast
           title={toast.title}
