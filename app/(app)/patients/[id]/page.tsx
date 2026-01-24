@@ -1,340 +1,372 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
-import { getPatientById } from '@/lib/queries'
-import { PatientTabs } from '@/components/patients/PatientTabs'
-import type { Consultation, JournalEntry, PatientWithDetails } from '@/lib/types'
+import { styles } from '@/lib/styles'
 
-type RecentJournalEntry = Pick<JournalEntry, 'id' | 'date' | 'mood' | 'energy' | 'text'> &
-  Pick<JournalEntry, 'adherence_hydratation' | 'adherence_respiration' | 'adherence_mouvement' | 'adherence_plantes'>
+const tabs = [
+  { id: 'overview', label: "Vue d'ensemble", href: '' },
+  { id: 'profile', label: 'Profil', href: '/profile' },
+  { id: 'appointments', label: 'Rendez-vous', href: '/appointments' },
+  { id: 'anamnesis', label: 'Anamnèse', href: '/anamnesis' },
+  { id: 'circular', label: 'Circular', href: '/circular' },
+  { id: 'journal', label: 'Journal', href: '/journal' },
+  { id: 'notes', label: 'Notes', href: '/notes' },
+  { id: 'messages', label: 'Messages', href: '/messages' },
+]
 
-const getNextConsultation = (consultations: Consultation[]) => {
-  const now = new Date()
-  return consultations
-    .filter((consultation) => new Date(consultation.date) >= now)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
-}
+export default function PatientOverviewPage() {
+  const params = useParams()
+  const supabase = createClientComponentClient()
 
-export default function PatientOverviewPage({ params }: { params: { id: string } }) {
-  const [patient, setPatient] = useState<PatientWithDetails | null>(null)
+  const [patient, setPatient] = useState<any>(null)
+  const [nextConsultation, setNextConsultation] = useState<any>(null)
+  const [activePlan, setActivePlan] = useState<any>(null)
+  const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let active = true
-
-    const loadPatient = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await getPatientById(params.id)
-        if (!active) return
-        if (!data) {
-          setError('Patient introuvable.')
-          setPatient(null)
-        } else {
-          setPatient(data)
-        }
-      } catch (err) {
-        if (!active) return
-        setError(err instanceof Error ? err.message : 'Impossible de charger le dossier patient.')
-      } finally {
-        if (active) {
-          setLoading(false)
-        }
-      }
-    }
-
-    loadPatient()
-
-    return () => {
-      active = false
-    }
+    loadPatientData()
   }, [params.id])
 
-  const nextConsultation = useMemo(() => {
-    if (!patient?.consultations) return null
-    return getNextConsultation(patient.consultations)
-  }, [patient?.consultations])
+  const loadPatientData = async () => {
+    try {
+      const { data: patientData } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', params.id)
+        .single()
 
-  const recentJournalEntries: RecentJournalEntry[] = useMemo(() => {
-    return (patient?.journal_entries ?? []).slice(0, 3)
-  }, [patient?.journal_entries])
+      setPatient(patientData)
 
-  const latestPlanVersion = useMemo(() => {
-    return patient?.plan?.versions?.[0]
-  }, [patient?.plan?.versions])
+      const { data: nextAppt } = await supabase
+        .from('consultations')
+        .select('*')
+        .eq('patient_id', params.id)
+        .gte('date', new Date().toISOString())
+        .order('date', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      setNextConsultation(nextAppt)
+
+      const { data: plan } = await supabase
+        .from('plans')
+        .select(`
+          *,
+          supplement_items(*)
+        `)
+        .eq('patient_id', params.id)
+        .eq('is_active', true)
+        .maybeSingle()
+
+      setActivePlan(plan)
+
+      const { data: logs } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('patient_id', params.id)
+        .order('log_date', { ascending: false })
+        .limit(3)
+
+      setRecentActivity(logs || [])
+    } catch (err) {
+      console.error('Erreur chargement patient:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
         <div
           className="animate-spin rounded-full h-12 w-12 border-b-2"
           style={{ borderColor: colors.teal.main }}
-        ></div>
+        />
       </div>
     )
   }
 
-  if (error || !patient) {
+  if (!patient) {
     return (
-      <div className="space-y-4">
-        <div className="rounded-xl border p-4 text-sm" style={{ borderColor: colors.gold }}>
-          {error ?? 'Patient introuvable.'}
-        </div>
-        <Link href="/patients" className="text-sm hover:underline" style={{ color: colors.teal.main }}>
-          Retour à la liste des patients
-        </Link>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
+        <p>Patient introuvable</p>
       </div>
     )
   }
+
+  const hasMeta = patient.age || patient.city || patient.pathology
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="border-b p-6">
-        <Link
-          href="/patients"
-          className="inline-flex items-center gap-2 mb-4 hover:underline"
-          style={{ color: colors.teal.main }}
-        >
-          ← Retour à la liste
-        </Link>
+    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+      <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
+        <div className="max-w-7xl mx-auto">
+          <Link
+            href="/patients"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '16px',
+              color: colors.teal.main,
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: 500,
+            }}
+          >
+            ← Retour à la liste
+          </Link>
 
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold" style={{ color: colors.teal.deep }}>
-                {patient.name}
-              </h1>
-              {(patient.is_premium || patient.status === 'premium') && (
-                <span
-                  className="text-sm px-3 py-1 rounded-full font-semibold"
-                  style={{
-                    backgroundColor: colors.aubergine.light,
-                    color: colors.aubergine.main,
-                  }}
-                >
-                  ✨ Premium
-                </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <h1 style={styles.heading.h1}>{patient.name || 'Non renseigné'}</h1>
+                {(patient.is_premium || patient.status === 'premium') && (
+                  <span style={styles.badgePremium}>Premium</span>
+                )}
+              </div>
+              {hasMeta ? (
+                <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: colors.gray.warm }}>
+                  {patient.age && <span>{patient.age} ans</span>}
+                  {patient.city && <span>• {patient.city}</span>}
+                  {patient.pathology && <span>• {patient.pathology}</span>}
+                </div>
+              ) : (
+                <div style={{ fontSize: '14px', color: colors.gray.warm }}>Non renseigné</div>
               )}
-            </div>
-            <div className="flex flex-wrap gap-4 text-sm" style={{ color: colors.gray.warm }}>
-              {patient.age && <span>{patient.age} ans</span>}
-              {patient.city && <span>• {patient.city}</span>}
-              {patient.consultation_reason && <span>• {patient.consultation_reason}</span>}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Résumé patient */}
-        <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
-          <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-            📋 Résumé patient
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', overflowX: 'auto' }}>
+        <div className="max-w-7xl mx-auto flex" style={{ gap: '32px', padding: '0 32px' }}>
+          {tabs.map((tab) => (
+            <Link
+              key={tab.id}
+              href={`/patients/${params.id}${tab.href}`}
+              style={{
+                padding: '16px 0',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: tab.id === 'overview' ? colors.teal.main : colors.gray.warm,
+                textDecoration: 'none',
+                borderBottom: tab.id === 'overview' ? `2px solid ${colors.teal.main}` : '2px solid transparent',
+                whiteSpace: 'nowrap',
+                transition: 'color 0.2s ease',
+              }}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6 space-y-5">
+        <div style={styles.card.base}>
+          <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+            <h2 style={styles.heading.h3}>Résumé patient</h2>
+          </div>
+          <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
             <div>
-              <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
-                Email
-              </p>
-              <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Email</p>
+              <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
                 {patient.email || 'Non renseigné'}
               </p>
             </div>
             <div>
-              <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
-                Ville
-              </p>
-              <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
-                {patient.city || 'Non renseignée'}
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Téléphone</p>
+              <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
+                {patient.phone || 'Non renseigné'}
               </p>
             </div>
             <div>
-              <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
-                Âge
-              </p>
-              <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
-                {patient.age ? `${patient.age} ans` : 'Non renseigné'}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
-                Téléphone
-              </p>
-              {/* NOTE: le champ téléphone n'existe pas dans la table patients. */}
-              <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
-                Non renseigné
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Date de naissance</p>
+              <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
+                {patient.date_of_birth
+                  ? new Date(patient.date_of_birth).toLocaleDateString('fr-FR')
+                  : 'Non renseignée'}
               </p>
             </div>
             <div>
-              <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
-                Date de naissance
-              </p>
-              {/* NOTE: le champ date de naissance n'existe pas dans la table patients. */}
-              <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
-                Non renseignée
-              </p>
-            </div>
-            <div>
-              <p className="text-sm mb-1" style={{ color: colors.gray.warm }}>
-                Statut
-              </p>
-              <p className="font-semibold" style={{ color: colors.gray.charcoal }}>
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Statut</p>
+              <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
                 {patient.is_premium || patient.status === 'premium' ? 'Premium' : 'Standard'}
               </p>
             </div>
           </div>
+          <div style={{ padding: '16px 24px', borderTop: '1px solid #F5F5F5' }}>
+            <Link
+              href={`/patients/${params.id}/profile`}
+              style={{ fontSize: '14px', fontWeight: 600, color: colors.teal.main, textDecoration: 'none' }}
+            >
+              Voir le profil complet →
+            </Link>
+          </div>
         </div>
 
-        {/* Prochaine consultation */}
         {nextConsultation ? (
-          <div
-            className="rounded-2xl p-6 shadow-sm border-t-4"
-            style={{
-              backgroundColor: colors.sand,
-              borderColor: colors.teal.main,
-            }}
-          >
-            <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-              📅 Prochain rendez-vous
-            </h2>
-            <p className="text-lg font-semibold mb-2" style={{ color: colors.gray.charcoal }}>
-              {new Date(nextConsultation.date).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}{' '}
-              à{' '}
-              {new Date(nextConsultation.date).toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
-            {nextConsultation.notes && (
-              <p className="text-sm" style={{ color: colors.gray.warm }}>
-                {nextConsultation.notes}
+          <div style={{ ...styles.card.base, position: 'relative' }}>
+            <div style={styles.signatureBar} />
+            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Prochain rendez-vous</h2>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ fontSize: '16px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '16px' }}>
+                {new Date(nextConsultation.date).toLocaleDateString('fr-FR', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}{' '}
+                {new Date(nextConsultation.date).toLocaleTimeString('fr-FR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
               </p>
-            )}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button style={styles.button.secondary}>Modifier</button>
+                <Link
+                  href={`/patients/${params.id}/appointments`}
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: colors.teal.main,
+                    textDecoration: 'none',
+                    alignSelf: 'center',
+                  }}
+                >
+                  Voir tous les rendez-vous →
+                </Link>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
-            <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-              📅 Rendez-vous
-            </h2>
-            <p style={{ color: colors.gray.warm }}>Aucun rendez-vous programmé</p>
+          <div style={styles.card.base}>
+            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Rendez-vous</h2>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ color: colors.gray.warm, marginBottom: '16px' }}>Aucun rendez-vous programmé</p>
+              <button style={styles.button.primary}>Programmer un rendez-vous</button>
+            </div>
           </div>
         )}
 
-        {/* Activité récente */}
-        <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
-          <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-            🔔 Activité récente
-          </h2>
-          {recentJournalEntries.length > 0 ? (
-            <div className="space-y-3">
-              {recentJournalEntries.map((entry) => (
-                <div key={entry.id} className="bg-white rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-semibold" style={{ color: colors.gray.charcoal }}>
-                      {new Date(entry.date).toLocaleDateString('fr-FR', {
+        {recentActivity.length > 0 && (
+          <div style={styles.card.base}>
+            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Activité récente</h2>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {recentActivity.map((log: any) => (
+                  <div
+                    key={log.id}
+                    style={{
+                      padding: '16px',
+                      background: '#FAFAFA',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '8px' }}>
+                      {new Date(log.log_date).toLocaleDateString('fr-FR', {
                         day: 'numeric',
                         month: 'long',
                       })}
-                    </span>
-                    <span className="text-xs" style={{ color: colors.gray.warm }}>
-                      Humeur: {entry.mood || 'Non renseignée'}
-                    </span>
-                    <span className="text-xs" style={{ color: colors.gray.warm }}>
-                      Énergie: {entry.energy || 'Non renseignée'}
-                    </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '13px' }}>
+                      <span style={{ color: log.good_nutrition ? colors.sage : colors.gray.warm }}>
+                        Nutrition {log.good_nutrition ? 'OK' : 'Non'}
+                      </span>
+                      <span style={{ color: log.good_sleep ? colors.sage : colors.gray.warm }}>
+                        Sommeil {log.good_sleep ? 'OK' : 'Non'}
+                      </span>
+                      <span style={{ color: log.good_mood ? colors.sage : colors.gray.warm }}>
+                        Humeur {log.good_mood ? 'OK' : 'Non'}
+                      </span>
+                      <span style={{ color: log.supplements_taken ? colors.sage : colors.gray.warm }}>
+                        Compléments {log.supplements_taken ? 'OK' : 'Non'}
+                      </span>
+                    </div>
+                    {log.note_for_practitioner && (
+                      <p style={{ fontSize: '13px', color: colors.gray.warm, fontStyle: 'italic', marginTop: '8px' }}>
+                        "{log.note_for_practitioner}"
+                      </p>
+                    )}
                   </div>
-                  {entry.text && (
-                    <p className="text-sm" style={{ color: colors.gray.warm }}>
-                      {entry.text}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap gap-3 text-sm mt-3">
-                    <span
-                      style={{
-                        color: entry.adherence_hydratation ? colors.sage : colors.gray.warm,
-                      }}
-                    >
-                      Hydratation {entry.adherence_hydratation ? '✅' : '⚠️'}
-                    </span>
-                    <span
-                      style={{
-                        color: entry.adherence_respiration ? colors.sage : colors.gray.warm,
-                      }}
-                    >
-                      Respiration {entry.adherence_respiration ? '✅' : '⚠️'}
-                    </span>
-                    <span
-                      style={{
-                        color: entry.adherence_mouvement ? colors.sage : colors.gray.warm,
-                      }}
-                    >
-                      Mouvement {entry.adherence_mouvement ? '✅' : '⚠️'}
-                    </span>
-                    <span
-                      style={{
-                        color: entry.adherence_plantes ? colors.sage : colors.gray.warm,
-                      }}
-                    >
-                      Plantes {entry.adherence_plantes ? '✅' : '⚠️'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          ) : (
-            <p style={{ color: colors.gray.warm }}>Aucune entrée récente</p>
-          )}
-        </div>
-
-        {/* Plan actif */}
-        {patient.plan ? (
-          <div
-            className="rounded-2xl p-6 shadow-sm"
-            style={{
-              backgroundColor: colors.sand,
-              borderTop: `4px solid`,
-              borderImage: colors.gradientTealAubergine,
-              borderImageSlice: 1,
-            }}
-          >
-            <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-              💊 Plan de compléments
-            </h2>
-            <p className="text-lg font-semibold mb-1" style={{ color: colors.gray.charcoal }}>
-              {latestPlanVersion?.title || 'Plan personnalisé'}
-            </p>
-            <p className="text-sm" style={{ color: colors.gray.warm }}>
-              {latestPlanVersion?.sections
-                ? `${latestPlanVersion.sections.length} section(s) au total`
-                : 'Sections à configurer'}
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
-            <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-              💊 Plan de compléments
-            </h2>
-            <p style={{ color: colors.gray.warm }}>Aucun plan actif</p>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #F5F5F5' }}>
+              <Link
+                href={`/patients/${params.id}/journal`}
+                style={{ fontSize: '14px', fontWeight: 600, color: colors.teal.main, textDecoration: 'none' }}
+              >
+                Voir le journal complet →
+              </Link>
+            </div>
           </div>
         )}
 
-        {/* Détails patient */}
-        <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
-          <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-            🧾 Dossier complet
-          </h2>
-          <PatientTabs patient={patient} />
-        </div>
+        {activePlan ? (
+          <div style={{ ...styles.card.base, position: 'relative' }}>
+            <div style={styles.signatureBar} />
+            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Plan de compléments actif</h2>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ fontSize: '16px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '8px' }}>
+                {activePlan.plan_name || 'Plan personnalisé'}
+              </p>
+              {activePlan.start_date && (
+                <p style={{ fontSize: '13px', color: colors.gray.warm, marginBottom: '16px' }}>
+                  Du {new Date(activePlan.start_date).toLocaleDateString('fr-FR')}
+                  {activePlan.end_date && ` au ${new Date(activePlan.end_date).toLocaleDateString('fr-FR')}`}
+                </p>
+              )}
+
+              {activePlan.supplement_items && activePlan.supplement_items.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  {activePlan.supplement_items.slice(0, 3).map((item: any) => (
+                    <div key={item.id} style={{ fontSize: '14px', marginBottom: '8px', display: 'flex', gap: '8px' }}>
+                      <span style={{ opacity: 0.6 }}>•</span>
+                      <span style={{ color: colors.gray.charcoal }}>
+                        <strong>{item.name}</strong> - {item.frequency}
+                      </span>
+                    </div>
+                  ))}
+                  {activePlan.supplement_items.length > 3 && (
+                    <p style={{ fontSize: '13px', fontStyle: 'italic', color: colors.gray.warm }}>
+                      + {activePlan.supplement_items.length - 3} autres compléments
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <Link
+                href={`/patients/${params.id}/plans`}
+                style={{ fontSize: '14px', fontWeight: 600, color: colors.teal.main, textDecoration: 'none' }}
+              >
+                Voir le plan complet →
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div style={styles.card.base}>
+            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Plan de compléments</h2>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ color: colors.gray.warm, marginBottom: '16px' }}>Aucun plan actif</p>
+              <button style={styles.button.primary}>Créer un plan</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
