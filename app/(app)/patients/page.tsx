@@ -7,7 +7,7 @@ import { styles } from '@/lib/styles'
 import { supabase } from '@/lib/supabase'
 
 export default function PatientsPage() {
-  const [patients, setPatients] = useState([])
+  const [patients, setPatients] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
