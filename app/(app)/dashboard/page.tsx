@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
+import { styles } from '@/lib/styles'
 import { supabase } from '@/lib/supabase'
 import type { Consultation, Patient } from '@/lib/types'
 
@@ -14,7 +15,6 @@ type RecentActivityItem = {
   type: 'journal' | 'message' | 'circular'
   patient: string
   time: string
-  icon: string
 }
 
 export default function DashboardPage() {
@@ -38,7 +38,6 @@ export default function DashboardPage() {
         return
       }
 
-      // Patients
       const { data: patients } = await supabase
         .from('patients')
         .select('id, is_premium, status')
@@ -65,10 +64,9 @@ export default function DashboardPage() {
       const weekEnd = new Date()
       weekEnd.setDate(now.getDate() + 7)
 
-      // Consultations à venir
       const { data: consultations } = await supabase
         .from('consultations')
-        .select('*, patients(name, is_premium)')
+        .select('*, patients(name, is_premium, status)')
         .in('patient_id', patientIds)
         .gte('date', now.toISOString())
         .order('date', { ascending: true })
@@ -81,7 +79,6 @@ export default function DashboardPage() {
         .gte('date', now.toISOString())
         .lte('date', weekEnd.toISOString())
 
-      // Messages non lus
       const { data: messages } = await supabase
         .from('messages')
         .select('id')
@@ -98,11 +95,10 @@ export default function DashboardPage() {
 
       setUpcomingAppointments(consultations || [])
 
-      // Activité récente simulée (à adapter selon vos besoins)
       setRecentActivity([
-        { type: 'journal', patient: 'Marie Dupont', time: '2h', icon: '📝' },
-        { type: 'message', patient: 'Julie Bernard', time: '5h', icon: '💬' },
-        { type: 'circular', patient: 'Laura Petit', time: '1j', icon: '💍' },
+        { type: 'journal', patient: 'Marie Dupont', time: '2h' },
+        { type: 'message', patient: 'Julie Bernard', time: '5h' },
+        { type: 'circular', patient: 'Laura Petit', time: '1j' },
       ])
     } catch (err) {
       console.error('Erreur chargement dashboard:', err)
@@ -113,174 +109,214 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
         <div className="text-center">
           <div
             className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
             style={{ borderColor: colors.teal.main }}
-          ></div>
-          <p className="text-gray-600">Chargement...</p>
+          />
+          <p style={{ color: colors.gray.warm }}>Chargement...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* En-tête */}
-      <div className="p-6 border-b">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: colors.teal.deep }}>
-          Tableau de bord
-        </h1>
-        <p className="text-gray-600">
-          {new Date().toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}{' '}
-          — aperçu rapide
-        </p>
+    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+      <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
+        <div className="max-w-7xl mx-auto">
+          <h1 style={styles.heading.h1}>Tableau de bord</h1>
+          <p style={{ color: colors.gray.warm, marginTop: '8px' }}>
+            {new Date().toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })}{' '}
+            — aperçu rapide
+          </p>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <div
-            className="rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
-            style={{ backgroundColor: colors.sand }}
+            className="relative p-6 transition-all"
+            style={{
+              ...styles.card.base,
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              Object.assign(e.currentTarget.style, styles.card.hover)
+            }}
+            onMouseLeave={(e) => {
+              Object.assign(e.currentTarget.style, styles.card.base)
+            }}
           >
-            <div className="text-4xl font-bold mb-2" style={{ color: colors.teal.main }}>
+            <div style={styles.signatureBar} />
+            <div style={{ fontSize: '36px', fontWeight: 700, color: colors.teal.main, marginBottom: '8px' }}>
               {stats.total}
             </div>
-            <div className="text-sm" style={{ color: colors.gray.charcoal }}>
+            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
               Patients actifs
             </div>
           </div>
 
           <div
-            className="rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
-            style={{ backgroundColor: colors.aubergine.light }}
+            className="relative p-6 transition-all"
+            style={{
+              ...styles.card.base,
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              Object.assign(e.currentTarget.style, styles.card.hover)
+            }}
+            onMouseLeave={(e) => {
+              Object.assign(e.currentTarget.style, styles.card.base)
+            }}
           >
+            <div style={styles.signatureBar} />
             <div
-              className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold rounded-bl-lg"
-              style={{ backgroundColor: colors.aubergine.main, color: 'white' }}
+              style={{
+                fontSize: '36px',
+                fontWeight: 700,
+                background: `linear-gradient(135deg, ${colors.teal.main} 0%, ${colors.aubergine.main} 100%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                marginBottom: '8px',
+              }}
             >
-              ✨ Premium
-            </div>
-            <div className="text-4xl font-bold mb-2" style={{ color: colors.aubergine.main }}>
               {stats.premium}
             </div>
-            <div className="text-sm" style={{ color: colors.gray.charcoal }}>
+            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
               Patients Premium
             </div>
           </div>
 
           <div
-            className="rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
-            style={{ backgroundColor: colors.sand }}
+            className="relative p-6 transition-all"
+            style={{
+              ...styles.card.base,
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              Object.assign(e.currentTarget.style, styles.card.hover)
+            }}
+            onMouseLeave={(e) => {
+              Object.assign(e.currentTarget.style, styles.card.base)
+            }}
           >
-            <div className="text-4xl font-bold mb-2" style={{ color: colors.teal.main }}>
+            <div style={styles.signatureBar} />
+            <div style={{ fontSize: '36px', fontWeight: 700, color: colors.teal.main, marginBottom: '8px' }}>
               {stats.appointments}
             </div>
-            <div className="text-sm" style={{ color: colors.gray.charcoal }}>
+            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
               RDV cette semaine
             </div>
           </div>
 
           <div
-            className="rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
-            style={{ backgroundColor: colors.sand }}
+            className="relative p-6 transition-all"
+            style={{
+              ...styles.card.base,
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              Object.assign(e.currentTarget.style, styles.card.hover)
+            }}
+            onMouseLeave={(e) => {
+              Object.assign(e.currentTarget.style, styles.card.base)
+            }}
           >
-            <div className="text-4xl font-bold mb-2" style={{ color: colors.gold }}>
+            <div style={styles.signatureBar} />
+            <div style={{ fontSize: '36px', fontWeight: 700, color: colors.gold, marginBottom: '8px' }}>
               {stats.messages}
             </div>
-            <div className="text-sm" style={{ color: colors.gray.charcoal }}>
+            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
               Nouveaux messages
             </div>
           </div>
         </div>
 
-        {/* Prochaines consultations */}
-        <div
-          className="rounded-2xl p-6 shadow-sm"
-          style={{
-            backgroundColor: colors.sand,
-            borderTop: `4px solid`,
-            borderImage: colors.gradientTealAubergine,
-            borderImageSlice: 1,
-          }}
-        >
-          <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-            📅 Prochaines consultations
-          </h2>
+        <div style={{ ...styles.card.base, position: 'relative' }}>
+          <div style={styles.signatureBar} />
+          <div style={{ padding: '24px', borderBottom: '1px solid #E5E5E5' }}>
+            <h2 style={styles.heading.h3}>Prochaines consultations</h2>
+          </div>
 
           {upcomingAppointments.length > 0 ? (
-            <div className="space-y-3">
-              {upcomingAppointments.map((appt: any) => (
+            <div>
+              {upcomingAppointments.map((appt) => (
                 <div
                   key={appt.id}
-                  className="bg-white rounded-lg p-4 border-l-4 hover:shadow-md transition-shadow"
-                  style={{ borderColor: colors.teal.main }}
+                  style={{
+                    padding: '20px 24px',
+                    borderBottom: '1px solid #F5F5F5',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                  }}
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold" style={{ color: colors.gray.charcoal }}>
-                          {new Date(appt.date).toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                          })}{' '}
-                          •{' '}
-                          {new Date(appt.date).toLocaleTimeString('fr-FR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        {appt.patients?.is_premium && (
-                          <span
-                            className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                            style={{
-                              backgroundColor: colors.aubergine.light,
-                              color: colors.aubergine.main,
-                            }}
-                          >
-                            ✨ Premium
-                          </span>
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div style={{ fontSize: '13px', color: colors.gray.warm, marginBottom: '6px' }}>
+                        {new Date(appt.date).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'long',
+                        })}{' '}
+                        •{' '}
+                        {new Date(appt.date).toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
+                      <div style={{ fontWeight: 600, color: colors.gray.charcoal, fontSize: '15px' }}>
+                        {appt.patients?.name || 'Non renseigné'}
+                      </div>
+                      <div style={{ fontSize: '13px', color: colors.gray.warm, marginTop: '4px' }}>
+                        {appt.notes || 'Consultation de suivi'}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-12">
+                      <div>
+                        {appt.patients?.is_premium || appt.patients?.status === 'premium' ? (
+                          <span style={styles.badgePremium}>Premium</span>
+                        ) : (
+                          <span style={styles.badgeStandard}>Standard</span>
                         )}
                       </div>
-                      <p className="font-semibold mb-1">👤 {appt.patients?.name}</p>
-                      <p className="text-sm" style={{ color: colors.gray.warm }}>
-                        {appt.notes || 'Consultation de suivi'}
-                      </p>
+                      <Link
+                        href={`/consultations/${appt.id}`}
+                        style={{
+                          ...styles.button.primary,
+                          textDecoration: 'none',
+                          display: 'inline-block',
+                        }}
+                      >
+                        Démarrer
+                      </Link>
                     </div>
-                    <Link
-                      href={`/consultations/${appt.id}`}
-                      className="px-4 py-2 rounded-lg font-semibold text-white hover:shadow-md transition-all"
-                      style={{ backgroundColor: colors.gold }}
-                    >
-                      ▶ Démarrer
-                    </Link>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p style={{ color: colors.gray.warm }}>Aucune consultation programmée</p>
+            <div style={{ padding: '24px', color: colors.gray.warm }}>Aucune consultation programmée</div>
           )}
         </div>
 
-        {/* Activité récente */}
-        <div className="rounded-2xl p-6 shadow-sm" style={{ backgroundColor: colors.sand }}>
-          <h2 className="text-xl font-bold mb-4" style={{ color: colors.teal.deep }}>
-            🔔 Activité récente
-          </h2>
-
-          <div className="space-y-2">
+        <div style={styles.card.base}>
+          <div style={{ padding: '24px', borderBottom: '1px solid #E5E5E5' }}>
+            <h2 style={styles.heading.h3}>Activité récente</h2>
+          </div>
+          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center gap-3 text-sm">
-                <span className="text-2xl">{activity.icon}</span>
-                <span style={{ color: colors.gray.charcoal }}>
-                  <strong>{activity.patient}</strong> a rempli son journal
+              <div key={index} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '13px' }}>
+                <span style={{ fontWeight: 600, color: colors.gray.charcoal }}>{activity.patient}</span>
+                <span style={{ color: colors.gray.warm }}>
+                  {activity.type === 'journal' && 'a rempli son journal'}
+                  {activity.type === 'message' && 'a envoyé un message'}
+                  {activity.type === 'circular' && 'a complété son circular'}
                 </span>
                 <span style={{ color: colors.gray.warm }}>(il y a {activity.time})</span>
               </div>
