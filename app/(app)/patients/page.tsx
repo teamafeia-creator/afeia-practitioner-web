@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
 import { styles } from '@/lib/styles'
+import { supabase } from '@/lib/supabase'
 
 export default function PatientsPage() {
-  const supabase = createClientComponentClient()
   const [patients, setPatients] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')

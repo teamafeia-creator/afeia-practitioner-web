@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { colors } from '@/lib/colors'
 import { styles } from '@/lib/styles'
+import { supabase } from '@/lib/supabase'
 
 export default function DashboardPage() {
-  const supabase = createClientComponentClient()
   const [stats, setStats] = useState({ total: 0, premium: 0, appointments: 0, messages: 0 })
   const [upcomingAppointments, setUpcomingAppointments] = useState([])
   const [loading, setLoading] = useState(true)
