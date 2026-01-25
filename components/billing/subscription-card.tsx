@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -18,6 +19,7 @@ interface SubscriptionCardProps {
 }
 
 export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: SubscriptionCardProps) {
+  const router = useRouter();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
@@ -127,7 +129,7 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
             ) : (
               <>
                 <Button
-                  onClick={() => setShowUpgradeModal(true)}
+                  onClick={() => router.push('/billing')}
                   variant="secondary"
                   className="flex-1"
                 >
