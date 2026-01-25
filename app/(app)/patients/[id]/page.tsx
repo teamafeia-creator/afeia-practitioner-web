@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
@@ -27,11 +27,7 @@ export default function PatientOverviewPage() {
   const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadPatientData()
-  }, [params.id])
-
-  const loadPatientData = async () => {
+  const loadPatientData = useCallback(async () => {
     try {
       // Patient
       const { data: patientData } = await supabase
@@ -82,7 +78,11 @@ export default function PatientOverviewPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id])
+
+  useEffect(() => {
+    loadPatientData()
+  }, [loadPatientData])
 
   if (loading) {
     return (
@@ -295,7 +295,7 @@ export default function PatientOverviewPage() {
                     </div>
                     {log.note_for_practitioner && (
                       <p style={{ fontSize: '13px', color: colors.gray.warm, fontStyle: 'italic', marginTop: '8px' }}>
-                        "{log.note_for_practitioner}"
+                        &quot;{log.note_for_practitioner}&quot;
                       </p>
                     )}
                   </div>
