@@ -100,7 +100,6 @@ export default function PatientOverviewPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
-      {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
         <div className="max-w-7xl mx-auto">
           <Link
@@ -139,9 +138,7 @@ export default function PatientOverviewPage() {
         </div>
       </div>
 
-      {/* Contenu */}
       <div className="max-w-7xl mx-auto p-6 space-y-5">
-        {/* Résumé */}
         <div style={styles.card.base}>
           <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
             <h2 style={styles.heading.h3}>Résumé patient</h2>
@@ -174,7 +171,6 @@ export default function PatientOverviewPage() {
           </div>
         </div>
 
-        {/* Prochaine consultation */}
         {nextConsultation ? (
           <div style={{ ...styles.card.base, position: 'relative' }}>
             <div style={styles.signatureBar} />
@@ -209,7 +205,6 @@ export default function PatientOverviewPage() {
           </div>
         )}
 
-        {/* Activité récente */}
         <div style={styles.card.base}>
           <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
             <h2 style={styles.heading.h3}>Activité récente</h2>
@@ -265,7 +260,6 @@ export default function PatientOverviewPage() {
           </div>
         </div>
 
-        {/* Plan actif */}
         {patient.plan ? (
           <div style={{ ...styles.card.base, position: 'relative' }}>
             <div style={styles.signatureBar} />
@@ -294,7 +288,6 @@ export default function PatientOverviewPage() {
           </div>
         )}
 
-        {/* Dossier complet */}
         <div style={styles.card.base}>
           <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
             <h2 style={styles.heading.h3}>Dossier complet</h2>
