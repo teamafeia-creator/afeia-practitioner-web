@@ -18,6 +18,7 @@ export type Patient = {
   email?: string | null;
   age?: number | null;
   city?: string | null;
+  phone?: string | null;
   consultation_reason?: string | null;
   status?: 'standard' | 'premium';
   is_premium: boolean;

@@ -352,6 +352,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     email: patient.email ?? '',
     age: patient.age ? String(patient.age) : '',
     city: patient.city ?? '',
+    phone: patient.phone ?? '',
     consultation_reason: patient.consultation_reason ?? ''
   });
   const [messages, setMessages] = useState<Message[]>(patient.messages ?? []);
@@ -427,6 +428,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       email: patientState.email ?? '',
       age: patientState.age ? String(patientState.age) : '',
       city: patientState.city ?? '',
+      phone: patientState.phone ?? '',
       consultation_reason: patientState.consultation_reason ?? ''
     }),
     [patientState]
@@ -438,6 +440,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       normalizeProfileValue(profileForm.email) !== normalizeProfileValue(initialProfile.email) ||
       normalizeProfileValue(profileForm.age) !== normalizeProfileValue(initialProfile.age) ||
       normalizeProfileValue(profileForm.city) !== normalizeProfileValue(initialProfile.city) ||
+      normalizeProfileValue(profileForm.phone) !== normalizeProfileValue(initialProfile.phone) ||
       normalizeProfileValue(profileForm.consultation_reason) !==
         normalizeProfileValue(initialProfile.consultation_reason)
     );
@@ -488,6 +491,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       email: patient.email ?? '',
       age: patient.age ? String(patient.age) : '',
       city: patient.city ?? '',
+      phone: patient.phone ?? '',
       consultation_reason: patient.consultation_reason ?? ''
     });
     setMessages(patient.messages ?? []);
@@ -552,6 +556,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
         email: profileForm.email.trim() || null,
         age: Number.isNaN(ageValue) ? null : ageValue,
         city: profileForm.city.trim() || null,
+        phone: profileForm.phone.trim() || null,
         consultation_reason: profileForm.consultation_reason.trim() || null
       };
       const updated = await updatePatient(patient.id, payload);
@@ -950,6 +955,14 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     }
                   />
                   <Input
+                    label="Téléphone"
+                    type="tel"
+                    value={profileForm.phone}
+                    onChange={(event) =>
+                      setProfileForm((prev) => ({ ...prev, phone: event.target.value }))
+                    }
+                  />
+                  <Input
                     label="Âge"
                     type="number"
                     min={0}
@@ -986,6 +999,10 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Email</p>
                     <p className="mt-1 text-sm">{renderValue(patientState.email)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-warmgray">Téléphone</p>
+                    <p className="mt-1 text-sm">{renderValue(patientState.phone)}</p>
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Âge</p>
@@ -1284,7 +1301,10 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     <Button variant="primary" onClick={handleUpgradePremium} loading={premiumLoading}>
                       Passer en Premium
                     </Button>
-                    <Button variant="secondary" onClick={() => setTab('Profil')}>
+                    <Button
+                      variant="secondary"
+                      onClick={() => router.push('/circular/en-savoir-plus')}
+                    >
                       En savoir plus
                     </Button>
                   </div>
@@ -1888,7 +1908,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
             <h2 className="text-lg font-semibold text-charcoal">Suppression définitive</h2>
             <p className="mt-2 text-sm text-warmgray">
-              Cette action supprimera définitivement le patient et toutes ses données associées.
+              Cette action est définitive. Le patient et toutes ses données associées seront supprimés.
             </p>
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               <Button

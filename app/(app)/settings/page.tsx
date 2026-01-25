@@ -18,13 +18,11 @@ export default function SettingsPage() {
     full_name: string;
     email: string;
     calendly_url: string | null;
-    default_consultation_reason: string | null;
   } | null>(null);
   const [formState, setFormState] = useState({
     full_name: '',
     email: '',
-    calendly_url: '',
-    default_consultation_reason: ''
+    calendly_url: ''
   });
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -49,15 +47,13 @@ export default function SettingsPage() {
         const safeProfile = {
           full_name: data?.full_name ?? '',
           email: data?.email ?? '',
-          calendly_url: data?.calendly_url ?? null,
-          default_consultation_reason: data?.default_consultation_reason ?? null
+          calendly_url: data?.calendly_url ?? null
         };
         setProfile(safeProfile);
         setFormState({
           full_name: safeProfile.full_name,
           email: safeProfile.email,
-          calendly_url: safeProfile.calendly_url ?? '',
-          default_consultation_reason: safeProfile.default_consultation_reason ?? ''
+          calendly_url: safeProfile.calendly_url ?? ''
         });
       } catch (error) {
         if (!active) return;
@@ -83,16 +79,13 @@ export default function SettingsPage() {
     profile &&
     (formState.full_name.trim() !== profile.full_name ||
       formState.email.trim() !== profile.email ||
-      formState.calendly_url.trim() !== (profile.calendly_url ?? '') ||
-      formState.default_consultation_reason.trim() !==
-        (profile.default_consultation_reason ?? ''));
+      formState.calendly_url.trim() !== (profile.calendly_url ?? ''));
 
   async function handleSaveProfile() {
     setToast(null);
     const trimmedName = formState.full_name.trim();
     const trimmedEmail = formState.email.trim();
     const trimmedCalendly = formState.calendly_url.trim();
-    const trimmedDefaultReason = formState.default_consultation_reason.trim();
 
     if (!trimmedName) {
       setToast({
@@ -120,20 +113,17 @@ export default function SettingsPage() {
         full_name: trimmedName,
         email: trimmedEmail || null,
         calendly_url: normalized,
-        default_consultation_reason: trimmedDefaultReason || null
       });
       const updatedProfile = {
         full_name: trimmedName,
         email: trimmedEmail,
-        calendly_url: normalized,
-        default_consultation_reason: trimmedDefaultReason || null
+        calendly_url: normalized
       };
       setProfile(updatedProfile);
       setFormState({
         full_name: updatedProfile.full_name,
         email: updatedProfile.email,
-        calendly_url: updatedProfile.calendly_url ?? '',
-        default_consultation_reason: updatedProfile.default_consultation_reason ?? ''
+        calendly_url: updatedProfile.calendly_url ?? ''
       });
       setIsEditing(false);
       setToast({
@@ -236,33 +226,6 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
-            <div>
-              {isEditing ? (
-                <Input
-                  label="Motif de consultation par défaut"
-                  placeholder="Ex. Troubles digestifs"
-                  value={formState.default_consultation_reason}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      default_consultation_reason: event.target.value
-                    }))
-                  }
-                  disabled={loadingProfile}
-                  hint="Cette valeur sera proposée lors de la création d’un nouveau patient."
-                />
-              ) : (
-                <div>
-                  <p className="text-xs font-medium text-warmgray">Motif de consultation par défaut</p>
-                  <div className="mt-2 text-sm text-marine">
-                    {profile?.default_consultation_reason || 'Non renseigné'}
-                  </div>
-                  <p className="mt-1 text-xs text-warmgray">
-                    Utilisé comme pré-remplissage lors de la création d’un patient.
-                  </p>
-                </div>
-              )}
-            </div>
             <div className="flex flex-wrap gap-2">
               {isEditing ? (
                 <>
@@ -281,8 +244,7 @@ export default function SettingsPage() {
                       setFormState({
                         full_name: profile.full_name,
                         email: profile.email,
-                        calendly_url: profile.calendly_url ?? '',
-                        default_consultation_reason: profile.default_consultation_reason ?? ''
+                        calendly_url: profile.calendly_url ?? ''
                       });
                       setIsEditing(false);
                     }}

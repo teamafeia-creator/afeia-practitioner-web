@@ -59,7 +59,7 @@ export default function BillingPage() {
         subtitle="Gérez votre abonnement et consultez vos factures"
       />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start">
         {/* Colonne principale */}
         <div className="space-y-6 min-w-0">
           <SubscriptionCard
