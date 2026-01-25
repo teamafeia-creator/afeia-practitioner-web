@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
@@ -12,6 +13,7 @@ import { normalizeCalendlyUrl } from '../../../lib/calendly';
 import { getPractitionerProfile, updatePractitionerProfile } from '../../../lib/queries';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<{
     full_name: string;
     email: string;
@@ -271,7 +273,7 @@ export default function SettingsPage() {
             <div className="rounded-2xl bg-white/80 p-3 text-sm text-marine ring-1 ring-black/5">
               Circular (sommeil, HRV, activité) activé pour les patients Premium.
             </div>
-            <Button variant="secondary" onClick={() => alert('💳 Gestion paiement (à brancher)')}>
+            <Button variant="secondary" onClick={() => router.push('/billing')}>
               Gérer la facturation
             </Button>
           </CardContent>

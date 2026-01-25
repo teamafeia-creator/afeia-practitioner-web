@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { SubscriptionFeatures } from '@/components/billing/subscription-features';
 import { BillingSkeleton } from '@/components/billing/billing-skeleton';
-import { getCurrentSubscription, getAvailablePlans, openCustomerPortal } from '@/lib/billing/api';
+import { getCurrentSubscription, getAvailablePlans } from '@/lib/billing/api';
 import type { Subscription, SubscriptionPlan, BillingCycle } from '@/lib/billing/types';
 import {
   formatPrice,
@@ -23,7 +23,6 @@ import { cn } from '@/lib/cn';
 export default function ManageSubscriptionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [selectedCycle, setSelectedCycle] = useState<BillingCycle>('monthly');
@@ -49,16 +48,6 @@ export default function ManageSubscriptionPage() {
 
     loadData();
   }, []);
-
-  const handleOpenPortal = async () => {
-    setActionLoading(true);
-    try {
-      await openCustomerPortal();
-    } catch (error) {
-      console.error('Error opening portal:', error);
-      setActionLoading(false);
-    }
-  };
 
   if (loading) {
     return <BillingSkeleton />;
@@ -174,8 +163,7 @@ export default function ManageSubscriptionPage() {
 
               {isPremium ? (
                 <Button
-                  onClick={handleOpenPortal}
-                  loading={actionLoading}
+                  onClick={() => router.push('/billing')}
                   variant="secondary"
                   className="w-full"
                 >
