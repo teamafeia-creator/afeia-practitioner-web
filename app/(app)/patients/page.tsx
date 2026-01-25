@@ -55,6 +55,7 @@ export default function PatientsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+      {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div>
@@ -87,6 +88,7 @@ export default function PatientsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
+        {/* Recherche */}
         <input
           type="text"
           placeholder="Rechercher par nom ou ville..."
@@ -104,6 +106,7 @@ export default function PatientsPage() {
           }}
         />
 
+        {/* Grille de cartes */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredPatients.map((patient: any) => (
             <Link
@@ -126,102 +129,88 @@ export default function PatientsPage() {
                   e.currentTarget.style.boxShadow = 'none'
                 }}
               >
+                {/* Barre signature */}
                 <div style={styles.signatureBar} />
 
-                <div
-                  style={{
-                    padding: '24px 24px 20px',
-                    borderBottom: '1px solid #F5F5F5',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                  }}
-                >
+                {/* Header */}
+                <div style={{
+                  padding: '24px 24px 20px',
+                  borderBottom: '1px solid #F5F5F5',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start'
+                }}>
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                    <div
-                      style={{
-                        ...styles.avatar.base,
-                        position: 'relative',
-                      }}
-                    >
-                      {patient.name?.charAt(0) || 'N'}
+                    {/* Avatar */}
+                    <div style={{
+                      ...styles.avatar.base,
+                      position: 'relative',
+                    }}>
+                      {patient.name?.charAt(0) || 'P'}
                       <div style={styles.statusIndicator} />
                     </div>
 
+                    {/* Info */}
                     <div>
-                      <h3 style={styles.heading.h3}>{patient.name || 'Non renseigné'}</h3>
-                      {(patient.age || patient.city) && (
-                        <div
-                          style={{
-                            fontSize: '13px',
-                            color: colors.gray.warm,
-                            marginTop: '3px',
-                            display: 'flex',
-                            gap: '6px',
-                            alignItems: 'center',
-                          }}
-                        >
-                          {patient.age && <span>{patient.age} ans</span>}
-                          {patient.age && patient.city && <span>•</span>}
-                          {patient.city && <span>{patient.city}</span>}
-                        </div>
-                      )}
-                      {!patient.age && !patient.city && (
-                        <div style={{ fontSize: '13px', color: colors.gray.warm, marginTop: '3px' }}>
-                          Non renseigné
-                        </div>
-                      )}
+                      <h3 style={styles.heading.h3}>
+                        {patient.name || 'Non renseigné'}
+                      </h3>
+                      <div style={{
+                        fontSize: '13px',
+                        color: colors.gray.warm,
+                        marginTop: '3px',
+                        display: 'flex',
+                        gap: '6px',
+                        alignItems: 'center'
+                      }}>
+                        <span>{patient.age ? `${patient.age} ans` : 'Non renseigné'}</span>
+                        <span>•</span>
+                        <span>{patient.city || 'Non renseigné'}</span>
+                      </div>
                     </div>
                   </div>
 
+                  {/* Badge */}
                   {(patient.is_premium || patient.status === 'premium') && (
-                    <div style={styles.badgePremium}>Premium</div>
+                    <div style={styles.badgePremium}>
+                      Premium
+                    </div>
                   )}
                 </div>
 
+                {/* Body */}
                 <div style={{ padding: '20px 24px' }}>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      gap: '12px',
-                      fontSize: '14px',
-                    }}
-                  >
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '12px',
+                    fontSize: '14px',
+                  }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ opacity: 0.6 }}>@</span>
-                      <span style={{ color: colors.gray.charcoal }}>
-                        {patient.email || 'Non renseigné'}
-                      </span>
+                      <span style={{ color: colors.gray.charcoal }}>{patient.email || 'Non renseigné'}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ opacity: 0.6 }}>•</span>
-                      <span style={{ color: colors.gray.charcoal }}>
-                        {patient.pathology || 'Non renseigné'}
-                      </span>
+                      <span style={{ color: colors.gray.charcoal }}>{patient.pathology || 'Non renseigné'}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ opacity: 0.6 }}>Tel</span>
-                      <span style={{ color: colors.gray.charcoal }}>
-                        {patient.phone || 'Non renseigné'}
-                      </span>
+                      <span style={{ color: colors.gray.charcoal }}>{patient.phone || 'Non renseigné'}</span>
                     </div>
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    padding: '16px 24px',
-                    borderTop: '1px solid #F5F5F5',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: colors.teal.main,
-                    }}
-                  >
+                {/* Footer */}
+                <div style={{
+                  padding: '16px 24px',
+                  borderTop: '1px solid #F5F5F5',
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: colors.teal.main
+                  }}>
                     Voir le dossier →
                   </span>
                 </div>

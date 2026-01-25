@@ -1,82 +1,75 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
 import { styles } from '@/lib/styles'
-import { supabase } from '@/lib/supabase'
+import { getPatientById } from '@/lib/queries'
+import { PatientTabs } from '@/components/patients/PatientTabs'
+import type { Consultation, JournalEntry, PatientWithDetails } from '@/lib/types'
 
-const tabs = [
-  { id: 'overview', label: "Vue d'ensemble", href: '' },
-  { id: 'profile', label: 'Profil', href: '/profile' },
-  { id: 'appointments', label: 'Rendez-vous', href: '/appointments' },
-  { id: 'anamnesis', label: 'Anamnèse', href: '/anamnesis' },
-  { id: 'circular', label: 'Circular', href: '/circular' },
-  { id: 'journal', label: 'Journal', href: '/journal' },
-  { id: 'notes', label: 'Notes', href: '/notes' },
-  { id: 'messages', label: 'Messages', href: '/messages' },
-]
+type RecentJournalEntry = Pick<JournalEntry, 'id' | 'date' | 'mood' | 'energy' | 'text'> &
+  Pick<JournalEntry, 'adherence_hydratation' | 'adherence_respiration' | 'adherence_mouvement' | 'adherence_plantes'>
+
+const getNextConsultation = (consultations: Consultation[]) => {
+  const now = new Date()
+  return consultations
+    .filter((consultation) => new Date(consultation.date) >= now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+}
 
 export default function PatientOverviewPage() {
   const params = useParams()
-  const [patient, setPatient] = useState<any>(null)
-  const [nextConsultation, setNextConsultation] = useState<any>(null)
-  const [activePlan, setActivePlan] = useState<any>(null)
-  const [recentActivity, setRecentActivity] = useState<any[]>([])
+
+  const [patient, setPatient] = useState<PatientWithDetails | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const loadPatientData = useCallback(async () => {
-    try {
-      const { data: patientData } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('id', params.id)
-        .single()
+  useEffect(() => {
+    let active = true
 
-      setPatient(patientData)
+    const loadPatient = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await getPatientById(params.id as string)
+        if (!active) return
+        if (!data) {
+          setError('Patient introuvable.')
+          setPatient(null)
+        } else {
+          setPatient(data)
+        }
+      } catch (err) {
+        if (!active) return
+        setError(err instanceof Error ? err.message : 'Impossible de charger le dossier patient.')
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
 
-      const { data: nextAppt } = await supabase
-        .from('consultations')
-        .select('*')
-        .eq('patient_id', params.id)
-        .gte('date', new Date().toISOString())
-        .order('date', { ascending: true })
-        .limit(1)
-        .maybeSingle()
+    loadPatient()
 
-      setNextConsultation(nextAppt)
-
-      const { data: plan } = await supabase
-        .from('plans')
-        .select(`
-          *,
-          supplement_items(*)
-        `)
-        .eq('patient_id', params.id)
-        .eq('is_active', true)
-        .maybeSingle()
-
-      setActivePlan(plan)
-
-      const { data: logs } = await supabase
-        .from('daily_logs')
-        .select('*')
-        .eq('patient_id', params.id)
-        .order('log_date', { ascending: false })
-        .limit(3)
-
-      setRecentActivity(logs || [])
-    } catch (err) {
-      console.error('Erreur chargement patient:', err)
-    } finally {
-      setLoading(false)
+    return () => {
+      active = false
     }
   }, [params.id])
 
-  useEffect(() => {
-    loadPatientData()
-  }, [loadPatientData])
+  const nextConsultation = useMemo(() => {
+    if (!patient?.consultations) return null
+    return getNextConsultation(patient.consultations)
+  }, [patient?.consultations])
+
+  const recentJournalEntries: RecentJournalEntry[] = useMemo(() => {
+    return (patient?.journal_entries ?? []).slice(0, 3)
+  }, [patient?.journal_entries])
+
+  const latestPlanVersion = useMemo(() => {
+    return patient?.plan?.versions?.[0]
+  }, [patient?.plan?.versions])
 
   if (loading) {
     return (
@@ -89,18 +82,25 @@ export default function PatientOverviewPage() {
     )
   }
 
-  if (!patient) {
+  if (error || !patient) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
-        <p>Patient introuvable</p>
+        <div className="text-center space-y-3">
+          <p style={{ color: colors.gray.warm }}>{error ?? 'Patient introuvable.'}</p>
+          <Link
+            href="/patients"
+            style={{ color: colors.teal.main, textDecoration: 'none', fontWeight: 600 }}
+          >
+            Retour à la liste
+          </Link>
+        </div>
       </div>
     )
   }
 
-  const hasMeta = patient.age || patient.city || patient.pathology
-
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+      {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
         <div className="max-w-7xl mx-auto">
           <Link
@@ -116,7 +116,7 @@ export default function PatientOverviewPage() {
               fontWeight: 500,
             }}
           >
-            ← Retour à la liste
+            Retour à la liste
           </Link>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
@@ -127,44 +127,21 @@ export default function PatientOverviewPage() {
                   <span style={styles.badgePremium}>Premium</span>
                 )}
               </div>
-              {hasMeta ? (
-                <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: colors.gray.warm }}>
-                  {patient.age && <span>{patient.age} ans</span>}
-                  {patient.city && <span>• {patient.city}</span>}
-                  {patient.pathology && <span>• {patient.pathology}</span>}
-                </div>
-              ) : (
-                <div style={{ fontSize: '14px', color: colors.gray.warm }}>Non renseigné</div>
-              )}
+              <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: colors.gray.warm }}>
+                <span>{patient.age ? `${patient.age} ans` : 'Non renseigné'}</span>
+                <span>•</span>
+                <span>{patient.city || 'Non renseigné'}</span>
+                <span>•</span>
+                <span>{patient.consultation_reason || 'Non renseigné'}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', overflowX: 'auto' }}>
-        <div className="max-w-7xl mx-auto flex" style={{ gap: '32px', padding: '0 32px' }}>
-          {tabs.map((tab) => (
-            <Link
-              key={tab.id}
-              href={`/patients/${params.id}${tab.href}`}
-              style={{
-                padding: '16px 0',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: tab.id === 'overview' ? colors.teal.main : colors.gray.warm,
-                textDecoration: 'none',
-                borderBottom: tab.id === 'overview' ? `2px solid ${colors.teal.main}` : '2px solid transparent',
-                whiteSpace: 'nowrap',
-                transition: 'color 0.2s ease',
-              }}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-
+      {/* Contenu */}
       <div className="max-w-7xl mx-auto p-6 space-y-5">
+        {/* Résumé */}
         <div style={styles.card.base}>
           <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
             <h2 style={styles.heading.h3}>Résumé patient</h2>
@@ -177,17 +154,15 @@ export default function PatientOverviewPage() {
               </p>
             </div>
             <div>
-              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Téléphone</p>
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Ville</p>
               <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
-                {patient.phone || 'Non renseigné'}
+                {patient.city || 'Non renseigné'}
               </p>
             </div>
             <div>
-              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Date de naissance</p>
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Âge</p>
               <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
-                {patient.date_of_birth
-                  ? new Date(patient.date_of_birth).toLocaleDateString('fr-FR')
-                  : 'Non renseignée'}
+                {patient.age ? `${patient.age} ans` : 'Non renseigné'}
               </p>
             </div>
             <div>
@@ -197,16 +172,9 @@ export default function PatientOverviewPage() {
               </p>
             </div>
           </div>
-          <div style={{ padding: '16px 24px', borderTop: '1px solid #F5F5F5' }}>
-            <Link
-              href={`/patients/${params.id}/profile`}
-              style={{ fontSize: '14px', fontWeight: 600, color: colors.teal.main, textDecoration: 'none' }}
-            >
-              Voir le profil complet →
-            </Link>
-          </div>
         </div>
 
+        {/* Prochaine consultation */}
         {nextConsultation ? (
           <div style={{ ...styles.card.base, position: 'relative' }}>
             <div style={styles.signatureBar} />
@@ -219,28 +187,15 @@ export default function PatientOverviewPage() {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
-                  year: 'numeric',
-                })}{' '}
-                {new Date(nextConsultation.date).toLocaleTimeString('fr-FR', {
+                  year: 'numeric'
+                })} à {new Date(nextConsultation.date).toLocaleTimeString('fr-FR', {
                   hour: '2-digit',
-                  minute: '2-digit',
+                  minute: '2-digit'
                 })}
               </p>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button style={styles.button.secondary}>Modifier</button>
-                <Link
-                  href={`/patients/${params.id}/appointments`}
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: colors.teal.main,
-                    textDecoration: 'none',
-                    alignSelf: 'center',
-                  }}
-                >
-                  Voir tous les rendez-vous →
-                </Link>
-              </div>
+              {nextConsultation.notes && (
+                <p style={{ fontSize: '13px', color: colors.gray.warm }}>{nextConsultation.notes}</p>
+              )}
             </div>
           </div>
         ) : (
@@ -249,109 +204,83 @@ export default function PatientOverviewPage() {
               <h2 style={styles.heading.h3}>Rendez-vous</h2>
             </div>
             <div style={{ padding: '24px' }}>
-              <p style={{ color: colors.gray.warm, marginBottom: '16px' }}>Aucun rendez-vous programmé</p>
-              <button style={styles.button.primary}>Programmer un rendez-vous</button>
+              <p style={{ color: colors.gray.warm }}>Aucun rendez-vous programmé</p>
             </div>
           </div>
         )}
 
-        {recentActivity.length > 0 && (
-          <div style={styles.card.base}>
-            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
-              <h2 style={styles.heading.h3}>Activité récente</h2>
-            </div>
-            <div style={{ padding: '24px' }}>
+        {/* Activité récente */}
+        <div style={styles.card.base}>
+          <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+            <h2 style={styles.heading.h3}>Activité récente</h2>
+          </div>
+          <div style={{ padding: '24px' }}>
+            {recentJournalEntries.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {recentActivity.map((log: any) => (
-                  <div
-                    key={log.id}
-                    style={{
-                      padding: '16px',
-                      background: '#FAFAFA',
-                      borderRadius: '4px',
-                    }}
-                  >
+                {recentJournalEntries.map((entry) => (
+                  <div key={entry.id} style={{
+                    padding: '16px',
+                    background: '#FAFAFA',
+                    borderRadius: '4px'
+                  }}>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '8px' }}>
-                      {new Date(log.log_date).toLocaleDateString('fr-FR', {
+                      {new Date(entry.date).toLocaleDateString('fr-FR', {
                         day: 'numeric',
-                        month: 'long',
+                        month: 'long'
                       })}
                     </div>
-                    <div style={{ display: 'flex', gap: '16px', fontSize: '13px' }}>
-                      <span style={{ color: log.good_nutrition ? colors.sage : colors.gray.warm }}>
-                        Nutrition {log.good_nutrition ? 'OK' : 'Non'}
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '13px', flexWrap: 'wrap' }}>
+                      <span style={{ color: colors.gray.warm }}>
+                        Humeur {entry.mood || 'Non renseigné'}
                       </span>
-                      <span style={{ color: log.good_sleep ? colors.sage : colors.gray.warm }}>
-                        Sommeil {log.good_sleep ? 'OK' : 'Non'}
-                      </span>
-                      <span style={{ color: log.good_mood ? colors.sage : colors.gray.warm }}>
-                        Humeur {log.good_mood ? 'OK' : 'Non'}
-                      </span>
-                      <span style={{ color: log.supplements_taken ? colors.sage : colors.gray.warm }}>
-                        Compléments {log.supplements_taken ? 'OK' : 'Non'}
+                      <span style={{ color: colors.gray.warm }}>
+                        Énergie {entry.energy || 'Non renseigné'}
                       </span>
                     </div>
-                    {log.note_for_practitioner && (
-                      <p style={{ fontSize: '13px', color: colors.gray.warm, fontStyle: 'italic', marginTop: '8px' }}>
-                        &quot;{log.note_for_practitioner}&quot;
+                    {entry.text && (
+                      <p style={{ fontSize: '13px', color: colors.gray.warm, marginTop: '8px' }}>
+                        {entry.text}
                       </p>
                     )}
+                    <div style={{ display: 'flex', gap: '12px', fontSize: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
+                      <span style={{ color: entry.adherence_hydratation ? colors.sage : colors.gray.warm }}>
+                        Hydratation {entry.adherence_hydratation ? 'Oui' : 'Non'}
+                      </span>
+                      <span style={{ color: entry.adherence_respiration ? colors.sage : colors.gray.warm }}>
+                        Respiration {entry.adherence_respiration ? 'Oui' : 'Non'}
+                      </span>
+                      <span style={{ color: entry.adherence_mouvement ? colors.sage : colors.gray.warm }}>
+                        Mouvement {entry.adherence_mouvement ? 'Oui' : 'Non'}
+                      </span>
+                      <span style={{ color: entry.adherence_plantes ? colors.sage : colors.gray.warm }}>
+                        Plantes {entry.adherence_plantes ? 'Oui' : 'Non'}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-            <div style={{ padding: '16px 24px', borderTop: '1px solid #F5F5F5' }}>
-              <Link
-                href={`/patients/${params.id}/journal`}
-                style={{ fontSize: '14px', fontWeight: 600, color: colors.teal.main, textDecoration: 'none' }}
-              >
-                Voir le journal complet →
-              </Link>
-            </div>
+            ) : (
+              <p style={{ color: colors.gray.warm }}>Aucune entrée récente</p>
+            )}
           </div>
-        )}
+        </div>
 
-        {activePlan ? (
+        {/* Plan actif */}
+        {patient.plan ? (
           <div style={{ ...styles.card.base, position: 'relative' }}>
             <div style={styles.signatureBar} />
             <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
-              <h2 style={styles.heading.h3}>Plan de compléments actif</h2>
+              <h2 style={styles.heading.h3}>Plan de compléments</h2>
             </div>
             <div style={{ padding: '24px' }}>
               <p style={{ fontSize: '16px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '8px' }}>
-                {activePlan.plan_name || 'Plan personnalisé'}
+                {latestPlanVersion?.title || 'Non renseigné'}
               </p>
-              {activePlan.start_date && (
-                <p style={{ fontSize: '13px', color: colors.gray.warm, marginBottom: '16px' }}>
-                  Du {new Date(activePlan.start_date).toLocaleDateString('fr-FR')}
-                  {activePlan.end_date && ` au ${new Date(activePlan.end_date).toLocaleDateString('fr-FR')}`}
-                </p>
-              )}
-
-              {activePlan.supplement_items && activePlan.supplement_items.length > 0 && (
-                <div style={{ marginBottom: '16px' }}>
-                  {activePlan.supplement_items.slice(0, 3).map((item: any) => (
-                    <div key={item.id} style={{ fontSize: '14px', marginBottom: '8px', display: 'flex', gap: '8px' }}>
-                      <span style={{ opacity: 0.6 }}>•</span>
-                      <span style={{ color: colors.gray.charcoal }}>
-                        <strong>{item.name}</strong> - {item.frequency}
-                      </span>
-                    </div>
-                  ))}
-                  {activePlan.supplement_items.length > 3 && (
-                    <p style={{ fontSize: '13px', fontStyle: 'italic', color: colors.gray.warm }}>
-                      + {activePlan.supplement_items.length - 3} autres compléments
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <Link
-                href={`/patients/${params.id}/plans`}
-                style={{ fontSize: '14px', fontWeight: 600, color: colors.teal.main, textDecoration: 'none' }}
-              >
-                Voir le plan complet →
-              </Link>
+              <p style={{ fontSize: '13px', color: colors.gray.warm }}>
+                {latestPlanVersion?.sections
+                  ? `${latestPlanVersion.sections.length} section(s) au total`
+                  : 'Sections à configurer'}
+              </p>
             </div>
           </div>
         ) : (
@@ -360,11 +289,20 @@ export default function PatientOverviewPage() {
               <h2 style={styles.heading.h3}>Plan de compléments</h2>
             </div>
             <div style={{ padding: '24px' }}>
-              <p style={{ color: colors.gray.warm, marginBottom: '16px' }}>Aucun plan actif</p>
-              <button style={styles.button.primary}>Créer un plan</button>
+              <p style={{ color: colors.gray.warm }}>Aucun plan actif</p>
             </div>
           </div>
         )}
+
+        {/* Dossier complet */}
+        <div style={styles.card.base}>
+          <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+            <h2 style={styles.heading.h3}>Dossier complet</h2>
+          </div>
+          <div style={{ padding: '24px' }}>
+            <PatientTabs patient={patient} />
+          </div>
+        </div>
       </div>
     </div>
   )
