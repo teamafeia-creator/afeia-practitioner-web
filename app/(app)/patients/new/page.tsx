@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '../../../../components/ui/Button';
@@ -11,19 +11,6 @@ import { createAnamneseInstance } from '../../../../services/anamnese';
 import { sendQuestionnaireCode } from '../../../../services/questionnaire';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const DATE_TIME_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit'
-});
-
-function formatDate(value?: string | null, withTime = true) {
-  if (!value) return '—';
-  const date = new Date(value);
-  return withTime ? DATE_TIME_FORMATTER.format(date) : DATE_TIME_FORMATTER.format(date);
-}
 
 export default function NewPatientPage() {
   const router = useRouter();
@@ -36,16 +23,10 @@ export default function NewPatientPage() {
   const [sendAnamnese, setSendAnamnese] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
-  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
-
-  const hasInvite = useMemo(() => Boolean(inviteSuccess), [inviteSuccess]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
-    setInviteSuccess(null);
-    setCodeExpiresAt(null);
 
     if (!name.trim()) {
       setError('Le nom du patient est obligatoire.');
@@ -80,17 +61,16 @@ export default function NewPatientPage() {
         isPremium,
         circularEnabled
       });
-      router.refresh();
 
       if (sendAnamnese) {
         await createAnamneseInstance(patientId);
-        const { sentToEmail, expiresAt } = await sendQuestionnaireCode(patientId);
-        setInviteSuccess(`Code envoyé à ${sentToEmail}.`);
-        setCodeExpiresAt(expiresAt);
+        await sendQuestionnaireCode(patientId);
       }
+
+      // Redirect to patient detail page with created flag
+      router.push(`/patients/${patientId}?created=1`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
-    } finally {
       setLoading(false);
     }
   }
@@ -188,22 +168,6 @@ export default function NewPatientPage() {
         </CardContent>
       </Card>
 
-      {hasInvite ? (
-        <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold">Code envoyé</h2>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-warmgray">{inviteSuccess}</p>
-            {codeExpiresAt ? (
-              <p className="text-xs text-warmgray">Expire à {formatDate(codeExpiresAt, true)}.</p>
-            ) : null}
-            <div className="rounded-xl border border-warmgray/20 bg-sable/40 p-3 text-sm text-marine">
-              Le code est valable 30 minutes et utilisable une seule fois.
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }

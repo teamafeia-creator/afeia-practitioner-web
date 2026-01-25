@@ -170,6 +170,21 @@ export type PractitionerNote = {
   updated_at: string;
 };
 
+export type PatientAnalysisResult = {
+  id: string;
+  patient_id: string;
+  practitioner_id: string;
+  file_name: string;
+  file_path: string;
+  file_type?: string | null;
+  file_size?: number | null;
+  description?: string | null;
+  analysis_date?: string | null;
+  uploaded_at: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type PatientWithUnreadCounts = Patient & {
   unreadMessages: number;
   unreadNotifications: number;
@@ -193,4 +208,5 @@ export type PatientWithDetails = Patient & {
   wearable_summaries?: WearableSummary[];
   wearable_insights?: WearableInsight[];
   patient_plans?: PatientPlan[];
+  analysis_results?: PatientAnalysisResult[];
 };
