@@ -18,6 +18,7 @@ export default function DashboardPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
 
+      // Stats
       const { data: patients } = await supabase
         .from('patients')
         .select('id, is_premium, status')
@@ -26,6 +27,7 @@ export default function DashboardPage() {
 
       const premiumCount = patients?.filter(p => p.is_premium || p.status === 'premium').length || 0
 
+      // Consultations
       const { data: consultations } = await supabase
         .from('consultations')
         .select('*, patients(name, is_premium, status)')
@@ -34,6 +36,7 @@ export default function DashboardPage() {
         .order('date', { ascending: true })
         .limit(5)
 
+      // Messages non lus
       const { data: messages } = await supabase
         .from('messages')
         .select('id')
@@ -44,7 +47,7 @@ export default function DashboardPage() {
         total: patients?.length || 0,
         premium: premiumCount,
         appointments: consultations?.length || 0,
-        messages: messages?.length || 0,
+        messages: messages?.length || 0
       })
 
       setUpcomingAppointments(consultations || [])
@@ -71,6 +74,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+      {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
         <div className="max-w-7xl mx-auto">
           <h1 style={styles.heading.h1}>Tableau de bord</h1>
@@ -78,14 +82,16 @@ export default function DashboardPage() {
             {new Date().toLocaleDateString('fr-FR', {
               weekday: 'long',
               day: 'numeric',
-              month: 'long',
+              month: 'long'
             })}
           </p>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <div className="grid grid-cols-4 gap-5">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Total Patients */}
           <div
             className="relative p-6 transition-all"
             style={{
@@ -108,6 +114,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Premium */}
           <div
             className="relative p-6 transition-all"
             style={{
@@ -122,17 +129,15 @@ export default function DashboardPage() {
             }}
           >
             <div style={styles.signatureBar} />
-            <div
-              style={{
-                fontSize: '36px',
-                fontWeight: 700,
-                background: `linear-gradient(135deg, ${colors.teal.main} 0%, ${colors.aubergine.main} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '8px',
-              }}
-            >
+            <div style={{
+              fontSize: '36px',
+              fontWeight: 700,
+              background: `linear-gradient(135deg, ${colors.teal.main} 0%, ${colors.aubergine.main} 100%)`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              marginBottom: '8px',
+            }}>
               {stats.premium}
             </div>
             <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
@@ -140,6 +145,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* RDV */}
           <div
             className="relative p-6 transition-all"
             style={{
@@ -162,6 +168,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Messages */}
           <div
             className="relative p-6 transition-all"
             style={{
@@ -185,6 +192,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Consultations à venir */}
         <div style={styles.card.base}>
           <div style={{ padding: '24px', borderBottom: '1px solid #E5E5E5' }}>
             <h2 style={styles.heading.h3}>Prochaines consultations</h2>
@@ -195,13 +203,10 @@ export default function DashboardPage() {
               {upcomingAppointments.map((appt: any, index: number) => (
                 <div
                   key={appt.id}
+                  className="grid gap-4 sm:grid-cols-[2fr_1fr_140px] sm:items-center"
                   style={{
                     padding: '20px 24px',
                     borderBottom: index < upcomingAppointments.length - 1 ? '1px solid #F5F5F5' : 'none',
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1fr 140px',
-                    alignItems: 'center',
-                    gap: '16px',
                     transition: 'background 0.15s ease',
                   }}
                   onMouseEnter={(e) => {
@@ -211,43 +216,41 @@ export default function DashboardPage() {
                     e.currentTarget.style.background = 'transparent'
                   }}
                 >
+                  {/* Patient */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div
-                      style={{
-                        ...styles.avatar.small,
-                        background: `linear-gradient(135deg, ${colors.teal.light} 0%, ${colors.teal.main} 100%)`,
-                      }}
-                    >
-                      {appt.patients?.name?.charAt(0) || 'N'}
+                    <div style={{
+                      ...styles.avatar.small,
+                      background: `linear-gradient(135deg, ${colors.teal.light} 0%, ${colors.teal.main} 100%)`,
+                    }}>
+                      {appt.patients?.name?.charAt(0) || 'P'}
                     </div>
                     <div>
                       <div style={{ fontWeight: 600, color: colors.gray.charcoal, fontSize: '14px' }}>
                         {appt.patients?.name || 'Non renseigné'}
                       </div>
-                      {appt.notes ? (
-                        <div style={{ fontSize: '12px', color: colors.gray.warm }}>{appt.notes}</div>
-                      ) : (
-                        <div style={{ fontSize: '12px', color: colors.gray.warm }}>Non renseigné</div>
-                      )}
+                      <div style={{ fontSize: '12px', color: colors.gray.warm }}>
+                        {appt.notes || 'Non renseigné'}
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    {appt.patients?.is_premium || appt.patients?.status === 'premium' ? (
+                  {/* Badge */}
+                  <div className="sm:text-center">
+                    {(appt.patients?.is_premium || appt.patients?.status === 'premium') ? (
                       <span style={styles.badgePremium}>Premium</span>
                     ) : (
                       <span style={styles.badgeStandard}>Standard</span>
                     )}
                   </div>
 
-                  <div style={{ fontSize: '13px', color: colors.gray.warm, textAlign: 'right' }}>
+                  {/* Date */}
+                  <div className="sm:text-right" style={{ fontSize: '13px', color: colors.gray.warm }}>
                     {new Date(appt.date).toLocaleDateString('fr-FR', {
                       day: 'numeric',
-                      month: 'long',
-                    })}{' '}
-                    {new Date(appt.date).toLocaleTimeString('fr-FR', {
+                      month: 'long'
+                    })} • {new Date(appt.date).toLocaleTimeString('fr-FR', {
                       hour: '2-digit',
-                      minute: '2-digit',
+                      minute: '2-digit'
                     })}
                   </div>
                 </div>

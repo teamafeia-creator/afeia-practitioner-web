@@ -143,7 +143,7 @@ function areJournalEntriesEqual(
 function EditBanner({ label }: { label: string }) {
   return (
     <div className="mt-4 rounded-xl border border-teal/30 bg-teal/10 px-3 py-2 text-xs font-medium text-teal">
-      ✏️ Mode édition activé — {label}
+      Mode édition activé — {label}
     </div>
   );
 }
@@ -174,6 +174,12 @@ const APPOINTMENT_STATUS_VARIANT: Record<Appointment['status'], 'info' | 'attent
   cancelled: 'attention',
   completed: 'success'
 };
+
+const MOOD_OPTIONS: { value: JournalEntry['mood']; label: string }[] = [
+  { value: '\u{1F642}', label: 'Satisfait' },
+  { value: '\u{1F610}', label: 'Neutre' },
+  { value: '\u{1F641}', label: 'Difficile' }
+];
 
 function renderAdherence(entry: JournalEntry) {
   return (
@@ -617,7 +623,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 </div>
                 {!profileEditing ? (
                   <Button variant="secondary" onClick={() => setProfileEditing(true)}>
-                    ✏️ Modifier le profil
+                    Modifier le profil
                   </Button>
                 ) : null}
               </div>
@@ -775,7 +781,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 setAppointmentModalOpen(true);
               }}
             >
-              📅 Planifier un rendez-vous
+              Planifier un rendez-vous
             </Button>
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
@@ -981,12 +987,11 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
             {!isPremium ? (
               <div className="relative overflow-hidden rounded-2xl border border-dashed border-teal/30 bg-teal/5 p-6 text-sm text-marine">
                 <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-teal shadow-soft">
-                  🔒 Premium
+                  Premium
                 </div>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-charcoal">
-                    <span className="text-lg">🌀</span>
-                    <p className="text-sm font-semibold">Fonctionnalité Circular verrouillée</p>
+                    <span className="text-sm font-semibold">Fonctionnalité Circular verrouillée</span>
                   </div>
                   <p>
                     Proposez l’offre Premium à votre client afin d’avoir accès à cette fonctionnalité.
@@ -1091,9 +1096,11 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                         className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                       >
                         <option value="">Sélectionner</option>
-                        <option value="🙂">🙂</option>
-                        <option value="😐">😐</option>
-                        <option value="🙁">🙁</option>
+                        {MOOD_OPTIONS.map((option) => (
+                          <option key={option.value ?? option.label} value={option.value ?? ''}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     ) : (
                       <p className="mt-2 text-sm">{renderValue(journalForm.mood)}</p>
