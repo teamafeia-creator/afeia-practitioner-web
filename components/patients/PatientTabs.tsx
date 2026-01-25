@@ -142,7 +142,7 @@ function areJournalEntriesEqual(
 
 function EditBanner({ label }: { label: string }) {
   return (
-    <div className="mt-4 rounded-xl border border-teal/30 bg-teal/10 px-3 py-2 text-xs font-medium text-teal">
+    <div className="mt-4 rounded border border-teal/30 bg-teal/10 px-3 py-2 text-xs font-medium text-teal">
       Mode édition activé — {label}
     </div>
   );
@@ -202,7 +202,7 @@ function renderAdherence(entry: JournalEntry) {
 
 function renderInsight(insight: WearableInsight) {
   return (
-    <div key={insight.id} className="rounded-2xl bg-sable p-4 ring-1 ring-black/5">
+    <div key={insight.id} className="rounded bg-sable p-4 ring-1 ring-black/5">
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wide text-warmgray">Insight {insight.type ?? ''}</span>
         <Badge variant={insight.level === 'attention' ? 'attention' : 'info'}>
@@ -583,7 +583,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-black/5">
+      <div className="rounded bg-white p-4 shadow-soft ring-1 ring-black/5">
         <h2 className="text-sm font-semibold text-charcoal">{activeMeta.title}</h2>
         <p className="text-xs text-warmgray">{activeMeta.description}</p>
       </div>
@@ -813,7 +813,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     ) : null}
                   </div>
                 ) : (
-                  <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+                  <div className="rounded bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
                     <p>À planifier.</p>
                     <Button
                       variant="secondary"
@@ -840,7 +840,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
               </CardHeader>
               <CardContent>
                 {sortedAppointments.length === 0 ? (
-                  <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+                  <div className="rounded bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
                     Aucun rendez-vous enregistré.
                   </div>
                 ) : (
@@ -848,7 +848,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     {sortedAppointments.map((appointment) => (
                       <div
                         key={appointment.id}
-                        className="rounded-2xl border border-black/5 bg-white p-4"
+                        className="rounded border border-black/5 bg-white p-4"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
@@ -903,7 +903,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     {section.questions.map((question) => (
-                      <div key={question.key} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+                      <div key={question.key} className="rounded bg-white p-4 ring-1 ring-black/5">
                         <p className="text-xs uppercase tracking-wide text-warmgray">{question.label}</p>
                         {anamnesisEditing ? (
                           question.type === 'choice' ? (
@@ -915,7 +915,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                                   [question.key]: event.target.value
                                 }))
                               }
-                              className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                              className="mt-2 w-full rounded border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                             >
                               <option value="">Sélectionner</option>
                               {question.options?.map((option) => (
@@ -985,8 +985,8 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardHeader>
           <CardContent>
             {!isPremium ? (
-              <div className="relative overflow-hidden rounded-2xl border border-dashed border-teal/30 bg-teal/5 p-6 text-sm text-marine">
-                <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-teal shadow-soft">
+              <div className="relative overflow-hidden rounded border border-dashed border-teal/30 bg-teal/5 p-6 text-sm text-marine">
+                <div className="absolute right-4 top-4 rounded bg-white px-3 py-1 text-xs font-semibold text-teal shadow-soft">
                   Premium
                 </div>
                 <div className="flex flex-col gap-3">
@@ -1007,7 +1007,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 </div>
               </div>
             ) : wearableSummaries.length === 0 ? (
-              <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+              <div className="rounded bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
                 Aucune donnée Circular disponible.
               </div>
             ) : (
@@ -1052,7 +1052,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     {wearableInsights.map((insight) => renderInsight(insight))}
                   </div>
                 ) : (
-                  <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+                  <div className="rounded bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
                     Aucun insight Circular disponible.
                   </div>
                 )}
@@ -1077,7 +1077,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white p-5 ring-1 ring-black/5">
+              <div className="rounded bg-white p-5 ring-1 ring-black/5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-charcoal">Dernière entrée</p>
                   <span className="text-xs text-warmgray">
@@ -1093,7 +1093,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                         onChange={(event) =>
                           setJournalForm((prev) => ({ ...prev, mood: event.target.value as JournalEntry['mood'] }))
                         }
-                        className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                        className="mt-2 w-full rounded border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                       >
                         <option value="">Sélectionner</option>
                         {MOOD_OPTIONS.map((option) => (
@@ -1117,7 +1117,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                             energy: event.target.value as JournalEntry['energy']
                           }))
                         }
-                        className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                        className="mt-2 w-full rounded border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                       >
                         <option value="">Sélectionner</option>
                         <option value="Bas">Bas</option>
@@ -1154,7 +1154,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                       { key: 'adherence_plantes', label: 'Plantes' }
                     ] as const
                   ).map((item) => (
-                    <div key={item.key} className="flex items-center justify-between rounded-xl bg-sable px-3 py-2">
+                    <div key={item.key} className="flex items-center justify-between rounded bg-sable px-3 py-2">
                       <span className="text-xs text-warmgray">{item.label}</span>
                       {journalEditing ? (
                         <select
@@ -1165,7 +1165,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                               [item.key]: event.target.value === 'Oui'
                             }))
                           }
-                          className="rounded-lg border border-warmgray/30 bg-white px-2 py-1 text-xs text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                          className="rounded border border-warmgray/30 bg-white px-2 py-1 text-xs text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                         >
                           <option value="Oui">Oui</option>
                           <option value="Non">Non</option>
@@ -1206,7 +1206,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
               <div className="space-y-3">
                 <p className="text-xs uppercase tracking-wide text-warmgray">Historique</p>
                 {journalEntries.length === 0 ? (
-                  <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+                  <div className="rounded bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
                     <p>Aucune entrée de journal.</p>
                     <Button
                       variant="secondary"
@@ -1222,7 +1222,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 ) : (
                   <div className="grid gap-3">
                     {journalEntries.map((entry) => (
-                      <div key={entry.id} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+                      <div key={entry.id} className="rounded bg-white p-4 ring-1 ring-black/5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
                           <div className="flex items-center gap-2 text-sm">
@@ -1258,7 +1258,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
             {noteEditing ? <EditBanner label="Enregistrez vos notes confidentielles." /> : null}
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+            <div className="rounded bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
               Notes privées : visibles uniquement par le naturopathe. Non partagées avec le patient.
             </div>
             {noteEditing ? (
@@ -1269,7 +1269,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 rows={6}
               />
             ) : (
-              <div className="rounded-2xl bg-white p-4 text-sm ring-1 ring-black/5 whitespace-pre-line">
+              <div className="rounded bg-white p-4 text-sm ring-1 ring-black/5 whitespace-pre-line">
                 {renderValue(noteContent)}
               </div>
             )}
@@ -1306,7 +1306,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardHeader>
           <CardContent className="space-y-4">
             {messages.length === 0 ? (
-              <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+              <div className="rounded bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
                 Aucun message pour le moment.
               </div>
             ) : (
@@ -1315,7 +1315,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   <div
                     key={message.id}
                     className={cn(
-                      'max-w-[90%] rounded-2xl px-4 py-2 text-sm ring-1 ring-black/5 sm:max-w-[78%]',
+                      'max-w-[90%] rounded px-4 py-2 text-sm ring-1 ring-black/5 sm:max-w-[78%]',
                       message.sender === 'patient'
                         ? 'bg-sable text-marine'
                         : 'ml-auto bg-teal text-white'
@@ -1356,7 +1356,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       )}
       {appointmentModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
+          <div className="w-full max-w-md rounded bg-white p-6 shadow-soft">
             <h2 className="text-lg font-semibold text-charcoal">Planifier un rendez-vous</h2>
             <p className="mt-2 text-sm text-warmgray">
               Définissez la date, l’heure et la durée estimée du rendez-vous.
