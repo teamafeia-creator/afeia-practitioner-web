@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/cn';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 
@@ -36,6 +36,16 @@ const FAQS = [
   }
 ];
 
+const actionBase =
+  'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/30 focus-visible:ring-offset-2 focus-visible:ring-offset-sable/40';
+
+const actionVariants = {
+  primary:
+    'bg-teal text-white shadow-[0_10px_26px_rgba(42,128,128,0.18)] hover:bg-teal-deep',
+  secondary:
+    'border border-teal/30 bg-white text-teal shadow-sm hover:border-teal/50 hover:bg-teal/5'
+};
+
 export default function CircularLearnMorePage() {
   return (
     <PageShell className="space-y-10">
@@ -57,12 +67,12 @@ export default function CircularLearnMorePage() {
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="primary">
-              <Link href="/billing/manage">Activer Circular</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="#comprendre-circular">Comprendre Circular</Link>
-            </Button>
+            <Link href="/billing/manage" className={cn(actionBase, actionVariants.primary)}>
+              Activer Circular
+            </Link>
+            <Link href="#comprendre-circular" className={cn(actionBase, actionVariants.secondary)}>
+              Comprendre Circular
+            </Link>
           </div>
         </div>
       </section>
