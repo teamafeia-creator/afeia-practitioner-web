@@ -7,6 +7,7 @@ import type {
   Plan, 
   PlanVersion, 
   PlanSection,
+  PatientPlan,
   JournalEntry, 
   Message, 
   WearableSummary, 
@@ -341,6 +342,12 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
     .eq('patient_id', id)
     .order('created_at', { ascending: false });
 
+  const { data: patientPlans } = await supabase
+    .from('patient_plans')
+    .select('*')
+    .eq('patient_id', id)
+    .order('version', { ascending: false });
+
   return {
     ...patient,
     anamnese: anamnese || undefined,
@@ -362,7 +369,8 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
     journal_entries: journal_entries || [],
     messages: messages || [],
     wearable_summaries: wearable_summaries || [],
-    wearable_insights: wearable_insights || []
+    wearable_insights: wearable_insights || [],
+    patient_plans: patientPlans || []
   };
 }
 
@@ -699,10 +707,9 @@ export async function deletePatient(patientId: string): Promise<void> {
   console.log('[patients] delete start', { patientId, practitionerId: userData.user.id });
   const { data, error } = await supabase
     .from('patients')
-    .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .delete()
     .eq('id', patientId)
     .eq('practitioner_id', userData.user.id)
-    .is('deleted_at', null)
     .select('id');
 
   if (error) {
@@ -714,6 +721,97 @@ export async function deletePatient(patientId: string): Promise<void> {
     throw new Error('Suppression impossible pour ce patient.');
   }
   console.log('[patients] delete success', { patientId });
+}
+
+export async function getPatientPlans(patientId: string): Promise<PatientPlan[]> {
+  const { data, error } = await supabase
+    .from('patient_plans')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('version', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching patient plans:', error);
+    throw new Error(describeSupabaseError(error));
+  }
+
+  return (data ?? []) as PatientPlan[];
+}
+
+export async function createPatientPlanVersion({
+  patientId,
+  version,
+  content
+}: {
+  patientId: string;
+  version: number;
+  content: Record<string, string>;
+}): Promise<PatientPlan> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    throw new Error('Veuillez vous reconnecter pour créer un plan.');
+  }
+
+  const { data, error } = await supabase
+    .from('patient_plans')
+    .insert({
+      patient_id: patientId,
+      practitioner_id: userData.user.id,
+      version,
+      status: 'draft',
+      content
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Error creating patient plan:', error);
+    throw new Error(describeSupabaseError(error));
+  }
+
+  return data as PatientPlan;
+}
+
+export async function updatePatientPlanContent({
+  planId,
+  content
+}: {
+  planId: string;
+  content: Record<string, string>;
+}): Promise<PatientPlan> {
+  const { data, error } = await supabase
+    .from('patient_plans')
+    .update({ content, updated_at: new Date().toISOString() })
+    .eq('id', planId)
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Error updating patient plan:', error);
+    throw new Error(describeSupabaseError(error));
+  }
+
+  return data as PatientPlan;
+}
+
+export async function sharePatientPlanVersion(planId: string): Promise<PatientPlan> {
+  const { data, error } = await supabase
+    .from('patient_plans')
+    .update({
+      status: 'shared',
+      shared_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', planId)
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Error sharing patient plan:', error);
+    throw new Error(describeSupabaseError(error));
+  }
+
+  return data as PatientPlan;
 }
 
 // ============================================
@@ -744,11 +842,13 @@ export async function getPractitionerProfile() {
 export async function updatePractitionerProfile({
   full_name,
   email,
-  calendly_url
+  calendly_url,
+  default_consultation_reason
 }: {
   full_name?: string | null;
   email?: string | null;
   calendly_url?: string | null;
+  default_consultation_reason?: string | null;
 }): Promise<void> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
@@ -770,6 +870,9 @@ export async function updatePractitionerProfile({
       ...(full_name !== undefined ? { full_name } : {}),
       ...(email !== undefined ? { email } : {}),
       ...(calendly_url !== undefined ? { calendly_url } : {}),
+      ...(default_consultation_reason !== undefined
+        ? { default_consultation_reason }
+        : {}),
       updated_at: new Date().toISOString()
     })
     .eq('id', userData.user.id)

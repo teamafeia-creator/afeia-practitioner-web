@@ -4,10 +4,49 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+type PatientPlan = {
+  id: string
+  version: number
+  status: string
+  content: Record<string, string> | null
+  shared_at?: string | null
+  created_at?: string | null
+}
+
+const PLAN_SECTIONS: Array<{ title: string; keys: Array<{ label: string; key: string }> }> = [
+  { title: 'Objectifs', keys: [{ label: 'Objectifs', key: 'objectifs' }] },
+  {
+    title: 'Alimentation',
+    keys: [
+      { label: 'Recommandations', key: 'alimentation_recommandations' },
+      { label: 'À éviter', key: 'alimentation_eviter' },
+      { label: 'Hydratation', key: 'alimentation_hydratation' }
+    ]
+  },
+  {
+    title: 'Plantes / phytothérapie',
+    keys: [
+      { label: 'Plantes', key: 'phytotherapie_plantes' },
+      { label: 'Posologie', key: 'phytotherapie_posologie' },
+      { label: 'Précautions', key: 'phytotherapie_precautions' }
+    ]
+  },
+  { title: 'Compléments', keys: [{ label: 'Compléments', key: 'complements' }] },
+  { title: 'Sommeil', keys: [{ label: 'Sommeil', key: 'sommeil' }] },
+  { title: 'Activité / exercices', keys: [{ label: 'Activité', key: 'activite' }] },
+  {
+    title: 'Gestion du stress',
+    keys: [{ label: 'Gestion du stress / respiration / méditation', key: 'gestion_stress' }]
+  },
+  { title: 'Suivi', keys: [{ label: 'Suivi', key: 'suivi' }] },
+  { title: 'Notes libres', keys: [{ label: 'Notes', key: 'notes_libres' }] }
+]
+
 export default function PatientHomePage() {
   const router = useRouter()
   const [patient, setPatient] = useState<any>(null)
   const [plan, setPlan] = useState<any>(null)
+  const [sharedPlans, setSharedPlans] = useState<PatientPlan[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -20,11 +59,28 @@ export default function PatientHomePage() {
         data: { user }
       } = await supabase.auth.getUser()
 
-      const { data: patientData } = await supabase
-        .from('patients')
-        .select('*, practitioners(*)')
-        .eq('auth_user_id', user!.id)
-        .single()
+      const { data: membership } = await supabase
+        .from('patient_memberships')
+        .select('patient_id')
+        .eq('patient_user_id', user!.id)
+        .maybeSingle()
+
+      let patientData = null
+      if (membership?.patient_id) {
+        const { data } = await supabase
+          .from('patients')
+          .select('*, practitioners(*)')
+          .eq('id', membership.patient_id)
+          .single()
+        patientData = data
+      } else {
+        const { data } = await supabase
+          .from('patients')
+          .select('*, practitioners(*)')
+          .eq('auth_user_id', user!.id)
+          .single()
+        patientData = data
+      }
 
       setPatient(patientData)
 
@@ -36,6 +92,16 @@ export default function PatientHomePage() {
         .maybeSingle()
 
       setPlan(planData)
+
+      if (patientData) {
+        const { data: sharedPlanData } = await supabase
+          .from('patient_plans')
+          .select('*')
+          .eq('patient_id', patientData.id)
+          .eq('status', 'shared')
+          .order('version', { ascending: false })
+        setSharedPlans((sharedPlanData ?? []) as PatientPlan[])
+      }
     } catch (err) {
       console.error(err)
     } finally {
@@ -49,6 +115,8 @@ export default function PatientHomePage() {
   }
 
   if (loading) return <div className="p-8">Chargement...</div>
+
+  const latestSharedPlan = sharedPlans[0]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -88,6 +156,52 @@ export default function PatientHomePage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {latestSharedPlan && (
+          <div className="bg-white rounded-xl p-6 shadow">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-bold">🌿 Plan de naturopathie</h2>
+                <p className="text-sm text-gray-600">
+                  Version v{latestSharedPlan.version}
+                </p>
+              </div>
+              <span className="inline-flex items-center rounded-full bg-green-50 text-green-700 text-xs px-2 py-1">
+                Partagé
+              </span>
+            </div>
+            <div className="mt-4 space-y-4">
+              {PLAN_SECTIONS.map((section) => {
+                const values = section.keys
+                  .map((field) => {
+                    const value = latestSharedPlan.content?.[field.key]?.trim()
+                    if (!value) return null
+                    return (
+                      <div key={field.key}>
+                        <p className="text-xs uppercase tracking-wide text-gray-500">{field.label}</p>
+                        <p className="text-sm text-gray-700 whitespace-pre-line">{value}</p>
+                      </div>
+                    )
+                  })
+                  .filter(Boolean)
+
+                if (values.length === 0) return null
+
+                return (
+                  <div key={section.title} className="space-y-2">
+                    <h3 className="text-sm font-semibold text-gray-800">{section.title}</h3>
+                    <div className="space-y-3">{values}</div>
+                  </div>
+                )
+              })}
+            </div>
+            {sharedPlans.length > 1 && (
+              <p className="mt-4 text-xs text-gray-500">
+                {sharedPlans.length} versions partagées disponibles.
+              </p>
+            )}
           </div>
         )}
 

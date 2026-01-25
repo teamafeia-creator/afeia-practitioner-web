@@ -59,9 +59,9 @@ export default function BillingPage() {
         subtitle="Gérez votre abonnement et consultez vos factures"
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         {/* Colonne principale */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 min-w-0">
           <SubscriptionCard
             subscription={subscription}
             plans={plans}
@@ -71,7 +71,7 @@ export default function BillingPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <BillingHistoryTable events={history} />
           <PaymentMethodCard paymentMethods={paymentMethods} />
         </div>

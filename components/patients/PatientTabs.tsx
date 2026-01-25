@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '../../lib/cn';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -14,9 +14,13 @@ import { Textarea } from '../ui/Textarea';
 import { Toast } from '../ui/Toast';
 import {
   createAppointment,
+  createPatientPlanVersion,
+  deletePatient,
   markMessagesAsRead,
   sendMessage,
+  sharePatientPlanVersion,
   updatePatient,
+  updatePatientPlanContent,
   upsertJournalEntry,
   upsertPatientAnamnesis,
   upsertPractitionerNote
@@ -26,6 +30,7 @@ import type {
   Appointment,
   JournalEntry,
   Message,
+  PatientPlan,
   PatientWithDetails,
   WearableInsight
 } from '../../lib/types';
@@ -37,6 +42,7 @@ const TABS = [
   'Circular',
   'Journal',
   'Notes consultation',
+  'Plan de naturopathie',
   'Messages'
 ] as const;
 
@@ -66,6 +72,10 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
   'Notes consultation': {
     title: 'Notes consultation',
     description: 'Notes internes réservées au praticien.'
+  },
+  'Plan de naturopathie': {
+    title: 'Plan de naturopathie',
+    description: 'Versions du plan partagé au patient.'
   },
   Messages: {
     title: 'Messages',
@@ -104,6 +114,103 @@ function renderAnswer(value?: string | null) {
   return renderValue(value);
 }
 
+const DEFAULT_PLAN_CONTENT = {
+  objectifs: '',
+  alimentation_recommandations: '',
+  alimentation_eviter: '',
+  alimentation_hydratation: '',
+  phytotherapie_plantes: '',
+  phytotherapie_posologie: '',
+  phytotherapie_precautions: '',
+  complements: '',
+  sommeil: '',
+  activite: '',
+  gestion_stress: '',
+  suivi: '',
+  notes_libres: ''
+};
+
+const PLAN_SECTIONS: Array<{
+  title: string;
+  description?: string;
+  fields: Array<{ key: keyof typeof DEFAULT_PLAN_CONTENT; label: string; placeholder?: string }>;
+}> = [
+  {
+    title: 'Objectifs',
+    fields: [{ key: 'objectifs', label: 'Objectifs', placeholder: 'Objectifs prioritaires du patient.' }]
+  },
+  {
+    title: 'Alimentation',
+    fields: [
+      {
+        key: 'alimentation_recommandations',
+        label: 'Recommandations',
+        placeholder: 'Aliments conseillés, rythme des repas, etc.'
+      },
+      {
+        key: 'alimentation_eviter',
+        label: 'À éviter',
+        placeholder: 'Aliments ou habitudes à limiter.'
+      },
+      {
+        key: 'alimentation_hydratation',
+        label: 'Hydratation',
+        placeholder: 'Objectif hydratation, conseils.'
+      }
+    ]
+  },
+  {
+    title: 'Plantes / phytothérapie',
+    fields: [
+      { key: 'phytotherapie_plantes', label: 'Plantes', placeholder: 'Plantes recommandées.' },
+      { key: 'phytotherapie_posologie', label: 'Posologie', placeholder: 'Dosage, durée.' },
+      { key: 'phytotherapie_precautions', label: 'Précautions', placeholder: 'Contre-indications, avertissements.' }
+    ]
+  },
+  {
+    title: 'Compléments',
+    fields: [
+      {
+        key: 'complements',
+        label: 'Compléments',
+        placeholder: 'Nom, dose, fréquence, durée.'
+      }
+    ]
+  },
+  {
+    title: 'Sommeil',
+    fields: [{ key: 'sommeil', label: 'Sommeil', placeholder: 'Routine, horaires, conseils.' }]
+  },
+  {
+    title: 'Activité / exercices',
+    fields: [{ key: 'activite', label: 'Activité', placeholder: 'Type, fréquence, intensité.' }]
+  },
+  {
+    title: 'Gestion du stress',
+    fields: [
+      {
+        key: 'gestion_stress',
+        label: 'Gestion du stress / respiration / méditation',
+        placeholder: 'Techniques recommandées.'
+      }
+    ]
+  },
+  {
+    title: 'Suivi',
+    fields: [
+      {
+        key: 'suivi',
+        label: 'Suivi',
+        placeholder: 'Indicateurs, prochain rendez-vous, notes.'
+      }
+    ]
+  },
+  {
+    title: 'Notes libres',
+    fields: [{ key: 'notes_libres', label: 'Notes libres', placeholder: 'Notes additionnelles.' }]
+  }
+];
+
 function getInitials(name?: string | null) {
   if (!name) return '👤';
   const parts = name.trim().split(' ').filter(Boolean);
@@ -119,6 +226,10 @@ function formatDateTimeLocal(value?: Date) {
 
 function normalizeProfileValue(value: string) {
   return value.trim();
+}
+
+function buildPlanContent(content?: Record<string, string> | null) {
+  return { ...DEFAULT_PLAN_CONTENT, ...(content ?? {}) };
 }
 
 function areRecordsEqual(
@@ -226,6 +337,7 @@ function renderInsight(insight: WearableInsight) {
 }
 
 export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
+  const router = useRouter();
   const [patientState, setPatientState] = useState<PatientWithDetails>(patient);
   const searchParams = useSearchParams();
   const initialTab = useMemo<Tab>(() => {
@@ -256,6 +368,16 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   const [noteEditing, setNoteEditing] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteContent, setNoteContent] = useState(patient.practitioner_note?.content ?? '');
+  const [plans, setPlans] = useState<PatientPlan[]>(patient.patient_plans ?? []);
+  const [activePlanId, setActivePlanId] = useState<string | null>(
+    patient.patient_plans?.[0]?.id ?? null
+  );
+  const [planForm, setPlanForm] = useState<Record<string, string>>(buildPlanContent(null));
+  const [planSaving, setPlanSaving] = useState(false);
+  const [planSharing, setPlanSharing] = useState(false);
+  const [planCreating, setPlanCreating] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [premiumLoading, setPremiumLoading] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>(patient.appointments ?? []);
   const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
@@ -289,6 +411,14 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   const initialNote = useMemo(
     () => patientState.practitioner_note?.content ?? '',
     [patientState.practitioner_note]
+  );
+  const activePlan = useMemo(
+    () => plans.find((plan) => plan.id === activePlanId) ?? plans[0] ?? null,
+    [activePlanId, plans]
+  );
+  const initialPlanContent = useMemo(
+    () => buildPlanContent(activePlan?.content ?? null),
+    [activePlan]
   );
 
   const initialProfile = useMemo(
@@ -325,6 +455,12 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     return noteContent.trim() !== initialNote.trim();
   }, [noteContent, initialNote]);
 
+  const isPlanDirty = useMemo(() => {
+    return !areRecordsEqual(planForm, initialPlanContent);
+  }, [planForm, initialPlanContent]);
+
+  const canEditPlan = activePlan?.status === 'draft';
+
   const sortedAppointments = useMemo(() => {
     return [...appointments].sort(
       (a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()
@@ -359,11 +495,17 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     setNoteContent(patient.practitioner_note?.content ?? '');
     setJournalForm(buildJournalForm(patient.journal_entries?.[0]));
     setAppointments(patient.appointments ?? []);
+    setPlans(patient.patient_plans ?? []);
+    setActivePlanId(patient.patient_plans?.[0]?.id ?? null);
     setProfileEditing(false);
     setAnamnesisEditing(false);
     setJournalEditing(false);
     setNoteEditing(false);
   }, [patient]);
+
+  useEffect(() => {
+    setPlanForm(initialPlanContent);
+  }, [initialPlanContent]);
 
   useEffect(() => {
     setTab(initialTab);
@@ -390,10 +532,21 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
 
   async function handleSaveProfile() {
     if (!isProfileDirty) return;
+    if (!profileForm.name.trim()) {
+      setToast({
+        title: 'Nom requis',
+        description: 'Le nom du patient est obligatoire.',
+        variant: 'error'
+      });
+      return;
+    }
     setProfileSaving(true);
     try {
       const parsedAge = profileForm.age.trim();
       const ageValue = parsedAge ? Number(parsedAge) : null;
+      if (ageValue !== null && Number.isFinite(ageValue) && ageValue < 0) {
+        throw new Error('Merci de renseigner un âge valide.');
+      }
       const payload = {
         name: profileForm.name.trim(),
         email: profileForm.email.trim() || null,
@@ -556,6 +709,108 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     }
   }
 
+  async function handleCreatePlan(basePlan?: PatientPlan | null) {
+    setPlanCreating(true);
+    try {
+      const nextVersion = Math.max(0, ...plans.map((planItem) => planItem.version)) + 1;
+      const content = buildPlanContent(basePlan?.content ?? null);
+      const created = await createPatientPlanVersion({
+        patientId: patient.id,
+        version: nextVersion,
+        content
+      });
+      setPlans((prev) => [created, ...prev]);
+      setActivePlanId(created.id);
+      setPlanForm(buildPlanContent(created.content ?? null));
+      setToast({
+        title: 'Plan créé',
+        description: `Version v${created.version} prête à être complétée.`,
+        variant: 'success'
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur de création',
+        description: error instanceof Error ? error.message : 'Impossible de créer le plan.',
+        variant: 'error'
+      });
+    } finally {
+      setPlanCreating(false);
+    }
+  }
+
+  async function handleSavePlan() {
+    if (!activePlan) return;
+    if (!canEditPlan) {
+      setToast({
+        title: 'Plan partagé',
+        description: 'Cette version est figée et ne peut plus être modifiée.',
+        variant: 'info'
+      });
+      return;
+    }
+    setPlanSaving(true);
+    try {
+      const updated = await updatePatientPlanContent({
+        planId: activePlan.id,
+        content: planForm
+      });
+      setPlans((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+      setToast({
+        title: 'Plan enregistré',
+        description: 'La version a été mise à jour.',
+        variant: 'success'
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur de sauvegarde',
+        description: error instanceof Error ? error.message : 'Impossible d’enregistrer le plan.',
+        variant: 'error'
+      });
+    } finally {
+      setPlanSaving(false);
+    }
+  }
+
+  async function handleSharePlan() {
+    if (!activePlan) return;
+    if (!canEditPlan) return;
+    setPlanSharing(true);
+    try {
+      const shared = await sharePatientPlanVersion(activePlan.id);
+      setPlans((prev) => prev.map((item) => (item.id === shared.id ? shared : item)));
+      setToast({
+        title: 'Plan partagé',
+        description: 'Le patient peut désormais consulter cette version.',
+        variant: 'success'
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur de partage',
+        description: error instanceof Error ? error.message : 'Impossible de partager le plan.',
+        variant: 'error'
+      });
+    } finally {
+      setPlanSharing(false);
+    }
+  }
+
+  async function handleDeletePatient() {
+    setDeleteLoading(true);
+    try {
+      await deletePatient(patient.id);
+      setDeleteModalOpen(false);
+      router.push('/patients?deleted=1');
+    } catch (error) {
+      setToast({
+        title: 'Suppression impossible',
+        description: error instanceof Error ? error.message : 'Impossible de supprimer le patient.',
+        variant: 'error'
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
   async function handleUpgradePremium() {
     setPremiumLoading(true);
     try {
@@ -635,6 +890,12 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 Planifier RDV
               </Button>
             ) : null}
+            <Button
+              variant="destructive"
+              onClick={() => setDeleteModalOpen(true)}
+            >
+              Supprimer le patient
+            </Button>
           </div>
         </div>
       </div>
@@ -1333,6 +1594,180 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
         </Card>
       )}
 
+      {tab === 'Plan de naturopathie' && (
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold">Versions du plan</h2>
+                  <p className="text-xs text-warmgray">
+                    Suivi des versions partagées avec le patient.
+                  </p>
+                </div>
+                <Button
+                  variant="primary"
+                  onClick={() => handleCreatePlan(activePlan)}
+                  loading={planCreating}
+                >
+                  Créer un plan
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {plans.length === 0 ? (
+                <EmptyState
+                  icon="🌿"
+                  title="Aucun plan créé"
+                  description="Créez la première version du plan de naturopathie."
+                />
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {plans.map((planItem) => {
+                    const isActive = planItem.id === activePlan?.id;
+                    const statusLabel = planItem.status === 'shared' ? 'Partagé' : 'Brouillon';
+                    const statusVariant = planItem.status === 'shared' ? 'success' : 'info';
+                    return (
+                      <button
+                        key={planItem.id}
+                        type="button"
+                        onClick={() => setActivePlanId(planItem.id)}
+                        className={cn(
+                          'text-left rounded-2xl border border-transparent bg-white/80 p-4 shadow-sm ring-1 ring-black/5 transition',
+                          isActive ? 'border-teal/40 ring-2 ring-teal/20' : 'hover:border-teal/20'
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-charcoal">
+                              Version v{planItem.version}
+                            </p>
+                            <p className="text-xs text-warmgray">
+                              {formatDate(planItem.shared_at ?? planItem.created_at, true)}
+                            </p>
+                          </div>
+                          <Badge variant={statusVariant}>{statusLabel}</Badge>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {activePlan ? (
+            <Card className={cn(canEditPlan ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
+              <CardHeader>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="text-sm font-semibold">
+                      Plan v{activePlan.version}
+                    </h2>
+                    <p className="text-xs text-warmgray">
+                      {canEditPlan
+                        ? 'Version brouillon (modifiable).'
+                        : 'Version partagée (lecture seule).'}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleCreatePlan(activePlan)}
+                      disabled={planCreating}
+                    >
+                      Dupliquer
+                    </Button>
+                    {canEditPlan ? (
+                      <Button
+                        variant="secondary"
+                        onClick={handleSavePlan}
+                        loading={planSaving}
+                        disabled={!isPlanDirty || planSaving}
+                      >
+                        Enregistrer
+                      </Button>
+                    ) : null}
+                    {canEditPlan ? (
+                      <Button
+                        variant="primary"
+                        onClick={handleSharePlan}
+                        loading={planSharing}
+                        disabled={planSharing || planSaving || isPlanDirty}
+                      >
+                        Partager au patient
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+                {canEditPlan ? (
+                  <EditBanner label="Complétez le plan avant de le partager." />
+                ) : null}
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {PLAN_SECTIONS.map((section) => (
+                  <div key={section.title} className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-charcoal">{section.title}</h3>
+                      {section.description ? (
+                        <p className="text-xs text-warmgray">{section.description}</p>
+                      ) : null}
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {section.fields.map((field) => (
+                        <div
+                          key={field.key}
+                          className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5"
+                        >
+                          <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
+                          {canEditPlan ? (
+                            <Textarea
+                              className="mt-2"
+                              value={planForm[field.key]}
+                              onChange={(event) =>
+                                setPlanForm((prev) => ({
+                                  ...prev,
+                                  [field.key]: event.target.value
+                                }))
+                              }
+                              placeholder={field.placeholder}
+                              rows={3}
+                            />
+                          ) : (
+                            <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
+                              {renderAnswer(planForm[field.key])}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {canEditPlan ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="primary"
+                      onClick={handleSavePlan}
+                      loading={planSaving}
+                      disabled={!isPlanDirty || planSaving}
+                    >
+                      Enregistrer
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setPlanForm(initialPlanContent)}
+                      disabled={planSaving}
+                    >
+                      Annuler
+                    </Button>
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
+      )}
+
       {tab === 'Messages' && (
         <Card>
           <CardHeader>
@@ -1444,6 +1879,32 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   Enregistrer
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {deleteModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
+            <h2 className="text-lg font-semibold text-charcoal">Suppression définitive</h2>
+            <p className="mt-2 text-sm text-warmgray">
+              Cette action supprimera définitivement le patient et toutes ses données associées.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setDeleteModalOpen(false)}
+                disabled={deleteLoading}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeletePatient}
+                loading={deleteLoading}
+              >
+                Supprimer définitivement
+              </Button>
             </div>
           </div>
         </div>
