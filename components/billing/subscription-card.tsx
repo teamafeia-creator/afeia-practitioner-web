@@ -121,9 +121,9 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             {isFree ? (
-              <Button onClick={() => setShowUpgradeModal(true)} className="flex-1">
+              <Button onClick={() => setShowUpgradeModal(true)} className="w-full sm:flex-1">
                 Passer à Premium
               </Button>
             ) : (
@@ -131,7 +131,7 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
                 <Button
                   onClick={() => router.push('/billing')}
                   variant="secondary"
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                 >
                   Gérer la facturation
                 </Button>
@@ -139,7 +139,7 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
                   <Button
                     onClick={() => setShowCancelDialog(true)}
                     variant="ghost"
-                    className="text-aubergine hover:text-aubergine hover:bg-aubergine/5"
+                    className="w-full text-aubergine hover:text-aubergine hover:bg-aubergine/5 sm:w-auto"
                   >
                     Annuler
                   </Button>

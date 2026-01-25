@@ -15,7 +15,6 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
-  const [defaultReason, setDefaultReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,7 +42,6 @@ export default function SignUpPage() {
         options: {
           data: {
             full_name: fullName,
-            default_consultation_reason: defaultReason.trim() || null,
             role: 'practitioner'
           }
         }
@@ -120,15 +118,6 @@ export default function SignUpPage() {
               autoComplete="new-password"
               required
             />
-            <Input
-              label="Pathologie (motif de consultation)"
-              type="text"
-              value={defaultReason}
-              onChange={(e) => setDefaultReason(e.target.value)}
-              placeholder="Ex. Troubles digestifs"
-              hint="Utilisé comme valeur par défaut lors de la création d’un patient."
-            />
-
             {error ? (
               <div role="alert" className="rounded-xl border border-gold/30 bg-gold/10 p-3 text-sm">
                 <div className="font-medium">Impossible de créer le compte</div>
