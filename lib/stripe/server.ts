@@ -3,11 +3,22 @@
 
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
-}
+let stripeInstance: Stripe | null = null;
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+/**
+ * Récupère l'instance Stripe (lazy initialization)
+ * Cela évite les erreurs au build time quand les variables d'env ne sont pas disponibles
+ */
+function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+    }
+    stripeInstance = new Stripe(secretKey);
+  }
+  return stripeInstance;
+}
 
 /**
  * Crée un client Stripe pour un praticien
@@ -17,7 +28,7 @@ export async function createStripeCustomer(
   name: string,
   userId: string
 ): Promise<Stripe.Customer> {
-  return stripe.customers.create({
+  return getStripe().customers.create({
     email,
     name,
     metadata: {
@@ -34,6 +45,7 @@ export async function getOrCreateStripeCustomer(
   name: string,
   userId: string
 ): Promise<Stripe.Customer> {
+  const stripe = getStripe();
   // Chercher si le client existe déjà
   const existingCustomers = await stripe.customers.list({
     email,
@@ -88,7 +100,7 @@ export async function createCheckoutSession(params: {
     sessionParams.subscription_data!.trial_period_days = params.trialPeriodDays;
   }
 
-  return stripe.checkout.sessions.create(sessionParams);
+  return getStripe().checkout.sessions.create(sessionParams);
 }
 
 /**
@@ -98,7 +110,7 @@ export async function createCustomerPortalSession(
   customerId: string,
   returnUrl: string
 ): Promise<Stripe.BillingPortal.Session> {
-  return stripe.billingPortal.sessions.create({
+  return getStripe().billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
   });
@@ -111,6 +123,7 @@ export async function cancelStripeSubscription(
   subscriptionId: string,
   cancelAtPeriodEnd: boolean = true
 ): Promise<Stripe.Subscription> {
+  const stripe = getStripe();
   if (cancelAtPeriodEnd) {
     // Annuler à la fin de la période de facturation
     return stripe.subscriptions.update(subscriptionId, {
@@ -128,21 +141,21 @@ export async function cancelStripeSubscription(
 export async function getStripeSubscription(
   subscriptionId: string
 ): Promise<Stripe.Subscription> {
-  return stripe.subscriptions.retrieve(subscriptionId);
+  return getStripe().subscriptions.retrieve(subscriptionId);
 }
 
 /**
  * Récupère une facture Stripe
  */
 export async function getStripeInvoice(invoiceId: string): Promise<Stripe.Invoice> {
-  return stripe.invoices.retrieve(invoiceId);
+  return getStripe().invoices.retrieve(invoiceId);
 }
 
 /**
  * Récupère le PDF d'une facture Stripe
  */
 export async function getStripeInvoicePdf(invoiceId: string): Promise<string | null> {
-  const invoice = await stripe.invoices.retrieve(invoiceId);
+  const invoice = await getStripe().invoices.retrieve(invoiceId);
   return invoice.invoice_pdf || null;
 }
 
@@ -157,7 +170,7 @@ export function constructWebhookEvent(
   if (!webhookSecret) {
     throw new Error('STRIPE_WEBHOOK_SECRET is not set');
   }
-  return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+  return getStripe().webhooks.constructEvent(payload, signature, webhookSecret);
 }
 
 /**
@@ -166,7 +179,7 @@ export function constructWebhookEvent(
 export async function getCustomerPaymentMethods(
   customerId: string
 ): Promise<Stripe.PaymentMethod[]> {
-  const paymentMethods = await stripe.paymentMethods.list({
+  const paymentMethods = await getStripe().paymentMethods.list({
     customer: customerId,
     type: 'card',
   });
