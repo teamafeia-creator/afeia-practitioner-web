@@ -11,12 +11,14 @@
     "questionnaire:smoke": "node scripts/questionnaire-code-smoke-test.mjs"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^8.6.4",
     "@supabase/supabase-js": "^2.91.0",
     "clsx": "^2.1.1",
     "jose": "^5.9.3",
     "next": "^14.2.5",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "stripe": "^20.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.12",
