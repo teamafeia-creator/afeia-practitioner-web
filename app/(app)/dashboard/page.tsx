@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({ total: 0, premium: 0, appointments: 0, messages: 0 })
-  const [upcomingAppointments, setUpcomingAppointments] = useState([])
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
