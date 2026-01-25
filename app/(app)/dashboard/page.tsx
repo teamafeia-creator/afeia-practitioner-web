@@ -4,108 +4,119 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
 import { styles } from '@/lib/styles'
-import { supabase } from '@/lib/supabase'
-import type { Consultation, Patient } from '@/lib/types'
+import { Toast } from '@/components/ui/Toast'
+import { getNotifications, getPatients, getPractitionerCalendlyUrl } from '@/lib/queries'
+import type { Notification, Patient } from '@/lib/types'
 
-type ConsultationWithPatient = Consultation & {
-  patients?: Pick<Patient, 'id' | 'name' | 'is_premium' | 'status'> | null
-}
-
-type RecentActivityItem = {
-  type: 'journal' | 'message' | 'circular'
-  patient: string
-  time: string
+type ToastState = {
+  title: string
+  description?: string
+  variant?: 'success' | 'error' | 'info'
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({ total: 0, premium: 0, appointments: 0, messages: 0 })
-  const [upcomingAppointments, setUpcomingAppointments] = useState<ConsultationWithPatient[]>([])
-  const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([])
+  const [patients, setPatients] = useState<Patient[]>([])
+  const [notifications, setNotifications] = useState<(Notification & { patient?: Patient })[]>([])
   const [loading, setLoading] = useState(true)
+  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null)
+  const [calendlyLoading, setCalendlyLoading] = useState(true)
+  const [calendlyError, setCalendlyError] = useState<string | null>(null)
+  const [toast, setToast] = useState<ToastState | null>(null)
 
   useEffect(() => {
-    loadDashboardData()
+    const loadData = async () => {
+      setLoading(true)
+      try {
+        const [patientsData, notificationsData] = await Promise.all([
+          getPatients(),
+          getNotifications(),
+        ])
+        setPatients(patientsData)
+        setNotifications(notificationsData)
+      } catch (error) {
+        console.error('[dashboard] failed to load data', error)
+        setToast({
+          title: 'Erreur de chargement',
+          description: error instanceof Error ? error.message : 'Impossible de charger le tableau de bord.',
+          variant: 'error',
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
   }, [])
 
-  const loadDashboardData = async () => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+  useEffect(() => {
+    let active = true
 
-      if (!user) {
-        setLoading(false)
-        return
+    const loadCalendly = async () => {
+      setCalendlyLoading(true)
+      setCalendlyError(null)
+      try {
+        const url = await getPractitionerCalendlyUrl()
+        if (!active) return
+        setCalendlyUrl(url)
+      } catch (error) {
+        if (!active) return
+        console.error('[dashboard] failed to load calendly url', error)
+        setCalendlyError(error instanceof Error ? error.message : 'Erreur inconnue.')
+      } finally {
+        if (active) {
+          setCalendlyLoading(false)
+        }
       }
-
-      const { data: patients } = await supabase
-        .from('patients')
-        .select('id, is_premium, status')
-        .eq('practitioner_id', user!.id)
-        .is('deleted_at', null)
-
-      const premiumCount = patients?.filter((p) => p.is_premium || p.status === 'premium').length || 0
-      const patientIds = patients?.map((patient) => patient.id) ?? []
-
-      if (patientIds.length === 0) {
-        setStats({
-          total: 0,
-          premium: 0,
-          appointments: 0,
-          messages: 0,
-        })
-        setUpcomingAppointments([])
-        setRecentActivity([])
-        setLoading(false)
-        return
-      }
-
-      const now = new Date()
-      const weekEnd = new Date()
-      weekEnd.setDate(now.getDate() + 7)
-
-      const { data: consultations } = await supabase
-        .from('consultations')
-        .select('*, patients(name, is_premium, status)')
-        .in('patient_id', patientIds)
-        .gte('date', now.toISOString())
-        .order('date', { ascending: true })
-        .limit(5)
-
-      const { data: weekConsultations } = await supabase
-        .from('consultations')
-        .select('id')
-        .in('patient_id', patientIds)
-        .gte('date', now.toISOString())
-        .lte('date', weekEnd.toISOString())
-
-      const { data: messages } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('sender_role', 'patient')
-        .is('read_by_practitioner', false)
-        .in('patient_id', patientIds)
-
-      setStats({
-        total: patients?.length || 0,
-        premium: premiumCount,
-        appointments: weekConsultations?.length || 0,
-        messages: messages?.length || 0,
-      })
-
-      setUpcomingAppointments(consultations || [])
-
-      setRecentActivity([
-        { type: 'journal', patient: 'Marie Dupont', time: '2h' },
-        { type: 'message', patient: 'Julie Bernard', time: '5h' },
-        { type: 'circular', patient: 'Laura Petit', time: '1j' },
-      ])
-    } catch (err) {
-      console.error('Erreur chargement dashboard:', err)
-    } finally {
-      setLoading(false)
     }
+
+    loadCalendly()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const handleOpenCalendly = () => {
+    if (calendlyLoading) {
+      setToast({
+        title: 'Chargement en cours',
+        description: 'Le lien Calendly est en cours de récupération.',
+        variant: 'info',
+      })
+      return
+    }
+
+    if (calendlyError) {
+      setToast({
+        title: 'Lien Calendly indisponible',
+        description: calendlyError,
+        variant: 'error',
+      })
+      return
+    }
+
+    if (!calendlyUrl) {
+      setToast({
+        title: 'Lien Calendly manquant',
+        description: 'Ajoutez votre lien dans Paramètres pour activer la prise de RDV.',
+        variant: 'info',
+      })
+      return
+    }
+
+    window.open(calendlyUrl, '_blank', 'noopener,noreferrer')
   }
+
+  const today = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  })
+
+  const premiumPatients = patients.filter((patient) => patient.is_premium)
+  const recentPatients = [...patients].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )
 
   if (loading) {
     return (
@@ -124,206 +135,332 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
       <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
-        <div className="max-w-7xl mx-auto">
-          <h1 style={styles.heading.h1}>Tableau de bord</h1>
-          <p style={{ color: colors.gray.warm, marginTop: '8px' }}>
-            {new Date().toLocaleDateString('fr-FR', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}{' '}
-            — aperçu rapide
-          </p>
+        <div className="max-w-7xl mx-auto flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 style={styles.heading.h1}>Tableau de bord</h1>
+            <p style={{ color: colors.gray.warm, marginTop: '8px' }}>{today} — aperçu rapide</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Link
+              href="/patients/new"
+              style={{
+                ...styles.button.secondary,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                justifyContent: 'center',
+              }}
+            >
+              Nouveau patient
+            </Link>
+            <button
+              type="button"
+              style={{
+                ...styles.button.primary,
+                opacity: calendlyLoading ? 0.7 : 1,
+              }}
+              onClick={handleOpenCalendly}
+              disabled={calendlyLoading}
+            >
+              {calendlyLoading ? 'Chargement…' : 'Prise de rendez-vous'}
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {calendlyError ? (
           <div
-            className="relative p-6 transition-all"
             style={{
               ...styles.card.base,
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.hover)
-            }}
-            onMouseLeave={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.base)
+              borderColor: 'rgba(255, 154, 61, 0.4)',
+              background: 'rgba(255, 154, 61, 0.08)',
+              padding: '20px 24px',
             }}
           >
-            <div style={styles.signatureBar} />
-            <div style={{ fontSize: '36px', fontWeight: 700, color: colors.teal.main, marginBottom: '8px' }}>
-              {stats.total}
-            </div>
-            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
-              Patients actifs
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span style={{ color: colors.marine }}>Erreur Calendly : {calendlyError}</span>
+              <button
+                type="button"
+                style={styles.button.secondary}
+                onClick={() => {
+                  setCalendlyError(null)
+                  setCalendlyLoading(true)
+                  getPractitionerCalendlyUrl()
+                    .then((url) => {
+                      setCalendlyUrl(url)
+                    })
+                    .catch((error) => {
+                      console.error('[dashboard] retry calendly failed', error)
+                      setCalendlyError(error instanceof Error ? error.message : 'Erreur inconnue.')
+                    })
+                    .finally(() => setCalendlyLoading(false))
+                }}
+              >
+                Réessayer
+              </button>
             </div>
           </div>
+        ) : null}
 
+        {!calendlyLoading && !calendlyError && !calendlyUrl ? (
           <div
-            className="relative p-6 transition-all"
             style={{
               ...styles.card.base,
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.hover)
-            }}
-            onMouseLeave={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.base)
+              borderColor: 'rgba(42, 128, 128, 0.2)',
+              background: 'rgba(42, 128, 128, 0.06)',
+              padding: '20px 24px',
             }}
           >
-            <div style={styles.signatureBar} />
-            <div
-              style={{
-                fontSize: '36px',
-                fontWeight: 700,
-                background: `linear-gradient(135deg, ${colors.teal.main} 0%, ${colors.aubergine.main} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                marginBottom: '8px',
-              }}
-            >
-              {stats.premium}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span style={{ color: colors.marine }}>
+                Ajoutez votre lien Calendly dans Paramètres pour activer la prise de RDV.
+              </span>
+              <Link
+                href="/settings"
+                style={{
+                  ...styles.button.secondary,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  justifyContent: 'center',
+                }}
+              >
+                Aller aux paramètres
+              </Link>
             </div>
-            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
-              Patients Premium
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div style={styles.card.base}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Notifications</h2>
+              <p style={{ marginTop: '6px', fontSize: '12px', color: colors.gray.warm }}>
+                Questionnaires, Circular, messages
+              </p>
+            </div>
+            <div style={{ padding: '20px 24px' }}>
+              {notifications.length === 0 ? (
+                <p style={{ fontSize: '13px', color: colors.gray.warm }}>Aucune notification</p>
+              ) : (
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {notifications.slice(0, 5).map((notification) => (
+                    <li
+                      key={notification.id}
+                      style={{
+                        padding: '12px',
+                        border: '1px solid #F0F0F0',
+                        borderRadius: '4px',
+                        background: '#FFFFFF',
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <span
+                          style={{
+                            marginTop: '6px',
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background:
+                              notification.level === 'attention' ? colors.gold : colors.teal.main,
+                          }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '14px', color: colors.gray.charcoal }}>{notification.title}</p>
+                          <p style={{ fontSize: '12px', color: colors.gray.warm, marginTop: '4px' }}>
+                            {notification.description}
+                          </p>
+                          {notification.patient_id && (
+                            <Link
+                              href={`/patients/${notification.patient_id}`}
+                              style={{
+                                display: 'inline-block',
+                                marginTop: '6px',
+                                fontSize: '12px',
+                                color: colors.teal.main,
+                                textDecoration: 'none',
+                              }}
+                            >
+                              Ouvrir le dossier
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 
-          <div
-            className="relative p-6 transition-all"
-            style={{
-              ...styles.card.base,
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.hover)
-            }}
-            onMouseLeave={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.base)
-            }}
-          >
-            <div style={styles.signatureBar} />
-            <div style={{ fontSize: '36px', fontWeight: 700, color: colors.teal.main, marginBottom: '8px' }}>
-              {stats.appointments}
+          <div style={styles.card.base}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Patients</h2>
+              <p style={{ marginTop: '6px', fontSize: '12px', color: colors.gray.warm }}>
+                {patients.length} patient(s) au total
+              </p>
             </div>
-            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
-              RDV cette semaine
-            </div>
-          </div>
-
-          <div
-            className="relative p-6 transition-all"
-            style={{
-              ...styles.card.base,
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.hover)
-            }}
-            onMouseLeave={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.base)
-            }}
-          >
-            <div style={styles.signatureBar} />
-            <div style={{ fontSize: '36px', fontWeight: 700, color: colors.gold, marginBottom: '8px' }}>
-              {stats.messages}
-            </div>
-            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
-              Nouveaux messages
-            </div>
-          </div>
-        </div>
-
-        <div style={{ ...styles.card.base, position: 'relative' }}>
-          <div style={styles.signatureBar} />
-          <div style={{ padding: '24px', borderBottom: '1px solid #E5E5E5' }}>
-            <h2 style={styles.heading.h3}>Prochaines consultations</h2>
-          </div>
-
-          {upcomingAppointments.length > 0 ? (
-            <div>
-              {upcomingAppointments.map((appt) => (
-                <div
-                  key={appt.id}
-                  style={{
-                    padding: '20px 24px',
-                    borderBottom: '1px solid #F5F5F5',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                  }}
-                >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <div style={{ fontSize: '13px', color: colors.gray.warm, marginBottom: '6px' }}>
-                        {new Date(appt.date).toLocaleDateString('fr-FR', {
-                          day: 'numeric',
-                          month: 'long',
-                        })}{' '}
-                        •{' '}
-                        {new Date(appt.date).toLocaleTimeString('fr-FR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+            <div style={{ padding: '20px 24px' }}>
+              {patients.length === 0 ? (
+                <p style={{ fontSize: '13px', color: colors.gray.warm }}>Aucun patient</p>
+              ) : (
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {patients.slice(0, 4).map((patient) => (
+                    <li
+                      key={patient.id}
+                      style={{
+                        padding: '12px',
+                        border: '1px solid #F0F0F0',
+                        borderRadius: '4px',
+                        background: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <Link
+                          href={`/patients/${patient.id}`}
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: colors.gray.charcoal,
+                            textDecoration: 'none',
+                          }}
+                        >
+                          {patient.name}
+                        </Link>
+                        <p style={{ fontSize: '12px', color: colors.gray.warm, marginTop: '4px' }}>
+                          {[patient.city, patient.age ? `${patient.age} ans` : null]
+                            .filter(Boolean)
+                            .join(' • ') || 'Non renseigné'}
+                        </p>
                       </div>
-                      <div style={{ fontWeight: 600, color: colors.gray.charcoal, fontSize: '15px' }}>
-                        {appt.patients?.name || 'Non renseigné'}
-                      </div>
-                      <div style={{ fontSize: '13px', color: colors.gray.warm, marginTop: '4px' }}>
-                        {appt.notes || 'Consultation de suivi'}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-12">
-                      <div>
-                        {appt.patients?.is_premium || appt.patients?.status === 'premium' ? (
-                          <span style={styles.badgePremium}>Premium</span>
-                        ) : (
-                          <span style={styles.badgeStandard}>Standard</span>
-                        )}
-                      </div>
-                      <Link
-                        href={`/consultations/${appt.id}`}
-                        style={{
-                          ...styles.button.primary,
-                          textDecoration: 'none',
-                          display: 'inline-block',
-                        }}
+                      <span
+                        style={patient.is_premium ? styles.badgePremium : styles.badgeStandard}
                       >
-                        Démarrer
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                        {patient.is_premium ? 'Premium' : 'Standard'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          ) : (
-            <div style={{ padding: '24px', color: colors.gray.warm }}>Aucune consultation programmée</div>
-          )}
+          </div>
+
+          <div style={styles.card.base}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Patients premium</h2>
+              <p style={{ marginTop: '6px', fontSize: '12px', color: colors.gray.warm }}>
+                {premiumPatients.length} patient(s) premium
+              </p>
+            </div>
+            <div style={{ padding: '20px 24px' }}>
+              {premiumPatients.length === 0 ? (
+                <p style={{ fontSize: '13px', color: colors.gray.warm }}>Aucun patient premium</p>
+              ) : (
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {premiumPatients.slice(0, 4).map((patient) => (
+                    <li
+                      key={patient.id}
+                      style={{
+                        padding: '12px',
+                        border: '1px solid #F0F0F0',
+                        borderRadius: '4px',
+                        background: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <Link
+                          href={`/patients/${patient.id}`}
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: colors.gray.charcoal,
+                            textDecoration: 'none',
+                          }}
+                        >
+                          {patient.name}
+                        </Link>
+                        <p style={{ fontSize: '12px', color: colors.gray.warm, marginTop: '4px' }}>
+                          {[patient.city, patient.age ? `${patient.age} ans` : null]
+                            .filter(Boolean)
+                            .join(' • ') || 'Non renseigné'}
+                        </p>
+                      </div>
+                      <span style={styles.badgePremium}>Premium</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
 
         <div style={styles.card.base}>
-          <div style={{ padding: '24px', borderBottom: '1px solid #E5E5E5' }}>
-            <h2 style={styles.heading.h3}>Activité récente</h2>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid #F5F5F5' }}>
+            <h2 style={styles.heading.h3}>Derniers patients ajoutés</h2>
           </div>
-          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {recentActivity.map((activity, index) => (
-              <div key={index} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '13px' }}>
-                <span style={{ fontWeight: 600, color: colors.gray.charcoal }}>{activity.patient}</span>
-                <span style={{ color: colors.gray.warm }}>
-                  {activity.type === 'journal' && 'a rempli son journal'}
-                  {activity.type === 'message' && 'a envoyé un message'}
-                  {activity.type === 'circular' && 'a complété son circular'}
-                </span>
-                <span style={{ color: colors.gray.warm }}>(il y a {activity.time})</span>
-              </div>
-            ))}
+          <div style={{ padding: '20px 24px' }}>
+            {recentPatients.length === 0 ? (
+              <p style={{ fontSize: '13px', color: colors.gray.warm }}>Aucun patient récent</p>
+            ) : (
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {recentPatients.slice(0, 5).map((patient) => (
+                  <li
+                    key={patient.id}
+                    style={{
+                      padding: '12px',
+                      border: '1px solid #F0F0F0',
+                      borderRadius: '4px',
+                      background: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <Link
+                        href={`/patients/${patient.id}`}
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: colors.gray.charcoal,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {patient.name}
+                      </Link>
+                      <p style={{ fontSize: '12px', color: colors.gray.warm, marginTop: '4px' }}>
+                        Ajouté le {new Date(patient.created_at).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                    <span
+                      style={patient.is_premium ? styles.badgePremium : styles.badgeStandard}
+                    >
+                      {patient.is_premium ? 'Premium' : 'Standard'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>
+
+      {toast ? (
+        <Toast
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      ) : null}
     </div>
   )
 }
