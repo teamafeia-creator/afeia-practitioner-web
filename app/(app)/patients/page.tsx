@@ -1,53 +1,98 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { colors } from '@/lib/colors'
 import { styles } from '@/lib/styles'
-import { supabase } from '@/lib/supabase'
+import { getPatientById } from '@/lib/queries'
+import { PatientTabs } from '@/components/patients/PatientTabs'
+import type { Consultation, JournalEntry, PatientWithDetails } from '@/lib/types'
 
-export default function PatientsPage() {
-  const [patients, setPatients] = useState<any[]>([])
+type RecentJournalEntry = Pick<JournalEntry, 'id' | 'date' | 'mood' | 'energy' | 'text'> &
+  Pick<JournalEntry, 'adherence_hydratation' | 'adherence_respiration' | 'adherence_mouvement' | 'adherence_plantes'>
+
+const getNextConsultation = (consultations: Consultation[]) => {
+  const now = new Date()
+  return consultations
+    .filter((consultation) => new Date(consultation.date) >= now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+}
+
+export default function PatientOverviewPage() {
+  const params = useParams()
+
+  const [patient, setPatient] = useState<PatientWithDetails | null>(null)
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadPatients()
-  }, [])
+    let active = true
 
-  const loadPatients = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      const { data } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('practitioner_id', user!.id)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
-
-      setPatients(data || [])
-    } catch (err) {
-      console.error('Erreur chargement patients:', err)
-    } finally {
-      setLoading(false)
+    const loadPatient = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await getPatientById(params.id as string)
+        if (!active) return
+        if (!data) {
+          setError('Patient introuvable.')
+          setPatient(null)
+        } else {
+          setPatient(data)
+        }
+      } catch (err) {
+        if (!active) return
+        setError(err instanceof Error ? err.message : 'Impossible de charger le dossier patient.')
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
     }
-  }
 
-  const filteredPatients = patients.filter((p: any) =>
-    p.name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.city?.toLowerCase().includes(search.toLowerCase())
-  )
+    loadPatient()
+
+    return () => {
+      active = false
+    }
+  }, [params.id])
+
+  const nextConsultation = useMemo(() => {
+    if (!patient?.consultations) return null
+    return getNextConsultation(patient.consultations)
+  }, [patient?.consultations])
+
+  const recentJournalEntries: RecentJournalEntry[] = useMemo(() => {
+    return (patient?.journal_entries ?? []).slice(0, 3)
+  }, [patient?.journal_entries])
+
+  const latestPlanVersion = useMemo(() => {
+    return patient?.plan?.versions?.[0]
+  }, [patient?.plan?.versions])
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
-        <div className="text-center">
-          <div
-            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-            style={{ borderColor: colors.teal.main }}
-          />
-          <p style={{ color: colors.gray.warm }}>Chargement...</p>
+        <div
+          className="animate-spin rounded-full h-12 w-12 border-b-2"
+          style={{ borderColor: colors.teal.main }}
+        />
+      </div>
+    )
+  }
+
+  if (error || !patient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
+        <div className="text-center space-y-3">
+          <p style={{ color: colors.gray.warm }}>{error ?? 'Patient introuvable.'}</p>
+          <Link
+            href="/patients"
+            style={{ color: colors.teal.main, textDecoration: 'none', fontWeight: 600 }}
+          >
+            Retour à la liste
+          </Link>
         </div>
       </div>
     )
@@ -55,175 +100,202 @@ export default function PatientsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
-      {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 style={styles.heading.h1}>Patients</h1>
-            <p style={{ color: colors.gray.warm, marginTop: '8px' }}>
-              {patients.length} patient(s) au total
-            </p>
-          </div>
+        <div className="max-w-7xl mx-auto">
           <Link
-            href="/patients/new"
+            href="/patients"
             style={{
-              ...styles.button.primary,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '16px',
+              color: colors.teal.main,
               textDecoration: 'none',
-              display: 'inline-block',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#FF8A2D'
-              e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(255, 154, 61, 0.25)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = colors.gold
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
+              fontSize: '14px',
+              fontWeight: 500,
             }}
           >
-            Nouveau patient
+            Retour à la liste
           </Link>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <h1 style={styles.heading.h1}>{patient.name || 'Non renseigné'}</h1>
+                {(patient.is_premium || patient.status === 'premium') && (
+                  <span style={styles.badgePremium}>Premium</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: colors.gray.warm }}>
+                <span>{patient.age ? `${patient.age} ans` : 'Non renseigné'}</span>
+                <span>•</span>
+                <span>{patient.city || 'Non renseigné'}</span>
+                <span>•</span>
+                <span>{patient.consultation_reason || 'Non renseigné'}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Recherche */}
-        <input
-          type="text"
-          placeholder="Rechercher par nom ou ville..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            border: search ? `2px solid ${colors.teal.main}` : '2px solid #E5E5E5',
-            borderRadius: '4px',
-            fontSize: '14px',
-            marginBottom: '24px',
-            outline: 'none',
-            transition: 'border-color 0.2s ease',
-          }}
-        />
-
-        {/* Grille de cartes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredPatients.map((patient: any) => (
-            <Link
-              key={patient.id}
-              href={`/patients/${patient.id}`}
-              style={{ textDecoration: 'none', color: 'inherit' }}
-            >
-              <div
-                className="relative transition-all"
-                style={{
-                  ...styles.card.base,
-                  padding: 0,
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => {
-                  Object.assign(e.currentTarget.style, styles.card.hover)
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#E5E5E5'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
-              >
-                {/* Barre signature */}
-                <div style={styles.signatureBar} />
-
-                {/* Header */}
-                <div style={{
-                  padding: '24px 24px 20px',
-                  borderBottom: '1px solid #F5F5F5',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start'
-                }}>
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                    {/* Avatar */}
-                    <div style={{
-                      ...styles.avatar.base,
-                      position: 'relative',
-                    }}>
-                      {patient.name?.charAt(0) || 'P'}
-                      <div style={styles.statusIndicator} />
-                    </div>
-
-                    {/* Info */}
-                    <div>
-                      <h3 style={styles.heading.h3}>
-                        {patient.name || 'Non renseigné'}
-                      </h3>
-                      <div style={{
-                        fontSize: '13px',
-                        color: colors.gray.warm,
-                        marginTop: '3px',
-                        display: 'flex',
-                        gap: '6px',
-                        alignItems: 'center'
-                      }}>
-                        <span>{patient.age ? `${patient.age} ans` : 'Non renseigné'}</span>
-                        <span>•</span>
-                        <span>{patient.city || 'Non renseigné'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badge */}
-                  {(patient.is_premium || patient.status === 'premium') && (
-                    <div style={styles.badgePremium}>
-                      Premium
-                    </div>
-                  )}
-                </div>
-
-                {/* Body */}
-                <div style={{ padding: '20px 24px' }}>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '12px',
-                    fontSize: '14px',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ opacity: 0.6 }}>@</span>
-                      <span style={{ color: colors.gray.charcoal }}>{patient.email || 'Non renseigné'}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ opacity: 0.6 }}>•</span>
-                      <span style={{ color: colors.gray.charcoal }}>{patient.pathology || 'Non renseigné'}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ opacity: 0.6 }}>Tel</span>
-                      <span style={{ color: colors.gray.charcoal }}>{patient.phone || 'Non renseigné'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div style={{
-                  padding: '16px 24px',
-                  borderTop: '1px solid #F5F5F5',
-                }}>
-                  <span style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: colors.teal.main
-                  }}>
-                    Voir le dossier →
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
+      <div className="max-w-7xl mx-auto p-6 space-y-5">
+        <div style={styles.card.base}>
+          <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+            <h2 style={styles.heading.h3}>Résumé patient</h2>
+          </div>
+          <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+            <div>
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Email</p>
+              <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
+                {patient.email || 'Non renseigné'}
+              </p>
+            </div>
+            <div>
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Ville</p>
+              <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
+                {patient.city || 'Non renseigné'}
+              </p>
+            </div>
+            <div>
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Âge</p>
+              <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
+                {patient.age ? `${patient.age} ans` : 'Non renseigné'}
+              </p>
+            </div>
+            <div>
+              <p style={{ fontSize: '12px', color: colors.gray.warm, marginBottom: '4px' }}>Statut</p>
+              <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
+                {patient.is_premium || patient.status === 'premium' ? 'Premium' : 'Standard'}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {filteredPatients.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '64px 0', color: colors.gray.warm }}>
-            Aucun patient trouvé
+        {nextConsultation ? (
+          <div style={{ ...styles.card.base, position: 'relative' }}>
+            <div style={styles.signatureBar} />
+            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Prochain rendez-vous</h2>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ fontSize: '16px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '16px' }}>
+                {new Date(nextConsultation.date).toLocaleDateString('fr-FR', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })} à {new Date(nextConsultation.date).toLocaleTimeString('fr-FR', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+              {nextConsultation.notes && (
+                <p style={{ fontSize: '13px', color: colors.gray.warm }}>{nextConsultation.notes}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div style={styles.card.base}>
+            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Rendez-vous</h2>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ color: colors.gray.warm }}>Aucun rendez-vous programmé</p>
+            </div>
           </div>
         )}
+
+        <div style={styles.card.base}>
+          <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+            <h2 style={styles.heading.h3}>Activité récente</h2>
+          </div>
+          <div style={{ padding: '24px' }}>
+            {recentJournalEntries.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {recentJournalEntries.map((entry) => (
+                  <div key={entry.id} style={{
+                    padding: '16px',
+                    background: '#FAFAFA',
+                    borderRadius: '4px'
+                  }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '8px' }}>
+                      {new Date(entry.date).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long'
+                      })}
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '13px', flexWrap: 'wrap' }}>
+                      <span style={{ color: colors.gray.warm }}>
+                        Humeur {entry.mood || 'Non renseigné'}
+                      </span>
+                      <span style={{ color: colors.gray.warm }}>
+                        Énergie {entry.energy || 'Non renseigné'}
+                      </span>
+                    </div>
+                    {entry.text && (
+                      <p style={{ fontSize: '13px', color: colors.gray.warm, marginTop: '8px' }}>
+                        {entry.text}
+                      </p>
+                    )}
+                    <div style={{ display: 'flex', gap: '12px', fontSize: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
+                      <span style={{ color: entry.adherence_hydratation ? colors.sage : colors.gray.warm }}>
+                        Hydratation {entry.adherence_hydratation ? 'Oui' : 'Non'}
+                      </span>
+                      <span style={{ color: entry.adherence_respiration ? colors.sage : colors.gray.warm }}>
+                        Respiration {entry.adherence_respiration ? 'Oui' : 'Non'}
+                      </span>
+                      <span style={{ color: entry.adherence_mouvement ? colors.sage : colors.gray.warm }}>
+                        Mouvement {entry.adherence_mouvement ? 'Oui' : 'Non'}
+                      </span>
+                      <span style={{ color: entry.adherence_plantes ? colors.sage : colors.gray.warm }}>
+                        Plantes {entry.adherence_plantes ? 'Oui' : 'Non'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: colors.gray.warm }}>Aucune entrée récente</p>
+            )}
+          </div>
+        </div>
+
+        {patient.plan ? (
+          <div style={{ ...styles.card.base, position: 'relative' }}>
+            <div style={styles.signatureBar} />
+            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Plan de compléments</h2>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ fontSize: '16px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '8px' }}>
+                {latestPlanVersion?.title || 'Non renseigné'}
+              </p>
+              <p style={{ fontSize: '13px', color: colors.gray.warm }}>
+                {latestPlanVersion?.sections
+                  ? `${latestPlanVersion.sections.length} section(s) au total`
+                  : 'Sections à configurer'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div style={styles.card.base}>
+            <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+              <h2 style={styles.heading.h3}>Plan de compléments</h2>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ color: colors.gray.warm }}>Aucun plan actif</p>
+            </div>
+          </div>
+        )}
+
+        <div style={styles.card.base}>
+          <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
+            <h2 style={styles.heading.h3}>Dossier complet</h2>
+          </div>
+          <div style={{ padding: '24px' }}>
+            <PatientTabs patient={patient} />
+          </div>
+        </div>
       </div>
     </div>
   )
