@@ -8,7 +8,7 @@ import { styles } from '@/lib/styles'
 import { supabase } from '@/lib/supabase'
 
 const tabs = [
-  { id: 'overview', label: "Vue d'ensemble", href: '' },
+  { id: 'overview', label: 'Vue d\'ensemble', href: '' },
   { id: 'profile', label: 'Profil', href: '/profile' },
   { id: 'appointments', label: 'Rendez-vous', href: '/appointments' },
   { id: 'anamnesis', label: 'Anamnèse', href: '/anamnesis' },
@@ -20,6 +20,7 @@ const tabs = [
 
 export default function PatientOverviewPage() {
   const params = useParams()
+
   const [patient, setPatient] = useState<any>(null)
   const [nextConsultation, setNextConsultation] = useState<any>(null)
   const [activePlan, setActivePlan] = useState<any>(null)
@@ -28,6 +29,7 @@ export default function PatientOverviewPage() {
 
   const loadPatientData = useCallback(async () => {
     try {
+      // Patient
       const { data: patientData } = await supabase
         .from('patients')
         .select('*')
@@ -36,6 +38,7 @@ export default function PatientOverviewPage() {
 
       setPatient(patientData)
 
+      // Prochaine consultation
       const { data: nextAppt } = await supabase
         .from('consultations')
         .select('*')
@@ -47,6 +50,7 @@ export default function PatientOverviewPage() {
 
       setNextConsultation(nextAppt)
 
+      // Plan actif
       const { data: plan } = await supabase
         .from('plans')
         .select(`
@@ -59,6 +63,7 @@ export default function PatientOverviewPage() {
 
       setActivePlan(plan)
 
+      // Activité récente
       const { data: logs } = await supabase
         .from('daily_logs')
         .select('*')
@@ -67,6 +72,7 @@ export default function PatientOverviewPage() {
         .limit(3)
 
       setRecentActivity(logs || [])
+
     } catch (err) {
       console.error('Erreur chargement patient:', err)
     } finally {
@@ -81,8 +87,7 @@ export default function PatientOverviewPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
-        <div
-          className="animate-spin rounded-full h-12 w-12 border-b-2"
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2"
           style={{ borderColor: colors.teal.main }}
         />
       </div>
@@ -97,10 +102,9 @@ export default function PatientOverviewPage() {
     )
   }
 
-  const hasMeta = patient.age || patient.city || patient.pathology
-
   return (
     <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
+      {/* Header */}
       <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
         <div className="max-w-7xl mx-auto">
           <Link
@@ -127,20 +131,19 @@ export default function PatientOverviewPage() {
                   <span style={styles.badgePremium}>Premium</span>
                 )}
               </div>
-              {hasMeta ? (
-                <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: colors.gray.warm }}>
-                  {patient.age && <span>{patient.age} ans</span>}
-                  {patient.city && <span>• {patient.city}</span>}
-                  {patient.pathology && <span>• {patient.pathology}</span>}
-                </div>
-              ) : (
-                <div style={{ fontSize: '14px', color: colors.gray.warm }}>Non renseigné</div>
-              )}
+              <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: colors.gray.warm }}>
+                <span>{patient.age ? `${patient.age} ans` : 'Non renseigné'}</span>
+                <span>•</span>
+                <span>{patient.city || 'Non renseigné'}</span>
+                <span>•</span>
+                <span>{patient.pathology || 'Non renseigné'}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Navigation onglets */}
       <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', overflowX: 'auto' }}>
         <div className="max-w-7xl mx-auto flex" style={{ gap: '32px', padding: '0 32px' }}>
           {tabs.map((tab) => (
@@ -164,7 +167,9 @@ export default function PatientOverviewPage() {
         </div>
       </div>
 
+      {/* Contenu */}
       <div className="max-w-7xl mx-auto p-6 space-y-5">
+        {/* Résumé */}
         <div style={styles.card.base}>
           <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
             <h2 style={styles.heading.h3}>Résumé patient</h2>
@@ -187,7 +192,8 @@ export default function PatientOverviewPage() {
               <p style={{ fontWeight: 600, color: colors.gray.charcoal }}>
                 {patient.date_of_birth
                   ? new Date(patient.date_of_birth).toLocaleDateString('fr-FR')
-                  : 'Non renseignée'}
+                  : 'Non renseignée'
+                }
               </p>
             </div>
             <div>
@@ -207,6 +213,7 @@ export default function PatientOverviewPage() {
           </div>
         </div>
 
+        {/* Prochaine consultation */}
         {nextConsultation ? (
           <div style={{ ...styles.card.base, position: 'relative' }}>
             <div style={styles.signatureBar} />
@@ -219,24 +226,19 @@ export default function PatientOverviewPage() {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
-                  year: 'numeric',
-                })}{' '}
-                {new Date(nextConsultation.date).toLocaleTimeString('fr-FR', {
+                  year: 'numeric'
+                })} à {new Date(nextConsultation.date).toLocaleTimeString('fr-FR', {
                   hour: '2-digit',
-                  minute: '2-digit',
+                  minute: '2-digit'
                 })}
               </p>
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button style={styles.button.secondary}>Modifier</button>
+                <button style={styles.button.secondary}>
+                  Modifier
+                </button>
                 <Link
                   href={`/patients/${params.id}/appointments`}
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: colors.teal.main,
-                    textDecoration: 'none',
-                    alignSelf: 'center',
-                  }}
+                  style={{ fontSize: '14px', fontWeight: 600, color: colors.teal.main, textDecoration: 'none', alignSelf: 'center' }}
                 >
                   Voir tous les rendez-vous →
                 </Link>
@@ -250,11 +252,14 @@ export default function PatientOverviewPage() {
             </div>
             <div style={{ padding: '24px' }}>
               <p style={{ color: colors.gray.warm, marginBottom: '16px' }}>Aucun rendez-vous programmé</p>
-              <button style={styles.button.primary}>Programmer un rendez-vous</button>
+              <button style={styles.button.primary}>
+                Programmer un rendez-vous
+              </button>
             </div>
           </div>
         )}
 
+        {/* Activité récente */}
         {recentActivity.length > 0 && (
           <div style={styles.card.base}>
             <div style={{ padding: '24px', borderBottom: '1px solid #F5F5F5' }}>
@@ -263,32 +268,29 @@ export default function PatientOverviewPage() {
             <div style={{ padding: '24px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {recentActivity.map((log: any) => (
-                  <div
-                    key={log.id}
-                    style={{
-                      padding: '16px',
-                      background: '#FAFAFA',
-                      borderRadius: '4px',
-                    }}
-                  >
+                  <div key={log.id} style={{
+                    padding: '16px',
+                    background: '#FAFAFA',
+                    borderRadius: '4px'
+                  }}>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '8px' }}>
                       {new Date(log.log_date).toLocaleDateString('fr-FR', {
                         day: 'numeric',
-                        month: 'long',
+                        month: 'long'
                       })}
                     </div>
                     <div style={{ display: 'flex', gap: '16px', fontSize: '13px' }}>
                       <span style={{ color: log.good_nutrition ? colors.sage : colors.gray.warm }}>
-                        Nutrition {log.good_nutrition ? 'OK' : 'Non'}
+                        Nutrition {log.good_nutrition ? 'Oui' : 'Non'}
                       </span>
                       <span style={{ color: log.good_sleep ? colors.sage : colors.gray.warm }}>
-                        Sommeil {log.good_sleep ? 'OK' : 'Non'}
+                        Sommeil {log.good_sleep ? 'Oui' : 'Non'}
                       </span>
                       <span style={{ color: log.good_mood ? colors.sage : colors.gray.warm }}>
-                        Humeur {log.good_mood ? 'OK' : 'Non'}
+                        Humeur {log.good_mood ? 'Oui' : 'Non'}
                       </span>
                       <span style={{ color: log.supplements_taken ? colors.sage : colors.gray.warm }}>
-                        Compléments {log.supplements_taken ? 'OK' : 'Non'}
+                        Compléments {log.supplements_taken ? 'Oui' : 'Non'}
                       </span>
                     </div>
                     {log.note_for_practitioner && (
@@ -311,6 +313,7 @@ export default function PatientOverviewPage() {
           </div>
         )}
 
+        {/* Plan actif */}
         {activePlan ? (
           <div style={{ ...styles.card.base, position: 'relative' }}>
             <div style={styles.signatureBar} />
@@ -319,7 +322,7 @@ export default function PatientOverviewPage() {
             </div>
             <div style={{ padding: '24px' }}>
               <p style={{ fontSize: '16px', fontWeight: 600, color: colors.gray.charcoal, marginBottom: '8px' }}>
-                {activePlan.plan_name || 'Plan personnalisé'}
+                {activePlan.plan_name || 'Non renseigné'}
               </p>
               {activePlan.start_date && (
                 <p style={{ fontSize: '13px', color: colors.gray.warm, marginBottom: '16px' }}>
@@ -361,7 +364,9 @@ export default function PatientOverviewPage() {
             </div>
             <div style={{ padding: '24px' }}>
               <p style={{ color: colors.gray.warm, marginBottom: '16px' }}>Aucun plan actif</p>
-              <button style={styles.button.primary}>Créer un plan</button>
+              <button style={styles.button.primary}>
+                Créer un plan
+              </button>
             </div>
           </div>
         )}
