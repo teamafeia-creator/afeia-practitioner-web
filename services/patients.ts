@@ -89,8 +89,8 @@ type PatientRow = {
 
 type AppointmentRow = {
   patient_id: string;
-  start_at: string;
-  status: 'scheduled' | 'done' | 'cancelled';
+  starts_at: string;
+  status: 'scheduled' | 'done' | 'cancelled' | 'completed';
 };
 
 type MessageRow = {
@@ -111,7 +111,7 @@ type AnamneseDetailRow = {
 
 type AppointmentDetailRow = {
   id: string;
-  start_at: string;
+  starts_at: string;
   status: string | null;
 };
 
@@ -164,7 +164,7 @@ export async function fetchPatientsOverview(): Promise<PatientOverview[]> {
   const [appointmentsResult, messagesResult, anamneseResult] = await Promise.all([
     supabase
       .from('appointments')
-      .select('patient_id, start_at, status')
+      .select('patient_id, starts_at, status')
       .in('patient_id', patientIds),
     supabase
       .from('messages')
@@ -197,18 +197,18 @@ export async function fetchPatientsOverview(): Promise<PatientOverview[]> {
   const now = new Date();
 
   appointments.forEach((appointment) => {
-    const appointmentDate = new Date(appointment.start_at);
-    if (appointment.status === 'done') {
+    const appointmentDate = new Date(appointment.starts_at);
+    if (appointment.status === 'done' || appointment.status === 'completed') {
       const existing = lastConsultationMap.get(appointment.patient_id);
       if (!existing || appointmentDate > new Date(existing)) {
-        lastConsultationMap.set(appointment.patient_id, appointment.start_at);
+        lastConsultationMap.set(appointment.patient_id, appointment.starts_at);
       }
     }
 
     if (appointment.status === 'scheduled' && appointmentDate >= now) {
       const existing = nextAppointmentMap.get(appointment.patient_id);
       if (!existing || appointmentDate < new Date(existing)) {
-        nextAppointmentMap.set(appointment.patient_id, appointment.start_at);
+        nextAppointmentMap.set(appointment.patient_id, appointment.starts_at);
       }
     }
   });
@@ -344,10 +344,10 @@ export async function fetchPatientDetail(patientId: string): Promise<PatientDeta
   };
 
   const appointments = ((appointmentsResult.data ?? []) as AppointmentDetailRow[])
-    .filter((item) => item.start_at)
+    .filter((item) => item.starts_at)
     .map((item) => ({
       id: item.id,
-      startAt: item.start_at,
+      startAt: item.starts_at,
       status: item.status ?? 'scheduled'
     }))
     .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());

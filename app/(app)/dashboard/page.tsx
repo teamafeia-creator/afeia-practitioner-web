@@ -1,271 +1,190 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { colors } from '@/lib/colors'
-import { styles } from '@/lib/styles'
-import { supabase } from '@/lib/supabase'
+import { useEffect, useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/Badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { supabase } from '@/lib/supabase';
+
+type ConsultationRow = {
+  id: string;
+  date: string;
+  patients?: {
+    name?: string | null;
+    is_premium?: boolean | null;
+    status?: string | null;
+  } | null;
+};
+
+const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long'
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat('fr-FR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+});
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({ total: 0, premium: 0, appointments: 0, messages: 0 })
-  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({ total: 0, premium: 0, appointments: 0, messages: 0 });
+  const [upcomingAppointments, setUpcomingAppointments] = useState<ConsultationRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboardData()
-  }, [])
+    async function loadDashboardData() {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user.id;
 
-  const loadDashboardData = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
+        if (!userId) {
+          setStats({ total: 0, premium: 0, appointments: 0, messages: 0 });
+          setUpcomingAppointments([]);
+          return;
+        }
 
-      // Stats
-      const { data: patients } = await supabase
-        .from('patients')
-        .select('id, is_premium, status')
-        .eq('practitioner_id', user!.id)
-        .is('deleted_at', null)
+        const { data: patients } = await supabase
+          .from('patients')
+          .select('id, is_premium, status')
+          .eq('practitioner_id', userId)
+          .is('deleted_at', null);
 
-      const premiumCount = patients?.filter(p => p.is_premium || p.status === 'premium').length || 0
+        const premiumCount = patients?.filter((p) => p.is_premium || p.status === 'premium').length || 0;
 
-      // Consultations
-      const { data: consultations } = await supabase
-        .from('consultations')
-        .select('*, patients(name, is_premium, status)')
-        .eq('practitioner_id', user!.id)
-        .gte('date', new Date().toISOString())
-        .order('date', { ascending: true })
-        .limit(5)
+        const { data: consultations } = await supabase
+          .from('consultations')
+          .select('id, date, patients(name, is_premium, status)')
+          .eq('practitioner_id', userId)
+          .gte('date', new Date().toISOString())
+          .order('date', { ascending: true })
+          .limit(5);
 
-      // Messages non lus
-      const { data: messages } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('sender_role', 'patient')
-        .is('read_by_practitioner', false)
+        const { data: messages } = await supabase
+          .from('messages')
+          .select('id')
+          .eq('sender_role', 'patient')
+          .is('read_by_practitioner', false);
 
-      setStats({
-        total: patients?.length || 0,
-        premium: premiumCount,
-        appointments: consultations?.length || 0,
-        messages: messages?.length || 0
-      })
+        setStats({
+          total: patients?.length || 0,
+          premium: premiumCount,
+          appointments: consultations?.length || 0,
+          messages: messages?.length || 0
+        });
 
-      setUpcomingAppointments(consultations || [])
-    } catch (err) {
-      console.error('Erreur chargement dashboard:', err)
-    } finally {
-      setLoading(false)
+        setUpcomingAppointments((consultations ?? []) as ConsultationRow[]);
+      } catch (err) {
+        console.error('Erreur chargement dashboard:', err);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
+
+    loadDashboardData();
+  }, []);
+
+  const todayLabel = useMemo(() => dateFormatter.format(new Date()), []);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
-        <div className="text-center">
-          <div
-            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-            style={{ borderColor: colors.teal.main }}
-          />
-          <p style={{ color: colors.gray.warm }}>Chargement...</p>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
+        Chargement du tableau de bord…
       </div>
-    )
+    );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAFAFA' }}>
-      {/* Header */}
-      <div style={{ background: 'white', borderBottom: '1px solid #E5E5E5', padding: '32px' }}>
-        <div className="max-w-7xl mx-auto">
-          <h1 style={styles.heading.h1}>Tableau de bord</h1>
-          <p style={{ color: colors.gray.warm, marginTop: '8px' }}>
-            {new Date().toLocaleDateString('fr-FR', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long'
-            })}
-          </p>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-charcoal">Tableau de bord</h1>
+        <p className="text-sm text-warmgray capitalize">{todayLabel}</p>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-5">
-          {/* Total Patients */}
-          <div
-            className="relative p-6 transition-all"
-            style={{
-              ...styles.card.base,
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.hover)
-            }}
-            onMouseLeave={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.base)
-            }}
-          >
-            <div style={styles.signatureBar} />
-            <div style={{ fontSize: '36px', fontWeight: 700, color: colors.teal.main, marginBottom: '8px' }}>
-              {stats.total}
-            </div>
-            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
-              Patients actifs
-            </div>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Patients actifs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-semibold text-teal">{stats.total}</div>
+            <p className="mt-2 text-xs text-warmgray">Dossiers actifs suivis</p>
+          </CardContent>
+        </Card>
 
-          {/* Premium */}
-          <div
-            className="relative p-6 transition-all"
-            style={{
-              ...styles.card.base,
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.hover)
-            }}
-            onMouseLeave={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.base)
-            }}
-          >
-            <div style={styles.signatureBar} />
-            <div style={{
-              fontSize: '36px',
-              fontWeight: 700,
-              background: `linear-gradient(135deg, ${colors.teal.main} 0%, ${colors.aubergine.main} 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              marginBottom: '8px',
-            }}>
-              {stats.premium}
-            </div>
-            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
-              Patients Premium
-            </div>
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Patients Premium</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-semibold text-aubergine">{stats.premium}</div>
+            <p className="mt-2 text-xs text-warmgray">Accès Circular + suivi avancé</p>
+          </CardContent>
+        </Card>
 
-          {/* RDV */}
-          <div
-            className="relative p-6 transition-all"
-            style={{
-              ...styles.card.base,
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.hover)
-            }}
-            onMouseLeave={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.base)
-            }}
-          >
-            <div style={styles.signatureBar} />
-            <div style={{ fontSize: '36px', fontWeight: 700, color: colors.teal.main, marginBottom: '8px' }}>
-              {stats.appointments}
-            </div>
-            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
-              RDV cette semaine
-            </div>
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>RDV cette semaine</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-semibold text-teal">{stats.appointments}</div>
+            <p className="mt-2 text-xs text-warmgray">Consultations à venir</p>
+          </CardContent>
+        </Card>
 
-          {/* Messages */}
-          <div
-            className="relative p-6 transition-all"
-            style={{
-              ...styles.card.base,
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.hover)
-            }}
-            onMouseLeave={(e) => {
-              Object.assign(e.currentTarget.style, styles.card.base)
-            }}
-          >
-            <div style={styles.signatureBar} />
-            <div style={{ fontSize: '36px', fontWeight: 700, color: colors.gold, marginBottom: '8px' }}>
-              {stats.messages}
-            </div>
-            <div style={{ fontSize: '14px', color: colors.gray.warm, fontWeight: 500 }}>
-              Nouveaux messages
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Nouveaux messages</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-semibold text-gold">{stats.messages}</div>
+            <p className="mt-2 text-xs text-warmgray">À traiter aujourd’hui</p>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Consultations à venir */}
-        <div style={styles.card.base}>
-          <div style={{ padding: '24px', borderBottom: '1px solid #E5E5E5' }}>
-            <h2 style={styles.heading.h3}>Prochaines consultations</h2>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle>Prochaines consultations</CardTitle>
+            <Badge variant="info">{upcomingAppointments.length} à venir</Badge>
           </div>
-
-          {upcomingAppointments.length > 0 ? (
-            <div>
-              {upcomingAppointments.map((appt: any, index: number) => (
+        </CardHeader>
+        <CardContent>
+          {upcomingAppointments.length === 0 ? (
+            <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
+              Aucun rendez-vous planifié.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {upcomingAppointments.map((appointment) => (
                 <div
-                  key={appt.id}
-                  style={{
-                    padding: '20px 24px',
-                    borderBottom: index < upcomingAppointments.length - 1 ? '1px solid #F5F5F5' : 'none',
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1fr 140px',
-                    alignItems: 'center',
-                    gap: '16px',
-                    transition: 'background 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#FAFAFA'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent'
-                  }}
+                  key={appointment.id}
+                  className="flex flex-col gap-2 rounded-2xl border border-black/5 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  {/* Patient */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      ...styles.avatar.small,
-                      background: `linear-gradient(135deg, ${colors.teal.light} 0%, ${colors.teal.main} 100%)`,
-                    }}>
-                      {appt.patients?.name?.charAt(0) || 'P'}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 600, color: colors.gray.charcoal, fontSize: '14px' }}>
-                        {appt.patients?.name || 'Non renseigné'}
-                      </div>
-                      <div style={{ fontSize: '12px', color: colors.gray.warm }}>
-                        {appt.notes || 'Non renseigné'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badge */}
                   <div>
-                    {(appt.patients?.is_premium || appt.patients?.status === 'premium') ? (
-                      <span style={styles.badgePremium}>Premium</span>
-                    ) : (
-                      <span style={styles.badgeStandard}>Standard</span>
-                    )}
+                    <div className="text-sm font-semibold text-charcoal">
+                      {appointment.patients?.name ?? 'Patient'}
+                    </div>
+                    <div className="text-xs text-warmgray">
+                      {dateTimeFormatter.format(new Date(appointment.date))}
+                    </div>
                   </div>
-
-                  {/* Date */}
-                  <div style={{ fontSize: '13px', color: colors.gray.warm, textAlign: 'right' }}>
-                    {new Date(appt.date).toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'long'
-                    })} • {new Date(appt.date).toLocaleTimeString('fr-FR', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                  <div className="flex items-center gap-2">
+                    {appointment.patients?.is_premium || appointment.patients?.status === 'premium' ? (
+                      <Badge variant="premium">Premium</Badge>
+                    ) : (
+                      <Badge variant="info">Standard</Badge>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <div style={{ padding: '48px 24px', textAlign: 'center', color: colors.gray.warm }}>
-              Aucune consultation programmée
-            </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }
