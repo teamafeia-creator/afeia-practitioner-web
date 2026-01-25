@@ -348,6 +348,13 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
     .eq('patient_id', id)
     .order('version', { ascending: false });
 
+  // Fetch analysis results
+  const { data: analysisResults } = await supabase
+    .from('patient_analysis_results')
+    .select('*')
+    .eq('patient_id', id)
+    .order('analysis_date', { ascending: false });
+
   return {
     ...patient,
     anamnese: anamnese || undefined,
@@ -370,7 +377,8 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
     messages: messages || [],
     wearable_summaries: wearable_summaries || [],
     wearable_insights: wearable_insights || [],
-    patient_plans: patientPlans || []
+    patient_plans: patientPlans || [],
+    analysis_results: analysisResults || []
   };
 }
 

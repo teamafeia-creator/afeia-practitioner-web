@@ -43,6 +43,7 @@ const TABS = [
   'Journal',
   'Notes consultation',
   'Plan de naturopathie',
+  'Résultats d\'analyses',
   'Messages'
 ] as const;
 
@@ -76,6 +77,10 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
   'Plan de naturopathie': {
     title: 'Plan de naturopathie',
     description: 'Versions du plan partagé au patient.'
+  },
+  'Résultats d\'analyses': {
+    title: 'Résultats d\'analyses',
+    description: 'Documents et résultats d\'examens médicaux.'
   },
   Messages: {
     title: 'Messages',
@@ -1786,6 +1791,67 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
             </Card>
           ) : null}
         </div>
+      )}
+
+      {tab === 'Résultats d\'analyses' && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-sm font-semibold">Résultats d&apos;analyses</h2>
+            <p className="text-xs text-warmgray">Documents et résultats d&apos;examens médicaux du patient.</p>
+          </CardHeader>
+          <CardContent>
+            {!patient.analysis_results || patient.analysis_results.length === 0 ? (
+              <EmptyState
+                icon="📋"
+                title="Aucun résultat d'analyse"
+                description="Les résultats d'analyses médicaux apparaîtront ici lorsqu'ils seront disponibles."
+              />
+            ) : (
+              <div className="space-y-3">
+                {patient.analysis_results.map((result) => (
+                  <div
+                    key={result.id}
+                    className="flex items-center justify-between rounded-xl border border-warmgray/20 bg-sable/30 p-4"
+                  >
+                    <div className="flex-1 min-w-0 mr-4">
+                      <p className="text-sm font-medium text-charcoal truncate">{result.file_name}</p>
+                      {result.description && (
+                        <p className="text-xs text-warmgray mt-1 line-clamp-2">{result.description}</p>
+                      )}
+                      <p className="text-xs text-warmgray mt-1">
+                        {result.analysis_date
+                          ? `Date : ${DATE_FORMATTER.format(new Date(result.analysis_date))}`
+                          : `Ajouté le ${DATE_FORMATTER.format(new Date(result.uploaded_at))}`
+                        }
+                      </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        variant="ghost"
+                        className="text-xs"
+                        onClick={() => window.open(result.file_path, '_blank')}
+                      >
+                        Voir
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="text-xs"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = result.file_path;
+                          link.download = result.file_name;
+                          link.click();
+                        }}
+                      >
+                        Télécharger
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {tab === 'Messages' && (
