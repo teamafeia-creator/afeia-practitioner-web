@@ -68,7 +68,7 @@ export default function ConsultationPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="cta" onClick={() => router.push(`/plans/${patient.plan.id}`)}>Ouvrir le plan</Button>
+          <Button variant="primary" onClick={() => router.push(`/plans/${patient.plan.id}`)}>Ouvrir le plan</Button>
           <Button variant="secondary" onClick={() => alert('🧾 Export PDF (à brancher)')}>Exporter</Button>
         </div>
       </div>
@@ -146,7 +146,7 @@ export default function ConsultationPage() {
               <h2 className="text-sm font-semibold">Actions rapides</h2>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <Button variant="cta" onClick={() => router.push(`/plans/${patient.plan.id}`)}>Créer / ajuster le plan</Button>
+              <Button variant="primary" onClick={() => router.push(`/plans/${patient.plan.id}`)}>Créer / ajuster le plan</Button>
               <Button variant="secondary" onClick={() => alert('📩 Message envoyé (mock)')}>Envoyer un message au patient</Button>
               <Button variant="ghost" onClick={() => alert('🩺 Orientation médecin (template)')}>
                 Proposer une orientation médicale (si nécessaire)

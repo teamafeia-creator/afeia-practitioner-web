@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { Button } from '../ui/Button';
+import { PageShell } from '../ui/PageShell';
 import { supabase } from '../../lib/supabase';
 
 const NAV = [
@@ -158,9 +159,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <main className="min-w-0 flex-1 p-4 md:p-6">
-          <div className="rounded-2xl bg-white shadow-soft ring-1 ring-black/5">
-            <div className="p-4 md:p-6">{children}</div>
-          </div>
+          <PageShell>{children}</PageShell>
         </main>
       </div>
 

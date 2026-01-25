@@ -56,7 +56,7 @@ export default function PlanPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="cta" onClick={saveMock}>Enregistrer</Button>
+          <Button variant="primary" onClick={saveMock}>Enregistrer</Button>
           <Button variant="secondary" onClick={newVersion}>Créer une nouvelle version</Button>
           <Button variant="ghost" onClick={() => alert('📤 Publication patient (à brancher)')}>Publier au patient</Button>
         </div>
