@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Toast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabase';
 
 type PatientRow = {
@@ -26,6 +28,12 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<PatientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const [toast, setToast] = useState<{
+    title: string;
+    description?: string;
+    variant?: 'success' | 'error' | 'info';
+  } | null>(null);
 
   useEffect(() => {
     async function loadPatients() {
@@ -55,6 +63,16 @@ export default function PatientsPage() {
 
     loadPatients();
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get('deleted') === '1') {
+      setToast({
+        title: 'Patient supprimé',
+        description: 'Le dossier a été supprimé définitivement.',
+        variant: 'success'
+      });
+    }
+  }, [searchParams]);
 
   const filteredPatients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -148,6 +166,14 @@ export default function PatientsPage() {
               <Button variant="secondary">Créer un patient</Button>
             </Link>
           }
+        />
+      ) : null}
+      {toast ? (
+        <Toast
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
         />
       ) : null}
     </div>

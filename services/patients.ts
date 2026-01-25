@@ -254,6 +254,13 @@ export async function createPatientRecord(input: CreatePatientInput) {
     throw new Error('Veuillez vous reconnecter pour créer un patient.');
   }
 
+  const { data: practitioner } = await supabase
+    .from('practitioners')
+    .select('default_consultation_reason')
+    .eq('id', userData.user.id)
+    .maybeSingle();
+  const defaultReason = practitioner?.default_consultation_reason?.trim() || null;
+
   const { data, error } = await supabase
     .from('patients')
     .insert({
@@ -262,6 +269,7 @@ export async function createPatientRecord(input: CreatePatientInput) {
       email: input.email ?? null,
       age: input.age ?? null,
       city: input.city ?? null,
+      consultation_reason: defaultReason,
       status: input.status,
       is_premium: input.isPremium,
       circular_enabled: input.circularEnabled

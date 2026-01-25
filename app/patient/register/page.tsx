@@ -56,6 +56,14 @@ function RegisterForm() {
         })
         .eq('id', patientId)
 
+      const { error: membershipError } = await supabase.from('patient_memberships').upsert({
+        patient_id: patientId,
+        patient_user_id: authData.user!.id
+      })
+      if (membershipError) {
+        console.error('Erreur création membership patient:', membershipError)
+      }
+
       router.push('/patient/home')
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la création')

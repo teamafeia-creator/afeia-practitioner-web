@@ -5,6 +5,7 @@ export type Practitioner = {
   id: string;
   email: string;
   full_name: string;
+  default_consultation_reason?: string | null;
   calendly_url?: string | null;
   created_at: string;
   updated_at: string;
@@ -89,6 +90,18 @@ export type PlanSection = {
   title: string;
   body?: string;
   sort_order: number;
+};
+
+export type PatientPlan = {
+  id: string;
+  patient_id: string;
+  practitioner_id: string;
+  version: number;
+  status: 'draft' | 'shared';
+  content: Record<string, string> | null;
+  shared_at?: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type JournalEntry = {
@@ -178,4 +191,5 @@ export type PatientWithDetails = Patient & {
   messages?: Message[];
   wearable_summaries?: WearableSummary[];
   wearable_insights?: WearableInsight[];
+  patient_plans?: PatientPlan[];
 };
