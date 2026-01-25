@@ -1,8 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Toast } from '@/components/ui/Toast';
+import { getCalendlyUrlForCurrentPractitioner } from '@/lib/calendly';
 import { supabase } from '@/lib/supabase';
 
 type ConsultationRow = {
@@ -30,9 +34,17 @@ const dateTimeFormatter = new Intl.DateTimeFormat('fr-FR', {
 });
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [stats, setStats] = useState({ total: 0, premium: 0, appointments: 0, messages: 0 });
   const [upcomingAppointments, setUpcomingAppointments] = useState<ConsultationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
+  const [calendlyLoading, setCalendlyLoading] = useState(true);
+  const [toast, setToast] = useState<{
+    title: string;
+    description?: string;
+    variant?: 'success' | 'error' | 'info';
+  } | null>(null);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -83,7 +95,25 @@ export default function DashboardPage() {
       }
     }
 
+    async function loadCalendly() {
+      try {
+        const url = await getCalendlyUrlForCurrentPractitioner();
+        setCalendlyUrl(url);
+      } catch (err) {
+        setCalendlyUrl(null);
+        setToast({
+          title: 'Calendly indisponible',
+          description:
+            err instanceof Error ? err.message : 'Impossible de récupérer votre lien Calendly.',
+          variant: 'error'
+        });
+      } finally {
+        setCalendlyLoading(false);
+      }
+    }
+
     loadDashboardData();
+    loadCalendly();
   }, []);
 
   const todayLabel = useMemo(() => dateFormatter.format(new Date()), []);
@@ -102,6 +132,56 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-semibold text-charcoal">Tableau de bord</h1>
         <p className="text-sm text-warmgray capitalize">{todayLabel}</p>
       </div>
+
+      <Card>
+        <CardContent className="flex flex-col gap-4 py-6 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-charcoal">Raccourcis rapides</p>
+            <p className="text-xs text-warmgray">
+              Gérez vos patients et vos rendez-vous en un clic.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button variant="primary" onClick={() => router.push('/patients/new')}>
+              Ajouter un patient
+            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (calendlyLoading) {
+                    setToast({
+                      title: 'Calendly en chargement',
+                      description: 'Votre lien Calendly est en cours de récupération.',
+                      variant: 'info'
+                    });
+                    return;
+                  }
+                  if (!calendlyUrl) {
+                    setToast({
+                      title: 'Lien Calendly manquant',
+                      description: 'Ajoutez votre lien Calendly dans les paramètres.',
+                      variant: 'error'
+                    });
+                    return;
+                  }
+                  window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
+                }}
+              >
+                Planifier un rendez-vous
+              </Button>
+              {!calendlyLoading && !calendlyUrl ? (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-warmgray">
+                  <span>Calendly non configuré.</span>
+                  <Button variant="ghost" onClick={() => router.push('/settings')}>
+                    Configurer Calendly
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
@@ -185,6 +265,15 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {toast ? (
+        <Toast
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      ) : null}
     </div>
   );
 }
