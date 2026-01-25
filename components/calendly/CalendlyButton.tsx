@@ -112,7 +112,7 @@ export function CalendlyButton({ patient, calendlyUrl }: CalendlyButtonProps) {
 
   return (
     <div className="space-y-2">
-      <Button variant="cta" onClick={handleOpenCalendly} loading={opening} className="w-full sm:w-auto">
+      <Button variant="primary" onClick={handleOpenCalendly} loading={opening} className="w-full sm:w-auto">
         Prendre rendez-vous
       </Button>
       {error ? <p className="text-xs text-aubergine">{error}</p> : null}

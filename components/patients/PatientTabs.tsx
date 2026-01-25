@@ -4,9 +4,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../lib/cn';
 import { Badge } from '../ui/Badge';
-import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { Card, CardContent, CardHeader } from '../ui/Card';
+import { EmptyState } from '../ui/EmptyState';
 import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
+import { TabsPills } from '../ui/TabsPills';
 import { Textarea } from '../ui/Textarea';
 import { Toast } from '../ui/Toast';
 import {
@@ -101,6 +104,13 @@ function renderAnswer(value?: string | null) {
   return renderValue(value);
 }
 
+function getInitials(name?: string | null) {
+  if (!name) return '👤';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length === 0) return '👤';
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
+}
+
 function formatDateTimeLocal(value?: Date) {
   if (!value) return '';
   const timezoneOffset = value.getTimezoneOffset() * 60000;
@@ -142,7 +152,7 @@ function areJournalEntriesEqual(
 
 function EditBanner({ label }: { label: string }) {
   return (
-    <div className="mt-4 rounded-xl border border-teal/30 bg-teal/10 px-3 py-2 text-xs font-medium text-teal">
+    <div className="mt-4 rounded-2xl border border-teal/20 bg-teal/5 px-3 py-2 text-xs font-medium text-teal">
       ✏️ Mode édition activé — {label}
     </div>
   );
@@ -177,26 +187,30 @@ const APPOINTMENT_STATUS_VARIANT: Record<Appointment['status'], 'info' | 'attent
 
 function renderAdherence(entry: JournalEntry) {
   return (
-    <div className="flex flex-wrap gap-2 text-xs text-warmgray">
-      <span>
-        Hydratation : <strong className="text-marine">{entry.adherence_hydratation ? 'Oui' : 'Non'}</strong>
-      </span>
-      <span>
-        Respiration : <strong className="text-marine">{entry.adherence_respiration ? 'Oui' : 'Non'}</strong>
-      </span>
-      <span>
-        Mouvement : <strong className="text-marine">{entry.adherence_mouvement ? 'Oui' : 'Non'}</strong>
-      </span>
-      <span>
-        Plantes : <strong className="text-marine">{entry.adherence_plantes ? 'Oui' : 'Non'}</strong>
-      </span>
+    <div className="flex flex-wrap gap-2 text-xs">
+      {[
+        { label: 'Hydratation', value: entry.adherence_hydratation },
+        { label: 'Respiration', value: entry.adherence_respiration },
+        { label: 'Mouvement', value: entry.adherence_mouvement },
+        { label: 'Plantes', value: entry.adherence_plantes }
+      ].map((item) => (
+        <span
+          key={item.label}
+          className={cn(
+            'rounded-full px-3 py-1 text-xs font-medium',
+            item.value ? 'bg-teal/10 text-teal' : 'bg-sable/70 text-warmgray'
+          )}
+        >
+          {item.label}: {item.value ? 'Oui' : 'Non'}
+        </span>
+      ))}
     </div>
   );
 }
 
 function renderInsight(insight: WearableInsight) {
   return (
-    <div key={insight.id} className="rounded-2xl bg-sable p-4 ring-1 ring-black/5">
+    <div key={insight.id} className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5">
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wide text-warmgray">Insight {insight.type ?? ''}</span>
         <Badge variant={insight.level === 'attention' ? 'attention' : 'info'}>
@@ -575,30 +589,61 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
     setMessageLoading(false);
   }
 
+  function openAppointmentModal() {
+    setAppointmentForm({
+      startsAt: formatDateTimeLocal(new Date()),
+      durationMinutes: '60',
+      notes: ''
+    });
+    setAppointmentModalOpen(true);
+  }
+
   return (
-    <div className="space-y-5">
-      <div className="rounded-2xl bg-white p-4 shadow-soft ring-1 ring-black/5">
-        <h2 className="text-sm font-semibold text-charcoal">{activeMeta.title}</h2>
-        <p className="text-xs text-warmgray">{activeMeta.description}</p>
+    <div className="space-y-6">
+      <div className="rounded-[26px] bg-white/85 p-5 shadow-soft ring-1 ring-black/5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal/10 text-lg font-semibold text-teal">
+              {getInitials(patientState.name)}
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-warmgray">Dossier patient</p>
+              <h1 className="text-2xl font-semibold text-charcoal">
+                {patientState.name ?? 'Patient'}
+              </h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-warmgray">
+                <Badge variant={isPremium ? 'premium' : 'standard'}>
+                  {isPremium ? 'Premium' : 'Standard'}
+                </Badge>
+                {patientState.age ? <span>{patientState.age} ans</span> : null}
+                {patientState.city ? <span>• {patientState.city}</span> : null}
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setTab('Profil');
+                setProfileEditing(true);
+              }}
+            >
+              Modifier le profil
+            </Button>
+            {tab !== 'Rendez-vous' ? (
+              <Button variant="primary" onClick={openAppointmentModal}>
+                Planifier RDV
+              </Button>
+            ) : null}
+          </div>
+        </div>
       </div>
 
-      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <div className="flex flex-nowrap items-end gap-6 border-b border-black/10 pb-2">
-          {TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                'whitespace-nowrap pb-2 text-sm font-medium transition',
-                tab === t
-                  ? 'border-b-2 border-teal text-teal'
-                  : 'border-b-2 border-transparent text-warmgray hover:text-teal'
-              )}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+      <TabsPills tabs={TABS} active={tab} onChange={setTab} />
+
+      <div className="rounded-2xl bg-white/70 px-4 py-3 shadow-sm ring-1 ring-black/5">
+        <h2 className="text-sm font-semibold text-charcoal">{activeMeta.title}</h2>
+        <p className="text-xs text-warmgray">{activeMeta.description}</p>
       </div>
 
       {tab === 'Profil' && (
@@ -606,7 +651,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           <Card
             className={cn(
               'transition',
-              profileEditing ? 'border-2 border-teal/30 bg-teal/5' : ''
+              profileEditing ? 'ring-2 ring-teal/20 bg-teal/5' : ''
             )}
           >
             <CardHeader>
@@ -662,7 +707,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   <div className="sm:col-span-2">
                     <p className="text-xs font-medium text-warmgray">Statut</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <Badge variant={isPremium ? 'premium' : 'info'}>
+                      <Badge variant={isPremium ? 'premium' : 'standard'}>
                         {isPremium ? 'Premium' : 'Standard'}
                       </Badge>
                       <span className="text-xs text-warmgray">
@@ -694,7 +739,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Statut</p>
                     <div className="mt-1">
-                      <Badge variant={isPremium ? 'premium' : 'info'}>
+                      <Badge variant={isPremium ? 'premium' : 'standard'}>
                         {isPremium ? 'Premium' : 'Standard'}
                       </Badge>
                     </div>
@@ -729,7 +774,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           <Card
             className={cn(
               'transition',
-              profileEditing ? 'border-2 border-teal/30 bg-teal/5' : ''
+              profileEditing ? 'ring-2 ring-teal/20 bg-teal/5' : ''
             )}
           >
             <CardHeader>
@@ -763,21 +808,6 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
 
       {tab === 'Rendez-vous' && (
         <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button
-              variant="primary"
-              onClick={() => {
-                setAppointmentForm({
-                  startsAt: formatDateTimeLocal(new Date()),
-                  durationMinutes: '60',
-                  notes: ''
-                });
-                setAppointmentModalOpen(true);
-              }}
-            >
-              📅 Planifier un rendez-vous
-            </Button>
-          </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
@@ -807,23 +837,16 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     ) : null}
                   </div>
                 ) : (
-                  <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                    <p>À planifier.</p>
-                    <Button
-                      variant="secondary"
-                      className="mt-3"
-                      onClick={() => {
-                        setAppointmentForm({
-                          startsAt: formatDateTimeLocal(new Date()),
-                          durationMinutes: '60',
-                          notes: ''
-                        });
-                        setAppointmentModalOpen(true);
-                      }}
-                    >
-                      Planifier un rendez-vous
-                    </Button>
-                  </div>
+                  <EmptyState
+                    icon="📆"
+                    title="À planifier"
+                    description="Aucune consultation programmée pour le moment."
+                    action={
+                      <Button variant="primary" onClick={openAppointmentModal}>
+                        Planifier un rendez-vous
+                      </Button>
+                    }
+                  />
                 )}
               </CardContent>
             </Card>
@@ -834,15 +857,17 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
               </CardHeader>
               <CardContent>
                 {sortedAppointments.length === 0 ? (
-                  <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                    Aucun rendez-vous enregistré.
-                  </div>
+                  <EmptyState
+                    icon="🗂️"
+                    title="Aucun rendez-vous enregistré"
+                    description="L’historique des consultations apparaîtra ici."
+                  />
                 ) : (
                   <div className="space-y-3">
                     {sortedAppointments.map((appointment) => (
                       <div
                         key={appointment.id}
-                        className="rounded-2xl border border-black/5 bg-white p-4"
+                        className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
@@ -873,7 +898,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       )}
 
       {tab === 'Anamnèse' && (
-        <Card className={cn(anamnesisEditing ? 'border-2 border-teal/30 bg-teal/5' : '')}>
+        <Card className={cn(anamnesisEditing ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Anamnèse</h2>
@@ -897,11 +922,15 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     {section.questions.map((question) => (
-                      <div key={question.key} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+                      <div
+                        key={question.key}
+                        className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5"
+                      >
                         <p className="text-xs uppercase tracking-wide text-warmgray">{question.label}</p>
                         {anamnesisEditing ? (
                           question.type === 'choice' ? (
-                            <select
+                            <Select
+                              className="mt-2"
                               value={anamnesisAnswers[question.key] ?? ''}
                               onChange={(event) =>
                                 setAnamnesisAnswers((prev) => ({
@@ -909,7 +938,6 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                                   [question.key]: event.target.value
                                 }))
                               }
-                              className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                             >
                               <option value="">Sélectionner</option>
                               {question.options?.map((option) => (
@@ -917,7 +945,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                                   {option}
                                 </option>
                               ))}
-                            </select>
+                            </Select>
                           ) : (
                             <Textarea
                               className="mt-2"
@@ -974,12 +1002,12 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">Circular</h2>
-              {isPremium ? <Badge variant="premium">Actif</Badge> : <Badge variant="attention">Non activé</Badge>}
+              {isPremium ? <Badge variant="active">Actif</Badge> : <Badge variant="attention">Non activé</Badge>}
             </div>
           </CardHeader>
           <CardContent>
             {!isPremium ? (
-              <div className="relative overflow-hidden rounded-2xl border border-dashed border-teal/30 bg-teal/5 p-6 text-sm text-marine">
+              <div className="relative overflow-hidden rounded-2xl border border-dashed border-teal/20 bg-teal/5 p-6 text-sm text-marine">
                 <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-teal shadow-soft">
                   🔒 Premium
                 </div>
@@ -992,7 +1020,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     Proposez l’offre Premium à votre client afin d’avoir accès à cette fonctionnalité.
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <Button variant="cta" onClick={handleUpgradePremium} loading={premiumLoading}>
+                    <Button variant="primary" onClick={handleUpgradePremium} loading={premiumLoading}>
                       Passer en Premium
                     </Button>
                     <Button variant="secondary" onClick={() => setTab('Profil')}>
@@ -1002,9 +1030,11 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 </div>
               </div>
             ) : wearableSummaries.length === 0 ? (
-              <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                Aucune donnée Circular disponible.
-              </div>
+              <EmptyState
+                icon="🌀"
+                title="Aucune donnée Circular disponible"
+                description="Les données s’afficheront dès la première synchronisation."
+              />
             ) : (
               <div className="space-y-4">
                 <div className="overflow-x-auto">
@@ -1047,9 +1077,11 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     {wearableInsights.map((insight) => renderInsight(insight))}
                   </div>
                 ) : (
-                  <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                    Aucun insight Circular disponible.
-                  </div>
+                  <EmptyState
+                    icon="💡"
+                    title="Aucun insight Circular disponible"
+                    description="Les suggestions apparaîtront après analyse."
+                  />
                 )}
               </div>
             )}
@@ -1058,7 +1090,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       )}
 
       {tab === 'Journal' && (
-        <Card className={cn(journalEditing ? 'border-2 border-teal/30 bg-teal/5' : '')}>
+        <Card className={cn(journalEditing ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Journal</h2>
@@ -1072,7 +1104,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white p-5 ring-1 ring-black/5">
+              <div className="rounded-2xl bg-white/90 p-5 shadow-sm ring-1 ring-black/5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-charcoal">Dernière entrée</p>
                   <span className="text-xs text-warmgray">
@@ -1083,18 +1115,18 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Humeur</p>
                     {journalEditing ? (
-                      <select
+                      <Select
+                        className="mt-2"
                         value={journalForm.mood ?? ''}
                         onChange={(event) =>
                           setJournalForm((prev) => ({ ...prev, mood: event.target.value as JournalEntry['mood'] }))
                         }
-                        className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                       >
                         <option value="">Sélectionner</option>
                         <option value="🙂">🙂</option>
                         <option value="😐">😐</option>
                         <option value="🙁">🙁</option>
-                      </select>
+                      </Select>
                     ) : (
                       <p className="mt-2 text-sm">{renderValue(journalForm.mood)}</p>
                     )}
@@ -1102,7 +1134,8 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   <div>
                     <p className="text-xs uppercase tracking-wide text-warmgray">Énergie</p>
                     {journalEditing ? (
-                      <select
+                      <Select
+                        className="mt-2"
                         value={journalForm.energy ?? ''}
                         onChange={(event) =>
                           setJournalForm((prev) => ({
@@ -1110,13 +1143,12 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                             energy: event.target.value as JournalEntry['energy']
                           }))
                         }
-                        className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
                       >
                         <option value="">Sélectionner</option>
                         <option value="Bas">Bas</option>
                         <option value="Moyen">Moyen</option>
                         <option value="Élevé">Élevé</option>
-                      </select>
+                      </Select>
                     ) : (
                       <p className="mt-2 text-sm">{renderValue(journalForm.energy)}</p>
                     )}
@@ -1147,10 +1179,10 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                       { key: 'adherence_plantes', label: 'Plantes' }
                     ] as const
                   ).map((item) => (
-                    <div key={item.key} className="flex items-center justify-between rounded-xl bg-sable px-3 py-2">
+                    <div key={item.key} className="flex items-center justify-between rounded-2xl bg-sable/70 px-3 py-2">
                       <span className="text-xs text-warmgray">{item.label}</span>
                       {journalEditing ? (
-                        <select
+                        <Select
                           value={journalForm[item.key] ? 'Oui' : 'Non'}
                           onChange={(event) =>
                             setJournalForm((prev) => ({
@@ -1158,11 +1190,11 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                               [item.key]: event.target.value === 'Oui'
                             }))
                           }
-                          className="rounded-lg border border-warmgray/30 bg-white px-2 py-1 text-xs text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                          className="max-w-[120px] text-xs"
                         >
                           <option value="Oui">Oui</option>
                           <option value="Non">Non</option>
-                        </select>
+                        </Select>
                       ) : (
                         <span className="text-xs font-medium text-marine">
                           {journalForm[item.key] ? 'Oui' : 'Non'}
@@ -1199,23 +1231,26 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
               <div className="space-y-3">
                 <p className="text-xs uppercase tracking-wide text-warmgray">Historique</p>
                 {journalEntries.length === 0 ? (
-                  <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                    <p>Aucune entrée de journal.</p>
-                    <Button
-                      variant="secondary"
-                      className="mt-3"
-                      onClick={() => {
-                        setJournalForm(buildJournalForm(undefined));
-                        setJournalEditing(true);
-                      }}
-                    >
-                      Ajouter une entrée
-                    </Button>
-                  </div>
+                  <EmptyState
+                    icon="📓"
+                    title="Aucune entrée de journal"
+                    description="Commencez un suivi quotidien en ajoutant une première note."
+                    action={
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          setJournalForm(buildJournalForm(undefined));
+                          setJournalEditing(true);
+                        }}
+                      >
+                        Ajouter une entrée
+                      </Button>
+                    }
+                  />
                 ) : (
                   <div className="grid gap-3">
                     {journalEntries.map((entry) => (
-                      <div key={entry.id} className="rounded-2xl bg-white p-4 ring-1 ring-black/5">
+                      <div key={entry.id} className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
                           <div className="flex items-center gap-2 text-sm">
@@ -1238,7 +1273,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       )}
 
       {tab === 'Notes consultation' && (
-        <Card className={cn(noteEditing ? 'border-2 border-teal/30 bg-teal/5' : '')}>
+        <Card className={cn(noteEditing ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Notes privées de consultation</h2>
@@ -1251,8 +1286,14 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
             {noteEditing ? <EditBanner label="Enregistrez vos notes confidentielles." /> : null}
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-              Notes privées : visibles uniquement par le naturopathe. Non partagées avec le patient.
+            <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 text-sm text-marine shadow-sm ring-1 ring-black/5">
+              <span className="text-lg">🔒</span>
+              <div>
+                <p className="text-sm font-semibold text-charcoal">Notes privées</p>
+                <p className="mt-1 text-xs text-warmgray">
+                  Visibles uniquement par le naturopathe. Non partagées avec le patient.
+                </p>
+              </div>
             </div>
             {noteEditing ? (
               <Textarea
@@ -1262,7 +1303,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 rows={6}
               />
             ) : (
-              <div className="rounded-2xl bg-white p-4 text-sm ring-1 ring-black/5 whitespace-pre-line">
+              <div className="rounded-2xl bg-white/90 p-4 text-sm shadow-sm ring-1 ring-black/5 whitespace-pre-line">
                 {renderValue(noteContent)}
               </div>
             )}
@@ -1299,18 +1340,20 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardHeader>
           <CardContent className="space-y-4">
             {messages.length === 0 ? (
-              <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-                Aucun message pour le moment.
-              </div>
+              <EmptyState
+                icon="💬"
+                title="Aucun message pour le moment"
+                description="Envoyez un premier message pour ouvrir la conversation."
+              />
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-black/5">
                 {messages.map((message) => (
                   <div
                     key={message.id}
                     className={cn(
                       'max-w-[90%] rounded-2xl px-4 py-2 text-sm ring-1 ring-black/5 sm:max-w-[78%]',
                       message.sender === 'patient'
-                        ? 'bg-sable text-marine'
+                        ? 'bg-sable/80 text-marine'
                         : 'ml-auto bg-teal text-white'
                     )}
                   >
@@ -1335,14 +1378,15 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 onChange={(event) => setMessageText(event.target.value)}
                 rows={4}
               />
-              <Button
-                variant="primary"
-                onClick={handleSendMessage}
-                loading={messageLoading}
-                className="w-full sm:w-auto"
-              >
-                Envoyer
-              </Button>
+              <div className="flex justify-end">
+                <Button
+                  variant="primary"
+                  onClick={handleSendMessage}
+                  loading={messageLoading}
+                >
+                  Envoyer
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

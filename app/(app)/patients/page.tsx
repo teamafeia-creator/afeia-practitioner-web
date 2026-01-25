@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { supabase } from '@/lib/supabase';
 
 type PatientRow = {
@@ -74,15 +76,15 @@ export default function PatientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Patients</h1>
-          <p className="text-sm text-warmgray">{patients.length} patient(s) au total</p>
-        </div>
-        <Link href="/patients/new">
-          <Button variant="cta">Nouveau patient</Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Patients"
+        subtitle={`${patients.length} patient(s) au total`}
+        actions={
+          <Link href="/patients/new">
+            <Button variant="primary">Ajouter un patient</Button>
+          </Link>
+        }
+      />
 
       <Input
         value={search}
@@ -106,30 +108,29 @@ export default function PatientsPage() {
                       {patient.city ? ` • ${patient.city}` : ''}
                     </p>
                   </div>
-                  {isPremium ? <Badge variant="premium">Premium</Badge> : <Badge variant="info">Standard</Badge>}
+                  {isPremium ? (
+                    <Badge variant="premium">Premium</Badge>
+                  ) : (
+                    <Badge variant="standard">Standard</Badge>
+                  )}
                 </div>
 
-                <div className="grid gap-2 text-sm text-marine">
-                  <div>
-                    <span className="text-xs text-warmgray">Email</span>
-                    <div>{patient.email || 'Non renseigné'}</div>
+                <div className="space-y-2 text-sm text-marine">
+                  <div className="flex flex-wrap gap-2 text-xs text-warmgray">
+                    <span>Email : <span className="text-marine">{patient.email || 'Non renseigné'}</span></span>
+                    <span>Téléphone : <span className="text-marine">{patient.phone || 'Non renseigné'}</span></span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <span className="text-xs text-warmgray">Téléphone</span>
-                      <div>{patient.phone || 'Non renseigné'}</div>
-                    </div>
-                    <div>
-                      <span className="text-xs text-warmgray">Pathologie</span>
-                      <div>{patient.pathology || 'Non renseigné'}</div>
-                    </div>
+                  <div className="text-xs text-warmgray">
+                    Pathologie : <span className="text-marine">{patient.pathology || 'Non renseigné'}</span>
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 flex justify-end">
                 <Link href={`/patients/${patient.id}`}>
-                  <Button variant="secondary">Voir le dossier</Button>
+                  <Button variant="ghost" className="rounded-full px-4 py-2 text-xs">
+                    Voir le dossier
+                  </Button>
                 </Link>
               </div>
             </Card>
@@ -138,9 +139,16 @@ export default function PatientsPage() {
       </div>
 
       {filteredPatients.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-warmgray/30 bg-sable/50 p-6 text-center text-sm text-warmgray">
-          Aucun patient trouvé.
-        </div>
+        <EmptyState
+          icon="🧑‍⚕️"
+          title="Aucun patient trouvé"
+          description="Ajustez votre recherche ou ajoutez un nouveau dossier."
+          action={
+            <Link href="/patients/new">
+              <Button variant="secondary">Créer un patient</Button>
+            </Link>
+          }
+        />
       ) : null}
     </div>
   );

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { Toast } from '@/components/ui/Toast';
 import { getCalendlyUrlForCurrentPractitioner } from '@/lib/calendly';
 import { supabase } from '@/lib/supabase';
@@ -128,60 +130,49 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-charcoal">Tableau de bord</h1>
-        <p className="text-sm text-warmgray capitalize">{todayLabel}</p>
-      </div>
-
-      <Card>
-        <CardContent className="flex flex-col gap-4 py-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-charcoal">Raccourcis rapides</p>
-            <p className="text-xs text-warmgray">
-              Gérez vos patients et vos rendez-vous en un clic.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <PageHeader
+        title="Tableau de bord"
+        subtitle={<span className="capitalize">{todayLabel}</span>}
+        actions={
+          <>
             <Button variant="primary" onClick={() => router.push('/patients/new')}>
               Ajouter un patient
             </Button>
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  if (calendlyLoading) {
-                    setToast({
-                      title: 'Calendly en chargement',
-                      description: 'Votre lien Calendly est en cours de récupération.',
-                      variant: 'info'
-                    });
-                    return;
-                  }
-                  if (!calendlyUrl) {
-                    setToast({
-                      title: 'Lien Calendly manquant',
-                      description: 'Ajoutez votre lien Calendly dans les paramètres.',
-                      variant: 'error'
-                    });
-                    return;
-                  }
-                  window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
-                }}
-              >
-                Planifier un rendez-vous
-              </Button>
-              {!calendlyLoading && !calendlyUrl ? (
-                <div className="flex flex-wrap items-center gap-2 text-xs text-warmgray">
-                  <span>Calendly non configuré.</span>
-                  <Button variant="ghost" onClick={() => router.push('/settings')}>
-                    Configurer Calendly
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (calendlyLoading) {
+                  setToast({
+                    title: 'Calendly en chargement',
+                    description: 'Votre lien Calendly est en cours de récupération.',
+                    variant: 'info'
+                  });
+                  return;
+                }
+                if (!calendlyUrl) {
+                  setToast({
+                    title: 'Lien Calendly manquant',
+                    description: 'Ajoutez votre lien Calendly dans les paramètres.',
+                    variant: 'error'
+                  });
+                  return;
+                }
+                window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
+              }}
+            >
+              Planifier un rendez-vous
+            </Button>
+          </>
+        }
+      />
+      {!calendlyLoading && !calendlyUrl ? (
+        <div className="flex flex-wrap items-center gap-2 text-xs text-warmgray">
+          <span>Calendly non configuré.</span>
+          <Button variant="ghost" onClick={() => router.push('/settings')}>
+            Configurer Calendly
+          </Button>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
@@ -189,7 +180,7 @@ export default function DashboardPage() {
             <CardTitle>Patients actifs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-teal">{stats.total}</div>
+            <div className="text-3xl font-semibold text-teal md:text-4xl">{stats.total}</div>
             <p className="mt-2 text-xs text-warmgray">Dossiers actifs suivis</p>
           </CardContent>
         </Card>
@@ -199,7 +190,7 @@ export default function DashboardPage() {
             <CardTitle>Patients Premium</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-aubergine">{stats.premium}</div>
+            <div className="text-3xl font-semibold text-aubergine md:text-4xl">{stats.premium}</div>
             <p className="mt-2 text-xs text-warmgray">Accès Circular + suivi avancé</p>
           </CardContent>
         </Card>
@@ -209,7 +200,7 @@ export default function DashboardPage() {
             <CardTitle>RDV cette semaine</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-teal">{stats.appointments}</div>
+            <div className="text-3xl font-semibold text-teal md:text-4xl">{stats.appointments}</div>
             <p className="mt-2 text-xs text-warmgray">Consultations à venir</p>
           </CardContent>
         </Card>
@@ -219,7 +210,7 @@ export default function DashboardPage() {
             <CardTitle>Nouveaux messages</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-gold">{stats.messages}</div>
+            <div className="text-3xl font-semibold text-gold md:text-4xl">{stats.messages}</div>
             <p className="mt-2 text-xs text-warmgray">À traiter aujourd’hui</p>
           </CardContent>
         </Card>
@@ -229,20 +220,48 @@ export default function DashboardPage() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle>Prochaines consultations</CardTitle>
-            <Badge variant="info">{upcomingAppointments.length} à venir</Badge>
+            <Badge variant="active">{upcomingAppointments.length} à venir</Badge>
           </div>
         </CardHeader>
         <CardContent>
           {upcomingAppointments.length === 0 ? (
-            <div className="rounded-2xl bg-sable p-4 text-sm text-marine ring-1 ring-black/5">
-              Aucun rendez-vous planifié.
-            </div>
+            <EmptyState
+              icon="🗓️"
+              title="Aucun rendez-vous planifié"
+              description="Planifiez votre prochaine consultation en quelques clics."
+              action={
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    if (calendlyLoading) {
+                      setToast({
+                        title: 'Calendly en chargement',
+                        description: 'Votre lien Calendly est en cours de récupération.',
+                        variant: 'info'
+                      });
+                      return;
+                    }
+                    if (!calendlyUrl) {
+                      setToast({
+                        title: 'Lien Calendly manquant',
+                        description: 'Ajoutez votre lien Calendly dans les paramètres.',
+                        variant: 'error'
+                      });
+                      return;
+                    }
+                    window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  Planifier
+                </Button>
+              }
+            />
           ) : (
             <div className="space-y-3">
               {upcomingAppointments.map((appointment) => (
                 <div
                   key={appointment.id}
-                  className="flex flex-col gap-2 rounded-2xl border border-black/5 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-2 rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <div className="text-sm font-semibold text-charcoal">
@@ -256,7 +275,7 @@ export default function DashboardPage() {
                     {appointment.patients?.is_premium || appointment.patients?.status === 'premium' ? (
                       <Badge variant="premium">Premium</Badge>
                     ) : (
-                      <Badge variant="info">Standard</Badge>
+                      <Badge variant="standard">Standard</Badge>
                     )}
                   </div>
                 </div>

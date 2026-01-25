@@ -2,10 +2,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
+import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
+import { PageHeader } from '../../../components/ui/PageHeader';
 import { Toast } from '../../../components/ui/Toast';
 import { normalizeCalendlyUrl } from '../../../lib/calendly';
 import { getPractitionerProfile, updatePractitionerProfile } from '../../../lib/queries';
@@ -141,14 +142,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-charcoal">Paramètres</h1>
+    <div className="space-y-6">
+      <PageHeader title="Paramètres" subtitle="Gérez votre profil professionnel et votre abonnement." />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold">Profil professionnel</h2>
+              <div>
+                <h2 className="text-sm font-semibold">Profil professionnel</h2>
+                <p className="text-xs text-warmgray">Vos informations visibles par vos patients.</p>
+              </div>
               {profile ? (
                 <Button
                   variant="secondary"
@@ -160,12 +164,12 @@ export default function SettingsPage() {
               ) : null}
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="text-xs font-medium text-warmgray">Nom</label>
                 {isEditing ? (
                   <Input
+                    label="Nom"
                     value={formState.full_name}
                     onChange={(event) =>
                       setFormState((prev) => ({ ...prev, full_name: event.target.value }))
@@ -173,15 +177,16 @@ export default function SettingsPage() {
                     placeholder="Votre nom complet"
                   />
                 ) : (
-                  <div className="mt-2 text-sm text-marine">
-                    {profileName}
+                  <div>
+                    <p className="text-xs font-medium text-warmgray">Nom</p>
+                    <div className="mt-2 text-sm text-marine">{profileName}</div>
                   </div>
                 )}
               </div>
               <div>
-                <label className="text-xs font-medium text-warmgray">Email</label>
                 {isEditing ? (
                   <Input
+                    label="Email"
                     type="email"
                     value={formState.email}
                     onChange={(event) =>
@@ -190,37 +195,40 @@ export default function SettingsPage() {
                     placeholder="vous@exemple.fr"
                   />
                 ) : (
-                  <div className="mt-2 text-sm text-marine">
-                    {profileEmail}
+                  <div>
+                    <p className="text-xs font-medium text-warmgray">Email</p>
+                    <div className="mt-2 text-sm text-marine">{profileEmail}</div>
                   </div>
                 )}
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-warmgray">Lien Calendly</label>
               {isEditing ? (
                 <Input
+                  label="Lien Calendly"
                   placeholder="https://calendly.com/mon-profil ou mon-profil"
                   value={formState.calendly_url}
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, calendly_url: event.target.value }))
                   }
                   disabled={loadingProfile}
+                  hint="Ajoutez une URL complète ou un slug Calendly. Exemple : https://calendly.com/mon-profil."
                 />
               ) : (
-                <div className="mt-2 text-sm text-marine">
-                  {profileCalendly}
+                <div>
+                  <p className="text-xs font-medium text-warmgray">Lien Calendly</p>
+                  <div className="mt-2 text-sm text-marine">{profileCalendly}</div>
+                  <p className="mt-1 text-xs text-warmgray">
+                    Ajoutez une URL complète ou un slug Calendly. Exemple : https://calendly.com/mon-profil.
+                  </p>
                 </div>
               )}
-              <p className="mt-1 text-xs text-warmgray">
-                Ajoutez une URL complète ou un slug Calendly. Exemple : https://calendly.com/mon-profil.
-              </p>
             </div>
             <div className="flex flex-wrap gap-2">
               {isEditing ? (
                 <>
                   <Button
-                    variant="cta"
+                    variant="primary"
                     onClick={handleSaveProfile}
                     loading={savingProfile}
                     disabled={!hasChanges || savingProfile}
@@ -244,7 +252,9 @@ export default function SettingsPage() {
                   </Button>
                 </>
               ) : null}
-              <Button variant="secondary" onClick={() => alert('📄 Documents pro (à brancher)')}>Gérer mes documents</Button>
+              <Button variant="secondary" onClick={() => alert('📄 Documents pro (à brancher)')}>
+                Gérer mes documents
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -258,10 +268,12 @@ export default function SettingsPage() {
               <div className="text-sm text-charcoal">Plan</div>
               <Badge variant="premium">Premium</Badge>
             </div>
-            <div className="rounded-2xl bg-sable p-3 text-sm text-marine ring-1 ring-black/5">
+            <div className="rounded-2xl bg-white/80 p-3 text-sm text-marine ring-1 ring-black/5">
               Circular (sommeil, HRV, activité) activé pour les patients Premium.
             </div>
-            <Button variant="secondary" onClick={() => alert('💳 Gestion paiement (à brancher)')}>Gérer la facturation</Button>
+            <Button variant="secondary" onClick={() => alert('💳 Gestion paiement (à brancher)')}>
+              Gérer la facturation
+            </Button>
           </CardContent>
         </Card>
       </div>
