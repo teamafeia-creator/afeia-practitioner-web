@@ -119,6 +119,7 @@ export async function POST(
     return NextResponse.json({ error: 'Impossible de générer le code.' }, { status: 500 });
   }
 
+  // ✅ TOUJOURS envoyer l'email (dev + prod)
   const emailPayload = buildQuestionnaireCodeEmail({
     to: patient.email,
     patientName: patient.name,
@@ -128,11 +129,25 @@ export async function POST(
 
   try {
     await sendEmail(emailPayload);
-    console.log(`✅ Email envoyé à ${patient.email}, code: ${code}`);
-  } catch (error) {
-    console.error('Failed to send questionnaire email', error);
-    return NextResponse.json({ error: 'Impossible d\'envoyer l\'email.' }, { status: 500 });
-  }
+    console.log(`✅✅✅ EMAIL ENVOYÉ AVEC SUCCÈS à ${patient.email}`);
+    console.log(`Code OTP: ${code}`);
 
-  return NextResponse.json({ ok: true, expiresAt: expiresAt.toISOString(), sentToEmail: patient.email });
+    return NextResponse.json({
+      ok: true,
+      message: `📧 Email envoyé avec succès à ${patient.email}`,
+      code: isDev ? code : undefined, // Montre le code en dev seulement
+      expiresAt: expiresAt.toISOString(),
+      sentToEmail: patient.email
+    });
+  } catch (emailError: unknown) {
+    const errorMessage = emailError instanceof Error ? emailError.message : 'Inconnue';
+    const errorStack = emailError instanceof Error ? emailError.stack : undefined;
+    console.error('❌❌❌ ERREUR ENVOI EMAIL:', emailError);
+    console.error('Détails:', errorMessage, errorStack);
+
+    return NextResponse.json({
+      error: `Impossible d'envoyer l'email. Erreur: ${errorMessage}. Vérifiez la configuration Resend.`,
+      details: errorMessage
+    }, { status: 500 });
+  }
 }
