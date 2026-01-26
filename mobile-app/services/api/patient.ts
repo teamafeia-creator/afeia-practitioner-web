@@ -1,42 +1,75 @@
-/**
- * Patient API Service
- */
+import { apiClient } from './client';
+import type { APIResponse, Patient, Naturopathe } from '../../types';
 
-import apiClient from './client';
-import type { PatientProfile, NaturopatheInfo, Patient } from '@/types';
+// Service Patient API
 
-export const patientApi = {
-  /**
-   * Get patient profile with naturopathe info
-   */
-  async getProfile(): Promise<PatientProfile> {
-    const response = await apiClient.get<PatientProfile>('/patient/profile');
-    return response.data;
+export const patientService = {
+  // Récupérer les informations du patient
+  async getPatientInfo(): Promise<APIResponse<Patient>> {
+    try {
+      console.log('✅ API Call: getPatientInfo');
+      const { data } = await apiClient.get('/patient/info');
+      return data;
+    } catch (error: any) {
+      console.error('❌ getPatientInfo Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Update patient profile
-   */
-  async updateProfile(data: Partial<Patient>): Promise<Patient> {
-    const response = await apiClient.put<Patient>('/patient/profile', data);
-    return response.data;
+  // Mettre à jour le profil patient
+  async updateProfile(updates: Partial<Patient>): Promise<APIResponse<Patient>> {
+    try {
+      console.log('✅ API Call: updateProfile', updates);
+      const { data } = await apiClient.put('/patient/profile', updates);
+      return data;
+    } catch (error: any) {
+      console.error('❌ updateProfile Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Get naturopathe info with consultation dates
-   */
-  async getNaturopatheInfo(): Promise<NaturopatheInfo> {
-    const response = await apiClient.get<NaturopatheInfo>('/patient/naturopathe-info');
-    return response.data;
+  // Récupérer les informations du naturopathe
+  async getNaturopathe(): Promise<APIResponse<Naturopathe>> {
+    try {
+      console.log('✅ API Call: getNaturopathe');
+      const { data } = await apiClient.get('/patient/naturopathe');
+      return data;
+    } catch (error: any) {
+      console.error('❌ getNaturopathe Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Upload avatar image
-   */
-  async uploadAvatar(imageBase64: string): Promise<{ avatarUrl: string }> {
-    const response = await apiClient.post<{ avatarUrl: string }>('/patient/avatar', {
-      image: imageBase64,
-    });
-    return response.data;
+  // Récupérer les consultations
+  async getConsultations(): Promise<APIResponse<{ last?: string; next?: string }>> {
+    try {
+      console.log('✅ API Call: getConsultations');
+      const { data } = await apiClient.get('/patient/consultations');
+      return data;
+    } catch (error: any) {
+      console.error('❌ getConsultations Error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Récupérer les données dashboard
+  async getDashboard(): Promise<APIResponse<{
+    patient: Patient;
+    naturopathe: Naturopathe;
+    lastConsultation?: string;
+    nextConsultation?: string;
+    unreadMessages: number;
+    todayJournalComplete: boolean;
+  }>> {
+    try {
+      console.log('✅ API Call: getDashboard');
+      const { data } = await apiClient.get('/patient/dashboard');
+      return data;
+    } catch (error: any) {
+      console.error('❌ getDashboard Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 };
+
+export default patientService;

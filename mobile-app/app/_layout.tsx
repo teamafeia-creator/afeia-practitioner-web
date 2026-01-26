@@ -1,54 +1,42 @@
-import '../polyfills';
-
-/**
- * Root Layout
- * AFEIA Mobile App
- */
-
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { Colors } from '@/constants';
-
-// Keep splash screen visible while loading
-SplashScreen.preventAutoHideAsync();
+import { View, StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider } from '../contexts/AuthContext';
+import { Colors } from '../constants/Colors';
 
 export default function RootLayout() {
   useEffect(() => {
-    // Hide splash screen after a short delay
-    const hideSplash = async () => {
-      await SplashScreen.hideAsync();
-    };
-    hideSplash();
+    console.log('✅ App: Root layout mounted');
   }, []);
 
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="dark" backgroundColor={Colors.neutral.white} />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: Colors.neutral.white },
-            animation: 'slide_from_right',
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
+        <View style={styles.container}>
+          <StatusBar style="dark" backgroundColor={Colors.sable} />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: Colors.sable },
+              animation: 'slide_from_right',
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+        </View>
       </AuthProvider>
-    </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.sable,
   },
 });

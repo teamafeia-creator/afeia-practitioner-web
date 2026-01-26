@@ -1,8 +1,3 @@
-/**
- * Welcome Screen
- * First screen users see when opening the app
- */
-
 import React from 'react';
 import {
   View,
@@ -12,174 +7,187 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Button } from '@/components/ui';
-import { Colors, Theme, Spacing, TextStyles } from '@/constants';
+import { useRouter } from 'expo-router';
+import { Button } from '../../components/ui';
+import { Colors } from '../../constants/Colors';
 
-const { height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
+  const router = useRouter();
+
   const handleStart = () => {
+    console.log('✅ Welcome: Starting...');
     router.push('/(auth)/otp');
   };
 
   const handleLogin = () => {
+    console.log('✅ Welcome: Going to login');
     router.push('/(auth)/login');
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {/* Logo Section */}
-        <View style={styles.logoSection}>
-          <View style={styles.logoContainer}>
+        {/* Logo et branding */}
+        <View style={styles.logoContainer}>
+          <View style={styles.logoPlaceholder}>
             <Text style={styles.logoText}>AFEIA</Text>
-            <Text style={styles.logoSubtext}>Naturopathie</Text>
           </View>
-        </View>
-
-        {/* Welcome Text */}
-        <View style={styles.textSection}>
-          <Text style={styles.title}>Bienvenue dans votre espace AFEIA</Text>
+          <Text style={styles.title}>AFEIA Patient</Text>
           <Text style={styles.subtitle}>
-            Votre accompagnement naturopathique personnalisé, accessible à tout moment.
+            Votre compagnon naturopathie
           </Text>
         </View>
 
-        {/* Features */}
-        <View style={styles.featuresSection}>
-          <FeatureItem
-            icon="📋"
-            text="Suivez vos recommandations personnalisées"
-          />
+        {/* Description */}
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.description}>
+            Suivez vos compléments, remplissez votre journal quotidien et restez
+            en contact avec votre naturopathe pour un accompagnement personnalisé.
+          </Text>
+        </View>
+
+        {/* Caractéristiques */}
+        <View style={styles.featuresContainer}>
           <FeatureItem
             icon="💊"
-            text="Gérez vos compléments alimentaires"
+            text="Suivi de vos compléments alimentaires"
           />
           <FeatureItem
             icon="📔"
-            text="Tenez votre journal de bien-être"
+            text="Journal quotidien de bien-être"
           />
           <FeatureItem
             icon="💬"
-            text="Communiquez avec votre naturopathe"
+            text="Messagerie avec votre naturopathe"
+          />
+          <FeatureItem
+            icon="📊"
+            text="Visualisation de vos progrès"
           />
         </View>
+      </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionSection}>
+      {/* Boutons */}
+      <View style={styles.buttonsContainer}>
+        <Button
+          title="Commencer avec mon code"
+          onPress={handleStart}
+          variant="primary"
+          fullWidth
+          size="large"
+        />
+        <View style={styles.loginContainer}>
+          <Text style={styles.loginText}>Déjà un compte ? </Text>
           <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            onPress={handleStart}
-          >
-            Commencer
-          </Button>
-          <Button
-            variant="ghost"
-            size="md"
-            fullWidth
+            title="Se connecter"
             onPress={handleLogin}
-            style={styles.loginButton}
-          >
-            J'ai déjà un compte
-          </Button>
+            variant="ghost"
+            size="small"
+          />
         </View>
       </View>
     </SafeAreaView>
   );
 }
 
-function FeatureItem({ icon, text }: { icon: string; text: string }) {
-  return (
-    <View style={styles.featureItem}>
-      <Text style={styles.featureIcon}>{icon}</Text>
-      <Text style={styles.featureText}>{text}</Text>
-    </View>
-  );
-}
+const FeatureItem: React.FC<{ icon: string; text: string }> = ({ icon, text }) => (
+  <View style={styles.featureItem}>
+    <Text style={styles.featureIcon}>{icon}</Text>
+    <Text style={styles.featureText}>{text}</Text>
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral.white,
+    backgroundColor: Colors.sable,
   },
   content: {
     flex: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: height * 0.08,
-    paddingBottom: Spacing.xl,
-  },
-
-  // Logo
-  logoSection: {
-    alignItems: 'center',
-    marginBottom: Spacing['3xl'],
+    paddingHorizontal: 24,
+    paddingTop: 40,
   },
   logoContainer: {
     alignItems: 'center',
+    marginBottom: 32,
+  },
+  logoPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 24,
+    backgroundColor: Colors.teal,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: Colors.teal,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   logoText: {
-    fontSize: 48,
+    fontSize: 24,
     fontWeight: '700',
-    color: Colors.primary.teal,
-    letterSpacing: 4,
-  },
-  logoSubtext: {
-    ...TextStyles.body,
-    color: Theme.textSecondary,
-    marginTop: Spacing.xs,
-    letterSpacing: 2,
-  },
-
-  // Text
-  textSection: {
-    alignItems: 'center',
-    marginBottom: Spacing['2xl'],
+    color: Colors.blanc,
   },
   title: {
-    ...TextStyles.h2,
-    color: Theme.text,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.charcoal,
+    marginBottom: 8,
   },
   subtitle: {
-    ...TextStyles.bodyLarge,
-    color: Theme.textSecondary,
+    fontSize: 18,
+    color: Colors.grisChaud,
     textAlign: 'center',
-    maxWidth: 300,
   },
-
-  // Features
-  featuresSection: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: Spacing.md,
+  descriptionContainer: {
+    marginBottom: 32,
+  },
+  description: {
+    fontSize: 16,
+    color: Colors.charcoal,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  featuresContainer: {
+    backgroundColor: Colors.blanc,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: Colors.charcoal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.neutral.sand,
-    padding: Spacing.base,
-    borderRadius: 12,
+    marginBottom: 16,
   },
   featureIcon: {
     fontSize: 24,
-    marginRight: Spacing.md,
+    marginRight: 16,
   },
   featureText: {
-    ...TextStyles.body,
-    color: Theme.text,
     flex: 1,
+    fontSize: 15,
+    color: Colors.charcoal,
   },
-
-  // Actions
-  actionSection: {
-    paddingTop: Spacing.xl,
+  buttonsContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    gap: 16,
   },
-  loginButton: {
-    marginTop: Spacing.md,
+  loginContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginText: {
+    fontSize: 14,
+    color: Colors.grisChaud,
   },
 });

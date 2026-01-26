@@ -1,59 +1,94 @@
-/**
- * Journal API Service
- */
+import { apiClient } from './client';
+import type { APIResponse, JournalEntry, JournalStats, PaginatedResponse } from '../../types';
 
-import apiClient from './client';
-import type { JournalEntry, CreateJournalEntryRequest } from '@/types';
+// Service Journal API
 
-export const journalApi = {
-  /**
-   * Create or update journal entry for a specific date
-   */
-  async create(data: CreateJournalEntryRequest): Promise<{ journalId: string }> {
-    const response = await apiClient.post<{ journalId: string }>('/journal', data);
-    return response.data;
+export interface JournalEntryInput {
+  mood: number;
+  alimentation: number;
+  sommeil: number;
+  energie: number;
+  complementsTaken: string[];
+  problems?: string;
+  noteNaturopathe?: string;
+}
+
+export const journalService = {
+  // Créer une entrée de journal
+  async createEntry(entry: JournalEntryInput): Promise<APIResponse<JournalEntry>> {
+    try {
+      console.log('✅ API Call: createJournalEntry', entry);
+      const { data } = await apiClient.post('/journal', {
+        ...entry,
+        date: new Date().toISOString().split('T')[0],
+      });
+      return data;
+    } catch (error: any) {
+      console.error('❌ createJournalEntry Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Get today's journal entry
-   */
-  async getToday(): Promise<JournalEntry | null> {
-    const response = await apiClient.get<{ entry: JournalEntry | null }>('/journal/today');
-    return response.data.entry;
+  // Récupérer l'entrée du jour
+  async getTodayEntry(): Promise<APIResponse<JournalEntry | null>> {
+    try {
+      console.log('✅ API Call: getTodayJournalEntry');
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await apiClient.get(`/journal/day/${today}`);
+      return data;
+    } catch (error: any) {
+      console.error('❌ getTodayJournalEntry Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Get journal history
-   */
-  async getHistory(startDate: string, endDate: string): Promise<JournalEntry[]> {
-    const response = await apiClient.get<{ entries: JournalEntry[] }>('/journal/history', {
-      params: { startDate, endDate },
-    });
-    return response.data.entries;
+  // Récupérer l'historique
+  async getHistory(page: number = 1, pageSize: number = 20): Promise<APIResponse<PaginatedResponse<JournalEntry>>> {
+    try {
+      console.log('✅ API Call: getJournalHistory', { page, pageSize });
+      const { data } = await apiClient.get(`/journal/history?page=${page}&pageSize=${pageSize}`);
+      return data;
+    } catch (error: any) {
+      console.error('❌ getJournalHistory Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Get journal statistics (for graphs)
-   */
-  async getStatistics(
-    startDate: string,
-    endDate: string
-  ): Promise<{
-    averageMood: number;
-    averageSleep: number;
-    averageEnergy: number;
-    averageAlimentation: number;
-    entries: JournalEntry[];
-  }> {
-    const response = await apiClient.get<{
-      averageMood: number;
-      averageSleep: number;
-      averageEnergy: number;
-      averageAlimentation: number;
-      entries: JournalEntry[];
-    }>('/journal/statistics', {
-      params: { startDate, endDate },
-    });
-    return response.data;
+  // Récupérer une entrée par date
+  async getByDate(date: string): Promise<APIResponse<JournalEntry | null>> {
+    try {
+      console.log('✅ API Call: getJournalByDate', { date });
+      const { data } = await apiClient.get(`/journal/day/${date}`);
+      return data;
+    } catch (error: any) {
+      console.error('❌ getJournalByDate Error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Mettre à jour une entrée
+  async updateEntry(id: string, updates: Partial<JournalEntryInput>): Promise<APIResponse<JournalEntry>> {
+    try {
+      console.log('✅ API Call: updateJournalEntry', { id, updates });
+      const { data } = await apiClient.put(`/journal/${id}`, updates);
+      return data;
+    } catch (error: any) {
+      console.error('❌ updateJournalEntry Error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Récupérer les statistiques
+  async getStats(period: 'week' | 'month' | 'year' = 'month'): Promise<APIResponse<JournalStats>> {
+    try {
+      console.log('✅ API Call: getJournalStats', { period });
+      const { data } = await apiClient.get(`/journal/stats?period=${period}`);
+      return data;
+    } catch (error: any) {
+      console.error('❌ getJournalStats Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 };
+
+export default journalService;

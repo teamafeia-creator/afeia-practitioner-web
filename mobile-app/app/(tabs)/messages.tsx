@@ -1,9 +1,4 @@
-/**
- * Messages Screen
- * Chat with naturopathe
- */
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,218 +9,202 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useMessages } from '@/hooks';
-import { useAuth } from '@/contexts/AuthContext';
-import { patientApi, formatApiError } from '@/services/api';
-import { Avatar, LoadingSpinner, EmptyState } from '@/components/ui';
-import { Colors, Theme, Spacing, TextStyles, BorderRadius } from '@/constants';
-import type { Message, NaturopatheInfo } from '@/types';
+import { useAuth } from '../../contexts/AuthContext';
+import { LoadingSpinner } from '../../components/ui';
+import { messagesService } from '../../services/api/messages';
+import { patientService } from '../../services/api/patient';
+import { Colors } from '../../constants/Colors';
+import { formatRelativeTime, formatFullName, formatInitials } from '../../utils/formatters';
+import type { Message, Naturopathe } from '../../types';
 
 export default function MessagesScreen() {
-  const { patient } = useAuth();
-  const {
-    messages,
-    isLoading,
-    isSending,
-    hasMore,
-    sendMessage,
-    loadMore,
-    markAsRead,
-    refresh,
-  } = useMessages();
-
-  const [messageText, setMessageText] = useState('');
-  const [naturopatheInfo, setNaturopatheInfo] = useState<NaturopatheInfo | null>(null);
+  const { user } = useAuth();
   const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    fetchNaturopatheInfo();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [naturopathe, setNaturopathe] = useState<Naturopathe | null>(null);
+  const [newMessage, setNewMessage] = useState('');
+
+  const loadData = useCallback(async () => {
+    try {
+      console.log('✅ Messages: Loading data...');
+
+      const [messagesRes, naturoRes] = await Promise.allSettled([
+        messagesService.getMessages(1, 100),
+        patientService.getNaturopathe(),
+      ]);
+
+      if (messagesRes.status === 'fulfilled' && messagesRes.value.success) {
+        setMessages(messagesRes.value.data?.data || []);
+      }
+
+      if (naturoRes.status === 'fulfilled' && naturoRes.value.success) {
+        setNaturopathe(naturoRes.value.data || null);
+      }
+
+      // Marquer les messages comme lus
+      const unreadIds = (messagesRes.status === 'fulfilled' ? messagesRes.value.data?.data : [])
+        ?.filter(m => !m.isRead && m.senderType === 'naturopathe')
+        .map(m => m.id) || [];
+
+      if (unreadIds.length > 0) {
+        await messagesService.markAsRead(unreadIds);
+      }
+
+      console.log('✅ Messages: Data loaded');
+    } catch (error) {
+      console.error('❌ Messages: Error loading data', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Mark messages as read when viewed
   useEffect(() => {
-    messages.forEach((message) => {
-      if (!message.read && message.senderType === 'praticien') {
-        markAsRead(message.id);
-      }
-    });
-  }, [messages]);
-
-  const fetchNaturopatheInfo = async () => {
-    try {
-      const info = await patientApi.getNaturopatheInfo();
-      setNaturopatheInfo(info);
-    } catch (error) {
-      console.error('Error fetching naturopathe info:', error);
-    }
-  };
+    loadData();
+  }, [loadData]);
 
   const handleSend = async () => {
-    if (!messageText.trim()) return;
-
-    const text = messageText.trim();
-    setMessageText('');
+    if (!newMessage.trim() || isSending) return;
 
     try {
-      await sendMessage({ content: text });
+      setIsSending(true);
+      const response = await messagesService.sendMessage(newMessage.trim());
+
+      if (response.success && response.data) {
+        setMessages(prev => [...prev, response.data!]);
+        setNewMessage('');
+
+        // Scroll vers le bas
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
     } catch (error) {
-      Alert.alert('Erreur', formatApiError(error));
-      setMessageText(text);
+      console.error('❌ Messages: Error sending message', error);
+    } finally {
+      setIsSending(false);
     }
   };
 
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return "Aujourd'hui";
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Hier';
-    } else {
-      return date.toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'long',
-      });
-    }
-  };
-
-  const renderMessage = ({ item, index }: { item: Message; index: number }) => {
-    const isOwn = item.senderType === 'patient';
-    const showDate =
-      index === messages.length - 1 ||
-      formatDate(item.createdAt) !== formatDate(messages[index + 1].createdAt);
+  const renderMessage = ({ item }: { item: Message }) => {
+    const isPatient = item.senderType === 'patient';
 
     return (
-      <>
-        {showDate && (
-          <View style={styles.dateContainer}>
-            <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
+      <View
+        style={[
+          styles.messageContainer,
+          isPatient ? styles.messagePatient : styles.messageNaturopathe,
+        ]}
+      >
+        {!isPatient && (
+          <View style={styles.avatarSmall}>
+            <Text style={styles.avatarSmallText}>
+              {formatInitials(naturopathe?.firstName, naturopathe?.lastName)}
+            </Text>
           </View>
         )}
-        <View style={[styles.messageContainer, isOwn && styles.messageContainerOwn]}>
-          {!isOwn && (
-            <Avatar
-              source={naturopatheInfo?.naturopathe.avatarUrl}
-              name={naturopatheInfo?.naturopathe.fullName}
-              size="sm"
-            />
-          )}
-          <View style={[styles.messageBubble, isOwn && styles.messageBubbleOwn]}>
-            <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
-              {item.content}
-            </Text>
-            <Text style={[styles.messageTime, isOwn && styles.messageTimeOwn]}>
-              {formatTime(item.createdAt)}
-              {isOwn && item.read && (
-                <Text style={styles.readIndicator}> Lu</Text>
-              )}
-            </Text>
-          </View>
+        <View
+          style={[
+            styles.messageBubble,
+            isPatient ? styles.bubblePatient : styles.bubbleNaturopathe,
+          ]}
+        >
+          <Text
+            style={[
+              styles.messageText,
+              isPatient ? styles.textPatient : styles.textNaturopathe,
+            ]}
+          >
+            {item.content}
+          </Text>
+          <Text
+            style={[
+              styles.messageTime,
+              isPatient ? styles.timePatient : styles.timeNaturopathe,
+            ]}
+          >
+            {formatRelativeTime(item.createdAt)}
+          </Text>
         </View>
-      </>
+      </View>
     );
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LoadingSpinner fullScreen message="Chargement..." />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        {naturopatheInfo && (
-          <View style={styles.headerContent}>
-            <Avatar
-              source={naturopatheInfo.naturopathe.avatarUrl}
-              name={naturopatheInfo.naturopathe.fullName}
-              size="md"
-            />
-            <View style={styles.headerText}>
-              <Text style={styles.headerName}>
-                {naturopatheInfo.naturopathe.fullName}
-              </Text>
-              <Text style={styles.headerSubtitle}>Votre naturopathe</Text>
-            </View>
-          </View>
-        )}
-      </View>
-
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* Messages List */}
-        {isLoading && messages.length === 0 ? (
-          <View style={styles.loadingContainer}>
-            <LoadingSpinner />
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {formatInitials(naturopathe?.firstName, naturopathe?.lastName)}
+            </Text>
           </View>
-        ) : messages.length === 0 ? (
-          <EmptyState
-            icon="chatbubble-outline"
-            title="Aucun message"
-            message="Envoyez un message à votre naturopathe pour commencer la conversation."
-          />
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            renderItem={renderMessage}
-            keyExtractor={(item) => item.id}
-            inverted
-            contentContainerStyle={styles.messagesList}
-            showsVerticalScrollIndicator={false}
-            onEndReached={loadMore}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={
-              hasMore ? (
-                <View style={styles.loadMoreContainer}>
-                  <LoadingSpinner size="small" />
-                </View>
-              ) : null
-            }
-          />
-        )}
+          <View style={styles.headerInfo}>
+            <Text style={styles.headerName}>
+              {formatFullName(naturopathe?.firstName, naturopathe?.lastName)}
+            </Text>
+            <Text style={styles.headerRole}>Votre naturopathe</Text>
+          </View>
+        </View>
+
+        {/* Messages list */}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.messagesList}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => {
+            flatListRef.current?.scrollToEnd({ animated: false });
+          }}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                Démarrez la conversation avec votre naturopathe
+              </Text>
+            </View>
+          }
+        />
 
         {/* Input */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
+            value={newMessage}
+            onChangeText={setNewMessage}
             placeholder="Écrivez votre message..."
-            placeholderTextColor={Colors.neutral.grayWarm}
-            value={messageText}
-            onChangeText={setMessageText}
+            placeholderTextColor={Colors.grisChaud}
             multiline
             maxLength={1000}
           />
           <TouchableOpacity
             style={[
               styles.sendButton,
-              (!messageText.trim() || isSending) && styles.sendButtonDisabled,
+              (!newMessage.trim() || isSending) && styles.sendButtonDisabled,
             ]}
             onPress={handleSend}
-            disabled={!messageText.trim() || isSending}
+            disabled={!newMessage.trim() || isSending}
           >
-            <Ionicons
-              name="send"
-              size={20}
-              color={
-                messageText.trim() && !isSending
-                  ? Colors.neutral.white
-                  : Colors.neutral.grayWarm
-              }
-            />
+            <Text style={styles.sendButtonText}>
+              {isSending ? '...' : '➤'}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -236,129 +215,152 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral.white,
-  },
-  header: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral.sandDark,
-    backgroundColor: Colors.neutral.white,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerText: {
-    marginLeft: Spacing.md,
-  },
-  headerName: {
-    ...TextStyles.h5,
-    color: Theme.text,
-  },
-  headerSubtitle: {
-    ...TextStyles.bodySmall,
-    color: Theme.textSecondary,
+    backgroundColor: Colors.sable,
   },
   keyboardView: {
     flex: 1,
   },
-  loadingContainer: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
+    backgroundColor: Colors.blanc,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.sable,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.teal,
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.blanc,
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.charcoal,
+  },
+  headerRole: {
+    fontSize: 13,
+    color: Colors.grisChaud,
   },
   messagesList: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
+    padding: 16,
+    flexGrow: 1,
   },
-  dateContainer: {
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: Spacing.md,
+    paddingVertical: 40,
   },
-  dateText: {
-    ...TextStyles.caption,
-    color: Theme.textSecondary,
-    backgroundColor: Colors.neutral.sand,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
+  emptyText: {
+    fontSize: 14,
+    color: Colors.grisChaud,
+    textAlign: 'center',
   },
   messageContainer: {
     flexDirection: 'row',
-    marginBottom: Spacing.sm,
+    marginBottom: 12,
     alignItems: 'flex-end',
   },
-  messageContainerOwn: {
+  messagePatient: {
     justifyContent: 'flex-end',
+  },
+  messageNaturopathe: {
+    justifyContent: 'flex-start',
+  },
+  avatarSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.teal,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  avatarSmallText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: Colors.blanc,
   },
   messageBubble: {
     maxWidth: '75%',
-    backgroundColor: Colors.neutral.sand,
-    borderRadius: BorderRadius.lg,
-    borderBottomLeftRadius: BorderRadius.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    marginLeft: Spacing.sm,
+    padding: 12,
+    borderRadius: 16,
   },
-  messageBubbleOwn: {
-    backgroundColor: Colors.primary.teal,
-    borderBottomLeftRadius: BorderRadius.lg,
-    borderBottomRightRadius: BorderRadius.xs,
-    marginLeft: 0,
+  bubblePatient: {
+    backgroundColor: Colors.teal,
+    borderBottomRightRadius: 4,
+    marginLeft: 'auto',
+  },
+  bubbleNaturopathe: {
+    backgroundColor: Colors.blanc,
+    borderBottomLeftRadius: 4,
   },
   messageText: {
-    ...TextStyles.body,
-    color: Theme.text,
+    fontSize: 15,
+    lineHeight: 20,
   },
-  messageTextOwn: {
-    color: Colors.neutral.white,
+  textPatient: {
+    color: Colors.blanc,
+  },
+  textNaturopathe: {
+    color: Colors.charcoal,
   },
   messageTime: {
-    ...TextStyles.caption,
-    color: Theme.textSecondary,
-    marginTop: Spacing.xs,
+    fontSize: 11,
+    marginTop: 4,
+  },
+  timePatient: {
+    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'right',
   },
-  messageTimeOwn: {
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  readIndicator: {
-    fontWeight: '500',
-  },
-  loadMoreContainer: {
-    paddingVertical: Spacing.md,
+  timeNaturopathe: {
+    color: Colors.grisChaud,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
+    padding: 12,
+    backgroundColor: Colors.blanc,
     borderTopWidth: 1,
-    borderTopColor: Colors.neutral.sandDark,
-    backgroundColor: Colors.neutral.white,
+    borderTopColor: Colors.sable,
   },
   input: {
     flex: 1,
-    backgroundColor: Colors.neutral.sand,
-    borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    paddingTop: Spacing.sm,
+    backgroundColor: Colors.sable,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: Colors.charcoal,
     maxHeight: 100,
-    ...TextStyles.body,
-    color: Theme.text,
+    marginRight: 8,
   },
   sendButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primary.teal,
-    alignItems: 'center',
+    backgroundColor: Colors.teal,
     justifyContent: 'center',
-    marginLeft: Spacing.sm,
+    alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: Colors.neutral.sand,
+    backgroundColor: Colors.grisChaud,
+  },
+  sendButtonText: {
+    fontSize: 18,
+    color: Colors.blanc,
   },
 });

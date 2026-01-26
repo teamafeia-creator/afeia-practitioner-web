@@ -1,59 +1,69 @@
-/**
- * Login Screen
- * For existing users
- */
-
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useForm, Controller } from 'react-hook-form';
-import { Input, Button } from '@/components/ui';
-import { useAuth } from '@/contexts/AuthContext';
-import { formatApiError } from '@/services/api';
-import { Colors, Theme, Spacing, TextStyles } from '@/constants';
-
-interface FormData {
-  email: string;
-  password: string;
-}
+import { useRouter } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
+import { Button, Input, LoadingSpinner } from '../../components/ui';
+import { Colors } from '../../constants/Colors';
+import { validateEmail } from '../../utils/validation';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const { login, isLoading } = useAuth();
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const onSubmit = async (data: FormData) => {
-    setIsLoading(true);
-    setError(null);
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.valid) {
+      newErrors.email = emailValidation.error || '';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Le mot de passe est requis';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleLogin = async () => {
+    if (!validate()) return;
 
     try {
-      await login(data);
-      // Navigation is handled by AuthContext
-    } catch (err) {
-      setError(formatApiError(err));
-    } finally {
-      setIsLoading(false);
+      console.log('✅ Login: Attempting login');
+      await login(formData);
+
+      console.log('✅ Login: Success');
+      router.replace('/');
+    } catch (err: any) {
+      console.error('❌ Login: Failed', err);
+      Alert.alert(
+        'Erreur',
+        err.response?.data?.message || 'Identifiants incorrects'
+      );
     }
   };
 
@@ -62,131 +72,88 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    // TODO: Implement forgot password
-    router.push('/(auth)/otp');
+    Alert.alert(
+      'Mot de passe oublié',
+      'Contactez votre naturopathe pour réinitialiser votre mot de passe.'
+    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={Theme.text} />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo */}
-          <View style={styles.logoSection}>
-            <Text style={styles.logoText}>AFEIA</Text>
-          </View>
+          {/* Header */}
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Text style={styles.backText}>← Retour</Text>
+          </TouchableOpacity>
 
-          {/* Title */}
-          <View style={styles.titleSection}>
+          <View style={styles.content}>
             <Text style={styles.title}>Connexion</Text>
             <Text style={styles.subtitle}>
-              Accédez à votre espace personnel
+              Connectez-vous pour accéder à votre espace patient
             </Text>
-          </View>
 
-          {/* Form */}
-          <View style={styles.form}>
-            {error && (
-              <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={20} color={Colors.state.error} />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
+            {/* Formulaire */}
+            <View style={styles.form}>
+              <Input
+                label="Email"
+                value={formData.email}
+                onChangeText={value => handleChange('email', value)}
+                type="email"
+                placeholder="votre@email.com"
+                error={errors.email}
+                autoFocus
+              />
 
-            <Controller
-              control={control}
-              name="email"
-              rules={{
-                required: 'L\'email est requis',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Adresse email invalide',
-                },
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Email"
-                  placeholder="votre@email.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.email?.message}
-                  leftIcon={
-                    <Ionicons name="mail-outline" size={20} color={Colors.neutral.grayWarm} />
-                  }
-                />
-              )}
-            />
+              <Input
+                label="Mot de passe"
+                value={formData.password}
+                onChangeText={value => handleChange('password', value)}
+                type="password"
+                placeholder="Votre mot de passe"
+                error={errors.password}
+              />
 
-            <Controller
-              control={control}
-              name="password"
-              rules={{
-                required: 'Le mot de passe est requis',
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Mot de passe"
-                  placeholder="••••••••"
-                  isPassword
-                  autoCapitalize="none"
-                  autoComplete="password"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.password?.message}
-                  leftIcon={
-                    <Ionicons name="lock-closed-outline" size={20} color={Colors.neutral.grayWarm} />
-                  }
-                />
-              )}
-            />
-
-            <TouchableOpacity
-              onPress={handleForgotPassword}
-              style={styles.forgotButton}
-            >
-              <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
-            </TouchableOpacity>
-
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
-              onPress={handleSubmit(onSubmit)}
-              isLoading={isLoading}
-              style={styles.submitButton}
-            >
-              Se connecter
-            </Button>
-          </View>
-
-          {/* Register Link */}
-          <View style={styles.registerSection}>
-            <Text style={styles.registerText}>
-              Vous n'avez pas encore de compte ?
-            </Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/otp')}>
-              <Text style={styles.registerLink}>Créer un compte avec mon code</Text>
-            </TouchableOpacity>
+              {/* Mot de passe oublié */}
+              <TouchableOpacity
+                style={styles.forgotPasswordButton}
+                onPress={handleForgotPassword}
+              >
+                <Text style={styles.forgotPasswordText}>
+                  Mot de passe oublié ?
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
+
+        {/* Bouton */}
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Se connecter"
+            onPress={handleLogin}
+            variant="primary"
+            fullWidth
+            size="large"
+            loading={isLoading}
+          />
+
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerText}>Pas encore de compte ? </Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/otp')}>
+              <Text style={styles.registerLink}>S'inscrire</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {isLoading && <LoadingSpinner fullScreen overlay message="Connexion..." />}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -195,88 +162,72 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral.white,
+    backgroundColor: Colors.sable,
   },
   keyboardView: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-  },
-  backButton: {
-    padding: Spacing.sm,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing['3xl'],
+    flexGrow: 1,
   },
-  logoSection: {
-    alignItems: 'center',
-    marginBottom: Spacing['2xl'],
+  backButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
-  logoText: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: Colors.primary.teal,
-    letterSpacing: 3,
+  backText: {
+    fontSize: 16,
+    color: Colors.teal,
+    fontWeight: '500',
   },
-  titleSection: {
-    alignItems: 'center',
-    marginBottom: Spacing.xl,
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
   title: {
-    ...TextStyles.h2,
-    color: Theme.text,
-    marginBottom: Spacing.sm,
+    fontSize: 28,
+    fontWeight: '700',
+    color: Colors.charcoal,
+    marginBottom: 12,
   },
   subtitle: {
-    ...TextStyles.body,
-    color: Theme.textSecondary,
+    fontSize: 16,
+    color: Colors.grisChaud,
+    marginBottom: 32,
+    lineHeight: 24,
   },
-  form: {},
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.state.errorLight,
-    padding: Spacing.md,
-    borderRadius: 8,
-    marginBottom: Spacing.base,
+  form: {
+    gap: 8,
   },
-  errorText: {
-    ...TextStyles.bodySmall,
-    color: Colors.state.error,
-    marginLeft: Spacing.sm,
-    flex: 1,
-  },
-  forgotButton: {
+  forgotPasswordButton: {
     alignSelf: 'flex-end',
-    marginBottom: Spacing.lg,
+    marginTop: 8,
   },
-  forgotText: {
-    ...TextStyles.bodySmall,
-    color: Colors.primary.teal,
+  forgotPasswordText: {
+    fontSize: 14,
+    color: Colors.teal,
+    fontWeight: '500',
   },
-  submitButton: {
-    marginTop: Spacing.md,
+  buttonContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    paddingTop: 16,
+    gap: 16,
   },
-  registerSection: {
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing['2xl'],
   },
   registerText: {
-    ...TextStyles.body,
-    color: Theme.textSecondary,
-    marginBottom: Spacing.xs,
+    fontSize: 14,
+    color: Colors.grisChaud,
   },
   registerLink: {
-    ...TextStyles.body,
-    color: Colors.primary.teal,
+    fontSize: 14,
+    color: Colors.teal,
     fontWeight: '600',
   },
 });

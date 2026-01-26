@@ -1,100 +1,95 @@
-/**
- * Register Screen
- * Create account after OTP verification
- */
-
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useForm, Controller } from 'react-hook-form';
-import { Input, Button, Checkbox } from '@/components/ui';
-import { useAuth } from '@/contexts/AuthContext';
-import { formatApiError } from '@/services/api';
-import { Colors, Theme, Spacing, TextStyles } from '@/constants';
-
-interface FormData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  acceptTerms: boolean;
-}
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
+import { Button, Input, LoadingSpinner } from '../../components/ui';
+import { Colors } from '../../constants/Colors';
+import {
+  validateEmail,
+  validatePassword,
+  validatePasswordConfirm,
+} from '../../utils/validation';
 
 export default function RegisterScreen() {
-  const { patientId, tempToken, email: prefilledEmail, name } = useLocalSearchParams<{
-    patientId: string;
-    tempToken: string;
-    email: string;
-    name: string;
-  }>();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ email?: string; inviteCode?: string }>();
+  const { register, isLoading } = useAuth();
 
-  const { register } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const {
-    control,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<FormData>({
-    defaultValues: {
-      email: prefilledEmail || '',
-      password: '',
-      confirmPassword: '',
-      acceptTerms: false,
-    },
+  const [formData, setFormData] = useState({
+    email: params.email || '',
+    password: '',
+    confirmPassword: '',
+    acceptTerms: false,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const password = watch('password');
-
-  const validatePassword = (value: string) => {
-    if (value.length < 8) {
-      return 'Le mot de passe doit contenir au moins 8 caractères';
+  const handleChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Effacer l'erreur du champ
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
-    if (!/[A-Z]/.test(value)) {
-      return 'Le mot de passe doit contenir au moins une majuscule';
-    }
-    if (!/[a-z]/.test(value)) {
-      return 'Le mot de passe doit contenir au moins une minuscule';
-    }
-    if (!/[0-9]/.test(value)) {
-      return 'Le mot de passe doit contenir au moins un chiffre';
-    }
-    return true;
   };
 
-  const onSubmit = async (data: FormData) => {
-    if (!patientId || !tempToken) {
-      setError('Session invalide. Veuillez recommencer.');
-      return;
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.valid) {
+      newErrors.email = emailValidation.error || '';
     }
 
-    setIsLoading(true);
-    setError(null);
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.valid) {
+      newErrors.password = passwordValidation.error || '';
+    }
+
+    const confirmValidation = validatePasswordConfirm(
+      formData.password,
+      formData.confirmPassword
+    );
+    if (!confirmValidation.valid) {
+      newErrors.confirmPassword = confirmValidation.error || '';
+    }
+
+    if (!formData.acceptTerms) {
+      newErrors.terms = 'Vous devez accepter les CGU';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleRegister = async () => {
+    if (!validate()) return;
 
     try {
+      console.log('✅ Register: Creating account');
       await register({
-        patientId,
-        tempToken,
-        email: data.email,
-        password: data.password,
+        email: formData.email,
+        password: formData.password,
+        inviteCode: params.inviteCode || '',
       });
 
-      // Navigation is handled by AuthContext
-    } catch (err) {
-      setError(formatApiError(err));
-    } finally {
-      setIsLoading(false);
+      console.log('✅ Register: Account created successfully');
+      // La redirection sera gérée par le AuthContext
+      router.replace('/');
+    } catch (err: any) {
+      console.error('❌ Register: Failed', err);
+      Alert.alert(
+        'Erreur',
+        err.response?.data?.message || 'Erreur lors de la création du compte'
+      );
     }
   };
 
@@ -105,155 +100,99 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={Theme.text} />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Title */}
-          <View style={styles.titleSection}>
-            {name && (
-              <Text style={styles.welcomeText}>Bienvenue {name.split(' ')[0]} !</Text>
-            )}
-            <Text style={styles.title}>Créez votre compte sécurisé</Text>
+          {/* Header */}
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Text style={styles.backText}>← Retour</Text>
+          </TouchableOpacity>
+
+          <View style={styles.content}>
+            <Text style={styles.title}>Créer votre compte</Text>
             <Text style={styles.subtitle}>
-              Vous pourrez ensuite accéder à votre espace personnel AFEIA.
+              Renseignez vos informations pour commencer votre accompagnement
             </Text>
-          </View>
 
-          {/* Form */}
-          <View style={styles.form}>
-            {error && (
-              <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={20} color={Colors.state.error} />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
+            {/* Formulaire */}
+            <View style={styles.form}>
+              <Input
+                label="Email"
+                value={formData.email}
+                onChangeText={value => handleChange('email', value)}
+                type="email"
+                placeholder="votre@email.com"
+                error={errors.email}
+                autoFocus={!params.email}
+                editable={!params.email}
+              />
 
-            <Controller
-              control={control}
-              name="email"
-              rules={{
-                required: 'L\'email est requis',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Adresse email invalide',
-                },
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Email"
-                  placeholder="votre@email.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.email?.message}
-                  editable={!prefilledEmail}
-                  leftIcon={
-                    <Ionicons name="mail-outline" size={20} color={Colors.neutral.grayWarm} />
-                  }
-                />
-              )}
-            />
+              <Input
+                label="Mot de passe"
+                value={formData.password}
+                onChangeText={value => handleChange('password', value)}
+                type="password"
+                placeholder="Minimum 8 caractères"
+                error={errors.password}
+                helper="Au moins 8 caractères, 1 majuscule, 1 minuscule et 1 chiffre"
+              />
 
-            <Controller
-              control={control}
-              name="password"
-              rules={{
-                required: 'Le mot de passe est requis',
-                validate: validatePassword,
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Mot de passe"
-                  placeholder="••••••••"
-                  isPassword
-                  autoCapitalize="none"
-                  autoComplete="password-new"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.password?.message}
-                  hint="8 caractères min., 1 majuscule, 1 minuscule, 1 chiffre"
-                  leftIcon={
-                    <Ionicons name="lock-closed-outline" size={20} color={Colors.neutral.grayWarm} />
-                  }
-                />
-              )}
-            />
+              <Input
+                label="Confirmer le mot de passe"
+                value={formData.confirmPassword}
+                onChangeText={value => handleChange('confirmPassword', value)}
+                type="password"
+                placeholder="Répétez le mot de passe"
+                error={errors.confirmPassword}
+              />
 
-            <Controller
-              control={control}
-              name="confirmPassword"
-              rules={{
-                required: 'Veuillez confirmer le mot de passe',
-                validate: (value) =>
-                  value === password || 'Les mots de passe ne correspondent pas',
-              }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Confirmer le mot de passe"
-                  placeholder="••••••••"
-                  isPassword
-                  autoCapitalize="none"
-                  autoComplete="password-new"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.confirmPassword?.message}
-                  leftIcon={
-                    <Ionicons name="lock-closed-outline" size={20} color={Colors.neutral.grayWarm} />
-                  }
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="acceptTerms"
-              rules={{
-                validate: (value) =>
-                  value === true || 'Vous devez accepter les conditions d\'utilisation',
-              }}
-              render={({ field: { onChange, value } }) => (
-                <View style={styles.termsContainer}>
-                  <Checkbox
-                    checked={value}
-                    onChange={onChange}
-                    label="J'accepte les conditions générales d'utilisation et la politique de confidentialité"
-                  />
-                  {errors.acceptTerms && (
-                    <Text style={styles.fieldError}>{errors.acceptTerms.message}</Text>
+              {/* Checkbox CGU */}
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => handleChange('acceptTerms', !formData.acceptTerms)}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    formData.acceptTerms && styles.checkboxChecked,
+                  ]}
+                >
+                  {formData.acceptTerms && (
+                    <Text style={styles.checkmark}>✓</Text>
                   )}
                 </View>
+                <Text style={styles.checkboxLabel}>
+                  J'accepte les{' '}
+                  <Text style={styles.link}>Conditions Générales d'Utilisation</Text>
+                  {' '}et la{' '}
+                  <Text style={styles.link}>Politique de Confidentialité</Text>
+                </Text>
+              </TouchableOpacity>
+              {errors.terms && (
+                <Text style={styles.errorText}>{errors.terms}</Text>
               )}
-            />
-
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
-              onPress={handleSubmit(onSubmit)}
-              isLoading={isLoading}
-              style={styles.submitButton}
-            >
-              Créer mon compte
-            </Button>
+            </View>
           </View>
         </ScrollView>
+
+        {/* Bouton */}
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Créer mon compte"
+            onPress={handleRegister}
+            variant="primary"
+            fullWidth
+            size="large"
+            loading={isLoading}
+          />
+        </View>
+
+        {isLoading && <LoadingSpinner fullScreen overlay message="Création en cours..." />}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -262,69 +201,88 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral.white,
+    backgroundColor: Colors.sable,
   },
   keyboardView: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-  },
-  backButton: {
-    padding: Spacing.sm,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing['3xl'],
+    flexGrow: 1,
   },
-  titleSection: {
-    marginBottom: Spacing.xl,
+  backButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
-  welcomeText: {
-    ...TextStyles.h4,
-    color: Colors.primary.teal,
-    marginBottom: Spacing.sm,
+  backText: {
+    fontSize: 16,
+    color: Colors.teal,
+    fontWeight: '500',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
   },
   title: {
-    ...TextStyles.h3,
-    color: Theme.text,
-    marginBottom: Spacing.sm,
+    fontSize: 28,
+    fontWeight: '700',
+    color: Colors.charcoal,
+    marginBottom: 12,
   },
   subtitle: {
-    ...TextStyles.body,
-    color: Theme.textSecondary,
+    fontSize: 16,
+    color: Colors.grisChaud,
+    marginBottom: 32,
+    lineHeight: 24,
   },
-  form: {},
-  errorContainer: {
+  form: {
+    gap: 8,
+  },
+  checkboxContainer: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 16,
+    gap: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: Colors.grisChaud,
+    borderRadius: 6,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.state.errorLight,
-    padding: Spacing.md,
-    borderRadius: 8,
-    marginBottom: Spacing.base,
+    backgroundColor: Colors.blanc,
+  },
+  checkboxChecked: {
+    backgroundColor: Colors.teal,
+    borderColor: Colors.teal,
+  },
+  checkmark: {
+    color: Colors.blanc,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  checkboxLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.charcoal,
+    lineHeight: 20,
+  },
+  link: {
+    color: Colors.teal,
+    textDecorationLine: 'underline',
   },
   errorText: {
-    ...TextStyles.bodySmall,
-    color: Colors.state.error,
-    marginLeft: Spacing.sm,
-    flex: 1,
+    color: Colors.error,
+    fontSize: 12,
+    marginTop: 4,
   },
-  termsContainer: {
-    marginBottom: Spacing.lg,
-  },
-  fieldError: {
-    ...TextStyles.bodySmall,
-    color: Colors.state.error,
-    marginTop: Spacing.xs,
-    marginLeft: Spacing.sm,
-  },
-  submitButton: {
-    marginTop: Spacing.md,
+  buttonContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    paddingTop: 16,
   },
 });

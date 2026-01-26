@@ -1,93 +1,115 @@
-/**
- * Auth API Service
- */
-
-import apiClient from './client';
-import { TokenStorage } from '../storage/secureStore';
+import { apiClient } from './client';
+import { secureStorage } from '../storage/secureStore';
 import type {
-  OTPVerifyResponse,
-  RegisterRequest,
-  LoginRequest,
-  AuthResponse,
-  RefreshTokenResponse,
-} from '@/types';
+  APIResponse,
+  AuthTokens,
+  Patient,
+  LoginCredentials,
+  RegisterPayload,
+  OTPVerification
+} from '../../types';
 
-export const authApi = {
-  /**
-   * Verify OTP code
-   */
-  async verifyOTP(code: string): Promise<OTPVerifyResponse> {
-    const response = await apiClient.post<OTPVerifyResponse>('/auth/verify-otp', {
-      otp: code,
-    });
-    return response.data;
-  },
+// Service d'authentification AFEIA
 
-  /**
-   * Register new patient account
-   */
-  async register(data: RegisterRequest): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/auth/register', data);
-
-    // Store tokens
-    await TokenStorage.setTokens(response.data.accessToken, response.data.refreshToken);
-    await TokenStorage.setPatientId(response.data.patient.id);
-
-    return response.data;
-  },
-
-  /**
-   * Login with email and password
-   */
-  async login(data: LoginRequest): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/auth/login', data);
-
-    // Store tokens
-    await TokenStorage.setTokens(response.data.accessToken, response.data.refreshToken);
-    await TokenStorage.setPatientId(response.data.patient.id);
-
-    return response.data;
-  },
-
-  /**
-   * Refresh access token
-   */
-  async refreshToken(): Promise<RefreshTokenResponse> {
-    const refreshToken = await TokenStorage.getRefreshToken();
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
+export const authService = {
+  // Vérifier le code OTP d'invitation
+  async verifyOTP(code: string): Promise<APIResponse<{ valid: boolean; email?: string }>> {
+    try {
+      console.log('✅ API Call: verifyOTP', { code });
+      const { data } = await apiClient.post('/auth/verify-otp', { code });
+      return data;
+    } catch (error: any) {
+      console.error('❌ verifyOTP Error:', error.response?.data || error.message);
+      throw error;
     }
-
-    const response = await apiClient.post<RefreshTokenResponse>('/auth/refresh-token', {
-      refreshToken,
-    });
-
-    // Update access token
-    await TokenStorage.setAccessToken(response.data.accessToken);
-
-    return response.data;
   },
 
-  /**
-   * Logout - clear tokens
-   */
+  // Créer un compte
+  async register(payload: RegisterPayload): Promise<APIResponse<{ tokens: AuthTokens; patient: Patient }>> {
+    try {
+      console.log('✅ API Call: register', { email: payload.email });
+      const { data } = await apiClient.post('/auth/register', payload);
+
+      if (data.success && data.data) {
+        // Stocker les tokens
+        await secureStorage.setAccessToken(data.data.tokens.accessToken);
+        if (data.data.tokens.refreshToken) {
+          await secureStorage.setRefreshToken(data.data.tokens.refreshToken);
+        }
+        // Stocker les données patient
+        await secureStorage.setUserData(data.data.patient);
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('❌ register Error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Connexion
+  async login(credentials: LoginCredentials): Promise<APIResponse<{ tokens: AuthTokens; patient: Patient }>> {
+    try {
+      console.log('✅ API Call: login', { email: credentials.email });
+      const { data } = await apiClient.post('/auth/login', credentials);
+
+      if (data.success && data.data) {
+        // Stocker les tokens
+        await secureStorage.setAccessToken(data.data.tokens.accessToken);
+        if (data.data.tokens.refreshToken) {
+          await secureStorage.setRefreshToken(data.data.tokens.refreshToken);
+        }
+        // Stocker les données patient
+        await secureStorage.setUserData(data.data.patient);
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('❌ login Error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Déconnexion
   async logout(): Promise<void> {
     try {
-      // Optionally notify server
+      console.log('✅ API Call: logout');
+      // Appeler l'API de déconnexion si nécessaire
       await apiClient.post('/auth/logout');
-    } catch {
-      // Ignore errors on logout
+    } catch (error) {
+      console.log('⚠️ Logout API call failed, clearing local data anyway');
     } finally {
-      // Always clear local tokens
-      await TokenStorage.clearAll();
+      // Toujours nettoyer les données locales
+      await secureStorage.clearAuth();
     }
   },
 
-  /**
-   * Check if user is authenticated
-   */
-  async isAuthenticated(): Promise<boolean> {
-    const token = await TokenStorage.getAccessToken();
-    return !!token;
+  // Récupérer le profil utilisateur
+  async getProfile(): Promise<APIResponse<Patient>> {
+    try {
+      console.log('✅ API Call: getProfile');
+      const { data } = await apiClient.get('/auth/profile');
+
+      if (data.success && data.data) {
+        await secureStorage.setUserData(data.data);
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('❌ getProfile Error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Vérifier si l'utilisateur est authentifié
+  async checkAuth(): Promise<boolean> {
+    return secureStorage.isAuthenticated();
+  },
+
+  // Récupérer les données utilisateur stockées localement
+  async getStoredUser(): Promise<Patient | null> {
+    return secureStorage.getUserData<Patient>();
   },
 };
+
+export default authService;
