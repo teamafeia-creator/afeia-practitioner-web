@@ -8,6 +8,16 @@ import { SignJWT } from 'jose';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { hashQuestionnaireCode } from '@/lib/server/questionnaireCodes';
 
+// Get JWT secret with dev fallback
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET ||
+    (process.env.NODE_ENV === 'development' ? 'dev-jwt-secret-change-in-production' : '');
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  return new TextEncoder().encode(secret);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -88,7 +98,7 @@ export async function POST(request: NextRequest) {
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('30m')
-      .sign(new TextEncoder().encode(process.env.JWT_SECRET));
+      .sign(getJwtSecret());
 
     return NextResponse.json({
       valid: true,

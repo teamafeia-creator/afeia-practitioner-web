@@ -54,6 +54,10 @@ export function getQuestionnaireAccessTokenTtlMinutes() {
 function getQuestionnaireCodePepper() {
   const pepper = process.env.QUESTIONNAIRE_CODE_PEPPER;
   if (!pepper) {
+    // Use default pepper for development - change in production!
+    if (process.env.NODE_ENV === 'development') {
+      return 'dev-pepper-change-in-production';
+    }
     throw new Error('QUESTIONNAIRE_CODE_PEPPER is not configured');
   }
   return pepper;
