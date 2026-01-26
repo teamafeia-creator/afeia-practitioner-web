@@ -5,16 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
-import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-
-function hashCode(code: string): string {
-  const pepper = process.env.QUESTIONNAIRE_CODE_PEPPER || '';
-  return crypto
-    .createHash('sha256')
-    .update(code + pepper)
-    .digest('hex');
-}
+import { hashQuestionnaireCode } from '@/lib/server/questionnaireCodes';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,8 +20,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash the code and look it up
-    const codeHash = hashCode(otp.toUpperCase());
+    // Hash the code and look it up (use same hash function as send-code)
+    const codeHash = hashQuestionnaireCode(otp);
 
     const { data: otpRecord, error } = await getSupabaseAdmin()
       .from('patient_questionnaire_codes')
