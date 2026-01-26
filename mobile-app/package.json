@@ -34,7 +34,7 @@
     "react-native-screens": "~4.1.0",
     "react-native-svg": "15.8.0",
     "react-native-web": "^0.21.2",
-    "undici": "5.28.4",
+    "web-streams-polyfill": "^4.2.0",
     "zustand": "^4.4.7"
   },
   "devDependencies": {

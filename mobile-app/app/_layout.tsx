@@ -1,3 +1,5 @@
+import '../polyfills';
+
 /**
  * Root Layout
  * AFEIA Mobile App
