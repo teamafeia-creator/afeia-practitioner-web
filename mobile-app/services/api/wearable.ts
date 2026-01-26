@@ -1,72 +1,80 @@
-/**
- * Wearable (Circular Ring) API Service
- */
+import { apiClient } from './client';
+import type { APIResponse, WearableData } from '../../types';
 
-import apiClient from './client';
-import type { WearableData } from '@/types';
+// Service Wearable (Bague connectée) API
 
-export const wearableApi = {
-  /**
-   * Connect Circular ring
-   */
-  async connect(circularAuthCode: string): Promise<{ connected: boolean }> {
-    const response = await apiClient.post<{ connected: boolean }>('/wearable/connect', {
-      circularAuthCode,
-    });
-    return response.data;
+export const wearableService = {
+  // Récupérer les données wearable
+  async getData(): Promise<APIResponse<WearableData>> {
+    try {
+      console.log('✅ API Call: getWearableData');
+      const { data } = await apiClient.get('/wearable/data');
+      return data;
+    } catch (error: any) {
+      console.error('❌ getWearableData Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Disconnect wearable
-   */
-  async disconnect(): Promise<{ success: boolean }> {
-    const response = await apiClient.post<{ success: boolean }>('/wearable/disconnect');
-    return response.data;
+  // Vérifier si une bague est connectée
+  async isConnected(): Promise<APIResponse<{ connected: boolean; deviceName?: string }>> {
+    try {
+      console.log('✅ API Call: isWearableConnected');
+      const { data } = await apiClient.get('/wearable/status');
+      return data;
+    } catch (error: any) {
+      console.error('❌ isWearableConnected Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Get wearable data for a specific date
-   */
-  async getData(date: string): Promise<WearableData | null> {
-    const response = await apiClient.get<{ data: WearableData | null }>('/wearable/data', {
-      params: { date },
-    });
-    return response.data.data;
+  // Connecter une bague
+  async connect(deviceId: string): Promise<APIResponse<{ success: boolean }>> {
+    try {
+      console.log('✅ API Call: connectWearable', { deviceId });
+      const { data } = await apiClient.post('/wearable/connect', { deviceId });
+      return data;
+    } catch (error: any) {
+      console.error('❌ connectWearable Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Get wearable data history
-   */
-  async getHistory(startDate: string, endDate: string): Promise<WearableData[]> {
-    const response = await apiClient.get<{ data: WearableData[] }>('/wearable/history', {
-      params: { startDate, endDate },
-    });
-    return response.data.data;
+  // Déconnecter la bague
+  async disconnect(): Promise<APIResponse<{ success: boolean }>> {
+    try {
+      console.log('✅ API Call: disconnectWearable');
+      const { data } = await apiClient.post('/wearable/disconnect');
+      return data;
+    } catch (error: any) {
+      console.error('❌ disconnectWearable Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Sync wearable data
-   */
-  async sync(): Promise<{ synced: boolean; lastSyncDate: string }> {
-    const response = await apiClient.post<{ synced: boolean; lastSyncDate: string }>(
-      '/wearable/sync'
-    );
-    return response.data;
+  // Synchroniser les données
+  async sync(): Promise<APIResponse<WearableData>> {
+    try {
+      console.log('✅ API Call: syncWearable');
+      const { data } = await apiClient.post('/wearable/sync');
+      return data;
+    } catch (error: any) {
+      console.error('❌ syncWearable Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  /**
-   * Get connection status
-   */
-  async getStatus(): Promise<{
-    connected: boolean;
-    lastSyncDate: string | null;
-    deviceName: string | null;
-  }> {
-    const response = await apiClient.get<{
-      connected: boolean;
-      lastSyncDate: string | null;
-      deviceName: string | null;
-    }>('/wearable/status');
-    return response.data;
+  // Récupérer l'historique des données
+  async getHistory(period: 'day' | 'week' | 'month' = 'week'): Promise<APIResponse<WearableData[]>> {
+    try {
+      console.log('✅ API Call: getWearableHistory', { period });
+      const { data } = await apiClient.get(`/wearable/history?period=${period}`);
+      return data;
+    } catch (error: any) {
+      console.error('❌ getWearableHistory Error:', error.response?.data || error.message);
+      throw error;
+    }
   },
 };
+
+export default wearableService;

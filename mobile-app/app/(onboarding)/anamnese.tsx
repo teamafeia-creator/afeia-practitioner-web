@@ -1,1294 +1,1010 @@
-/**
- * Anamnese Questionnaire Screen
- * Multi-step questionnaire (12 sections)
- */
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
-  ScrollView,
   TouchableOpacity,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
+  TextInput,
+  ScrollView,
 } from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useForm, Controller, FormProvider } from 'react-hook-form';
-import { Button, StepProgress, Input, RadioGroup, CheckboxGroup, Rating } from '@/components/ui';
-import { anamneseApi, formatApiError } from '@/services/api';
-import { useAuth } from '@/contexts/AuthContext';
-import { DraftStorage } from '@/services/storage/secureStore';
-import { Colors, Theme, Spacing, TextStyles } from '@/constants';
-import type { AnamneseData } from '@/types';
+import { useRouter } from 'expo-router';
+import { Button, Input, Card, LoadingSpinner } from '../../components/ui';
+import { ProgressBar, SectionWrapper } from '../../components/anamnese';
+import { anamneseService } from '../../services/api/anamnese';
+import { Colors } from '../../constants/Colors';
+import { Config } from '../../constants/Config';
 
-const TOTAL_STEPS = 12;
+const TOTAL_SECTIONS = Config.ANAMNESE_TOTAL_SECTIONS;
 
-const SECTION_TITLES = [
-  'Informations générales',
-  'Profil personnel et émotionnel',
-  'Motif de consultation',
-  'Alimentation et hydratation',
-  'Digestion et transit',
-  'Sommeil et énergie',
-  'Activité physique et posture',
-  'Stress, émotions et équilibre',
-  'Élimination et peau',
-  'Santé spécifique',
-  'Mode de vie global',
-  'Question ouverte',
+// Définition des sections
+const SECTIONS = [
+  {
+    id: 1,
+    title: 'Informations générales',
+    description: 'Commençons par faire connaissance',
+  },
+  {
+    id: 2,
+    title: 'Profil personnel et émotionnel',
+    description: 'Parlez-nous de vous',
+  },
+  {
+    id: 3,
+    title: 'Motif de consultation',
+    description: 'Pourquoi consultez-vous ?',
+  },
+  {
+    id: 4,
+    title: 'Alimentation et hydratation',
+    description: 'Vos habitudes alimentaires',
+  },
+  {
+    id: 5,
+    title: 'Digestion et transit',
+    description: 'Comment fonctionne votre système digestif',
+  },
+  {
+    id: 6,
+    title: 'Sommeil et énergie',
+    description: 'Votre qualité de sommeil et vitalité',
+  },
+  {
+    id: 7,
+    title: 'Activité physique et posture',
+    description: 'Votre rapport au mouvement',
+  },
+  {
+    id: 8,
+    title: 'Stress et émotions',
+    description: 'Votre équilibre intérieur',
+  },
+  {
+    id: 9,
+    title: 'Élimination et peau',
+    description: 'Signes extérieurs de santé',
+  },
+  {
+    id: 10,
+    title: 'Questions spécifiques',
+    description: 'Selon votre profil',
+  },
+  {
+    id: 11,
+    title: 'Mode de vie global',
+    description: 'Vos habitudes au quotidien',
+  },
+  {
+    id: 12,
+    title: 'Question ouverte',
+    description: 'Ajoutez ce qui vous semble important',
+  },
 ];
 
 export default function AnamneseScreen() {
-  const { setNeedsAnamnese } = useAuth();
-  const [currentStep, setCurrentStep] = useState(0);
+  const router = useRouter();
+  const [currentSection, setCurrentSection] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
-  const [gender, setGender] = useState<'male' | 'female' | null>(null);
+  const [formData, setFormData] = useState<Record<string, any>>({});
 
-  const methods = useForm<AnamneseData>({
-    defaultValues: {
-      section1: { nom: '', age: '', profession: '', situationFamiliale: '', poids: '', taille: '' },
-      section2: { profil: 'entre_les_deux', temperament: [], anxiete: '' },
-      section3: { motifConsultation: '', objectifsAmelioration: '', dureeDesequilibres: '', periodesAmelioration: '' },
-      section4: { habitudesAlimentaires: '', nombreRepas: '', petitDejeuner: '', typesRepas: 'mixte', alimentsFrequents: [], boissonsFrequentes: '', enviesAlimentaires: '' },
-      section5: { digestion: '', frequenceTransit: '', variationTransit: '' },
-      section6: { heureCoucher: '', heureReveil: '', typeSommeil: 'entre_les_deux', reposReveil: '', reveilsNocturnes: '', coupsFatigue: '' },
-      section7: { activitePhysique: '', douleursTensions: '' },
-      section8: { stressFrequent: '', sourcesTension: '', sourcesDetente: '', expressionEmotions: '', humeurGenerale: '' },
-      section9: { transpiration: '', typePeau: 'mixte', problemesPeau: '', urines: '' },
-      section10: { gender: 'male', niveauEnergie: '', tensionsBasVentre: '', sommeilRecuperation: '' },
-      section11: { eauParJour: '', fumeur: '', alcool: '', tempsNature: '', activitesPlaisir: '' },
-      section12: { questionOuverte: '' },
-    },
-  });
+  const handleChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [`section${currentSection}`]: {
+        ...prev[`section${currentSection}`],
+        [field]: value,
+      },
+    }));
+  };
 
-  const { control, handleSubmit, getValues, setValue, watch } = methods;
+  const getValue = (field: string) => {
+    return formData[`section${currentSection}`]?.[field] || '';
+  };
 
-  // Load draft on mount
-  useEffect(() => {
-    loadDraft();
-  }, []);
-
-  // Auto-save draft on step change
-  useEffect(() => {
-    const values = getValues();
-    saveDraft(values);
-  }, [currentStep]);
-
-  const loadDraft = async () => {
-    try {
-      const draftStr = await DraftStorage.getAnamneseDraft();
-      if (draftStr) {
-        const draft = JSON.parse(draftStr);
-        Object.keys(draft).forEach((key) => {
-          setValue(key as keyof AnamneseData, draft[key]);
-        });
-        if (draft.section10?.gender) {
-          setGender(draft.section10.gender);
-        }
+  const handleNext = async () => {
+    if (currentSection < TOTAL_SECTIONS) {
+      // Sauvegarder la section actuelle
+      try {
+        setIsLoading(true);
+        await anamneseService.saveSection(
+          currentSection,
+          formData[`section${currentSection}`] || {}
+        );
+        setCurrentSection(prev => prev + 1);
+      } catch (error) {
+        console.log('⚠️ Anamnese: Could not save section, continuing anyway');
+        setCurrentSection(prev => prev + 1);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading draft:', error);
+    } else {
+      // Soumettre le questionnaire complet
+      handleSubmit();
     }
   };
 
-  const saveDraft = async (data: Partial<AnamneseData>) => {
-    setIsSavingDraft(true);
+  const handlePrevious = () => {
+    if (currentSection > 1) {
+      setCurrentSection(prev => prev - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
     try {
-      await DraftStorage.setAnamneseDraft(JSON.stringify(data));
-    } catch (error) {
-      console.error('Error saving draft:', error);
-    } finally {
-      setIsSavingDraft(false);
-    }
-  };
+      setIsLoading(true);
+      console.log('✅ Anamnese: Submitting questionnaire');
 
-  const handleNext = () => {
-    if (currentStep < TOTAL_STEPS - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
+      await anamneseService.submit(formData as any);
 
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSubmitForm = async () => {
-    setIsLoading(true);
-    try {
-      const data = getValues();
-      await anamneseApi.submit(data);
-      await DraftStorage.clearAnamneseDraft();
-      setNeedsAnamnese(false);
-      router.replace('/(onboarding)/complete');
-    } catch (error) {
-      Alert.alert('Erreur', formatApiError(error));
+      Alert.alert(
+        'Questionnaire terminé',
+        'Merci d\'avoir rempli le questionnaire. Votre naturopathe va pouvoir l\'analyser.',
+        [
+          {
+            text: 'Continuer',
+            onPress: () => router.replace('/(tabs)'),
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('❌ Anamnese: Submit failed', error);
+      Alert.alert('Erreur', 'Erreur lors de l\'envoi du questionnaire');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleExit = () => {
-    Alert.alert(
-      'Quitter le questionnaire ?',
-      'Vos réponses seront sauvegardées et vous pourrez reprendre plus tard.',
-      [
-        { text: 'Continuer', style: 'cancel' },
-        {
-          text: 'Quitter',
-          onPress: async () => {
-            const values = getValues();
-            await saveDraft(values);
-            router.back();
-          },
-        },
-      ]
-    );
-  };
-
   const renderSection = () => {
-    switch (currentStep) {
-      case 0:
-        return <Section1 control={control} />;
+    switch (currentSection) {
       case 1:
-        return <Section2 control={control} />;
+        return renderSection1();
       case 2:
-        return <Section3 control={control} />;
+        return renderSection2();
       case 3:
-        return <Section4 control={control} />;
+        return renderSection3();
       case 4:
-        return <Section5 control={control} />;
+        return renderSection4();
       case 5:
-        return <Section6 control={control} />;
+        return renderSection5();
       case 6:
-        return <Section7 control={control} />;
+        return renderSection6();
       case 7:
-        return <Section8 control={control} />;
+        return renderSection7();
       case 8:
-        return <Section9 control={control} />;
+        return renderSection8();
       case 9:
-        return (
-          <Section10
-            control={control}
-            gender={gender}
-            setGender={(g) => {
-              setGender(g);
-              setValue('section10.gender', g);
-            }}
-          />
-        );
+        return renderSection9();
       case 10:
-        return <Section11 control={control} />;
+        return renderSection10();
       case 11:
-        return <Section12 control={control} />;
+        return renderSection11();
+      case 12:
+        return renderSection12();
       default:
         return null;
     }
   };
 
+  // Section 1: Informations générales
+  const renderSection1 = () => (
+    <SectionWrapper
+      title={SECTIONS[0].title}
+      description={SECTIONS[0].description}
+    >
+      <Input
+        label="Prénom"
+        value={getValue('firstName')}
+        onChangeText={v => handleChange('firstName', v)}
+        placeholder="Votre prénom"
+      />
+      <Input
+        label="Nom"
+        value={getValue('lastName')}
+        onChangeText={v => handleChange('lastName', v)}
+        placeholder="Votre nom"
+      />
+      <Input
+        label="Âge"
+        value={getValue('age')}
+        onChangeText={v => handleChange('age', v)}
+        keyboardType="numeric"
+        placeholder="Votre âge"
+      />
+      <Input
+        label="Profession"
+        value={getValue('profession')}
+        onChangeText={v => handleChange('profession', v)}
+        placeholder="Votre profession"
+      />
+      <Input
+        label="Situation familiale"
+        value={getValue('familySituation')}
+        onChangeText={v => handleChange('familySituation', v)}
+        placeholder="Ex: Marié(e), 2 enfants"
+      />
+      <View style={styles.rowInputs}>
+        <Input
+          label="Poids (kg)"
+          value={getValue('weight')}
+          onChangeText={v => handleChange('weight', v)}
+          keyboardType="numeric"
+          containerStyle={styles.halfInput}
+          placeholder="70"
+        />
+        <Input
+          label="Taille (cm)"
+          value={getValue('height')}
+          onChangeText={v => handleChange('height', v)}
+          keyboardType="numeric"
+          containerStyle={styles.halfInput}
+          placeholder="170"
+        />
+      </View>
+      <Input
+        label="Médecin traitant"
+        value={getValue('doctor')}
+        onChangeText={v => handleChange('doctor', v)}
+        placeholder="Nom de votre médecin"
+      />
+      <Input
+        label="Traitements en cours"
+        value={getValue('currentTreatments')}
+        onChangeText={v => handleChange('currentTreatments', v)}
+        placeholder="Médicaments, compléments..."
+        multiline
+        numberOfLines={3}
+      />
+      <Input
+        label="Allergies connues"
+        value={getValue('allergies')}
+        onChangeText={v => handleChange('allergies', v)}
+        placeholder="Alimentaires, médicamenteuses..."
+        multiline
+        numberOfLines={2}
+      />
+    </SectionWrapper>
+  );
+
+  // Section 2: Profil personnel et émotionnel
+  const renderSection2 = () => (
+    <SectionWrapper
+      title={SECTIONS[1].title}
+      description={SECTIONS[1].description}
+    >
+      <SelectOption
+        label="Vous vous décrivez comme..."
+        value={getValue('personality')}
+        onChange={v => handleChange('personality', v)}
+        options={[
+          { value: 'introvert', label: 'Plutôt introverti(e)' },
+          { value: 'extrovert', label: 'Plutôt extraverti(e)' },
+          { value: 'ambivert', label: 'Un peu des deux' },
+        ]}
+      />
+      <Input
+        label="Comment décririez-vous votre tempérament ?"
+        value={getValue('temperament')}
+        onChangeText={v => handleChange('temperament', v)}
+        placeholder="Calme, nerveux, réactif..."
+        multiline
+        numberOfLines={2}
+      />
+      <SliderOption
+        label="Niveau d'anxiété général (1 = très calme, 10 = très anxieux)"
+        value={getValue('anxietyLevel') || 5}
+        onChange={v => handleChange('anxietyLevel', v)}
+        min={1}
+        max={10}
+      />
+    </SectionWrapper>
+  );
+
+  // Section 3: Motif de consultation
+  const renderSection3 = () => (
+    <SectionWrapper
+      title={SECTIONS[2].title}
+      description={SECTIONS[2].description}
+    >
+      <Input
+        label="Pourquoi consultez-vous ?"
+        value={getValue('reasonForConsultation')}
+        onChangeText={v => handleChange('reasonForConsultation', v)}
+        placeholder="Décrivez vos motifs principaux..."
+        multiline
+        numberOfLines={4}
+      />
+      <Input
+        label="Qu'aimeriez-vous améliorer ?"
+        value={getValue('wantToImprove')}
+        onChangeText={v => handleChange('wantToImprove', v)}
+        placeholder="Énergie, sommeil, digestion..."
+        multiline
+        numberOfLines={3}
+      />
+      <Input
+        label="Depuis quand ressentez-vous ces symptômes ?"
+        value={getValue('symptomsDuration')}
+        onChangeText={v => handleChange('symptomsDuration', v)}
+        placeholder="Quelques jours, mois, années..."
+      />
+      <Input
+        label="Y a-t-il des périodes où c'est pire/mieux ?"
+        value={getValue('symptomsPeriods')}
+        onChangeText={v => handleChange('symptomsPeriods', v)}
+        placeholder="Saisons, stress, alimentation..."
+        multiline
+        numberOfLines={2}
+      />
+    </SectionWrapper>
+  );
+
+  // Section 4: Alimentation et hydratation
+  const renderSection4 = () => (
+    <SectionWrapper
+      title={SECTIONS[3].title}
+      description={SECTIONS[3].description}
+    >
+      <Input
+        label="Décrivez vos habitudes alimentaires"
+        value={getValue('eatingHabits')}
+        onChangeText={v => handleChange('eatingHabits', v)}
+        placeholder="Régulier, grignotage, repas sautés..."
+        multiline
+        numberOfLines={3}
+      />
+      <Input
+        label="Nombre de repas par jour"
+        value={getValue('mealsPerDay')}
+        onChangeText={v => handleChange('mealsPerDay', v)}
+        keyboardType="numeric"
+        placeholder="Ex: 3"
+      />
+      <SelectOption
+        label="Prenez-vous un petit-déjeuner ?"
+        value={getValue('hasBreakfast')}
+        onChange={v => handleChange('hasBreakfast', v)}
+        options={[
+          { value: 'yes', label: 'Oui, tous les jours' },
+          { value: 'sometimes', label: 'Parfois' },
+          { value: 'rarely', label: 'Rarement' },
+          { value: 'never', label: 'Jamais' },
+        ]}
+      />
+      <Input
+        label="Types d'aliments consommés fréquemment"
+        value={getValue('foodTypes')}
+        onChangeText={v => handleChange('foodTypes', v)}
+        placeholder="Viande, légumes, féculents, sucre..."
+        multiline
+        numberOfLines={3}
+      />
+      <Input
+        label="Boissons consommées (eau, café, thé, sodas...)"
+        value={getValue('beverages')}
+        onChangeText={v => handleChange('beverages', v)}
+        placeholder="Quantité et type de boissons"
+        multiline
+        numberOfLines={2}
+      />
+      <Input
+        label="Avez-vous des envies particulières ?"
+        value={getValue('cravings')}
+        onChangeText={v => handleChange('cravings', v)}
+        placeholder="Sucré, salé, gras..."
+      />
+    </SectionWrapper>
+  );
+
+  // Section 5: Digestion et transit
+  const renderSection5 = () => (
+    <SectionWrapper
+      title={SECTIONS[4].title}
+      description={SECTIONS[4].description}
+    >
+      <Input
+        label="Comment décririez-vous votre digestion ?"
+        value={getValue('digestionQuality')}
+        onChangeText={v => handleChange('digestionQuality', v)}
+        placeholder="Facile, lente, ballonnements..."
+        multiline
+        numberOfLines={3}
+      />
+      <Input
+        label="Fréquence des selles"
+        value={getValue('bowelFrequency')}
+        onChangeText={v => handleChange('bowelFrequency', v)}
+        placeholder="1x/jour, irrégulier, constipation..."
+      />
+      <Input
+        label="Variations ou problèmes digestifs ?"
+        value={getValue('digestiveVariations')}
+        onChangeText={v => handleChange('digestiveVariations', v)}
+        placeholder="Brûlures, reflux, gaz..."
+        multiline
+        numberOfLines={3}
+      />
+    </SectionWrapper>
+  );
+
+  // Section 6: Sommeil et énergie
+  const renderSection6 = () => (
+    <SectionWrapper
+      title={SECTIONS[5].title}
+      description={SECTIONS[5].description}
+    >
+      <Input
+        label="Heure de coucher habituelle"
+        value={getValue('bedtime')}
+        onChangeText={v => handleChange('bedtime', v)}
+        placeholder="Ex: 23h00"
+      />
+      <Input
+        label="Heure de réveil habituelle"
+        value={getValue('wakeTime')}
+        onChangeText={v => handleChange('wakeTime', v)}
+        placeholder="Ex: 7h00"
+      />
+      <SliderOption
+        label="Qualité du sommeil (1 = très mauvais, 10 = excellent)"
+        value={getValue('sleepQuality') || 5}
+        onChange={v => handleChange('sleepQuality', v)}
+        min={1}
+        max={10}
+      />
+      <SelectOption
+        label="Vous réveillez-vous la nuit ?"
+        value={getValue('nightWakeups')}
+        onChange={v => handleChange('nightWakeups', v)}
+        options={[
+          { value: 'never', label: 'Jamais' },
+          { value: 'sometimes', label: 'Parfois' },
+          { value: 'often', label: 'Souvent' },
+          { value: 'always', label: 'Toutes les nuits' },
+        ]}
+      />
+      <Input
+        label="Avez-vous des coups de fatigue ? Quand ?"
+        value={getValue('energyDips')}
+        onChangeText={v => handleChange('energyDips', v)}
+        placeholder="Matin, après-midi, après les repas..."
+        multiline
+        numberOfLines={2}
+      />
+    </SectionWrapper>
+  );
+
+  // Section 7: Activité physique et posture
+  const renderSection7 = () => (
+    <SectionWrapper
+      title={SECTIONS[6].title}
+      description={SECTIONS[6].description}
+    >
+      <SelectOption
+        label="Pratiquez-vous une activité physique régulière ?"
+        value={getValue('regularActivity')}
+        onChange={v => handleChange('regularActivity', v)}
+        options={[
+          { value: 'yes', label: 'Oui' },
+          { value: 'sometimes', label: 'De temps en temps' },
+          { value: 'no', label: 'Non' },
+        ]}
+      />
+      <Input
+        label="Type d'activité"
+        value={getValue('activityType')}
+        onChangeText={v => handleChange('activityType', v)}
+        placeholder="Marche, natation, yoga..."
+      />
+      <Input
+        label="Fréquence"
+        value={getValue('activityFrequency')}
+        onChangeText={v => handleChange('activityFrequency', v)}
+        placeholder="Ex: 2-3 fois par semaine"
+      />
+      <Input
+        label="Douleurs ou tensions corporelles ?"
+        value={getValue('bodyPains')}
+        onChangeText={v => handleChange('bodyPains', v)}
+        placeholder="Dos, nuque, articulations..."
+        multiline
+        numberOfLines={3}
+      />
+    </SectionWrapper>
+  );
+
+  // Section 8: Stress, émotions et équilibre intérieur
+  const renderSection8 = () => (
+    <SectionWrapper
+      title={SECTIONS[7].title}
+      description={SECTIONS[7].description}
+    >
+      <SliderOption
+        label="Niveau de stress (1 = très calme, 10 = très stressé)"
+        value={getValue('stressLevel') || 5}
+        onChange={v => handleChange('stressLevel', v)}
+        min={1}
+        max={10}
+      />
+      <Input
+        label="Où ressentez-vous les tensions ?"
+        value={getValue('bodyTensions')}
+        onChangeText={v => handleChange('bodyTensions', v)}
+        placeholder="Nuque, épaules, ventre..."
+      />
+      <Input
+        label="Comment vous détendez-vous ?"
+        value={getValue('relaxationMethods')}
+        onChangeText={v => handleChange('relaxationMethods', v)}
+        placeholder="Lecture, sport, méditation..."
+        multiline
+        numberOfLines={2}
+      />
+      <SelectOption
+        label="Avez-vous tendance à intérioriser vos émotions ?"
+        value={getValue('emotionInternalization')}
+        onChange={v => handleChange('emotionInternalization', v)}
+        options={[
+          { value: 'yes', label: 'Oui, beaucoup' },
+          { value: 'sometimes', label: 'Parfois' },
+          { value: 'no', label: 'Non, j\'exprime facilement' },
+        ]}
+      />
+      <Input
+        label="Comment décririez-vous votre humeur générale ?"
+        value={getValue('generalMood')}
+        onChangeText={v => handleChange('generalMood', v)}
+        placeholder="Stable, changeante, plutôt positive..."
+      />
+    </SectionWrapper>
+  );
+
+  // Section 9: Élimination et peau
+  const renderSection9 = () => (
+    <SectionWrapper
+      title={SECTIONS[8].title}
+      description={SECTIONS[8].description}
+    >
+      <Input
+        label="Transpiration"
+        value={getValue('perspiration')}
+        onChangeText={v => handleChange('perspiration', v)}
+        placeholder="Normale, excessive, peu..."
+      />
+      <SelectOption
+        label="Type de peau"
+        value={getValue('skinType')}
+        onChange={v => handleChange('skinType', v)}
+        options={[
+          { value: 'normal', label: 'Normale' },
+          { value: 'dry', label: 'Sèche' },
+          { value: 'oily', label: 'Grasse' },
+          { value: 'combination', label: 'Mixte' },
+          { value: 'sensitive', label: 'Sensible' },
+        ]}
+      />
+      <Input
+        label="Problèmes de peau (boutons, eczéma, etc.)"
+        value={getValue('skinIssues')}
+        onChangeText={v => handleChange('skinIssues', v)}
+        placeholder="Décrivez vos problèmes éventuels"
+        multiline
+        numberOfLines={2}
+      />
+      <Input
+        label="Couleur et aspect des urines"
+        value={getValue('urineColor')}
+        onChangeText={v => handleChange('urineColor', v)}
+        placeholder="Claire, foncée, fréquence..."
+      />
+    </SectionWrapper>
+  );
+
+  // Section 10: Questions spécifiques (homme/femme)
+  const renderSection10 = () => {
+    const gender = formData.section1?.gender || 'female';
+
+    return (
+      <SectionWrapper
+        title={SECTIONS[9].title}
+        description={SECTIONS[9].description}
+      >
+        <SelectOption
+          label="Vous êtes..."
+          value={getValue('gender')}
+          onChange={v => handleChange('gender', v)}
+          options={[
+            { value: 'female', label: 'Une femme' },
+            { value: 'male', label: 'Un homme' },
+          ]}
+        />
+
+        {getValue('gender') === 'male' ? (
+          <>
+            <SliderOption
+              label="Niveau d'énergie général"
+              value={getValue('energyLevel') || 5}
+              onChange={v => handleChange('energyLevel', v)}
+              min={1}
+              max={10}
+            />
+            <Input
+              label="Tensions bas-ventre ou dos ?"
+              value={getValue('lowerBodyTensions')}
+              onChangeText={v => handleChange('lowerBodyTensions', v)}
+              placeholder="Décrivez..."
+              multiline
+              numberOfLines={2}
+            />
+            <Input
+              label="Qualité de récupération après le sommeil"
+              value={getValue('sleepRecovery')}
+              onChangeText={v => handleChange('sleepRecovery', v)}
+              placeholder="Bonne, moyenne, difficile..."
+            />
+          </>
+        ) : (
+          <>
+            <SelectOption
+              label="Cycles réguliers ?"
+              value={getValue('regularCycles')}
+              onChange={v => handleChange('regularCycles', v)}
+              options={[
+                { value: 'yes', label: 'Oui' },
+                { value: 'no', label: 'Non' },
+                { value: 'menopause', label: 'Ménopause' },
+              ]}
+            />
+            <Input
+              label="Durée moyenne des cycles (jours)"
+              value={getValue('cycleDuration')}
+              onChangeText={v => handleChange('cycleDuration', v)}
+              keyboardType="numeric"
+              placeholder="Ex: 28"
+            />
+            <SelectOption
+              label="Douleurs menstruelles ?"
+              value={getValue('menstrualPain')}
+              onChange={v => handleChange('menstrualPain', v)}
+              options={[
+                { value: 'no', label: 'Non' },
+                { value: 'light', label: 'Légères' },
+                { value: 'moderate', label: 'Modérées' },
+                { value: 'severe', label: 'Fortes' },
+              ]}
+            />
+            <Input
+              label="Changements avant les règles (SPM)"
+              value={getValue('premenstrualChanges')}
+              onChangeText={v => handleChange('premenstrualChanges', v)}
+              placeholder="Humeur, fatigue, ballonnements..."
+              multiline
+              numberOfLines={2}
+            />
+            <Input
+              label="Contraception utilisée"
+              value={getValue('contraception')}
+              onChangeText={v => handleChange('contraception', v)}
+              placeholder="Pilule, stérilet, naturelle..."
+            />
+          </>
+        )}
+      </SectionWrapper>
+    );
+  };
+
+  // Section 11: Mode de vie global
+  const renderSection11 = () => (
+    <SectionWrapper
+      title={SECTIONS[10].title}
+      description={SECTIONS[10].description}
+    >
+      <Input
+        label="Consommation d'eau par jour (litres)"
+        value={getValue('dailyWaterIntake')}
+        onChangeText={v => handleChange('dailyWaterIntake', v)}
+        keyboardType="numeric"
+        placeholder="Ex: 1.5"
+      />
+      <SelectOption
+        label="Consommation de tabac"
+        value={getValue('smokingStatus')}
+        onChange={v => handleChange('smokingStatus', v)}
+        options={[
+          { value: 'no', label: 'Non-fumeur' },
+          { value: 'former', label: 'Ancien fumeur' },
+          { value: 'occasional', label: 'Occasionnel' },
+          { value: 'regular', label: 'Quotidien' },
+        ]}
+      />
+      <SelectOption
+        label="Consommation d'alcool"
+        value={getValue('alcoholConsumption')}
+        onChange={v => handleChange('alcoholConsumption', v)}
+        options={[
+          { value: 'never', label: 'Jamais' },
+          { value: 'occasional', label: 'Occasionnel' },
+          { value: 'moderate', label: 'Modéré (1-2/semaine)' },
+          { value: 'regular', label: 'Régulier' },
+        ]}
+      />
+      <Input
+        label="Temps passé dans la nature"
+        value={getValue('natureExposure')}
+        onChangeText={v => handleChange('natureExposure', v)}
+        placeholder="Tous les jours, rarement..."
+      />
+      <Input
+        label="Activités de plaisir / hobbies"
+        value={getValue('pleasureActivities')}
+        onChangeText={v => handleChange('pleasureActivities', v)}
+        placeholder="Lecture, musique, jardinage..."
+        multiline
+        numberOfLines={2}
+      />
+    </SectionWrapper>
+  );
+
+  // Section 12: Question ouverte
+  const renderSection12 = () => (
+    <SectionWrapper
+      title={SECTIONS[11].title}
+      description={SECTIONS[11].description}
+    >
+      <Text style={styles.openQuestionLabel}>
+        Y a-t-il quelque chose d'autre que vous souhaitez partager avec votre
+        naturopathe ? Des informations qui vous semblent importantes et que nous
+        n'avons pas abordées ?
+      </Text>
+      <TextInput
+        style={styles.openQuestionInput}
+        value={getValue('additionalInfo')}
+        onChangeText={v => handleChange('additionalInfo', v)}
+        placeholder="Écrivez librement..."
+        multiline
+        numberOfLines={10}
+        textAlignVertical="top"
+      />
+    </SectionWrapper>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
-            <Ionicons name="close" size={24} color={Theme.text} />
-          </TouchableOpacity>
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{SECTION_TITLES[currentStep]}</Text>
-            {isSavingDraft && (
-              <Text style={styles.savingText}>Sauvegarde...</Text>
-            )}
-          </View>
-          <View style={styles.exitButton} />
-        </View>
+      {/* Header avec progression */}
+      <View style={styles.header}>
+        <ProgressBar current={currentSection} total={TOTAL_SECTIONS} />
+      </View>
 
-        {/* Progress */}
-        <View style={styles.progressContainer}>
-          <StepProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
-        </View>
+      {/* Contenu de la section */}
+      <View style={styles.content}>{renderSection()}</View>
 
-        {/* Content */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <FormProvider {...methods}>{renderSection()}</FormProvider>
-        </ScrollView>
+      {/* Navigation */}
+      <View style={styles.navigation}>
+        {currentSection > 1 && (
+          <Button
+            title="Précédent"
+            onPress={handlePrevious}
+            variant="outline"
+            style={styles.navButton}
+          />
+        )}
+        <Button
+          title={currentSection === TOTAL_SECTIONS ? 'Terminer' : 'Suivant'}
+          onPress={handleNext}
+          variant="primary"
+          style={currentSection === 1 ? [styles.navButton, styles.fullButton] : styles.navButton}
+          loading={isLoading}
+        />
+      </View>
 
-        {/* Navigation Buttons */}
-        <View style={styles.footer}>
-          {currentStep > 0 && (
-            <Button
-              variant="outline"
-              onPress={handleBack}
-              style={styles.footerButton}
-            >
-              Précédent
-            </Button>
-          )}
-          <View style={styles.footerSpacer} />
-          {currentStep < TOTAL_STEPS - 1 ? (
-            <Button
-              variant="primary"
-              onPress={handleNext}
-              style={styles.footerButton}
-            >
-              Suivant
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              onPress={handleSubmitForm}
-              isLoading={isLoading}
-              style={styles.footerButton}
-            >
-              Envoyer
-            </Button>
-          )}
-        </View>
-      </KeyboardAvoidingView>
+      {isLoading && <LoadingSpinner fullScreen overlay />}
     </SafeAreaView>
   );
 }
 
-// Section 1: Informations générales
-function Section1({ control }: { control: any }) {
-  return (
-    <View>
-      <Text style={styles.sectionIntro}>
-        Ces informations permettent à votre naturopathe de mieux vous connaître.
-      </Text>
-      <Controller
-        control={control}
-        name="section1.nom"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Nom complet" placeholder="Votre nom et prénom" value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section1.age"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Âge" placeholder="Ex: 35" keyboardType="number-pad" value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section1.profession"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Profession" placeholder="Votre métier actuel" value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section1.situationFamiliale"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Situation familiale" placeholder="Ex: Marié(e), 2 enfants" value={value} onChangeText={onChange} />
-        )}
-      />
-      <View style={styles.rowInputs}>
-        <Controller
-          control={control}
-          name="section1.poids"
-          render={({ field: { onChange, value } }) => (
-            <Input label="Poids (kg)" placeholder="Ex: 70" keyboardType="number-pad" value={value} onChangeText={onChange} containerStyle={styles.halfInput} />
-          )}
-        />
-        <Controller
-          control={control}
-          name="section1.taille"
-          render={({ field: { onChange, value } }) => (
-            <Input label="Taille (cm)" placeholder="Ex: 175" keyboardType="number-pad" value={value} onChangeText={onChange} containerStyle={styles.halfInput} />
-          )}
-        />
+// Composant SelectOption
+const SelectOption: React.FC<{
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}> = ({ label, value, onChange, options }) => (
+  <View style={styles.selectContainer}>
+    <Text style={styles.selectLabel}>{label}</Text>
+    <View style={styles.selectOptions}>
+      {options.map(option => (
+        <TouchableOpacity
+          key={option.value}
+          style={[
+            styles.selectOption,
+            value === option.value && styles.selectOptionSelected,
+          ]}
+          onPress={() => onChange(option.value)}
+        >
+          <Text
+            style={[
+              styles.selectOptionText,
+              value === option.value && styles.selectOptionTextSelected,
+            ]}
+          >
+            {option.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+);
+
+// Composant SliderOption (simplifié avec boutons)
+const SliderOption: React.FC<{
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min: number;
+  max: number;
+}> = ({ label, value, onChange, min, max }) => (
+  <View style={styles.sliderContainer}>
+    <Text style={styles.sliderLabel}>{label}</Text>
+    <View style={styles.sliderRow}>
+      <Text style={styles.sliderMin}>{min}</Text>
+      <View style={styles.sliderButtons}>
+        {Array.from({ length: max - min + 1 }, (_, i) => min + i).map(num => (
+          <TouchableOpacity
+            key={num}
+            style={[
+              styles.sliderButton,
+              value === num && styles.sliderButtonSelected,
+            ]}
+            onPress={() => onChange(num)}
+          >
+            <Text
+              style={[
+                styles.sliderButtonText,
+                value === num && styles.sliderButtonTextSelected,
+              ]}
+            >
+              {num}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
-      <Controller
-        control={control}
-        name="section1.medecinTraitant"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Médecin traitant (optionnel)" placeholder="Nom du médecin" value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section1.traitementsActuels"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Traitements ou compléments actuels" placeholder="Listez vos traitements en cours" multiline numberOfLines={3} value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section1.allergies"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Allergies connues" placeholder="Ex: Pollen, arachides..." value={value} onChangeText={onChange} />
-        )}
-      />
+      <Text style={styles.sliderMax}>{max}</Text>
     </View>
-  );
-}
-
-// Section 2: Profil personnel et émotionnel
-function Section2({ control }: { control: any }) {
-  return (
-    <View>
-      <Controller
-        control={control}
-        name="section2.profil"
-        render={({ field: { onChange, value } }) => (
-          <RadioGroup
-            label="Vous diriez que vous êtes plutôt :"
-            options={[
-              { value: 'introverti', label: 'Introverti(e)', description: 'Vous rechargez votre énergie seul(e)' },
-              { value: 'extraverti', label: 'Extraverti(e)', description: 'Vous rechargez votre énergie au contact des autres' },
-              { value: 'entre_les_deux', label: 'Entre les deux' },
-            ]}
-            value={value}
-            onChange={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section2.temperament"
-        render={({ field: { onChange, value } }) => (
-          <CheckboxGroup
-            label="Comment décririez-vous votre tempérament ?"
-            options={[
-              { value: 'calme', label: 'Calme / posé(e)' },
-              { value: 'stresse', label: 'Stressé(e) ou souvent sous tension' },
-              { value: 'dynamique', label: 'Dynamique / actif(ve)' },
-              { value: 'emotif', label: 'Émotif(ve) / sensible' },
-              { value: 'chill', label: 'Plutôt "chill" / détendu(e)' },
-            ]}
-            values={value || []}
-            onChange={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section2.anxiete"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Vous sentez-vous facilement dépassé(e) ou anxieux(se) ? Dans quelles situations ?"
-            placeholder="Décrivez les situations qui vous stressent..."
-            multiline
-            numberOfLines={4}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-    </View>
-  );
-}
-
-// Section 3: Motif de consultation
-function Section3({ control }: { control: any }) {
-  return (
-    <View>
-      <Text style={styles.sectionIntro}>
-        Ces informations nous aident à comprendre vos besoins et à personnaliser votre accompagnement.
-      </Text>
-      <Controller
-        control={control}
-        name="section3.motifConsultation"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Qu'est-ce qui vous amène à consulter aujourd'hui ?"
-            placeholder="Ex: fatigue, digestion difficile, sommeil léger, stress..."
-            multiline
-            numberOfLines={4}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section3.objectifsAmelioration"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Qu'aimeriez-vous améliorer dans votre santé ou votre bien-être ?"
-            placeholder="Ex: énergie, sommeil, digestion, détente, peau, émotions..."
-            multiline
-            numberOfLines={4}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section3.dureeDesequilibres"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Depuis combien de temps ressentez-vous ces déséquilibres ?"
-            placeholder="Ex: Quelques semaines, plusieurs mois, des années..."
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section3.periodesAmelioration"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous remarqué des périodes où cela s'améliore ou s'aggrave ?"
-            placeholder="Décrivez quand et dans quelles conditions..."
-            multiline
-            numberOfLines={3}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-    </View>
-  );
-}
-
-// Section 4: Alimentation et hydratation
-function Section4({ control }: { control: any }) {
-  return (
-    <View>
-      <Controller
-        control={control}
-        name="section4.habitudesAlimentaires"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Comment décririez-vous vos habitudes alimentaires ?"
-            placeholder="Ex: variées, rapides, irrégulières, équilibrées..."
-            multiline
-            numberOfLines={3}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section4.nombreRepas"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Combien de repas prenez-vous par jour ?" placeholder="Ex: 3 repas" value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section4.petitDejeuner"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Prenez-vous un petit-déjeuner ? Si oui, de quoi est-il composé ?"
-            placeholder="Décrivez votre petit-déjeuner habituel..."
-            multiline
-            numberOfLines={2}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section4.typesRepas"
-        render={({ field: { onChange, value } }) => (
-          <RadioGroup
-            label="Vos repas sont-ils majoritairement :"
-            options={[
-              { value: 'maison', label: 'Préparés à la maison' },
-              { value: 'exterieur', label: 'Pris à l\'extérieur (cantine, restaurant, plats à emporter)' },
-              { value: 'mixte', label: 'Un mélange des deux' },
-            ]}
-            value={value}
-            onChange={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section4.alimentsFrequents"
-        render={({ field: { onChange, value } }) => (
-          <CheckboxGroup
-            label="Quels types d'aliments consommez-vous le plus souvent ?"
-            options={[
-              { value: 'viandes', label: 'Viandes, charcuteries, œufs' },
-              { value: 'poissons', label: 'Poissons, fruits de mer' },
-              { value: 'feculents', label: 'Féculents (pâtes, riz, pain, pommes de terre...)' },
-              { value: 'legumes', label: 'Légumes et crudités' },
-              { value: 'fruits', label: 'Fruits' },
-              { value: 'sucres', label: 'Produits sucrés (pâtisseries, chocolat, sodas...)' },
-              { value: 'laitiers', label: 'Produits laitiers' },
-              { value: 'legumineuses', label: 'Légumineuses (lentilles, pois chiches, haricots...)' },
-            ]}
-            values={value || []}
-            onChange={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section4.boissonsFrequentes"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Quels types de boissons consommez-vous le plus dans la journée ?"
-            placeholder="Ex: eau, café, thé, infusions, jus, sodas..."
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section4.enviesAlimentaires"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous des envies alimentaires particulières ?"
-            placeholder="Ex: sucré, salé, chocolat, gras, pain..."
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-    </View>
-  );
-}
-
-// Section 5: Digestion et transit
-function Section5({ control }: { control: any }) {
-  return (
-    <View>
-      <Controller
-        control={control}
-        name="section5.digestion"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Comment décririez-vous votre digestion ?"
-            placeholder="Ex: facile, lente, ballonnements, lourdeurs, brûlures, reflux, gaz..."
-            multiline
-            numberOfLines={3}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section5.frequenceTransit"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="À quelle fréquence allez-vous à la selle ?"
-            placeholder="Ex: chaque jour, tous les 2 ou 3 jours, 2 fois par semaine..."
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section5.variationTransit"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous remarqué que votre transit varie selon votre alimentation ou état émotionnel ?"
-            placeholder="Ex: plus lent en période de stress, plus rapide en vacances..."
-            multiline
-            numberOfLines={3}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section5.remarquesTransit"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Autre remarque sur votre transit ou confort digestif (optionnel)"
-            placeholder="Partagez d'autres observations..."
-            multiline
-            numberOfLines={2}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-    </View>
-  );
-}
-
-// Section 6: Sommeil et énergie
-function Section6({ control }: { control: any }) {
-  return (
-    <View>
-      <View style={styles.rowInputs}>
-        <Controller
-          control={control}
-          name="section6.heureCoucher"
-          render={({ field: { onChange, value } }) => (
-            <Input label="Heure de coucher" placeholder="Ex: 22h30" value={value} onChangeText={onChange} containerStyle={styles.halfInput} />
-          )}
-        />
-        <Controller
-          control={control}
-          name="section6.heureReveil"
-          render={({ field: { onChange, value } }) => (
-            <Input label="Heure de réveil" placeholder="Ex: 7h00" value={value} onChangeText={onChange} containerStyle={styles.halfInput} />
-          )}
-        />
-      </View>
-      <Controller
-        control={control}
-        name="section6.typeSommeil"
-        render={({ field: { onChange, value } }) => (
-          <RadioGroup
-            label="Votre sommeil est-il plutôt :"
-            options={[
-              { value: 'leger', label: 'Léger' },
-              { value: 'profond', label: 'Profond' },
-              { value: 'entre_les_deux', label: 'Entre les deux' },
-            ]}
-            value={value}
-            onChange={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section6.reposReveil"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Vous sentez-vous reposé(e) au réveil ?" placeholder="Oui / Non / Parfois..." value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section6.reveilsNocturnes"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous des réveils nocturnes ou des difficultés d'endormissement ?"
-            placeholder="Décrivez vos difficultés de sommeil..."
-            multiline
-            numberOfLines={2}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section6.coupsFatigue"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous souvent des coups de fatigue dans la journée ? À quel moment ?"
-            placeholder="Ex: Après le déjeuner, en fin d'après-midi..."
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section6.remarquesSommeil"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Autre remarque sur votre sommeil (optionnel)"
-            placeholder="Partagez d'autres observations..."
-            multiline
-            numberOfLines={2}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-    </View>
-  );
-}
-
-// Section 7: Activité physique et posture
-function Section7({ control }: { control: any }) {
-  return (
-    <View>
-      <Controller
-        control={control}
-        name="section7.activitePhysique"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous une activité physique régulière ? Si oui, laquelle et à quelle fréquence ?"
-            placeholder="Ex: marche 30 min/jour, yoga 2x/semaine, course à pied..."
-            multiline
-            numberOfLines={3}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section7.activiteSouhaitee"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Si vous n'avez pas d'activité régulière, qu'aimeriez-vous pratiquer ?"
-            placeholder="Ex: Natation, yoga, marche en nature..."
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section7.douleursTensions"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous des douleurs ou tensions corporelles récurrentes ?"
-            placeholder="Ex: dos, nuque, jambes lourdes, articulations..."
-            multiline
-            numberOfLines={3}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-    </View>
-  );
-}
-
-// Section 8: Stress, émotions et équilibre intérieur
-function Section8({ control }: { control: any }) {
-  return (
-    <View>
-      <Controller
-        control={control}
-        name="section8.stressFrequent"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Vous sentez-vous souvent stressé(e), tendu(e) ou nerveux(se) ?" placeholder="Oui / Non / Parfois..." value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section8.sourcesTension"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Qu'est-ce qui provoque le plus de tension dans votre quotidien ?"
-            placeholder="Ex: travail, famille, finances, santé..."
-            multiline
-            numberOfLines={3}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section8.sourcesDetente"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Quelles sont vos principales sources de détente ou de ressourcement ?"
-            placeholder="Ex: lecture, nature, méditation, musique, activités manuelles, sport..."
-            multiline
-            numberOfLines={3}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section8.expressionEmotions"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous tendance à intérioriser vos émotions ou à les exprimer facilement ?"
-            placeholder="Décrivez votre manière de gérer vos émotions..."
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section8.humeurGenerale"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Comment décririez-vous votre humeur en général ?"
-            placeholder="Ex: stable, joyeuse, anxieuse, fatiguée, irritable, changeante..."
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-    </View>
-  );
-}
-
-// Section 9: Élimination et peau
-function Section9({ control }: { control: any }) {
-  return (
-    <View>
-      <Controller
-        control={control}
-        name="section9.transpiration"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Transpirez-vous facilement ?" placeholder="Oui / Non / Parfois..." value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section9.typePeau"
-        render={({ field: { onChange, value } }) => (
-          <RadioGroup
-            label="Votre peau est-elle :"
-            options={[
-              { value: 'seche', label: 'Sèche' },
-              { value: 'grasse', label: 'Grasse' },
-              { value: 'mixte', label: 'Mixte' },
-              { value: 'sensible', label: 'Sensible' },
-            ]}
-            value={value}
-            onChange={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section9.problemesPeau"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous des boutons, démangeaisons, eczéma, etc. ?"
-            placeholder="Décrivez vos problèmes de peau..."
-            multiline
-            numberOfLines={2}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section9.urines"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Vos urines sont-elles claires, foncées, abondantes ou peu fréquentes ?"
-            placeholder="Décrivez..."
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section9.remarquesElimination"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Autre remarque sur votre peau ou élimination (optionnel)"
-            placeholder="Partagez d'autres observations..."
-            multiline
-            numberOfLines={2}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-    </View>
-  );
-}
-
-// Section 10: Pour les femmes / Pour les hommes
-function Section10({
-  control,
-  gender,
-  setGender,
-}: {
-  control: any;
-  gender: 'male' | 'female' | null;
-  setGender: (g: 'male' | 'female') => void;
-}) {
-  return (
-    <View>
-      <Text style={styles.sectionIntro}>
-        Cette section concerne votre santé spécifique. Sélectionnez la section qui vous correspond.
-      </Text>
-      <RadioGroup
-        options={[
-          { value: 'female', label: 'Pour les femmes' },
-          { value: 'male', label: 'Pour les hommes' },
-        ]}
-        value={gender || ''}
-        onChange={(v) => setGender(v as 'male' | 'female')}
-      />
-
-      {gender === 'female' && (
-        <View style={styles.genderSection}>
-          <Controller
-            control={control}
-            name="section10.reglesRegulieres"
-            render={({ field: { onChange, value } }) => (
-              <RadioGroup
-                label="Avez-vous vos règles de façon régulière ?"
-                options={[
-                  { value: 'oui', label: 'Oui' },
-                  { value: 'non', label: 'Non' },
-                  { value: 'parfois', label: 'Parfois' },
-                ]}
-                value={value || ''}
-                onChange={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.dureeRegles"
-            render={({ field: { onChange, value } }) => (
-              <Input label="Combien de jours durent vos règles ?" placeholder="Ex: 4-5 jours" value={value} onChangeText={onChange} />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.douleursRegles"
-            render={({ field: { onChange, value } }) => (
-              <Input label="Avez-vous des douleurs ou gênes pendant vos règles ?" placeholder="Décrivez..." value={value} onChangeText={onChange} />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.intensiteDouleurs"
-            render={({ field: { onChange, value } }) => (
-              <RadioGroup
-                label="Intensité des douleurs :"
-                options={[
-                  { value: 'legere', label: 'Légère' },
-                  { value: 'moyenne', label: 'Moyenne' },
-                  { value: 'forte', label: 'Forte / difficile à supporter' },
-                ]}
-                value={value || ''}
-                onChange={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.changementsAvantRegles"
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Ressentez-vous des changements avant vos règles ?"
-                placeholder="Ex: irritabilité, fatigue, tristesse, envies alimentaires..."
-                multiline
-                numberOfLines={2}
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.variationsEnergie"
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Avez-vous remarqué des variations d'énergie au fil du mois ?"
-                placeholder="Ex: plus d'énergie à certains moments..."
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.menopausee"
-            render={({ field: { onChange, value } }) => (
-              <RadioGroup
-                label="Êtes-vous ménopausée ?"
-                options={[
-                  { value: 'oui', label: 'Oui' },
-                  { value: 'non', label: 'Non' },
-                ]}
-                value={value || ''}
-                onChange={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.symptomesMenopause"
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Si oui, ressentez-vous des bouffées de chaleur, troubles du sommeil ou variations d'humeur ?"
-                placeholder="Décrivez vos symptômes..."
-                multiline
-                numberOfLines={2}
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.contraception"
-            render={({ field: { onChange, value } }) => (
-              <Input label="Utilisez-vous une contraception ? Si oui, laquelle ?" placeholder="Ex: Pilule, stérilet..." value={value} onChangeText={onChange} />
-            )}
-          />
-        </View>
-      )}
-
-      {gender === 'male' && (
-        <View style={styles.genderSection}>
-          <Controller
-            control={control}
-            name="section10.niveauEnergie"
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Comment décririez-vous votre niveau d'énergie générale ?"
-                placeholder="Ex: stable, variable, en baisse récente..."
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.tensionsBasVentre"
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Avez-vous des tensions, douleurs ou lourdeurs au niveau du bas-ventre ou du dos ?"
-                placeholder="Décrivez..."
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.sommeilRecuperation"
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Comment se porte votre sommeil et votre récupération après l'effort ?"
-                placeholder="Décrivez..."
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="section10.remarquesVitalite"
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Autre remarque concernant votre vitalité ou équilibre hormonal (optionnel)"
-                placeholder="Partagez d'autres observations..."
-                multiline
-                numberOfLines={2}
-                value={value}
-                onChangeText={onChange}
-              />
-            )}
-          />
-        </View>
-      )}
-    </View>
-  );
-}
-
-// Section 11: Mode de vie global
-function Section11({ control }: { control: any }) {
-  return (
-    <View>
-      <Controller
-        control={control}
-        name="section11.eauParJour"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Combien d'eau buvez-vous par jour (environ) ?" placeholder="Ex: 1,5L, 2L..." value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section11.fumeur"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Fumez-vous ?" placeholder="Oui / Non / Ancien fumeur..." value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section11.alcool"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Consommez-vous de l'alcool ? Si oui, à quelle fréquence ?" placeholder="Ex: Occasionnellement, 1-2 verres/semaine..." value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section11.tempsNature"
-        render={({ field: { onChange, value } }) => (
-          <Input label="Passez-vous du temps dans la nature ou à l'extérieur ?" placeholder="Ex: Quotidiennement, le week-end..." value={value} onChangeText={onChange} />
-        )}
-      />
-      <Controller
-        control={control}
-        name="section11.activitesPlaisir"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Avez-vous des activités qui vous procurent du plaisir et du calme intérieur ?"
-            placeholder="Décrivez vos activités de détente..."
-            multiline
-            numberOfLines={3}
-            value={value}
-            onChangeText={onChange}
-          />
-        )}
-      />
-    </View>
-  );
-}
-
-// Section 12: Question ouverte
-function Section12({ control }: { control: any }) {
-  return (
-    <View>
-      <Text style={styles.sectionIntro}>
-        Y a-t-il autre chose que vous aimeriez partager sur votre santé, vos habitudes ou votre état actuel ?
-      </Text>
-      <Text style={styles.sectionHint}>
-        Tout ce qui vous semble utile ou important, même si vous pensez que ce n'est "pas lié".
-      </Text>
-      <Controller
-        control={control}
-        name="section12.questionOuverte"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            placeholder="Partagez librement vos pensées, observations ou questions..."
-            multiline
-            numberOfLines={8}
-            value={value}
-            onChangeText={onChange}
-            style={styles.largeTextarea}
-          />
-        )}
-      />
-      <View style={styles.thankYouBox}>
-        <Text style={styles.thankYouText}>
-          Merci d'avoir pris le temps de remplir ce questionnaire.
-        </Text>
-        <Text style={styles.thankYouSubtext}>
-          Ces informations permettront à votre naturopathe de préparer une séance personnalisée et adaptée à votre rythme et à vos besoins.
-        </Text>
-      </View>
-    </View>
-  );
-}
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral.white,
-  },
-  keyboardView: {
-    flex: 1,
+    backgroundColor: Colors.sable,
   },
   header: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  navigation: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral.sandDark,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.grisChaud,
+    backgroundColor: Colors.blanc,
   },
-  exitButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    ...TextStyles.label,
-    color: Theme.text,
-  },
-  savingText: {
-    ...TextStyles.caption,
-    color: Theme.textSecondary,
-    marginTop: 2,
-  },
-  progressContainer: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    backgroundColor: Colors.neutral.sand,
-  },
-  scrollView: {
+  navButton: {
     flex: 1,
   },
-  scrollContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing['3xl'],
-  },
-  sectionIntro: {
-    ...TextStyles.body,
-    color: Theme.textSecondary,
-    marginBottom: Spacing.lg,
-    fontStyle: 'italic',
-  },
-  sectionHint: {
-    ...TextStyles.bodySmall,
-    color: Theme.textSecondary,
-    marginBottom: Spacing.md,
+  fullButton: {
+    flex: 1,
   },
   rowInputs: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: 12,
   },
   halfInput: {
     flex: 1,
   },
-  genderSection: {
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.neutral.sandDark,
+  selectContainer: {
+    marginBottom: 16,
   },
-  largeTextarea: {
-    minHeight: 150,
-    textAlignVertical: 'top',
+  selectLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.charcoal,
+    marginBottom: 8,
   },
-  thankYouBox: {
-    marginTop: Spacing.xl,
-    padding: Spacing.lg,
-    backgroundColor: Colors.primary.tealPale,
-    borderRadius: 12,
-  },
-  thankYouText: {
-    ...TextStyles.body,
-    color: Colors.primary.tealDeep,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
-  },
-  thankYouSubtext: {
-    ...TextStyles.bodySmall,
-    color: Colors.primary.teal,
-    textAlign: 'center',
-  },
-  footer: {
+  selectOptions: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    paddingBottom: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.neutral.sandDark,
-    backgroundColor: Colors.neutral.white,
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  footerButton: {
+  selectOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.grisChaud,
+    backgroundColor: Colors.blanc,
+  },
+  selectOptionSelected: {
+    borderColor: Colors.teal,
+    backgroundColor: Colors.tealLight,
+  },
+  selectOptionText: {
+    fontSize: 14,
+    color: Colors.charcoal,
+  },
+  selectOptionTextSelected: {
+    color: Colors.blanc,
+    fontWeight: '500',
+  },
+  sliderContainer: {
+    marginBottom: 16,
+  },
+  sliderLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.charcoal,
+    marginBottom: 12,
+  },
+  sliderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sliderMin: {
+    fontSize: 12,
+    color: Colors.grisChaud,
+  },
+  sliderMax: {
+    fontSize: 12,
+    color: Colors.grisChaud,
+  },
+  sliderButtons: {
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  footerSpacer: {
-    width: Spacing.md,
+  sliderButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.grisChaud,
+    backgroundColor: Colors.blanc,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sliderButtonSelected: {
+    borderColor: Colors.teal,
+    backgroundColor: Colors.teal,
+  },
+  sliderButtonText: {
+    fontSize: 12,
+    color: Colors.charcoal,
+  },
+  sliderButtonTextSelected: {
+    color: Colors.blanc,
+    fontWeight: '600',
+  },
+  openQuestionLabel: {
+    fontSize: 16,
+    color: Colors.charcoal,
+    lineHeight: 24,
+    marginBottom: 16,
+  },
+  openQuestionInput: {
+    backgroundColor: Colors.blanc,
+    borderWidth: 1,
+    borderColor: Colors.grisChaud,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: Colors.charcoal,
+    minHeight: 200,
   },
 });

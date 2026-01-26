@@ -1,31 +1,30 @@
-/**
- * Profile Screen
- * User settings and account management
- */
-
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
+  SafeAreaView,
   TouchableOpacity,
   Switch,
   Alert,
-  Linking,
 } from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@/contexts/AuthContext';
-import { Avatar, Card, PremiumBadge, Button } from '@/components/ui';
-import { Colors, Theme, Spacing, TextStyles, BorderRadius } from '@/constants';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
+import { Card, Button } from '../../components/ui';
+import { Colors } from '../../constants/Colors';
+import { formatFullName, formatInitials } from '../../utils/formatters';
 
 export default function ProfileScreen() {
-  const { patient, logout } = useAuth();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [reminderComplements, setReminderComplements] = useState(true);
-  const [reminderJournal, setReminderJournal] = useState(true);
+  const router = useRouter();
+  const { user, logout, isLoading } = useAuth();
+
+  const [notifications, setNotifications] = useState({
+    push: true,
+    complementReminders: true,
+    journalReminder: true,
+    messages: true,
+  });
 
   const handleLogout = () => {
     Alert.alert(
@@ -38,48 +37,19 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
+            router.replace('/');
           },
         },
       ]
     );
   };
 
-  const handleEditProfile = () => {
-    // TODO: Navigate to edit profile screen
-    Alert.alert('Bientôt disponible', 'La modification du profil sera bientôt disponible.');
-  };
-
-  const handleConnectWearable = () => {
-    if (patient?.isPremium) {
-      // TODO: Implement Circular Ring connection
-      Alert.alert('Connexion Circular', 'Fonctionnalité en cours de développement.');
-    } else {
-      Alert.alert(
-        'Fonctionnalité Premium',
-        'Passez à Premium pour connecter votre bague Circular et suivre vos données de santé.',
-        [
-          { text: 'Plus tard', style: 'cancel' },
-          { text: 'Découvrir Premium', onPress: () => {/* Navigate to premium */ } },
-        ]
-      );
-    }
-  };
-
-  const handleManageSubscription = () => {
-    // TODO: Navigate to subscription management
-    Alert.alert('Bientôt disponible', 'La gestion des abonnements sera bientôt disponible.');
-  };
-
-  const handleContactSupport = () => {
-    Linking.openURL('mailto:support@afeia.com');
-  };
-
-  const handleOpenCGU = () => {
-    Linking.openURL('https://afeia.com/cgu');
-  };
-
-  const handleOpenPrivacy = () => {
-    Linking.openURL('https://afeia.com/privacy');
+  const handleToggleNotification = (key: keyof typeof notifications) => {
+    setNotifications(prev => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+    // TODO: Sauvegarder les préférences de notifications
   };
 
   return (
@@ -91,415 +61,372 @@ export default function ProfileScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Avatar
-            source={patient?.avatarUrl}
-            name={`${patient?.firstName} ${patient?.lastName}`}
-            size="2xl"
-          />
-          <Text style={styles.name}>
-            {patient?.firstName} {patient?.lastName}
+          <View style={styles.avatarLarge}>
+            <Text style={styles.avatarText}>
+              {formatInitials(user?.firstName, user?.lastName)}
+            </Text>
+          </View>
+          <Text style={styles.userName}>
+            {formatFullName(user?.firstName, user?.lastName)}
           </Text>
-          <Text style={styles.email}>{patient?.email}</Text>
-          {patient?.isPremium && (
-            <View style={styles.premiumBadgeContainer}>
-              <PremiumBadge />
-              <Text style={styles.premiumText}>Membre Premium</Text>
+          <Text style={styles.userEmail}>{user?.email}</Text>
+        </View>
+
+        {/* Informations personnelles */}
+        <Card title="Informations personnelles">
+          <ProfileItem label="Prénom" value={user?.firstName || '-'} />
+          <ProfileItem label="Nom" value={user?.lastName || '-'} />
+          <ProfileItem label="Email" value={user?.email || '-'} />
+          <ProfileItem label="Téléphone" value={user?.phone || '-'} />
+          <Button
+            title="Modifier mes informations"
+            onPress={() => {}}
+            variant="outline"
+            fullWidth
+            size="small"
+            style={styles.editButton}
+          />
+        </Card>
+
+        {/* Notifications */}
+        <Card title="Notifications">
+          <NotificationToggle
+            label="Notifications push"
+            description="Recevoir des notifications sur votre appareil"
+            value={notifications.push}
+            onToggle={() => handleToggleNotification('push')}
+          />
+          <NotificationToggle
+            label="Rappels compléments"
+            description="Rappel quotidien pour prendre vos compléments"
+            value={notifications.complementReminders}
+            onToggle={() => handleToggleNotification('complementReminders')}
+          />
+          <NotificationToggle
+            label="Rappel journal"
+            description="Rappel pour remplir votre journal quotidien"
+            value={notifications.journalReminder}
+            onToggle={() => handleToggleNotification('journalReminder')}
+          />
+          <NotificationToggle
+            label="Messages"
+            description="Notifier des nouveaux messages"
+            value={notifications.messages}
+            onToggle={() => handleToggleNotification('messages')}
+          />
+        </Card>
+
+        {/* Bague connectée */}
+        <Card title="Bague connectée">
+          {user?.isPremium ? (
+            <View style={styles.wearableConnected}>
+              <View style={styles.wearableStatus}>
+                <View style={styles.statusDot} />
+                <Text style={styles.statusText}>Connectée • Sync auto</Text>
+              </View>
+              <Button
+                title="Déconnecter"
+                onPress={() => {}}
+                variant="outline"
+                size="small"
+              />
+            </View>
+          ) : (
+            <View style={styles.wearableNotConnected}>
+              <Text style={styles.wearableDescription}>
+                Connectez votre bague pour synchroniser vos données de santé
+              </Text>
+              <Button
+                title="Connecter ma bague"
+                onPress={() => {}}
+                variant="outline"
+                fullWidth
+              />
             </View>
           )}
-        </View>
+        </Card>
 
-        {/* Profile Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mon compte</Text>
-          <Card style={styles.sectionCard}>
-            <MenuItem
-              icon="person-outline"
-              label="Informations personnelles"
-              onPress={handleEditProfile}
-            />
-            <MenuItem
-              icon="lock-closed-outline"
-              label="Sécurité & confidentialité"
-              onPress={() => {}}
-            />
-          </Card>
-        </View>
-
-        {/* Notifications Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <Card style={styles.sectionCard}>
-            <View style={styles.switchItem}>
-              <View style={styles.switchItemLeft}>
-                <Ionicons name="notifications-outline" size={22} color={Theme.text} />
-                <Text style={styles.switchLabel}>Notifications push</Text>
+        {/* Abonnement */}
+        <Card title="Mon abonnement">
+          {user?.isPremium ? (
+            <View style={styles.premiumContainer}>
+              <View style={styles.premiumBadge}>
+                <Text style={styles.premiumBadgeText}>Premium</Text>
               </View>
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{
-                  false: Colors.neutral.sandDark,
-                  true: Colors.primary.tealLight,
-                }}
-                thumbColor={
-                  notificationsEnabled ? Colors.primary.teal : Colors.neutral.grayWarm
-                }
-              />
-            </View>
-            <View style={styles.switchItem}>
-              <View style={styles.switchItemLeft}>
-                <Ionicons name="medical-outline" size={22} color={Theme.text} />
-                <View>
-                  <Text style={styles.switchLabel}>Rappel compléments</Text>
-                  <Text style={styles.switchHint}>Chaque jour à 8h00</Text>
-                </View>
-              </View>
-              <Switch
-                value={reminderComplements}
-                onValueChange={setReminderComplements}
-                trackColor={{
-                  false: Colors.neutral.sandDark,
-                  true: Colors.primary.tealLight,
-                }}
-                thumbColor={
-                  reminderComplements ? Colors.primary.teal : Colors.neutral.grayWarm
-                }
-                disabled={!notificationsEnabled}
-              />
-            </View>
-            <View style={styles.switchItem}>
-              <View style={styles.switchItemLeft}>
-                <Ionicons name="book-outline" size={22} color={Theme.text} />
-                <View>
-                  <Text style={styles.switchLabel}>Rappel journal</Text>
-                  <Text style={styles.switchHint}>Chaque jour à 20h00</Text>
-                </View>
-              </View>
-              <Switch
-                value={reminderJournal}
-                onValueChange={setReminderJournal}
-                trackColor={{
-                  false: Colors.neutral.sandDark,
-                  true: Colors.primary.tealLight,
-                }}
-                thumbColor={
-                  reminderJournal ? Colors.primary.teal : Colors.neutral.grayWarm
-                }
-                disabled={!notificationsEnabled}
-              />
-            </View>
-          </Card>
-        </View>
-
-        {/* Wearable Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bague connectée</Text>
-          <Card
-            variant={patient?.isPremium ? 'default' : 'premium'}
-            style={styles.sectionCard}
-          >
-            <TouchableOpacity
-              style={styles.wearableItem}
-              onPress={handleConnectWearable}
-            >
-              <View style={styles.wearableLeft}>
-                <Ionicons
-                  name="watch-outline"
-                  size={24}
-                  color={patient?.isPremium ? Colors.primary.teal : Colors.secondary.aubergine}
-                />
-                <View>
-                  <Text style={styles.wearableLabel}>Circular Ring</Text>
-                  <Text style={styles.wearableStatus}>
-                    {patient?.isPremium ? 'Non connectée' : 'Fonctionnalité Premium'}
-                  </Text>
-                </View>
-              </View>
-              {!patient?.isPremium && <PremiumBadge />}
-              {patient?.isPremium && (
-                <Ionicons name="chevron-forward" size={20} color={Colors.neutral.grayWarm} />
-              )}
-            </TouchableOpacity>
-          </Card>
-        </View>
-
-        {/* Subscription Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Abonnement</Text>
-          <Card style={styles.sectionCard}>
-            <TouchableOpacity
-              style={styles.subscriptionItem}
-              onPress={handleManageSubscription}
-            >
-              <View style={styles.subscriptionLeft}>
-                <Ionicons name="card-outline" size={22} color={Theme.text} />
-                <View>
-                  <Text style={styles.subscriptionLabel}>
-                    {patient?.isPremium ? 'Premium' : 'Gratuit'}
-                  </Text>
-                  <Text style={styles.subscriptionStatus}>
-                    {patient?.isPremium
-                      ? 'Renouvellement le 26/02/2026'
-                      : 'Découvrez les avantages Premium'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.neutral.grayWarm} />
-            </TouchableOpacity>
-            {!patient?.isPremium && (
+              <Text style={styles.subscriptionInfo}>
+                Votre abonnement est actif
+              </Text>
               <Button
+                title="Gérer mon abonnement"
+                onPress={() => {}}
+                variant="ghost"
+                size="small"
+              />
+            </View>
+          ) : (
+            <View style={styles.freeContainer}>
+              <Text style={styles.subscriptionInfo}>
+                Profitez de toutes les fonctionnalités avec Premium
+              </Text>
+              <Button
+                title="Passer à Premium"
+                onPress={() => {}}
                 variant="primary"
-                size="md"
                 fullWidth
-                onPress={handleManageSubscription}
-                style={styles.premiumButton}
-              >
-                Passer à Premium
-              </Button>
-            )}
-          </Card>
-        </View>
+              />
+            </View>
+          )}
+        </Card>
 
-        {/* Help Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Aide & informations</Text>
-          <Card style={styles.sectionCard}>
-            <MenuItem
-              icon="help-circle-outline"
-              label="Aide & Support"
-              onPress={handleContactSupport}
-            />
-            <MenuItem
-              icon="document-text-outline"
-              label="Conditions générales d'utilisation"
-              onPress={handleOpenCGU}
-            />
-            <MenuItem
-              icon="shield-checkmark-outline"
-              label="Politique de confidentialité"
-              onPress={handleOpenPrivacy}
-            />
-          </Card>
-        </View>
+        {/* Autres liens */}
+        <Card>
+          <MenuLink
+            icon="🔒"
+            title="Sécurité & confidentialité"
+            onPress={() => {}}
+          />
+          <MenuLink
+            icon="📜"
+            title="CGU & Politique de confidentialité"
+            onPress={() => {}}
+          />
+          <MenuLink
+            icon="❓"
+            title="Aide & Support"
+            onPress={() => {}}
+          />
+        </Card>
 
-        {/* Logout */}
+        {/* Déconnexion */}
         <Button
-          variant="ghost"
-          size="md"
-          fullWidth
+          title="Se déconnecter"
           onPress={handleLogout}
+          variant="outline"
+          fullWidth
           style={styles.logoutButton}
-        >
-          <View style={styles.logoutContent}>
-            <Ionicons name="log-out-outline" size={20} color={Colors.state.error} />
-            <Text style={styles.logoutText}>Déconnexion</Text>
-          </View>
-        </Button>
+          textStyle={styles.logoutButtonText}
+          loading={isLoading}
+        />
 
         {/* Version */}
-        <Text style={styles.versionText}>AFEIA Patient v1.0.0</Text>
+        <Text style={styles.version}>Version 1.0.0</Text>
+
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function MenuItem({
-  icon,
+const ProfileItem: React.FC<{ label: string; value: string }> = ({
   label,
-  onPress,
-  rightElement,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
+  value,
+}) => (
+  <View style={styles.profileItem}>
+    <Text style={styles.profileLabel}>{label}</Text>
+    <Text style={styles.profileValue}>{value}</Text>
+  </View>
+);
+
+const NotificationToggle: React.FC<{
   label: string;
+  description: string;
+  value: boolean;
+  onToggle: () => void;
+}> = ({ label, description, value, onToggle }) => (
+  <View style={styles.notificationItem}>
+    <View style={styles.notificationText}>
+      <Text style={styles.notificationLabel}>{label}</Text>
+      <Text style={styles.notificationDescription}>{description}</Text>
+    </View>
+    <Switch
+      value={value}
+      onValueChange={onToggle}
+      trackColor={{ false: Colors.grisChaud, true: Colors.tealLight }}
+      thumbColor={value ? Colors.teal : Colors.blanc}
+    />
+  </View>
+);
+
+const MenuLink: React.FC<{
+  icon: string;
+  title: string;
   onPress: () => void;
-  rightElement?: React.ReactNode;
-}) {
-  return (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
-      <View style={styles.menuItemLeft}>
-        <Ionicons name={icon} size={22} color={Theme.text} />
-        <Text style={styles.menuItemLabel}>{label}</Text>
-      </View>
-      {rightElement || (
-        <Ionicons name="chevron-forward" size={20} color={Colors.neutral.grayWarm} />
-      )}
-    </TouchableOpacity>
-  );
-}
+}> = ({ icon, title, onPress }) => (
+  <TouchableOpacity style={styles.menuLink} onPress={onPress}>
+    <Text style={styles.menuIcon}>{icon}</Text>
+    <Text style={styles.menuTitle}>{title}</Text>
+    <Text style={styles.menuArrow}>›</Text>
+  </TouchableOpacity>
+);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.neutral.sand,
+    backgroundColor: Colors.sable,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing['3xl'],
+    padding: 16,
   },
-
-  // Header
   header: {
     alignItems: 'center',
-    paddingVertical: Spacing.xl,
-    marginBottom: Spacing.md,
+    marginBottom: 24,
+    paddingTop: 16,
   },
-  name: {
-    ...TextStyles.h3,
-    color: Theme.text,
-    marginTop: Spacing.md,
-  },
-  email: {
-    ...TextStyles.body,
-    color: Theme.textSecondary,
-    marginTop: Spacing.xs,
-  },
-  premiumBadgeContainer: {
-    flexDirection: 'row',
+  avatarLarge: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Colors.teal,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.md,
-    gap: Spacing.sm,
+    marginBottom: 12,
   },
-  premiumText: {
-    ...TextStyles.labelSmall,
-    color: Colors.secondary.aubergine,
+  avatarText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: Colors.blanc,
   },
-
-  // Sections
-  section: {
-    marginBottom: Spacing.lg,
+  userName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: Colors.charcoal,
+    marginBottom: 4,
   },
-  sectionTitle: {
-    ...TextStyles.labelSmall,
-    color: Theme.textSecondary,
-    marginBottom: Spacing.sm,
-    marginLeft: Spacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  userEmail: {
+    fontSize: 14,
+    color: Colors.grisChaud,
   },
-  sectionCard: {
-    padding: 0,
-    overflow: 'hidden',
-  },
-
-  // Menu Items
-  menuItem: {
+  profileItem: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral.sand,
+    borderBottomColor: Colors.sable,
   },
-  menuItemLeft: {
+  profileLabel: {
+    fontSize: 14,
+    color: Colors.grisChaud,
+  },
+  profileValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.charcoal,
+  },
+  editButton: {
+    marginTop: 12,
+  },
+  notificationItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-  },
-  menuItemLabel: {
-    ...TextStyles.body,
-    color: Theme.text,
-  },
-
-  // Switch Items
-  switchItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.neutral.sand,
+    borderBottomColor: Colors.sable,
   },
-  switchItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
+  notificationText: {
     flex: 1,
+    marginRight: 12,
   },
-  switchLabel: {
-    ...TextStyles.body,
-    color: Theme.text,
+  notificationLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.charcoal,
   },
-  switchHint: {
-    ...TextStyles.caption,
-    color: Theme.textSecondary,
+  notificationDescription: {
+    fontSize: 12,
+    color: Colors.grisChaud,
+    marginTop: 2,
   },
-
-  // Wearable
-  wearableItem: {
+  wearableConnected: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-  },
-  wearableLeft: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    flex: 1,
-  },
-  wearableLabel: {
-    ...TextStyles.body,
-    color: Theme.text,
   },
   wearableStatus: {
-    ...TextStyles.caption,
-    color: Theme.textSecondary,
-  },
-
-  // Subscription
-  subscriptionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
   },
-  subscriptionLeft: {
-    flexDirection: 'row',
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.success,
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: 14,
+    color: Colors.charcoal,
+  },
+  wearableNotConnected: {
     alignItems: 'center',
-    gap: Spacing.md,
-    flex: 1,
   },
-  subscriptionLabel: {
-    ...TextStyles.body,
-    color: Theme.text,
-    fontWeight: '500',
-  },
-  subscriptionStatus: {
-    ...TextStyles.caption,
-    color: Theme.textSecondary,
-  },
-  premiumButton: {
-    margin: Spacing.base,
-  },
-
-  // Logout
-  logoutButton: {
-    marginTop: Spacing.lg,
-  },
-  logoutContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  logoutText: {
-    ...TextStyles.body,
-    color: Colors.state.error,
-    fontWeight: '500',
-  },
-
-  // Version
-  versionText: {
-    ...TextStyles.caption,
-    color: Theme.textSecondary,
+  wearableDescription: {
+    fontSize: 14,
+    color: Colors.grisChaud,
     textAlign: 'center',
-    marginTop: Spacing.xl,
+    marginBottom: 12,
+  },
+  premiumContainer: {
+    alignItems: 'center',
+  },
+  premiumBadge: {
+    backgroundColor: Colors.aubergine,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  premiumBadgeText: {
+    color: Colors.blanc,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  subscriptionInfo: {
+    fontSize: 14,
+    color: Colors.grisChaud,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  freeContainer: {
+    alignItems: 'center',
+  },
+  menuLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.sable,
+  },
+  menuIcon: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  menuTitle: {
+    flex: 1,
+    fontSize: 15,
+    color: Colors.charcoal,
+  },
+  menuArrow: {
+    fontSize: 20,
+    color: Colors.grisChaud,
+  },
+  logoutButton: {
+    marginTop: 16,
+    borderColor: Colors.error,
+  },
+  logoutButtonText: {
+    color: Colors.error,
+  },
+  version: {
+    fontSize: 12,
+    color: Colors.grisChaud,
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  bottomSpacer: {
+    height: 20,
   },
 });

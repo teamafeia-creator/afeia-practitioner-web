@@ -1,240 +1,187 @@
-/**
- * Input Component
- * AFEIA Design System
- */
-
 import React, { useState } from 'react';
 import {
   View,
   TextInput,
   Text,
   StyleSheet,
-  TextInputProps,
-  TouchableOpacity,
   ViewStyle,
+  TextStyle,
+  TouchableOpacity,
+  TextInputProps,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors, Theme, Spacing, BorderRadius, ComponentHeight, TextStyles } from '@/constants';
+import { Colors } from '../../constants/Colors';
 
-export interface InputProps extends TextInputProps {
+interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
-  hint?: string;
+  helper?: string;
+  containerStyle?: ViewStyle;
+  inputStyle?: TextStyle;
+  labelStyle?: TextStyle;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  isPassword?: boolean;
-  containerStyle?: ViewStyle;
+  type?: 'text' | 'email' | 'password' | 'number' | 'phone';
 }
 
-export function Input({
+export const Input: React.FC<InputProps> = ({
   label,
   error,
-  hint,
+  helper,
+  containerStyle,
+  inputStyle,
+  labelStyle,
   leftIcon,
   rightIcon,
-  isPassword,
-  containerStyle,
-  style,
-  ...props
-}: InputProps) {
+  type = 'text',
+  secureTextEntry,
+  ...rest
+}) => {
   const [isFocused, setIsFocused] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const hasError = !!error;
+  const isPassword = type === 'password';
+  const shouldHidePassword = isPassword && !isPasswordVisible;
+
+  const getKeyboardType = (): TextInputProps['keyboardType'] => {
+    switch (type) {
+      case 'email':
+        return 'email-address';
+      case 'number':
+        return 'numeric';
+      case 'phone':
+        return 'phone-pad';
+      default:
+        return 'default';
+    }
+  };
+
+  const getAutoCapitalize = (): TextInputProps['autoCapitalize'] => {
+    switch (type) {
+      case 'email':
+      case 'password':
+        return 'none';
+      default:
+        return 'sentences';
+    }
+  };
+
+  const inputContainerStyle: ViewStyle[] = [styles.inputContainer];
+  if (isFocused) {
+    inputContainerStyle.push(styles.inputFocused);
+  }
+  if (error) {
+    inputContainerStyle.push(styles.inputError);
+  }
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={[styles.label, labelStyle]}>{label}</Text>
+      )}
 
-      <View
-        style={[
-          styles.inputContainer,
-          isFocused && styles.inputFocused,
-          hasError && styles.inputError,
-        ]}
-      >
-        {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+      <View style={inputContainerStyle}>
+        {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
 
         <TextInput
           style={[
             styles.input,
-            leftIcon && styles.inputWithLeftIcon,
-            (rightIcon || isPassword) && styles.inputWithRightIcon,
-            style,
+            leftIcon ? styles.inputWithLeftIcon : null,
+            rightIcon || isPassword ? styles.inputWithRightIcon : null,
+            inputStyle,
           ]}
-          placeholderTextColor={Colors.neutral.grayWarm}
-          onFocus={(e) => {
-            setIsFocused(true);
-            props.onFocus?.(e);
-          }}
-          onBlur={(e) => {
-            setIsFocused(false);
-            props.onBlur?.(e);
-          }}
-          secureTextEntry={isPassword && !showPassword}
-          {...props}
+          placeholderTextColor={Colors.grisChaud}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          keyboardType={getKeyboardType()}
+          autoCapitalize={getAutoCapitalize()}
+          secureTextEntry={shouldHidePassword}
+          autoCorrect={type === 'email' || type === 'password' ? false : undefined}
+          {...rest}
         />
 
         {isPassword && (
           <TouchableOpacity
-            style={styles.rightIcon}
-            onPress={() => setShowPassword(!showPassword)}
+            style={styles.iconRight}
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
           >
-            <Ionicons
-              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-              size={20}
-              color={Colors.neutral.grayWarm}
-            />
+            <Text style={styles.passwordToggle}>
+              {isPasswordVisible ? '👁️' : '👁️‍🗨️'}
+            </Text>
           </TouchableOpacity>
         )}
 
-        {rightIcon && !isPassword && <View style={styles.rightIcon}>{rightIcon}</View>}
+        {rightIcon && !isPassword && (
+          <View style={styles.iconRight}>{rightIcon}</View>
+        )}
       </View>
 
-      {(error || hint) && (
-        <Text style={[styles.helperText, hasError && styles.errorText]}>
-          {error || hint}
-        </Text>
-      )}
+      {error && <Text style={styles.error}>{error}</Text>}
+      {helper && !error && <Text style={styles.helper}>{helper}</Text>}
     </View>
   );
-}
-
-// OTP Input Component
-export interface OTPInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  length?: number;
-  error?: string;
-}
-
-export function OTPInput({ value, onChange, length = 6, error }: OTPInputProps) {
-  const inputRef = React.useRef<TextInput>(null);
-
-  const handlePress = () => {
-    inputRef.current?.focus();
-  };
-
-  return (
-    <View>
-      <TouchableOpacity onPress={handlePress} activeOpacity={1}>
-        <View style={styles.otpContainer}>
-          {Array.from({ length }).map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.otpBox,
-                value.length === index && styles.otpBoxActive,
-                error && styles.otpBoxError,
-              ]}
-            >
-              <Text style={styles.otpText}>{value[index] || ''}</Text>
-            </View>
-          ))}
-        </View>
-      </TouchableOpacity>
-
-      <TextInput
-        ref={inputRef}
-        style={styles.otpHiddenInput}
-        value={value}
-        onChangeText={(text) => {
-          const cleaned = text.replace(/[^0-9]/g, '').slice(0, length);
-          onChange(cleaned);
-        }}
-        keyboardType="number-pad"
-        maxLength={length}
-        autoFocus
-      />
-
-      {error && <Text style={[styles.helperText, styles.errorText]}>{error}</Text>}
-    </View>
-  );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.base,
+    marginBottom: 16,
   },
   label: {
-    ...TextStyles.label,
-    color: Theme.text,
-    marginBottom: Spacing.sm,
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.charcoal,
+    marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.neutral.white,
+    backgroundColor: Colors.blanc,
     borderWidth: 1,
-    borderColor: Colors.neutral.sandDark,
-    borderRadius: BorderRadius.md,
-    height: ComponentHeight.input,
+    borderColor: Colors.grisChaud,
+    borderRadius: 12,
+    minHeight: 52,
   },
   inputFocused: {
-    borderColor: Colors.primary.teal,
+    borderColor: Colors.teal,
     borderWidth: 2,
   },
   inputError: {
-    borderColor: Colors.state.error,
+    borderColor: Colors.error,
+    borderWidth: 2,
   },
   input: {
     flex: 1,
-    height: '100%',
-    paddingHorizontal: Spacing.base,
-    ...TextStyles.body,
-    color: Theme.text,
+    fontSize: 16,
+    color: Colors.charcoal,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   inputWithLeftIcon: {
-    paddingLeft: Spacing.sm,
+    paddingLeft: 8,
   },
   inputWithRightIcon: {
-    paddingRight: Spacing.sm,
+    paddingRight: 8,
   },
-  leftIcon: {
-    paddingLeft: Spacing.base,
+  iconLeft: {
+    paddingLeft: 16,
   },
-  rightIcon: {
-    paddingRight: Spacing.base,
+  iconRight: {
+    paddingRight: 16,
   },
-  helperText: {
-    ...TextStyles.bodySmall,
-    color: Theme.textSecondary,
-    marginTop: Spacing.xs,
+  passwordToggle: {
+    fontSize: 20,
   },
-  errorText: {
-    color: Colors.state.error,
+  error: {
+    fontSize: 12,
+    color: Colors.error,
+    marginTop: 4,
+    marginLeft: 4,
   },
-
-  // OTP Styles
-  otpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-  },
-  otpBox: {
-    width: 48,
-    height: 56,
-    borderWidth: 2,
-    borderColor: Colors.neutral.sandDark,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.neutral.white,
-  },
-  otpBoxActive: {
-    borderColor: Colors.primary.teal,
-  },
-  otpBoxError: {
-    borderColor: Colors.state.error,
-  },
-  otpText: {
-    ...TextStyles.h3,
-    color: Theme.text,
-  },
-  otpHiddenInput: {
-    position: 'absolute',
-    opacity: 0,
-    width: 1,
-    height: 1,
+  helper: {
+    fontSize: 12,
+    color: Colors.grisChaud,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });
+
+export default Input;

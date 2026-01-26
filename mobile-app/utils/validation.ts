@@ -1,221 +1,158 @@
-/**
- * Validation Utilities
- * AFEIA Mobile App
- */
+// Fonctions de validation pour AFEIA Patient
 
-/**
- * Validate email address
- * @param email - The email to validate
- * @returns true if valid, error message if invalid
- */
-export function validateEmail(email: string): true | string {
+import { Config } from '../constants/Config';
+
+// Valider une adresse email
+export const validateEmail = (email: string): { valid: boolean; error?: string } => {
   if (!email || email.trim() === '') {
-    return 'L\'adresse email est requise';
+    return { valid: false, error: 'L\'email est requis' };
   }
 
-  const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    return 'Adresse email invalide';
+    return { valid: false, error: 'Format d\'email invalide' };
   }
 
-  return true;
-}
+  return { valid: true };
+};
 
-/**
- * Validate password strength
- * Requirements: 8+ chars, 1 uppercase, 1 lowercase, 1 digit
- * @param password - The password to validate
- * @returns true if valid, error message if invalid
- */
-export function validatePassword(password: string): true | string {
-  if (!password || password.length === 0) {
-    return 'Le mot de passe est requis';
+// Valider un mot de passe (8+ chars, 1 maj, 1 min, 1 chiffre)
+export const validatePassword = (password: string): { valid: boolean; error?: string } => {
+  if (!password || password.trim() === '') {
+    return { valid: false, error: 'Le mot de passe est requis' };
   }
 
-  if (password.length < 8) {
-    return 'Le mot de passe doit contenir au moins 8 caractères';
+  if (password.length < Config.PASSWORD_MIN_LENGTH) {
+    return { valid: false, error: `Le mot de passe doit contenir au moins ${Config.PASSWORD_MIN_LENGTH} caractères` };
   }
 
   if (!/[A-Z]/.test(password)) {
-    return 'Le mot de passe doit contenir au moins une majuscule';
+    return { valid: false, error: 'Le mot de passe doit contenir au moins une majuscule' };
   }
 
   if (!/[a-z]/.test(password)) {
-    return 'Le mot de passe doit contenir au moins une minuscule';
+    return { valid: false, error: 'Le mot de passe doit contenir au moins une minuscule' };
   }
 
   if (!/[0-9]/.test(password)) {
-    return 'Le mot de passe doit contenir au moins un chiffre';
+    return { valid: false, error: 'Le mot de passe doit contenir au moins un chiffre' };
   }
 
-  return true;
-}
-
-/**
- * Validate OTP code (6 digits)
- * @param otp - The OTP code to validate
- * @returns true if valid, error message if invalid
- */
-export function validateOTP(otp: string): true | string {
-  if (!otp || otp.trim() === '') {
-    return 'Le code est requis';
-  }
-
-  const cleaned = otp.replace(/\s/g, '');
-
-  if (cleaned.length !== 6) {
-    return 'Le code doit contenir 6 chiffres';
-  }
-
-  if (!/^\d{6}$/.test(cleaned)) {
-    return 'Le code doit contenir uniquement des chiffres';
-  }
-
-  return true;
-}
-
-/**
- * Validate French phone number
- * @param phone - The phone number to validate
- * @returns true if valid, error message if invalid
- */
-export function validatePhoneNumber(phone: string): true | string {
-  if (!phone || phone.trim() === '') {
-    return 'Le numéro de téléphone est requis';
-  }
-
-  // Remove spaces, dots, and dashes
-  const cleaned = phone.replace(/[\s.-]/g, '');
-
-  // French phone number patterns
-  // Mobile: 06XXXXXXXX or 07XXXXXXXX
-  // Landline: 01-05XXXXXXXX or 09XXXXXXXX
-  // With country code: +33XXXXXXXXX or 0033XXXXXXXXX
-  const frenchMobileRegex = /^(?:(?:\+|00)33|0)[67]\d{8}$/;
-  const frenchLandlineRegex = /^(?:(?:\+|00)33|0)[1-59]\d{8}$/;
-
-  if (!frenchMobileRegex.test(cleaned) && !frenchLandlineRegex.test(cleaned)) {
-    return 'Numéro de téléphone invalide';
-  }
-
-  return true;
-}
-
-/**
- * Validate required field
- * @param value - The value to check
- * @param fieldName - The field name for the error message
- * @returns true if valid, error message if invalid
- */
-export function validateRequired(value: unknown, fieldName: string = 'Ce champ'): true | string {
-  if (value === null || value === undefined) {
-    return `${fieldName} est requis`;
-  }
-
-  if (typeof value === 'string' && value.trim() === '') {
-    return `${fieldName} est requis`;
-  }
-
-  if (Array.isArray(value) && value.length === 0) {
-    return `${fieldName} est requis`;
-  }
-
-  return true;
-}
-
-/**
- * Validate minimum length
- * @param value - The string value to check
- * @param minLength - Minimum required length
- * @param fieldName - The field name for the error message
- * @returns true if valid, error message if invalid
- */
-export function validateMinLength(
-  value: string,
-  minLength: number,
-  fieldName: string = 'Ce champ'
-): true | string {
-  if (!value || value.length < minLength) {
-    return `${fieldName} doit contenir au moins ${minLength} caractères`;
-  }
-  return true;
-}
-
-/**
- * Validate maximum length
- * @param value - The string value to check
- * @param maxLength - Maximum allowed length
- * @param fieldName - The field name for the error message
- * @returns true if valid, error message if invalid
- */
-export function validateMaxLength(
-  value: string,
-  maxLength: number,
-  fieldName: string = 'Ce champ'
-): true | string {
-  if (value && value.length > maxLength) {
-    return `${fieldName} ne doit pas dépasser ${maxLength} caractères`;
-  }
-  return true;
-}
-
-/**
- * Validate numeric value
- * @param value - The value to check
- * @param fieldName - The field name for the error message
- * @returns true if valid, error message if invalid
- */
-export function validateNumeric(value: string, fieldName: string = 'Ce champ'): true | string {
-  if (value && !/^\d+$/.test(value)) {
-    return `${fieldName} doit être un nombre`;
-  }
-  return true;
-}
-
-/**
- * Validate that passwords match
- * @param password - The password
- * @param confirmPassword - The confirmation password
- * @returns true if valid, error message if invalid
- */
-export function validatePasswordMatch(password: string, confirmPassword: string): true | string {
-  if (password !== confirmPassword) {
-    return 'Les mots de passe ne correspondent pas';
-  }
-  return true;
-}
-
-/**
- * Compose multiple validators
- * @param value - The value to validate
- * @param validators - Array of validator functions
- * @returns true if all validators pass, first error message if any fails
- */
-export function composeValidators<T>(
-  value: T,
-  validators: Array<(value: T) => true | string>
-): true | string {
-  for (const validator of validators) {
-    const result = validator(value);
-    if (result !== true) {
-      return result;
-    }
-  }
-  return true;
-}
-
-// Export validation utilities object for convenience
-export const validation = {
-  email: validateEmail,
-  password: validatePassword,
-  otp: validateOTP,
-  phone: validatePhoneNumber,
-  required: validateRequired,
-  minLength: validateMinLength,
-  maxLength: validateMaxLength,
-  numeric: validateNumeric,
-  passwordMatch: validatePasswordMatch,
-  compose: composeValidators,
+  return { valid: true };
 };
 
-export default validation;
+// Valider la confirmation du mot de passe
+export const validatePasswordConfirm = (password: string, confirm: string): { valid: boolean; error?: string } => {
+  if (!confirm || confirm.trim() === '') {
+    return { valid: false, error: 'La confirmation du mot de passe est requise' };
+  }
+
+  if (password !== confirm) {
+    return { valid: false, error: 'Les mots de passe ne correspondent pas' };
+  }
+
+  return { valid: true };
+};
+
+// Valider un code OTP (6 chiffres)
+export const validateOTP = (code: string): { valid: boolean; error?: string } => {
+  if (!code || code.trim() === '') {
+    return { valid: false, error: 'Le code est requis' };
+  }
+
+  const cleanCode = code.replace(/\s/g, '');
+
+  if (cleanCode.length !== Config.OTP_LENGTH) {
+    return { valid: false, error: `Le code doit contenir ${Config.OTP_LENGTH} chiffres` };
+  }
+
+  if (!/^\d+$/.test(cleanCode)) {
+    return { valid: false, error: 'Le code doit contenir uniquement des chiffres' };
+  }
+
+  return { valid: true };
+};
+
+// Valider un numéro de téléphone
+export const validatePhoneNumber = (phone: string): { valid: boolean; error?: string } => {
+  if (!phone || phone.trim() === '') {
+    return { valid: false, error: 'Le numéro de téléphone est requis' };
+  }
+
+  // Nettoyer le numéro
+  const cleanPhone = phone.replace(/[\s\-\.\(\)]/g, '');
+
+  // Format français ou international
+  const phoneRegex = /^(\+33|0033|0)[1-9](\d{8})$/;
+  if (!phoneRegex.test(cleanPhone)) {
+    return { valid: false, error: 'Format de numéro de téléphone invalide' };
+  }
+
+  return { valid: true };
+};
+
+// Valider un champ requis
+export const validateRequired = (value: string, fieldName: string = 'Ce champ'): { valid: boolean; error?: string } => {
+  if (!value || value.trim() === '') {
+    return { valid: false, error: `${fieldName} est requis` };
+  }
+  return { valid: true };
+};
+
+// Valider un nombre dans une plage
+export const validateNumberRange = (
+  value: number,
+  min: number,
+  max: number,
+  fieldName: string = 'Cette valeur'
+): { valid: boolean; error?: string } => {
+  if (isNaN(value)) {
+    return { valid: false, error: `${fieldName} doit être un nombre` };
+  }
+
+  if (value < min || value > max) {
+    return { valid: false, error: `${fieldName} doit être entre ${min} et ${max}` };
+  }
+
+  return { valid: true };
+};
+
+// Valider une date
+export const validateDate = (date: string): { valid: boolean; error?: string } => {
+  if (!date || date.trim() === '') {
+    return { valid: false, error: 'La date est requise' };
+  }
+
+  const dateObj = new Date(date);
+  if (isNaN(dateObj.getTime())) {
+    return { valid: false, error: 'Format de date invalide' };
+  }
+
+  return { valid: true };
+};
+
+// Valider un formulaire complet
+export const validateForm = (
+  validations: { valid: boolean; error?: string }[]
+): { valid: boolean; errors: string[] } => {
+  const errors = validations
+    .filter(v => !v.valid)
+    .map(v => v.error || 'Erreur de validation');
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+};
+
+export default {
+  validateEmail,
+  validatePassword,
+  validatePasswordConfirm,
+  validateOTP,
+  validatePhoneNumber,
+  validateRequired,
+  validateNumberRange,
+  validateDate,
+  validateForm,
+};

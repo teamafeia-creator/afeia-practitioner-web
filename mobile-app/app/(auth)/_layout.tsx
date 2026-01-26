@@ -1,16 +1,12 @@
-/**
- * Auth Stack Layout
- */
-
 import { Stack } from 'expo-router';
-import { Colors } from '@/constants';
+import { Colors } from '../../constants/Colors';
 
 export default function AuthLayout() {
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Colors.neutral.white },
+        contentStyle: { backgroundColor: Colors.sable },
         animation: 'slide_from_right',
       }}
     >

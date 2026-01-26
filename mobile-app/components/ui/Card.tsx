@@ -1,139 +1,131 @@
-/**
- * Card Component
- * AFEIA Design System
- */
-
 import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ViewStyle,
+  TouchableOpacity,
 } from 'react-native';
-import { Colors, Theme, Spacing, BorderRadius, Shadows, TextStyles } from '@/constants';
+import { Colors } from '../../constants/Colors';
 
-export interface CardProps {
+interface CardProps {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
-  icon?: React.ReactNode;
-  rightElement?: React.ReactNode;
-  onPress?: () => void;
-  variant?: 'default' | 'elevated' | 'outline' | 'premium';
   style?: ViewStyle;
+  onPress?: () => void;
+  headerRight?: React.ReactNode;
+  noPadding?: boolean;
+  variant?: 'default' | 'outlined' | 'elevated';
 }
 
-export function Card({
+export const Card: React.FC<CardProps> = ({
   children,
   title,
   subtitle,
-  icon,
-  rightElement,
-  onPress,
-  variant = 'default',
   style,
-}: CardProps) {
-  const Container = onPress ? TouchableOpacity : View;
+  onPress,
+  headerRight,
+  noPadding = false,
+  variant = 'default',
+}) => {
+  const cardStyle: ViewStyle[] = [styles.card, styles[variant]];
 
-  return (
-    <Container
-      style={[styles.base, styles[variant], style]}
-      onPress={onPress}
-      activeOpacity={onPress ? 0.9 : 1}
-    >
-      {(title || icon || rightElement) && (
+  if (noPadding) {
+    cardStyle.push(styles.noPadding);
+  }
+
+  if (style) {
+    cardStyle.push(style);
+  }
+
+  const content = (
+    <View style={cardStyle}>
+      {(title || headerRight) && (
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            {icon && <View style={styles.iconContainer}>{icon}</View>}
-            <View>
-              {title && <Text style={styles.title}>{title}</Text>}
-              {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-            </View>
+          <View style={styles.headerText}>
+            {title && <Text style={styles.title}>{title}</Text>}
+            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
           </View>
-          {rightElement && <View>{rightElement}</View>}
+          {headerRight && <View style={styles.headerRight}>{headerRight}</View>}
         </View>
       )}
-      <View style={[styles.content, (title || icon) && styles.contentWithHeader]}>
+      <View style={[styles.content, noPadding && styles.contentNoPadding]}>
         {children}
       </View>
-    </Container>
-  );
-}
-
-// Premium Badge for cards
-export function PremiumBadge() {
-  return (
-    <View style={styles.premiumBadge}>
-      <Text style={styles.premiumBadgeText}>PREMIUM</Text>
     </View>
   );
-}
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
+};
 
 const styles = StyleSheet.create({
-  base: {
-    backgroundColor: Colors.neutral.white,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.base,
-    ...Shadows.md,
+  card: {
+    backgroundColor: Colors.blanc,
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
   },
-
-  // Variants
-  default: {},
+  default: {
+    shadowColor: Colors.charcoal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  outlined: {
+    borderWidth: 1,
+    borderColor: Colors.grisChaud,
+  },
   elevated: {
-    ...Shadows.lg,
+    shadowColor: Colors.charcoal,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  outline: {
-    ...Shadows.none,
-    borderWidth: 1,
-    borderColor: Colors.neutral.sandDark,
+  noPadding: {
+    padding: 0,
   },
-  premium: {
-    borderWidth: 1,
-    borderColor: Colors.secondary.auberginePale,
-    backgroundColor: Colors.neutral.white,
-  },
-
-  // Header
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  headerText: {
     flex: 1,
   },
-  iconContainer: {
-    marginRight: Spacing.md,
+  headerRight: {
+    marginLeft: 12,
   },
   title: {
-    ...TextStyles.h5,
-    color: Theme.text,
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.charcoal,
+    marginBottom: 2,
   },
   subtitle: {
-    ...TextStyles.bodySmall,
-    color: Theme.textSecondary,
-    marginTop: Spacing.xxs,
+    fontSize: 14,
+    color: Colors.grisChaud,
   },
-
-  // Content
-  content: {},
-  contentWithHeader: {
-    marginTop: Spacing.md,
+  content: {
+    padding: 16,
+    paddingTop: 8,
   },
-
-  // Premium Badge
-  premiumBadge: {
-    backgroundColor: Colors.secondary.auberginePale,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xxs,
-    borderRadius: BorderRadius.xs,
-  },
-  premiumBadgeText: {
-    ...TextStyles.overline,
-    color: Colors.secondary.aubergine,
-    fontSize: 10,
+  contentNoPadding: {
+    padding: 0,
   },
 });
+
+export default Card;

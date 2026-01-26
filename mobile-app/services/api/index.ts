@@ -1,17 +1,11 @@
-/**
- * API Services Index
- */
-
-export { default as apiClient } from './client';
-export { formatApiError, isNetworkError, isAuthError } from './client';
-
-export { authApi } from './auth';
-export { patientApi } from './patient';
-export { anamneseApi } from './anamnese';
-export { complementsApi } from './complements';
-export { conseilsApi } from './conseils';
-export { messagesApi } from './messages';
-export { journalApi } from './journal';
-export { articlesApi } from './articles';
-export { wearableApi } from './wearable';
-export { subscriptionApi } from './subscription';
+// Export de tous les services API
+export { apiClient } from './client';
+export { authService } from './auth';
+export { patientService } from './patient';
+export { anamneseService } from './anamnese';
+export { complementsService } from './complements';
+export { journalService } from './journal';
+export { messagesService } from './messages';
+export { conseilsService } from './conseils';
+export { wearableService } from './wearable';
+export { articlesService } from './articles';

@@ -1,171 +1,90 @@
-/**
- * Secure Storage Service
- * Uses expo-secure-store for sensitive data (tokens)
- */
-
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
+import { Config } from '../../constants/Config';
 
-const KEYS = {
-  ACCESS_TOKEN: 'afeia_access_token',
-  REFRESH_TOKEN: 'afeia_refresh_token',
-  PATIENT_ID: 'afeia_patient_id',
-  ANAMNESE_DRAFT: 'afeia_anamnese_draft',
-  JOURNAL_DRAFT: 'afeia_journal_draft',
-} as const;
+// Service de stockage sécurisé pour tokens et données sensibles
 
-// SecureStore options
-const options: SecureStore.SecureStoreOptions = {
-  keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-};
-
-// Web fallback using localStorage (less secure but necessary for web/dev)
-const webStorage = {
-  getItem: (key: string) => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem(key);
-    }
-    return null;
-  },
-  setItem: (key: string, value: string) => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(key, value);
+export const secureStorage = {
+  // Stocker une valeur
+  async setItem(key: string, value: string): Promise<void> {
+    try {
+      await SecureStore.setItemAsync(key, value);
+      console.log('✅ SecureStore: Saved', key);
+    } catch (error) {
+      console.error('❌ SecureStore setItem error:', error);
+      throw error;
     }
   },
-  deleteItem: (key: string) => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.removeItem(key);
+
+  // Récupérer une valeur
+  async getItem(key: string): Promise<string | null> {
+    try {
+      const value = await SecureStore.getItemAsync(key);
+      return value;
+    } catch (error) {
+      console.error('❌ SecureStore getItem error:', error);
+      return null;
     }
   },
-};
 
-// Helper to determine if we're on web
-const isWeb = Platform.OS === 'web';
-
-/**
- * Get a value from secure storage
- */
-export async function getSecureValue(key: string): Promise<string | null> {
-  try {
-    if (isWeb) {
-      return webStorage.getItem(key);
+  // Supprimer une valeur
+  async removeItem(key: string): Promise<void> {
+    try {
+      await SecureStore.deleteItemAsync(key);
+      console.log('✅ SecureStore: Removed', key);
+    } catch (error) {
+      console.error('❌ SecureStore removeItem error:', error);
     }
-    return await SecureStore.getItemAsync(key, options);
-  } catch (error) {
-    console.error(`Error getting secure value for key ${key}:`, error);
-    return null;
-  }
-}
-
-/**
- * Set a value in secure storage
- */
-export async function setSecureValue(key: string, value: string): Promise<void> {
-  try {
-    if (isWeb) {
-      webStorage.setItem(key, value);
-      return;
-    }
-    await SecureStore.setItemAsync(key, value, options);
-  } catch (error) {
-    console.error(`Error setting secure value for key ${key}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Delete a value from secure storage
- */
-export async function deleteSecureValue(key: string): Promise<void> {
-  try {
-    if (isWeb) {
-      webStorage.deleteItem(key);
-      return;
-    }
-    await SecureStore.deleteItemAsync(key, options);
-  } catch (error) {
-    console.error(`Error deleting secure value for key ${key}:`, error);
-  }
-}
-
-// Token Management
-export const TokenStorage = {
-  async getAccessToken(): Promise<string | null> {
-    return getSecureValue(KEYS.ACCESS_TOKEN);
   },
 
+  // Méthodes spécifiques pour les tokens
   async setAccessToken(token: string): Promise<void> {
-    return setSecureValue(KEYS.ACCESS_TOKEN, token);
+    await this.setItem(Config.STORAGE_KEYS.ACCESS_TOKEN, token);
   },
 
-  async getRefreshToken(): Promise<string | null> {
-    return getSecureValue(KEYS.REFRESH_TOKEN);
+  async getAccessToken(): Promise<string | null> {
+    return this.getItem(Config.STORAGE_KEYS.ACCESS_TOKEN);
   },
 
   async setRefreshToken(token: string): Promise<void> {
-    return setSecureValue(KEYS.REFRESH_TOKEN, token);
+    await this.setItem(Config.STORAGE_KEYS.REFRESH_TOKEN, token);
   },
 
-  async setTokens(accessToken: string, refreshToken: string): Promise<void> {
+  async getRefreshToken(): Promise<string | null> {
+    return this.getItem(Config.STORAGE_KEYS.REFRESH_TOKEN);
+  },
+
+  // Stocker les données utilisateur (JSON)
+  async setUserData(data: object): Promise<void> {
+    await this.setItem(Config.STORAGE_KEYS.USER_DATA, JSON.stringify(data));
+  },
+
+  async getUserData<T>(): Promise<T | null> {
+    const data = await this.getItem(Config.STORAGE_KEYS.USER_DATA);
+    if (data) {
+      try {
+        return JSON.parse(data) as T;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  },
+
+  // Nettoyer tout le stockage auth
+  async clearAuth(): Promise<void> {
     await Promise.all([
-      setSecureValue(KEYS.ACCESS_TOKEN, accessToken),
-      setSecureValue(KEYS.REFRESH_TOKEN, refreshToken),
+      this.removeItem(Config.STORAGE_KEYS.ACCESS_TOKEN),
+      this.removeItem(Config.STORAGE_KEYS.REFRESH_TOKEN),
+      this.removeItem(Config.STORAGE_KEYS.USER_DATA),
     ]);
+    console.log('✅ SecureStore: Auth data cleared');
   },
 
-  async clearTokens(): Promise<void> {
-    await Promise.all([
-      deleteSecureValue(KEYS.ACCESS_TOKEN),
-      deleteSecureValue(KEYS.REFRESH_TOKEN),
-    ]);
-  },
-
-  async getPatientId(): Promise<string | null> {
-    return getSecureValue(KEYS.PATIENT_ID);
-  },
-
-  async setPatientId(id: string): Promise<void> {
-    return setSecureValue(KEYS.PATIENT_ID, id);
-  },
-
-  async clearPatientId(): Promise<void> {
-    return deleteSecureValue(KEYS.PATIENT_ID);
-  },
-
-  async clearAll(): Promise<void> {
-    await Promise.all([
-      deleteSecureValue(KEYS.ACCESS_TOKEN),
-      deleteSecureValue(KEYS.REFRESH_TOKEN),
-      deleteSecureValue(KEYS.PATIENT_ID),
-      deleteSecureValue(KEYS.ANAMNESE_DRAFT),
-      deleteSecureValue(KEYS.JOURNAL_DRAFT),
-    ]);
+  // Vérifier si l'utilisateur est connecté
+  async isAuthenticated(): Promise<boolean> {
+    const token = await this.getAccessToken();
+    return !!token;
   },
 };
 
-// Draft Storage (for anamnese and journal)
-export const DraftStorage = {
-  async getAnamneseDraft(): Promise<string | null> {
-    return getSecureValue(KEYS.ANAMNESE_DRAFT);
-  },
-
-  async setAnamneseDraft(data: string): Promise<void> {
-    return setSecureValue(KEYS.ANAMNESE_DRAFT, data);
-  },
-
-  async clearAnamneseDraft(): Promise<void> {
-    return deleteSecureValue(KEYS.ANAMNESE_DRAFT);
-  },
-
-  async getJournalDraft(): Promise<string | null> {
-    return getSecureValue(KEYS.JOURNAL_DRAFT);
-  },
-
-  async setJournalDraft(data: string): Promise<void> {
-    return setSecureValue(KEYS.JOURNAL_DRAFT, data);
-  },
-
-  async clearJournalDraft(): Promise<void> {
-    return deleteSecureValue(KEYS.JOURNAL_DRAFT);
-  },
-};
+export default secureStorage;
