@@ -34,10 +34,12 @@
     "react-native-screens": "~4.1.0",
     "react-native-svg": "15.8.0",
     "react-native-web": "^0.21.2",
+    "undici": "^7.19.1",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@types/node": "^25.0.10",
     "@types/react": "~18.3.0",
     "eslint": "^8.56.0",
     "eslint-config-expo": "~8.0.0",

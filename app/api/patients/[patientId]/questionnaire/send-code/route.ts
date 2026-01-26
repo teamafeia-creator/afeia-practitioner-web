@@ -119,22 +119,19 @@ export async function POST(
     return NextResponse.json({ error: 'Impossible de générer le code.' }, { status: 500 });
   }
 
-  if (!isDev) {
-    const emailPayload = buildQuestionnaireCodeEmail({
-      to: patient.email,
-      patientName: patient.name,
-      code,
-      expiresInMinutes: ttlMinutes
-    });
+  const emailPayload = buildQuestionnaireCodeEmail({
+    to: patient.email,
+    patientName: patient.name,
+    code,
+    expiresInMinutes: ttlMinutes
+  });
 
-    try {
-      await sendEmail(emailPayload);
-    } catch (error) {
-      console.error('Failed to send questionnaire email', error);
-      return NextResponse.json({ error: 'Impossible d\'envoyer l\'email.' }, { status: 500 });
-    }
-  } else {
-    console.log(`[DEV] Code OTP pour ${patient.email}: ${code}`);
+  try {
+    await sendEmail(emailPayload);
+    console.log(`✅ Email envoyé à ${patient.email}, code: ${code}`);
+  } catch (error) {
+    console.error('Failed to send questionnaire email', error);
+    return NextResponse.json({ error: 'Impossible d\'envoyer l\'email.' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, expiresAt: expiresAt.toISOString(), sentToEmail: patient.email });
