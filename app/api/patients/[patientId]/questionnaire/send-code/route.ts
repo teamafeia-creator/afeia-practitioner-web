@@ -78,7 +78,8 @@ export async function POST(
   const now = new Date();
   const ttlMinutes = getQuestionnaireCodeTtlMinutes();
   const expiresAt = new Date(now.getTime() + ttlMinutes * 60 * 1000);
-  const code = generateQuestionnaireCode();
+  const isDev = process.env.NODE_ENV === 'development';
+  const code = isDev ? '123456' : generateQuestionnaireCode();
   const codeHash = hashQuestionnaireCode(code);
 
   const { error: revokeError } = await supabase
@@ -106,18 +107,22 @@ export async function POST(
     return NextResponse.json({ error: 'Impossible de générer le code.' }, { status: 500 });
   }
 
-  const emailPayload = buildQuestionnaireCodeEmail({
-    to: patient.email,
-    patientName: patient.name,
-    code,
-    expiresInMinutes: ttlMinutes
-  });
+  if (!isDev) {
+    const emailPayload = buildQuestionnaireCodeEmail({
+      to: patient.email,
+      patientName: patient.name,
+      code,
+      expiresInMinutes: ttlMinutes
+    });
 
-  try {
-    await sendEmail(emailPayload);
-  } catch (error) {
-    console.error('Failed to send questionnaire email', error);
-    return NextResponse.json({ error: 'Impossible d\'envoyer l\'email.' }, { status: 500 });
+    try {
+      await sendEmail(emailPayload);
+    } catch (error) {
+      console.error('Failed to send questionnaire email', error);
+      return NextResponse.json({ error: 'Impossible d\'envoyer l\'email.' }, { status: 500 });
+    }
+  } else {
+    console.log(`[DEV] Code OTP pour ${patient.email}: ${code}`);
   }
 
   return NextResponse.json({ ok: true, expiresAt: expiresAt.toISOString(), sentToEmail: patient.email });
