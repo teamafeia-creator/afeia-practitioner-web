@@ -1,5 +1,8 @@
 {
   "expo": {
+    "packagerOpts": {
+      "config": "metro.config.js"
+    },
     "name": "AFEIA Patient",
     "slug": "afeia-patient",
     "version": "1.0.0",
