@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify } from 'jose';
 import { getBearerToken } from '@/lib/auth';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function getPatientFromToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -45,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     const today = new Date().toISOString().split('T')[0];
 
-    const { data: entry, error } = await supabase
+    const { data: entry, error } = await getSupabaseAdmin()
       .from('daily_journals')
       .select('*')
       .eq('patient_id', patientId)

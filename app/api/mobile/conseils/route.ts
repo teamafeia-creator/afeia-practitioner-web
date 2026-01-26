@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify } from 'jose';
 import { getBearerToken } from '@/lib/auth';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function getPatientFromToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -47,7 +42,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
 
     // Get case file
-    const { data: caseFile } = await supabase
+    const { data: caseFile } = await getSupabaseAdmin()
       .from('case_files')
       .select('id')
       .eq('patient_id', patientId)
@@ -57,7 +52,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ conseils: [] });
     }
 
-    let query = supabase
+    let query = getSupabaseAdmin()
       .from('conseils')
       .select('*')
       .eq('case_file_id', caseFile.id)

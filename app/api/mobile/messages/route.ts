@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify } from 'jose';
 import { getBearerToken } from '@/lib/auth';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function getPatientFromToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -49,7 +44,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Get messages
-    const { data: messages, error, count } = await supabase
+    const { data: messages, error, count } = await getSupabaseAdmin()
       .from('messages')
       .select('id, sender, text, sent_at, read_at', { count: 'exact' })
       .eq('patient_id', patientId)
@@ -108,7 +103,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get case file to find recipient (practitioner)
-    const { data: caseFile } = await supabase
+    const { data: caseFile } = await getSupabaseAdmin()
       .from('case_files')
       .select('practitioner_id')
       .eq('patient_id', patientId)
@@ -117,7 +112,7 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
 
     // Create message
-    const { data: message, error } = await supabase
+    const { data: message, error } = await getSupabaseAdmin()
       .from('messages')
       .insert({
         patient_id: patientId,

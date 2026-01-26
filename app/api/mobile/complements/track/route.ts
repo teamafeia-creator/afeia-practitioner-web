@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify } from 'jose';
 import { getBearerToken } from '@/lib/auth';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function getPatientFromToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -54,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if tracking exists for this date
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabaseAdmin()
       .from('complement_tracking')
       .select('id')
       .eq('complement_id', complementId)
@@ -64,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       // Update existing
-      await supabase
+      await getSupabaseAdmin()
         .from('complement_tracking')
         .update({
           taken,
@@ -73,7 +68,7 @@ export async function POST(request: NextRequest) {
         .eq('id', existing.id);
     } else {
       // Create new
-      await supabase
+      await getSupabaseAdmin()
         .from('complement_tracking')
         .insert({
           complement_id: complementId,

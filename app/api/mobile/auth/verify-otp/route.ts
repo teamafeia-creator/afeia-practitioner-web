@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { SignJWT } from 'jose';
 import crypto from 'crypto';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 function hashCode(code: string): string {
   const pepper = process.env.QUESTIONNAIRE_CODE_PEPPER || '';
@@ -36,7 +31,7 @@ export async function POST(request: NextRequest) {
     // Hash the code and look it up
     const codeHash = hashCode(otp.toUpperCase());
 
-    const { data: otpRecord, error } = await supabase
+    const { data: otpRecord, error } = await getSupabaseAdmin()
       .from('patient_questionnaire_codes')
       .select('id, patient_id, expires_at, used_at, revoked_at')
       .eq('code_hash', codeHash)
@@ -66,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get patient info
-    const { data: patient } = await supabase
+    const { data: patient } = await getSupabaseAdmin()
       .from('patients')
       .select('id, name, email')
       .eq('id', otpRecord.patient_id)
@@ -80,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if patient already has a user account
-    const { data: membership } = await supabase
+    const { data: membership } = await getSupabaseAdmin()
       .from('patient_memberships')
       .select('patient_user_id')
       .eq('patient_id', patient.id)

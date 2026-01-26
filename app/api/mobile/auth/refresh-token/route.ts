@@ -4,13 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify, SignJWT } from 'jose';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user
-    const { data: user, error } = await supabase
+    const { data: user, error } = await getSupabaseAdmin()
       .from('users')
       .select('id, email, role, status')
       .eq('id', payload.sub)
@@ -61,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get patient membership
-    const { data: membership } = await supabase
+    const { data: membership } = await getSupabaseAdmin()
       .from('patient_memberships')
       .select('patient_id')
       .eq('patient_user_id', user.id)

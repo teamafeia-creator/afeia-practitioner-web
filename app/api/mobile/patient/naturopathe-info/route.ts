@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify } from 'jose';
 import { getBearerToken } from '@/lib/auth';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function getPatientFromToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -44,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get patient with practitioner
-    const { data: patient, error } = await supabase
+    const { data: patient, error } = await getSupabaseAdmin()
       .from('patients')
       .select(`
         practitioner_id,
@@ -63,14 +58,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get case file for consultation dates
-    const { data: caseFile } = await supabase
+    const { data: caseFile } = await getSupabaseAdmin()
       .from('case_files')
       .select('last_consultation_date, next_consultation_date')
       .eq('patient_id', patientId)
       .maybeSingle();
 
     // Get last completed appointment
-    const { data: lastAppointment } = await supabase
+    const { data: lastAppointment } = await getSupabaseAdmin()
       .from('appointments')
       .select('starts_at')
       .eq('patient_id', patientId)
@@ -80,7 +75,7 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     // Get next scheduled appointment
-    const { data: nextAppointment } = await supabase
+    const { data: nextAppointment } = await getSupabaseAdmin()
       .from('appointments')
       .select('starts_at')
       .eq('patient_id', patientId)

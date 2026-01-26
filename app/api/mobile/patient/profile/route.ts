@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify } from 'jose';
 import { getBearerToken } from '@/lib/auth';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function getPatientFromToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -44,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get patient with practitioner info
-    const { data: patient, error } = await supabase
+    const { data: patient, error } = await getSupabaseAdmin()
       .from('patients')
       .select(`
         id, name, email, phone, status, is_premium,
@@ -66,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Get subscription info if premium
     let subscription = null;
     if (patient.is_premium) {
-      const { data: sub } = await supabase
+      const { data: sub } = await getSupabaseAdmin()
         .from('subscriptions')
         .select('id, plan, status, current_period_end, cancel_at')
         .eq('patient_id', patientId)
@@ -139,7 +134,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { data: patient, error } = await supabase
+    const { data: patient, error } = await getSupabaseAdmin()
       .from('patients')
       .update(updates)
       .eq('id', patientId)

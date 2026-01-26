@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify, SignJWT } from 'jose';
 import crypto from 'crypto';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 function hashPassword(password: string): string {
   // In production, use bcrypt. For this example, using SHA-256
@@ -78,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email is already in use
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await getSupabaseAdmin()
       .from('users')
       .select('id')
       .eq('email', email.toLowerCase())
@@ -95,7 +90,7 @@ export async function POST(request: NextRequest) {
     const userId = crypto.randomUUID();
     const passwordHash = hashPassword(password);
 
-    const { error: userError } = await supabase
+    const { error: userError } = await getSupabaseAdmin()
       .from('users')
       .insert({
         id: userId,
@@ -114,7 +109,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create patient membership
-    const { error: membershipError } = await supabase
+    const { error: membershipError } = await getSupabaseAdmin()
       .from('patient_memberships')
       .insert({
         patient_id: patientId,
@@ -123,7 +118,7 @@ export async function POST(request: NextRequest) {
 
     if (membershipError) {
       // Rollback user creation
-      await supabase.from('users').delete().eq('id', userId);
+      await getSupabaseAdmin().from('users').delete().eq('id', userId);
       console.error('Error creating membership:', membershipError);
       return NextResponse.json(
         { message: 'Erreur lors de la création du compte' },
@@ -132,20 +127,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark OTP as used
-    await supabase
+    await getSupabaseAdmin()
       .from('patient_questionnaire_codes')
       .update({ used_at: new Date().toISOString() })
       .eq('id', tokenPayload.otpId);
 
     // Get patient info
-    const { data: patient } = await supabase
+    const { data: patient } = await getSupabaseAdmin()
       .from('patients')
       .select('id, name, email, phone, status, is_premium, practitioner_id')
       .eq('id', patientId)
       .single();
 
     // Check if anamnese exists
-    const { data: anamnese } = await supabase
+    const { data: anamnese } = await getSupabaseAdmin()
       .from('anamneses')
       .select('id')
       .eq('patient_id', patientId)

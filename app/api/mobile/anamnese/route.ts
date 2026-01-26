@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify } from 'jose';
 import { getBearerToken } from '@/lib/auth';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function getPatientFromToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -44,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get anamnese
-    const { data: anamnese } = await supabase
+    const { data: anamnese } = await getSupabaseAdmin()
       .from('anamneses')
       .select('id, data, completed, completed_at, created_at, updated_at')
       .eq('patient_id', patientId)
@@ -92,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get case file ID
-    const { data: caseFile } = await supabase
+    const { data: caseFile } = await getSupabaseAdmin()
       .from('case_files')
       .select('id')
       .eq('patient_id', patientId)
@@ -101,7 +96,7 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
 
     // Check if anamnese already exists
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabaseAdmin()
       .from('anamneses')
       .select('id')
       .eq('patient_id', patientId)
@@ -111,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       // Update existing
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseAdmin()
         .from('anamneses')
         .update({
           data: sections,
@@ -129,7 +124,7 @@ export async function POST(request: NextRequest) {
       anamneseId = data.id;
     } else {
       // Create new
-      const { data, error } = await supabase
+      const { data, error } = await getSupabaseAdmin()
         .from('anamneses')
         .insert({
           patient_id: patientId,
@@ -150,7 +145,7 @@ export async function POST(request: NextRequest) {
     // Also update the legacy anamneses fields if they exist
     // This ensures compatibility with the web platform
     if (sections.section3) {
-      await supabase
+      await getSupabaseAdmin()
         .from('anamneses')
         .update({
           motif: sections.section3.motifConsultation,

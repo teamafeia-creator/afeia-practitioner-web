@@ -4,14 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { SignJWT } from 'jose';
 import crypto from 'crypto';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex');
@@ -30,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user
-    const { data: user, error } = await supabase
+    const { data: user, error } = await getSupabaseAdmin()
       .from('users')
       .select('id, email, password_hash, role, status')
       .eq('email', email.toLowerCase())
@@ -62,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get patient membership
-    const { data: membership } = await supabase
+    const { data: membership } = await getSupabaseAdmin()
       .from('patient_memberships')
       .select('patient_id')
       .eq('patient_user_id', user.id)
@@ -76,14 +71,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Get patient info
-    const { data: patient } = await supabase
+    const { data: patient } = await getSupabaseAdmin()
       .from('patients')
       .select('id, name, email, phone, status, is_premium')
       .eq('id', membership.patient_id)
       .single();
 
     // Check if anamnese exists
-    const { data: anamnese } = await supabase
+    const { data: anamnese } = await getSupabaseAdmin()
       .from('anamneses')
       .select('id')
       .eq('patient_id', membership.patient_id)
