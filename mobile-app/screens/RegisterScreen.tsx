@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Colors } from '../constants/Colors';
-import { api } from '../services/api';
 
 export default function RegisterScreen({ otpData, onSuccess }: any) {
   const [password, setPassword] = useState('');
@@ -19,14 +18,11 @@ export default function RegisterScreen({ otpData, onSuccess }: any) {
     }
 
     setLoading(true);
-    try {
-      await api.register(otpData.email, password);
-      onSuccess();
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de créer le compte');
-    } finally {
-      setLoading(false);
-    }
+
+    // BYPASS API POUR TESTER
+    console.log('Compte créé pour:', otpData?.email);
+    onSuccess();
+    setLoading(false);
   };
 
   return (
