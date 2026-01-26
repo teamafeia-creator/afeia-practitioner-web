@@ -10,6 +10,8 @@
     "icon": "./assets/images/icon.png",
     "scheme": "afeia",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#F5EFE7",
+    "primaryColor": "#2A8080",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash.png",
