@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../constants/Colors';
-import { api } from '../services/api';
 
 const STORAGE_KEY = '@anamnese_data';
 
@@ -295,16 +294,22 @@ export default function AnamneseScreen({ onComplete }: AnamneseScreenProps) {
 
   const handleSubmit = async () => {
     setLoading(true);
+
     try {
-      await api.submitAnamnese(answers);
+      // TEMPORAIRE : Sauvegarder localement seulement (API backend à créer plus tard)
+      await AsyncStorage.setItem('anamnese_completed', JSON.stringify(answers));
       await AsyncStorage.removeItem(STORAGE_KEY);
+
+      console.log('✅ Anamnèse sauvegardée localement:', answers);
+
       Alert.alert(
-        'Questionnaire envoyé',
-        'Merci d\'avoir complété votre anamnèse. Votre naturopathe va l\'analyser.',
+        'Questionnaire complété !',
+        'Vos réponses ont été enregistrées. Elles seront envoyées à votre naturopathe.',
         [{ text: 'OK', onPress: onComplete }]
       );
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'envoyer le questionnaire. Vos réponses sont sauvegardées.');
+      console.error('Erreur:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder le questionnaire');
     } finally {
       setLoading(false);
     }
