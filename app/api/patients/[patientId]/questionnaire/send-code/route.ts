@@ -2,10 +2,21 @@ import { NextResponse } from 'next/server';
 
 import { createSupabaseAdminClient, createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
 import {
-  generateQuestionnaireCode,
   getQuestionnaireCodeTtlMinutes,
   hashQuestionnaireCode
 } from '@/lib/server/questionnaireCodes';
+import crypto from 'crypto';
+
+/**
+ * Generate a cryptographically secure 6-digit numeric OTP code
+ */
+function generateNumericOTP(): string {
+  const randomBytes = crypto.randomBytes(4);
+  const randomNumber = randomBytes.readUInt32BE(0);
+  // Generate a number between 100000 and 999999
+  const code = 100000 + (randomNumber % 900000);
+  return code.toString();
+}
 import { buildQuestionnaireCodeEmail } from '@/lib/server/questionnaireEmail';
 import { sendEmail } from '@/lib/server/email';
 
@@ -79,7 +90,8 @@ export async function POST(
   const ttlMinutes = getQuestionnaireCodeTtlMinutes();
   const expiresAt = new Date(now.getTime() + ttlMinutes * 60 * 1000);
   const isDev = process.env.NODE_ENV === 'development';
-  const code = isDev ? '123456' : generateQuestionnaireCode();
+  // Use 6-digit numeric OTP for mobile app compatibility
+  const code = isDev ? '123456' : generateNumericOTP();
   const codeHash = hashQuestionnaireCode(code);
 
   const { error: revokeError } = await supabase

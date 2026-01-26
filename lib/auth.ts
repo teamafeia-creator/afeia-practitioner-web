@@ -43,9 +43,14 @@ export async function verifyApiJwt(token: string): Promise<ApiJwtPayload> {
 }
 
 function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET;
+  let secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET is not configured');
+    // Use default secret for development - change in production!
+    if (process.env.NODE_ENV === 'development') {
+      secret = 'dev-jwt-secret-change-in-production';
+    } else {
+      throw new Error('JWT_SECRET is not configured');
+    }
   }
   return new TextEncoder().encode(secret);
 }

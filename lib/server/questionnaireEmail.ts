@@ -23,51 +23,89 @@ export function buildQuestionnaireCodeEmail({
   expiresInMinutes
 }: QuestionnaireEmailParams): QuestionnaireEmailContent {
   const greetingName = patientName?.trim() ? `Bonjour ${patientName.trim()},` : 'Bonjour,';
-  const subject = 'Votre code d’accès au questionnaire AFEIA';
-  const from = 'Team AFEIA <team.afeia@gmail.com>';
+  const subject = 'Bienvenue chez AFEIA - Votre code d\'accès';
+  // Use resend.dev domain for testing, or configure your verified domain
+  const from = process.env.RESEND_FROM_EMAIL || 'AFEIA <onboarding@resend.dev>';
 
   const html = `
-    <div style="font-family: Arial, sans-serif; color: #1F2A37; line-height: 1.5;">
-      <p>${greetingName}</p>
-      <p>Voici votre code à usage unique pour accéder à votre questionnaire de suivi AFEIA :</p>
-      <div style="font-size: 28px; font-weight: 700; letter-spacing: 4px; margin: 20px 0; font-family: 'Courier New', monospace;">
-        ${code}
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+      <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+        <div style="background-color: #2A8080; color: white; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="margin: 0; font-size: 24px;">Bienvenue chez AFEIA</h1>
+        </div>
+        <div style="background-color: #F5EFE7; padding: 30px; border-radius: 0 0 8px 8px;">
+          <p style="color: #3D3D3D; font-size: 16px; line-height: 1.6;">${greetingName}</p>
+          <p style="color: #3D3D3D; font-size: 16px; line-height: 1.6;">
+            Votre naturopathe vous a créé un compte AFEIA pour suivre votre accompagnement naturopathique.
+          </p>
+          <p style="color: #3D3D3D; font-size: 16px; line-height: 1.6; margin-bottom: 8px;">
+            <strong>Votre code d'accès à 6 chiffres :</strong>
+          </p>
+          <div style="background-color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center; padding: 20px; margin: 16px 0; border: 2px dashed #2A8080; border-radius: 8px; color: #2A8080; font-family: 'Courier New', monospace;">
+            ${code}
+          </div>
+          <p style="color: #6B7280; font-size: 14px; text-align: center; margin-bottom: 24px;">
+            <strong>Valable ${expiresInMinutes} minutes</strong> - Utilisable une seule fois
+          </p>
+          <p style="color: #3D3D3D; font-size: 16px; line-height: 1.6;"><strong>Prochaines étapes :</strong></p>
+          <ol style="padding-left: 20px; color: #3D3D3D; font-size: 16px; line-height: 1.8;">
+            <li>Téléchargez l'application AFEIA sur votre téléphone</li>
+            <li>Entrez ce code à 6 chiffres</li>
+            <li>Créez votre mot de passe sécurisé</li>
+            <li>Commencez votre questionnaire de santé</li>
+          </ol>
+          <p style="text-align: center; margin-top: 24px;">
+            <a href="${ANDROID_LINK}" style="color: #2A8080; text-decoration: none; margin-right: 16px;">Télécharger pour Android</a>
+            <a href="${IOS_LINK}" style="color: #2A8080; text-decoration: none;">Télécharger pour iOS</a>
+          </p>
+          <p style="color: #3D3D3D; font-size: 16px; line-height: 1.6; margin-top: 24px;">
+            À très bientôt,<br /><strong>L'équipe AFEIA</strong>
+          </p>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+          <p style="font-size: 12px; color: #6B7280;">
+            AFEIA - Votre accompagnement naturopathique personnalisé<br />
+            Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
+          </p>
+        </div>
       </div>
-      <p><strong>Valable ${expiresInMinutes} minutes, utilisable une seule fois.</strong></p>
-      <ol style="padding-left: 18px;">
-        <li>Téléchargez l’app AFEIA</li>
-        <li>Ouvrez l’app, allez sur « Questionnaire »</li>
-        <li>Saisissez votre code</li>
-      </ol>
-      <p>
-        <a href="${ANDROID_LINK}" style="color:#0F766E;">Télécharger pour Android</a><br />
-        <a href="${IOS_LINK}" style="color:#0F766E;">Télécharger pour iOS</a>
-      </p>
-      <p>À très vite,<br />La Team AFEIA</p>
-      <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 20px 0;" />
-      <p style="font-size: 12px; color: #6B7280;">Si vous n’êtes pas à l’origine de cette demande, ignorez cet email.</p>
-    </div>
+    </body>
+    </html>
   `;
 
-  const text = `${greetingName}
+  const text = `Bienvenue chez AFEIA
 
-Voici votre code à usage unique pour accéder à votre questionnaire de suivi AFEIA :
+${greetingName}
 
-${code}
+Votre naturopathe vous a créé un compte AFEIA pour suivre votre accompagnement naturopathique.
 
-Valable ${expiresInMinutes} minutes, utilisable une seule fois.
+Votre code d'accès à 6 chiffres :
 
-1) Téléchargez l’app AFEIA
-2) Ouvrez l’app, allez sur "Questionnaire"
-3) Saisissez votre code
+    ${code}
+
+Valable ${expiresInMinutes} minutes - Utilisable une seule fois.
+
+Prochaines étapes :
+1) Téléchargez l'application AFEIA sur votre téléphone
+2) Entrez ce code à 6 chiffres
+3) Créez votre mot de passe sécurisé
+4) Commencez votre questionnaire de santé
 
 Android : ${ANDROID_LINK}
 iOS : ${IOS_LINK}
 
-À très vite,
-La Team AFEIA
+À très bientôt,
+L'équipe AFEIA
 
-Si vous n’êtes pas à l’origine de cette demande, ignorez cet email.`;
+---
+AFEIA - Votre accompagnement naturopathique personnalisé
+Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.`;
 
   return { subject, from, to, html, text };
 }
