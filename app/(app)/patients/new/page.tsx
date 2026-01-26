@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '../../../../components/ui/Button';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/Card';
 import { Input } from '../../../../components/ui/Input';
+import { Toast } from '../../../../components/ui/Toast';
 import { createPatientRecord } from '../../../../services/patients';
 import { createAnamneseInstance } from '../../../../services/anamnese';
 import { sendQuestionnaireCode } from '../../../../services/questionnaire';
@@ -20,9 +21,13 @@ export default function NewPatientPage() {
   const [age, setAge] = useState('');
   const [isPremium, setIsPremium] = useState(false);
   const [circularEnabled, setCircularEnabled] = useState(false);
-  const [sendAnamnese, setSendAnamnese] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    title: string;
+    description?: string;
+    variant?: 'success' | 'error' | 'info';
+  } | null>(null);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -36,11 +41,6 @@ export default function NewPatientPage() {
     const trimmedEmail = email.trim();
     if (trimmedEmail && !EMAIL_REGEX.test(trimmedEmail)) {
       setError('Merci de renseigner un email valide.');
-      return;
-    }
-
-    if (sendAnamnese && !trimmedEmail) {
-      setError('Email requis pour envoyer le questionnaire.');
       return;
     }
 
@@ -62,9 +62,27 @@ export default function NewPatientPage() {
         circularEnabled
       });
 
-      if (sendAnamnese) {
-        await createAnamneseInstance(patientId);
-        await sendQuestionnaireCode(patientId);
+      // ✅ TOUJOURS envoyer l'email si un email est fourni
+      if (trimmedEmail) {
+        try {
+          await createAnamneseInstance(patientId);
+          await sendQuestionnaireCode(patientId);
+          setToast({
+            title: '✅ Email envoyé avec succès',
+            description: `Le code questionnaire a été envoyé à ${trimmedEmail}`,
+            variant: 'success'
+          });
+          console.log(`✅✅✅ Email envoyé avec succès à ${trimmedEmail}`);
+        } catch (emailErr) {
+          const errorMessage = emailErr instanceof Error ? emailErr.message : 'Erreur inconnue';
+          setToast({
+            title: '❌ Erreur lors de l\'envoi',
+            description: errorMessage,
+            variant: 'error'
+          });
+          console.error('❌❌❌ Erreur envoi email:', emailErr);
+          // Ne pas bloquer la création, continuer vers la page patient
+        }
       }
 
       // Redirect to patient detail page with created flag
@@ -145,16 +163,6 @@ export default function NewPatientPage() {
               </label>
             </div>
 
-            <label className="flex items-center gap-3 rounded-xl border border-warmgray/20 bg-sable/40 px-4 py-3 text-sm text-charcoal">
-              <input
-                type="checkbox"
-                checked={sendAnamnese}
-                onChange={(event) => setSendAnamnese(event.target.checked)}
-                className="h-4 w-4 rounded border-warmgray/40 text-teal focus:ring-teal/40"
-              />
-              Envoyer le code questionnaire Anamnèse (obligatoire à la première connexion)
-            </label>
-
             {error ? (
               <div className="rounded-xl border border-gold/30 bg-gold/10 p-3 text-sm">
                 {error}
@@ -168,6 +176,14 @@ export default function NewPatientPage() {
         </CardContent>
       </Card>
 
+      {toast ? (
+        <Toast
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      ) : null}
     </div>
   );
 }
