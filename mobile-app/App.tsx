@@ -3,9 +3,10 @@ import { SafeAreaView, StyleSheet } from 'react-native';
 import WelcomeScreen from './screens/WelcomeScreen';
 import OTPScreen from './screens/OTPScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import AnamneseScreen from './screens/AnamneseScreen';
 import DashboardScreen from './screens/DashboardScreen';
 
-type Screen = 'welcome' | 'otp' | 'register' | 'dashboard';
+type Screen = 'welcome' | 'otp' | 'register' | 'anamnese' | 'dashboard';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
@@ -27,8 +28,11 @@ export default function App() {
       {currentScreen === 'register' && (
         <RegisterScreen
           otpData={otpData}
-          onSuccess={() => setCurrentScreen('dashboard')}
+          onSuccess={() => setCurrentScreen('anamnese')}
         />
+      )}
+      {currentScreen === 'anamnese' && (
+        <AnamneseScreen onComplete={() => setCurrentScreen('dashboard')} />
       )}
       {currentScreen === 'dashboard' && <DashboardScreen />}
     </SafeAreaView>

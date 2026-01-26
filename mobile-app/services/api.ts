@@ -17,4 +17,11 @@ export const api = {
     // Simule
     return { success: true };
   },
+
+  async submitAnamnese(data: Record<string, any>) {
+    // Pour l'instant, simule une réponse
+    // TODO: Wire to actual endpoint POST /anamnese
+    const response = await axios.post(`${API_URL}/anamnese`, { data });
+    return response.data;
+  },
 };
