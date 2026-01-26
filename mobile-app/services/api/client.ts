@@ -6,7 +6,8 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { TokenStorage } from '../storage/secureStore';
 import type { ApiError } from '@/types';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/mobile';
+// Default to production URL for Expo Go compatibility
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://afeia-practitioner-web-ijov.vercel.app/api/mobile';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
