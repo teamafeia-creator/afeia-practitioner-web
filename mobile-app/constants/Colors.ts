@@ -4,4 +4,5 @@ export const Colors = {
   sable: '#F5EFE7',
   charcoal: '#3D3D3D',
   blanc: '#FFFFFF',
+  grisChaud: '#9E9E9E',
 };
