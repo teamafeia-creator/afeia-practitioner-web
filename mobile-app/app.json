@@ -1,12 +1,14 @@
 {
   "expo": {
-    "name": "AFEIA Patient",
+    "name": "AFEIA",
     "slug": "afeia-patient",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
     "backgroundColor": "#F5EFE7",
+    "primaryColor": "#2A8080",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -18,23 +20,15 @@
       "bundleIdentifier": "com.afeia.patient"
     },
     "android": {
+      "package": "com.afeia.patient",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F5EFE7"
       },
-      "package": "com.afeia.patient"
+      "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "metro"
-    },
-    "plugins": [
-      "expo-router",
-      "expo-secure-store"
-    ],
-    "scheme": "afeia",
-    "experiments": {
-      "typedRoutes": true
+      "favicon": "./assets/favicon.png"
     }
   }
 }
