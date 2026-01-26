@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Colors } from '../constants/Colors';
-import { api } from '../services/api';
 
 export default function OTPScreen({ onSuccess }: { onSuccess: (data: any) => void }) {
   const [code, setCode] = useState('');
@@ -14,16 +13,19 @@ export default function OTPScreen({ onSuccess }: { onSuccess: (data: any) => voi
     }
 
     setLoading(true);
-    try {
-      const result = await api.verifyOTP(code);
-      if (result.success) {
-        onSuccess(result);
-      }
-    } catch (error) {
-      Alert.alert('Erreur', 'Code invalide');
-    } finally {
-      setLoading(false);
-    }
+
+    // ACCEPTER N'IMPORTE QUEL CODE POUR TESTER
+    console.log('Code accepté:', code);
+
+    const mockData = {
+      success: true,
+      email: 'team.afeia@gmail.com',
+      patientId: 'test-patient-123',
+      tempToken: 'temp-token-123',
+    };
+
+    onSuccess(mockData);
+    setLoading(false);
   };
 
   return (
