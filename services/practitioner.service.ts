@@ -97,25 +97,43 @@ export async function createPatientActivationCode(
     console.log('🔐 Code généré:', code);
 
     // 5. Stocker le code OTP avec les infos du patient (schéma simplifié)
-    const { error: otpError } = await supabase
+    const otpPayload = {
+      email: normalizedEmail,
+      code: code,
+      practitioner_id: practitionerId,
+      patient_name: patientData.name,
+      patient_city: patientData.city || null,
+      patient_age: patientData.age || null,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 jours
+      used: false
+    };
+
+    console.log('═══════════════════════════════════════');
+    console.log('📝 INSERTION OTP_CODES');
+    console.log('Payload:', JSON.stringify(otpPayload, null, 2));
+    console.log('practitioner_id:', practitionerId);
+    console.log('Type practitioner_id:', typeof practitionerId);
+    console.log('═══════════════════════════════════════');
+
+    const { data: insertedOtp, error: otpError } = await supabase
       .from('otp_codes')
-      .insert({
-        email: normalizedEmail,
-        code: code,
-        practitioner_id: practitionerId,
-        patient_name: patientData.name,
-        patient_city: patientData.city || null,
-        patient_age: patientData.age || null,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 jours
-        used: false
-      });
+      .insert(otpPayload)
+      .select('id, email, code, practitioner_id')
+      .single();
 
     if (otpError) {
       console.error('❌ Erreur stockage code:', otpError);
+      console.error('Payload était:', JSON.stringify(otpPayload, null, 2));
       return { success: false, error: otpError.message };
     }
 
     console.log('✅ Code stocké avec infos patient');
+    console.log('📋 OTP inséré - vérification:', JSON.stringify(insertedOtp, null, 2));
+    if (insertedOtp?.practitioner_id !== practitionerId) {
+      console.error('⚠️ ALERTE: practitioner_id ne correspond pas!');
+      console.error('   Envoyé:', practitionerId);
+      console.error('   Reçu:', insertedOtp?.practitioner_id);
+    }
 
     // 6. Envoyer l'email d'activation
     try {
