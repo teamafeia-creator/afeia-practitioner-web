@@ -18,10 +18,8 @@ type PatientRow = {
   age?: number | null;
   city?: string | null;
   email?: string | null;
-  phone?: string | null;
-  pathology?: string | null;
-  status?: string | null;
-  is_premium?: boolean | null;
+  activated?: boolean | null;
+  activated_at?: string | null;
 };
 
 export default function PatientsPage() {
@@ -48,9 +46,8 @@ export default function PatientsPage() {
 
         const { data } = await supabase
           .from('patients')
-          .select('id, name, age, city, email, phone, pathology, status, is_premium')
+          .select('id, name, age, city, email, activated, activated_at')
           .eq('practitioner_id', userId)
-          .is('deleted_at', null)
           .order('created_at', { ascending: false });
 
         setPatients((data ?? []) as PatientRow[]);
@@ -112,7 +109,6 @@ export default function PatientsPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filteredPatients.map((patient) => {
-          const isPremium = patient.is_premium || patient.status === 'premium';
           return (
             <Card key={patient.id} className="flex flex-col justify-between p-5">
               <div className="space-y-3">
@@ -126,20 +122,16 @@ export default function PatientsPage() {
                       {patient.city ? ` • ${patient.city}` : ''}
                     </p>
                   </div>
-                  {isPremium ? (
-                    <Badge variant="premium">Premium</Badge>
+                  {patient.activated ? (
+                    <Badge variant="success">Activé</Badge>
                   ) : (
-                    <Badge variant="standard">Standard</Badge>
+                    <Badge variant="attention">En attente</Badge>
                   )}
                 </div>
 
                 <div className="space-y-2 text-sm text-marine">
-                  <div className="flex flex-wrap gap-2 text-xs text-warmgray">
-                    <span>Email : <span className="text-marine">{patient.email || 'Non renseigné'}</span></span>
-                    <span>Téléphone : <span className="text-marine">{patient.phone || 'Non renseigné'}</span></span>
-                  </div>
                   <div className="text-xs text-warmgray">
-                    Pathologie : <span className="text-marine">{patient.pathology || 'Non renseigné'}</span>
+                    Email : <span className="text-marine">{patient.email || 'Non renseigné'}</span>
                   </div>
                 </div>
               </div>
