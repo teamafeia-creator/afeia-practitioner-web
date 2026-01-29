@@ -2,7 +2,68 @@ import { supabase } from '../lib/supabase';
 
 export const patientAuthService = {
   /**
-   * Verify OTP code and create patient account
+   * Activer le compte avec UNIQUEMENT le code (pas d'email demandé)
+   * Le système trouve automatiquement l'email associé au code dans otp_codes
+   */
+  async activateAccountWithCode(
+    code: string,
+    password: string
+  ): Promise<{ success: boolean; email?: string; error?: string }> {
+    try {
+      console.log('═══════════════════════════════════════');
+      console.log('🔐 Activation avec code uniquement');
+      console.log('Code:', code);
+
+      // 1. Chercher le code dans otp_codes pour trouver l'email
+      const { data: otpData, error: otpError } = await supabase
+        .from('otp_codes')
+        .select('*, practitioner_id, patient_id')
+        .eq('code', code)
+        .eq('used', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (otpError || !otpData) {
+        console.error('❌ Code invalide ou expiré:', otpError);
+        return {
+          success: false,
+          error: 'Code invalide ou expiré. Vérifiez le code reçu par email.',
+        };
+      }
+
+      console.log('✅ Code trouvé!');
+      console.log('Email:', otpData.email);
+      console.log('Praticien ID:', otpData.practitioner_id);
+      console.log('Patient ID:', otpData.patient_id);
+
+      const email = otpData.email;
+
+      if (!email) {
+        console.error('❌ Pas d\'email associé au code');
+        return {
+          success: false,
+          error: 'Code invalide. Contactez votre praticien.',
+        };
+      }
+
+      // 2. Use the existing activateAccount method with the found email
+      const result = await this.activateAccount(email, code, password);
+
+      if (result.success) {
+        return { success: true, email };
+      } else {
+        return { success: false, error: result.error };
+      }
+    } catch (err) {
+      console.error('❌ Exception activateAccountWithCode:', err);
+      return { success: false, error: String(err) };
+    }
+  },
+
+  /**
+   * Verify OTP code and create patient account (legacy method with email)
    */
   async activateAccount(
     email: string,
