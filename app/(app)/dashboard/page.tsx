@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -37,6 +37,7 @@ import { Toaster, showToast } from '@/components/ui/Toaster';
 import { SkeletonDashboard } from '@/components/ui/Skeleton';
 import { getCalendlyUrlForCurrentPractitioner } from '@/lib/calendly';
 import { supabase } from '@/lib/supabase';
+import { useRequireAuth } from '@/hooks/useAuth';
 
 type ConsultationRow = {
   id: string;
@@ -155,6 +156,7 @@ function StatCard({ title, value, subtitle, icon, trend, color, delay = 0 }: Sta
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, loading: authLoading, isAuthenticated } = useRequireAuth('/login');
   const [stats, setStats] = useState({ total: 0, premium: 0, appointments: 0, messages: 0 });
   const [upcomingAppointments, setUpcomingAppointments] = useState<ConsultationRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,82 +172,125 @@ export default function DashboardPage() {
     else setGreeting('Bonsoir');
   }, []);
 
-  useEffect(() => {
-    async function loadDashboardData() {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData.session?.user.id;
-
-        if (!userId) {
-          setStats({ total: 0, premium: 0, appointments: 0, messages: 0 });
-          setUpcomingAppointments([]);
-          return;
-        }
-
-        // Get practitioner name
-        const { data: practitioner } = await supabase
-          .from('practitioners')
-          .select('name')
-          .eq('id', userId)
-          .single();
-
-        if (practitioner?.name) {
-          setPractitionerName(practitioner.name.split(' ')[0]);
-        }
-
-        const { data: patients } = await supabase
-          .from('patients')
-          .select('id, is_premium, status')
-          .eq('practitioner_id', userId)
-          .is('deleted_at', null);
-
-        const premiumCount =
-          patients?.filter((p) => p.is_premium || p.status === 'premium').length || 0;
-
-        const { data: consultations } = await supabase
-          .from('consultations')
-          .select('id, date, patients(name, is_premium, status)')
-          .eq('practitioner_id', userId)
-          .gte('date', new Date().toISOString())
-          .order('date', { ascending: true })
-          .limit(5);
-
-        const { data: messages } = await supabase
-          .from('messages')
-          .select('id')
-          .eq('sender_role', 'patient')
-          .is('read_by_practitioner', false);
-
-        setStats({
-          total: patients?.length || 0,
-          premium: premiumCount,
-          appointments: consultations?.length || 0,
-          messages: messages?.length || 0
-        });
-
-        setUpcomingAppointments((consultations ?? []) as ConsultationRow[]);
-      } catch (err) {
-        console.error('Erreur chargement dashboard:', err);
-        showToast.error('Erreur lors du chargement du tableau de bord');
-      } finally {
-        setLoading(false);
-      }
+  const loadDashboardData = useCallback(async () => {
+    // Wait for auth to complete and ensure user is authenticated
+    if (authLoading || !isAuthenticated || !user) {
+      console.log('📊 Dashboard: En attente de l\'authentification...');
+      return;
     }
 
+    console.log('📊 Dashboard: Chargement des données pour:', user.email);
+
+    try {
+      const userId = user.id;
+      console.log('🔑 User ID:', userId);
+
+      // Get practitioner name
+      console.log('📋 Chargement du profil praticien...');
+      const { data: practitioner, error: practitionerError } = await supabase
+        .from('practitioners')
+        .select('name')
+        .eq('id', userId)
+        .single();
+
+      if (practitionerError) {
+        console.warn('⚠️ Erreur profil praticien:', practitionerError.message);
+      } else if (practitioner?.name) {
+        console.log('✅ Praticien trouvé:', practitioner.name);
+        setPractitionerName(practitioner.name.split(' ')[0]);
+      }
+
+      // Get patients
+      console.log('📋 Chargement des patients...');
+      const { data: patients, error: patientsError } = await supabase
+        .from('patients')
+        .select('id, is_premium, status')
+        .eq('practitioner_id', userId)
+        .is('deleted_at', null);
+
+      if (patientsError) {
+        console.error('❌ Erreur patients:', patientsError.message);
+        showToast.error('Erreur lors du chargement des patients');
+      } else {
+        console.log('✅ Patients chargés:', patients?.length || 0);
+      }
+
+      const premiumCount =
+        patients?.filter((p) => p.is_premium || p.status === 'premium').length || 0;
+
+      // Get consultations
+      console.log('📋 Chargement des consultations...');
+      const { data: consultations, error: consultationsError } = await supabase
+        .from('consultations')
+        .select('id, date, patients(name, is_premium, status)')
+        .eq('practitioner_id', userId)
+        .gte('date', new Date().toISOString())
+        .order('date', { ascending: true })
+        .limit(5);
+
+      if (consultationsError) {
+        console.warn('⚠️ Erreur consultations:', consultationsError.message);
+      } else {
+        console.log('✅ Consultations chargées:', consultations?.length || 0);
+      }
+
+      // Get messages
+      console.log('📋 Chargement des messages...');
+      const { data: messages, error: messagesError } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('sender_role', 'patient')
+        .is('read_by_practitioner', false);
+
+      if (messagesError) {
+        console.warn('⚠️ Erreur messages:', messagesError.message);
+      } else {
+        console.log('✅ Messages non lus:', messages?.length || 0);
+      }
+
+      setStats({
+        total: patients?.length || 0,
+        premium: premiumCount,
+        appointments: consultations?.length || 0,
+        messages: messages?.length || 0
+      });
+
+      setUpcomingAppointments((consultations ?? []) as ConsultationRow[]);
+      console.log('✅ Dashboard chargé avec succès');
+    } catch (err) {
+      console.error('❌ Erreur chargement dashboard:', err);
+      if (err instanceof Error && err.message.includes('401')) {
+        showToast.error('Session expirée. Veuillez vous reconnecter.');
+        router.replace('/login');
+      } else {
+        showToast.error('Erreur lors du chargement du tableau de bord');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [authLoading, isAuthenticated, user, router]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  useEffect(() => {
     async function loadCalendly() {
       try {
         const url = await getCalendlyUrlForCurrentPractitioner();
         setCalendlyUrl(url);
       } catch (err) {
+        console.warn('⚠️ Erreur Calendly:', err);
         setCalendlyUrl(null);
       } finally {
         setCalendlyLoading(false);
       }
     }
 
-    loadDashboardData();
-    loadCalendly();
-  }, []);
+    if (isAuthenticated) {
+      loadCalendly();
+    }
+  }, [isAuthenticated]);
 
   const todayLabel = useMemo(() => dateFormatter.format(new Date()), []);
 
@@ -254,11 +299,26 @@ export default function DashboardPage() {
     { name: 'Premium', value: stats.premium }
   ];
 
-  if (loading) {
+  // Show loading state while auth is being checked or data is loading
+  if (authLoading || loading) {
     return (
       <div className="space-y-6">
         <PageHeader title="Tableau de bord" />
         <SkeletonDashboard />
+      </div>
+    );
+  }
+
+  // If not authenticated after loading, the hook will redirect
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Tableau de bord" />
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-warmgray">Redirection vers la page de connexion...</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
