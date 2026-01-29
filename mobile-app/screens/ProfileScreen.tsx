@@ -9,9 +9,11 @@ import { storage } from '../utils/storage';
 interface ProfileScreenProps {
   onBack: () => void;
   onLogout: () => void;
+  onEditAnamnese?: () => void;
+  hasAnamnesis?: boolean;
 }
 
-export default function ProfileScreen({ onBack, onLogout }: ProfileScreenProps) {
+export default function ProfileScreen({ onBack, onLogout, onEditAnamnese, hasAnamnesis }: ProfileScreenProps) {
   const [profile, setProfile] = useState<any>(null);
   const [naturopathe, setNaturopathe] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -176,11 +178,25 @@ export default function ProfileScreen({ onBack, onLogout }: ProfileScreenProps) 
       </Card>
 
       <Card>
-        <Text style={styles.sectionTitle}>Documents</Text>
-        <TouchableOpacity style={styles.documentRow}>
-          <Text style={styles.documentText}>📄 Mon questionnaire d'anamnèse</Text>
+        <Text style={styles.sectionTitle}>Mon anamnèse</Text>
+        <Text style={styles.anamneseDescription}>
+          {hasAnamnesis
+            ? 'Votre questionnaire de santé a été rempli. Vous pouvez le modifier à tout moment.'
+            : 'Complétez votre questionnaire de santé pour aider votre naturopathe à mieux vous accompagner.'}
+        </Text>
+        <TouchableOpacity
+          style={styles.anamneseButton}
+          onPress={onEditAnamnese}
+        >
+          <Text style={styles.anamneseButtonText}>
+            {hasAnamnesis ? '✏️ Modifier mon anamnèse' : '📋 Remplir mon anamnèse'}
+          </Text>
           <Text style={styles.documentArrow}>→</Text>
         </TouchableOpacity>
+      </Card>
+
+      <Card>
+        <Text style={styles.sectionTitle}>Documents</Text>
         <TouchableOpacity style={styles.documentRow}>
           <Text style={styles.documentText}>📊 Historique des consultations</Text>
           <Text style={styles.documentArrow}>→</Text>
@@ -299,6 +315,26 @@ const styles = StyleSheet.create({
   documentArrow: {
     fontSize: 16,
     color: Colors.grisChaud,
+  },
+  anamneseDescription: {
+    fontSize: 13,
+    color: Colors.grisChaud,
+    marginBottom: 15,
+    lineHeight: 18,
+  },
+  anamneseButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.teal + '15',
+    paddingVertical: 14,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+  },
+  anamneseButtonText: {
+    fontSize: 15,
+    color: Colors.teal,
+    fontWeight: '500',
   },
   logoutSection: {
     marginTop: 10,

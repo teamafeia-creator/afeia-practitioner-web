@@ -7,11 +7,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { Button } from '../ui/Button';
 import { PageShell } from '../ui/PageShell';
+import { NotificationDropdown } from '../notifications/NotificationDropdown';
 import { supabase } from '../../lib/supabase';
 
 const NAV = [
   { href: '/dashboard', label: 'Tableau de bord' },
   { href: '/patients', label: 'Patients' },
+  { href: '/questionnaires', label: 'Questionnaires' },
   { href: '/settings', label: 'Paramètres' }
 ];
 
@@ -96,7 +98,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </Link>
           </div>
-          <Button variant="ghost" onClick={logout}>Déconnexion</Button>
+          <div className="flex items-center gap-2">
+            <NotificationDropdown />
+            <Button variant="ghost" onClick={logout}>Déconnexion</Button>
+          </div>
         </div>
       </div>
 
@@ -147,9 +152,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               })}
             </nav>
             <div className="border-t border-black/5 p-4">
-              <div className="text-xs text-warmgray">Connecté en tant que</div>
-              <div className="text-sm font-semibold text-charcoal">{userEmail ?? 'Naturopathe'}</div>
-              <div className="mt-3">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-xs text-warmgray">Connecté en tant que</div>
+                  <div className="text-sm font-semibold text-charcoal">{userEmail ?? 'Naturopathe'}</div>
+                </div>
+                <NotificationDropdown />
+              </div>
+              <div>
                 <Button variant="secondary" className="w-full" onClick={logout}>
                   Déconnexion
                 </Button>

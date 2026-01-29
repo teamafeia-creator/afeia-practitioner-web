@@ -139,12 +139,33 @@ export async function POST(request: NextRequest) {
       .eq('id', patientId)
       .single();
 
-    // Check if anamnese exists
-    const { data: anamnese } = await getSupabaseAdmin()
+    // Check if anamnesis exists (check both old and new tables)
+    const { data: anamnesisNew } = await getSupabaseAdmin()
+      .from('patient_anamnesis')
+      .select('id, answers')
+      .eq('patient_id', patientId)
+      .maybeSingle();
+
+    const { data: anamnesisOld } = await getSupabaseAdmin()
       .from('anamneses')
       .select('id')
       .eq('patient_id', patientId)
       .maybeSingle();
+
+    // Check if patient has a linked preliminary questionnaire
+    const { data: preliminaryQuestionnaire } = await getSupabaseAdmin()
+      .from('preliminary_questionnaires')
+      .select('id')
+      .eq('linked_patient_id', patientId)
+      .eq('status', 'linked_to_patient')
+      .maybeSingle();
+
+    // Has anamnesis if any of these exist with actual answers
+    const hasAnamnesis = Boolean(
+      anamnesisOld ||
+      preliminaryQuestionnaire ||
+      (anamnesisNew?.answers && Object.keys(anamnesisNew.answers).length > 0)
+    );
 
     // Generate tokens
     const accessToken = await new SignJWT({
@@ -179,7 +200,7 @@ export async function POST(request: NextRequest) {
         phone: patient?.phone,
         isPremium: patient?.is_premium || false,
       },
-      needsAnamnese: !anamnese,
+      needsAnamnese: !hasAnamnesis,
     });
   } catch (error) {
     console.error('Error during registration:', error);

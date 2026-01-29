@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Colors } from '../constants/Colors';
 
-export default function RegisterScreen({ otpData, onSuccess }: any) {
+type RegisterScreenProps = {
+  otpData: any;
+  onSuccess: (needsAnamnese: boolean) => void;
+};
+
+export default function RegisterScreen({ otpData, onSuccess }: RegisterScreenProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,9 +24,10 @@ export default function RegisterScreen({ otpData, onSuccess }: any) {
 
     setLoading(true);
 
-    // BYPASS API POUR TESTER
+    // BYPASS API POUR TESTER - assume anamnesis not needed (may have preliminary questionnaire)
     console.log('Compte créé pour:', otpData?.email);
-    onSuccess();
+    // Pass false = anamnesis not strictly required (can be filled optionally later)
+    onSuccess(false);
     setLoading(false);
   };
 
