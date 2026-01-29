@@ -76,14 +76,21 @@ export default function ActivatePage() {
 
       console.log('✅ Code trouvé:', otpData.email)
 
+      // Construire le nom complet à partir de first_name et last_name
+      const fullName = [otpData.patient_first_name, otpData.patient_last_name]
+        .filter(Boolean)
+        .join(' ')
+
       // Rediriger vers la page de création de mot de passe
       const params = new URLSearchParams({
         email: otpData.email,
-        name: otpData.patient_name || '',
+        name: fullName,
+        first_name: otpData.patient_first_name || '',
+        last_name: otpData.patient_last_name || '',
         practitioner_id: otpData.practitioner_id || '',
         otp_id: otpData.id,
         city: otpData.patient_city || '',
-        age: otpData.patient_age?.toString() || ''
+        phone: otpData.patient_phone_number || ''
       })
 
       router.push(`/patient/register?${params.toString()}`)

@@ -11,10 +11,12 @@ function RegisterForm() {
   // Données de otp_codes passées via URL params
   const patientEmail = searchParams.get('email') || ''
   const patientName = searchParams.get('name') || ''
+  const patientFirstName = searchParams.get('first_name') || ''
+  const patientLastName = searchParams.get('last_name') || ''
   const practitionerId = searchParams.get('practitioner_id') || ''
   const otpId = searchParams.get('otp_id') || ''
   const patientCity = searchParams.get('city') || ''
-  const patientAge = searchParams.get('age') || ''
+  const patientPhone = searchParams.get('phone') || ''
 
   const [email, setEmail] = useState(patientEmail)
   const [password, setPassword] = useState('')
@@ -84,17 +86,17 @@ function RegisterForm() {
       console.log('✅ Compte auth créé:', authData.user.id)
 
       // 2. Créer l'entrée patient
-      const patientPayload = {
+      const patientPayload: Record<string, unknown> = {
         id: authData.user.id,
         practitioner_id: practitionerId,
         email: email.toLowerCase().trim(),
-        name: patientName,
-        city: patientCity || null,
-        age: patientAge ? parseInt(patientAge) : null,
-        activated: true,
-        activated_at: new Date().toISOString(),
+        name: patientName || `${patientFirstName} ${patientLastName}`.trim(),
         status: 'active'
       }
+
+      // Ajouter les champs optionnels s'ils existent
+      if (patientCity) patientPayload.city = patientCity
+      if (patientPhone) patientPayload.phone = patientPhone
 
       console.log('📝 Création patient:', patientPayload)
 
