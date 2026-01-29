@@ -8,8 +8,10 @@ import { supabase } from '../lib/supabase';
 
 type CreatePatientInput = {
   email: string;
-  name: string;
-  age?: number;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   city?: string;
 };
 
@@ -96,14 +98,19 @@ export async function createPatientActivationCode(
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     console.log('🔐 Code généré:', code);
 
-    // 5. Stocker le code OTP avec les infos du patient (schéma simplifié)
+    // 5. Stocker le code OTP avec les infos du patient
+    // Colonnes correctes de otp_codes: patient_first_name, patient_last_name, patient_phone_number, patient_city
+    const firstName = patientData.firstName || patientData.name?.split(' ')[0] || '';
+    const lastName = patientData.lastName || patientData.name?.split(' ').slice(1).join(' ') || '';
+
     const otpPayload = {
       email: normalizedEmail,
       code: code,
       practitioner_id: practitionerId,
-      patient_name: patientData.name,
+      patient_first_name: firstName,
+      patient_last_name: lastName,
+      patient_phone_number: patientData.phone || null,
       patient_city: patientData.city || null,
-      patient_age: patientData.age || null,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 jours
       used: false
     };
@@ -136,6 +143,7 @@ export async function createPatientActivationCode(
     }
 
     // 6. Envoyer l'email d'activation
+    const patientFullName = `${firstName} ${lastName}`.trim() || patientData.name;
     try {
       const { error: emailError } = await supabase.functions.invoke('send-otp', {
         body: {
@@ -143,7 +151,7 @@ export async function createPatientActivationCode(
           code: code,
           type: 'patient-activation',
           practitionerEmail: user.email,
-          patientName: patientData.name
+          patientName: patientFullName
         }
       });
 
@@ -213,6 +221,11 @@ export async function resendActivationCode(email: string): Promise<CreatePatient
       .single();
 
     if (existingCode) {
+      // Construire le nom complet à partir des colonnes correctes
+      const patientName = [existingCode.patient_first_name, existingCode.patient_last_name]
+        .filter(Boolean)
+        .join(' ') || 'Patient';
+
       // Renvoyer le même code
       try {
         await supabase.functions.invoke('send-otp', {
@@ -221,7 +234,7 @@ export async function resendActivationCode(email: string): Promise<CreatePatient
             code: existingCode.code,
             type: 'patient-activation',
             practitionerEmail: user.email,
-            patientName: existingCode.patient_name
+            patientName: patientName
           }
         });
         console.log('✅ Email renvoyé');

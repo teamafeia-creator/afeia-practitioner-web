@@ -16,7 +16,7 @@ export default function NewPatientPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
-  const [age, setAge] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activationCode, setActivationCode] = useState<string | null>(null);
@@ -47,12 +47,6 @@ export default function NewPatientPage() {
       return;
     }
 
-    const parsedAge = age ? Number(age) : undefined;
-    if (parsedAge !== undefined && (Number.isNaN(parsedAge) || parsedAge < 0)) {
-      setError('Merci de renseigner un âge valide.');
-      return;
-    }
-
     setLoading(true);
     try {
       // NOUVEAU FLUX: Ne crée PAS d'entrée dans `patients`
@@ -62,7 +56,7 @@ export default function NewPatientPage() {
         email: trimmedEmail,
         name: name.trim(),
         city: city.trim() || undefined,
-        age: parsedAge !== undefined && !Number.isNaN(parsedAge) ? parsedAge : undefined
+        phone: phone.trim() || undefined
       });
 
       if (!result.success) {
@@ -137,12 +131,11 @@ export default function NewPatientPage() {
               />
             </div>
             <Input
-              label="Âge"
-              type="number"
-              min={0}
-              value={age}
-              onChange={(event) => setAge(event.target.value)}
-              placeholder="35"
+              label="Téléphone"
+              type="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              placeholder="06 12 34 56 78"
             />
 
             {error ? (
