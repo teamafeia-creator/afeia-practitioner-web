@@ -78,50 +78,71 @@ export const patientAuthService = {
         userId = authData.user?.id;
       }
 
-      // 3. Update the patient record with the user_id (use upsert logic)
+      // 3. Link the auth user to the patient via patient_memberships
       if (userId) {
-        // First try to update existing patient record
+        // Find existing patient record by email
         const { data: existingPatient, error: findError } = await supabase
           .from('patients')
-          .select('id')
+          .select('id, practitioner_id')
           .eq('email', normalizedEmail)
           .single();
 
         if (existingPatient) {
-          // Update existing patient
+          console.log('✅ Patient trouvé:', existingPatient.id);
+          console.log('   Praticien associé:', existingPatient.practitioner_id);
+
+          // Check if membership already exists
+          const { data: existingMembership } = await supabase
+            .from('patient_memberships')
+            .select('patient_id')
+            .eq('patient_id', existingPatient.id)
+            .eq('patient_user_id', userId)
+            .maybeSingle();
+
+          if (existingMembership) {
+            console.log('✅ Membership existe déjà');
+          } else {
+            // Create the membership link (patient_id -> patient_user_id)
+            const { error: membershipError } = await supabase
+              .from('patient_memberships')
+              .insert({
+                patient_id: existingPatient.id,
+                patient_user_id: userId,
+              });
+
+            if (membershipError) {
+              // Ignore duplicate key errors (membership might already exist)
+              if (!membershipError.message.includes('duplicate') &&
+                  !membershipError.message.includes('unique constraint')) {
+                console.error('❌ Erreur création membership:', membershipError);
+              } else {
+                console.log('✅ Membership existe déjà (ignoré)');
+              }
+            } else {
+              console.log('✅ Membership créé: patient', existingPatient.id, '↔ user', userId);
+            }
+          }
+
+          // Update patient activated status (if column exists)
           const { error: updateError } = await supabase
             .from('patients')
             .update({
-              user_id: userId,
               activated: true,
+              activated_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             })
-            .eq('email', normalizedEmail);
+            .eq('id', existingPatient.id);
 
           if (updateError) {
-            console.error('❌ Erreur mise à jour patient:', updateError);
+            // Columns might not exist yet - that's OK
+            console.log('⚠️ Mise à jour activated ignorée (colonne peut-être absente):', updateError.message);
           } else {
-            console.log('✅ Patient mis à jour');
+            console.log('✅ Patient marqué comme activé');
           }
         } else {
-          console.log('⚠️ Pas de patient trouvé avec cet email, création...');
-          // Insert new patient record
-          const { error: insertError } = await supabase
-            .from('patients')
-            .insert({
-              user_id: userId,
-              email: normalizedEmail,
-              activated: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-
-          if (insertError) {
-            console.error('❌ Erreur création patient:', insertError);
-            // Continue anyway - auth account is created
-          } else {
-            console.log('✅ Patient créé');
-          }
+          console.error('❌ Pas de patient trouvé avec cet email:', normalizedEmail);
+          console.log('   Le praticien doit d\'abord créer le patient dans son interface');
+          // Don't fail - the auth account is created, they can be linked later
         }
       }
 
