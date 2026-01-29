@@ -119,6 +119,36 @@ export async function POST(
     return NextResponse.json({ error: 'Impossible de générer le code.' }, { status: 500 });
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // ✅ ALSO store the code in otp_codes table for mobile app activation
+  // The mobile app's patient-auth.service.ts looks for codes in otp_codes,
+  // not in patient_questionnaire_codes. This ensures the activation flow works.
+  // ═══════════════════════════════════════════════════════════════
+  const { error: otpInsertError } = await supabase.from('otp_codes').insert({
+    email: patient.email.toLowerCase().trim(),
+    code: code, // Plain code for mobile activation
+    type: 'activation',
+    expires_at: expiresAt.toISOString()
+  });
+
+  if (otpInsertError) {
+    console.error('═══════════════════════════════════════');
+    console.error('❌ ERREUR: Impossible de stocker le code dans otp_codes');
+    console.error('Email:', patient.email);
+    console.error('Code:', code);
+    console.error('Erreur:', otpInsertError);
+    console.error('═══════════════════════════════════════');
+    // Don't fail the request - continue with email sending
+    // The practitioner web flow will still work via patient_questionnaire_codes
+  } else {
+    console.log('═══════════════════════════════════════');
+    console.log('✅ Code stocké dans otp_codes avec succès');
+    console.log('📧 Email:', patient.email.toLowerCase().trim());
+    console.log('🔑 Code:', code);
+    console.log('⏰ Expire:', expiresAt.toISOString());
+    console.log('═══════════════════════════════════════');
+  }
+
   // ✅ TOUJOURS envoyer l'email (dev + prod)
   const emailPayload = buildQuestionnaireCodeEmail({
     to: patient.email,
