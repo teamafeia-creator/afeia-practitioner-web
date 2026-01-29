@@ -126,7 +126,7 @@ export const patientAuthService = {
       // 2. Trouver le patient pending créé par le naturo
       const { data: pendingPatient } = await supabase
         .from('patients')
-        .select('id, name, first_name, last_name, phone, city, activated')
+        .select('id, full_name, first_name, last_name, phone, city, activated')
         .eq('email', normalizedEmail)
         .eq('practitioner_id', practitionerId)
         .single();
@@ -201,7 +201,7 @@ export const patientAuthService = {
       // 4. Construire le nom du patient
       const patientFirstName = pendingPatient.first_name || otpData.patient_first_name || '';
       const patientLastName = pendingPatient.last_name || otpData.patient_last_name || '';
-      const patientName = pendingPatient.name || `${patientFirstName} ${patientLastName}`.trim() || normalizedEmail.split('@')[0];
+      const patientFullName = pendingPatient.full_name || `${patientFirstName} ${patientLastName}`.trim() || normalizedEmail.split('@')[0];
       const patientCity = pendingPatient.city || otpData.patient_city || null;
       const patientPhone = pendingPatient.phone || otpData.patient_phone || null;
 
@@ -223,7 +223,7 @@ export const patientAuthService = {
           id: userId, // ✅ VRAI ID auth
           practitioner_id: practitionerId,
           email: normalizedEmail,
-          name: patientName,
+          full_name: patientFullName,
           first_name: patientFirstName,
           last_name: patientLastName,
           phone: patientPhone,
@@ -246,7 +246,7 @@ export const patientAuthService = {
             .insert({
               practitioner_id: practitionerId,
               email: normalizedEmail,
-              name: patientName,
+              full_name: patientFullName,
               first_name: patientFirstName,
               last_name: patientLastName,
               phone: patientPhone,

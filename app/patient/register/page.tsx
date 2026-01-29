@@ -61,7 +61,7 @@ function RegisterForm() {
       // 1. Trouver le patient pending créé par le naturo
       const { data: pendingPatient } = await supabase
         .from('patients')
-        .select('id, name, first_name, last_name, phone, city, activated')
+        .select('id, full_name, first_name, last_name, phone, city, activated')
         .eq('email', normalizedEmail)
         .eq('practitioner_id', practitionerId)
         .single()
@@ -123,7 +123,7 @@ function RegisterForm() {
       // 3. Construire les données du patient
       const finalFirstName = pendingPatient.first_name || patientFirstName || ''
       const finalLastName = pendingPatient.last_name || patientLastName || ''
-      const fullName = pendingPatient.name || patientName || `${finalFirstName} ${finalLastName}`.trim()
+      const fullName = pendingPatient.full_name || patientName || `${finalFirstName} ${finalLastName}`.trim()
       const finalCity = pendingPatient.city || patientCity || null
       const finalPhone = pendingPatient.phone || patientPhone || null
 
@@ -143,7 +143,7 @@ function RegisterForm() {
         id: userId, // ✅ VRAI ID auth
         practitioner_id: practitionerId,
         email: normalizedEmail,
-        name: fullName,
+        full_name: fullName,
         first_name: finalFirstName || null,
         last_name: finalLastName || null,
         phone: finalPhone,

@@ -121,7 +121,7 @@ export async function createPatientActivationCode(
         .insert({
           practitioner_id: practitionerId,
           email: normalizedEmail,
-          name: fullName,
+          full_name: fullName,
           first_name: firstName,
           last_name: lastName,
           phone: patientData.phone || null,
@@ -145,7 +145,7 @@ export async function createPatientActivationCode(
       await supabase
         .from('patients')
         .update({
-          name: fullName,
+          full_name: fullName,
           first_name: firstName,
           last_name: lastName,
           phone: patientData.phone || null,
