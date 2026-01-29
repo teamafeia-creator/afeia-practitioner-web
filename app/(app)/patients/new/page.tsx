@@ -178,7 +178,7 @@ export default function NewPatientPage() {
 
             {activationCode ? (
               <div className="rounded-xl border border-teal/30 bg-teal/10 p-3 text-sm">
-                <p className="font-semibold">Code d'activation (dev):</p>
+                <p className="font-semibold">Code d&apos;activation (dev):</p>
                 <p className="font-mono text-lg">{activationCode}</p>
                 <p className="text-xs text-warmgray mt-1">
                   Ce code sera envoyé par email au patient.
@@ -187,7 +187,7 @@ export default function NewPatientPage() {
             ) : null}
 
             <Button type="submit" loading={loading} className="w-full">
-              Envoyer le code d'activation
+              Envoyer le code d&apos;activation
             </Button>
           </form>
         </CardContent>
