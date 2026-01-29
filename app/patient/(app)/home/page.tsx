@@ -4,50 +4,53 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
-type PatientPlan = {
+type PatientData = {
   id: string
-  version: number
-  status: string
-  content: Record<string, string> | null
-  shared_at?: string | null
-  created_at?: string | null
+  name: string
+  email: string
+  is_premium?: boolean
+  practitioner_id: string
+  practitioners?: {
+    name?: string
+    full_name?: string
+    phone?: string
+    email?: string
+  }
 }
 
-const PLAN_SECTIONS: Array<{ title: string; keys: Array<{ label: string; key: string }> }> = [
-  { title: 'Objectifs', keys: [{ label: 'Objectifs', key: 'objectifs' }] },
-  {
-    title: 'Alimentation',
-    keys: [
-      { label: 'Recommandations', key: 'alimentation_recommandations' },
-      { label: 'À éviter', key: 'alimentation_eviter' },
-      { label: 'Hydratation', key: 'alimentation_hydratation' }
-    ]
-  },
-  {
-    title: 'Plantes / phytothérapie',
-    keys: [
-      { label: 'Plantes', key: 'phytotherapie_plantes' },
-      { label: 'Posologie', key: 'phytotherapie_posologie' },
-      { label: 'Précautions', key: 'phytotherapie_precautions' }
-    ]
-  },
-  { title: 'Compléments', keys: [{ label: 'Compléments', key: 'complements' }] },
-  { title: 'Sommeil', keys: [{ label: 'Sommeil', key: 'sommeil' }] },
-  { title: 'Activité / exercices', keys: [{ label: 'Activité', key: 'activite' }] },
-  {
-    title: 'Gestion du stress',
-    keys: [{ label: 'Gestion du stress / respiration / méditation', key: 'gestion_stress' }]
-  },
-  { title: 'Suivi', keys: [{ label: 'Suivi', key: 'suivi' }] },
-  { title: 'Notes libres', keys: [{ label: 'Notes', key: 'notes_libres' }] }
-]
+type Message = {
+  id: string
+  content?: string
+  body?: string
+  sender_type?: string
+  sender_role?: string
+  created_at: string
+  read?: boolean
+}
+
+type CarePlan = {
+  id: string
+  title: string
+  description?: string
+  content?: Record<string, string>
+  status: string
+  created_at: string
+}
 
 export default function PatientHomePage() {
   const router = useRouter()
-  const [patient, setPatient] = useState<any>(null)
-  const [plan, setPlan] = useState<any>(null)
-  const [sharedPlans, setSharedPlans] = useState<PatientPlan[]>([])
+  const [patient, setPatient] = useState<PatientData | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [plans, setPlans] = useState<CarePlan[]>([])
   const [loading, setLoading] = useState(true)
+  const [greeting, setGreeting] = useState('Bonjour')
+
+  useEffect(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) setGreeting('Bonjour')
+    else if (hour < 18) setGreeting('Bon après-midi')
+    else setGreeting('Bonsoir')
+  }, [])
 
   useEffect(() => {
     loadData()
@@ -55,55 +58,87 @@ export default function PatientHomePage() {
 
   const loadData = async () => {
     try {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser()
+      const { data: { user } } = await supabase.auth.getUser()
 
-      const { data: membership } = await supabase
-        .from('patient_memberships')
-        .select('patient_id')
-        .eq('patient_user_id', user!.id)
-        .maybeSingle()
-
-      let patientData = null
-      if (membership?.patient_id) {
-        const { data } = await supabase
-          .from('patients')
-          .select('*, practitioners(*)')
-          .eq('id', membership.patient_id)
-          .single()
-        patientData = data
-      } else {
-        const { data } = await supabase
-          .from('patients')
-          .select('*, practitioners(*)')
-          .eq('auth_user_id', user!.id)
-          .single()
-        patientData = data
+      if (!user) {
+        router.push('/patient/login')
+        return
       }
 
-      setPatient(patientData)
+      console.log('🔍 Chargement données patient pour:', user.id)
 
-      const { data: planData } = await supabase
-        .from('supplement_plans')
-        .select('*, supplement_items(*)')
-        .eq('patient_id', patientData.id)
-        .eq('is_active', true)
+      // Nouveau flow: chercher le patient directement par son ID (qui est le même que l'auth user ID)
+      let patientData = null
+
+      // D'abord essayer avec l'ID directement (nouveau flow)
+      const { data: directPatient } = await supabase
+        .from('patients')
+        .select('*, practitioners(name, full_name, phone, email)')
+        .eq('id', user.id)
         .maybeSingle()
 
-      setPlan(planData)
+      if (directPatient) {
+        patientData = directPatient
+      } else {
+        // Fallback: ancien système avec patient_memberships
+        const { data: membership } = await supabase
+          .from('patient_memberships')
+          .select('patient_id')
+          .eq('patient_user_id', user.id)
+          .maybeSingle()
 
-      if (patientData) {
-        const { data: sharedPlanData } = await supabase
+        if (membership?.patient_id) {
+          const { data } = await supabase
+            .from('patients')
+            .select('*, practitioners(name, full_name, phone, email)')
+            .eq('id', membership.patient_id)
+            .single()
+          patientData = data
+        }
+      }
+
+      if (!patientData) {
+        console.error('Patient non trouvé')
+        setLoading(false)
+        return
+      }
+
+      console.log('✅ Patient trouvé:', patientData.name)
+      setPatient(patientData)
+
+      // Charger les messages
+      const { data: messagesData } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('patient_id', patientData.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      setMessages(messagesData || [])
+
+      // Charger les plans (essayer les deux tables)
+      const { data: carePlans } = await supabase
+        .from('care_plans')
+        .select('*')
+        .eq('patient_id', patientData.id)
+        .order('created_at', { ascending: false })
+        .limit(3)
+
+      if (carePlans && carePlans.length > 0) {
+        setPlans(carePlans)
+      } else {
+        // Fallback vers patient_plans
+        const { data: patientPlans } = await supabase
           .from('patient_plans')
           .select('*')
           .eq('patient_id', patientData.id)
-          .eq('status', 'shared')
-          .order('version', { ascending: false })
-        setSharedPlans((sharedPlanData ?? []) as PatientPlan[])
+          .order('created_at', { ascending: false })
+          .limit(3)
+        setPlans(patientPlans || [])
       }
+
     } catch (err) {
-      console.error(err)
+      console.error('Erreur chargement:', err)
     } finally {
       setLoading(false)
     }
@@ -114,120 +149,214 @@ export default function PatientHomePage() {
     router.push('/patient/login')
   }
 
-  if (loading) return <div className="p-8">Chargement...</div>
+  const unreadMessages = messages.filter(m =>
+    (m.sender_type === 'practitioner' || m.sender_role === 'practitioner') && !m.read
+  ).length
 
-  const latestSharedPlan = sharedPlans[0]
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F8F9FB] to-[#EDF2F7] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#6B8DC9] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#718096]">Chargement de votre espace...</p>
+        </div>
+      </div>
+    )
+  }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-blue-600 text-white p-6">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">
-              Bonjour {patient?.full_name?.split(' ')[0]} 👋
-            </h1>
-            {patient?.is_premium && (
-              <span className="inline-block bg-yellow-400 text-yellow-900 text-xs px-2 py-1 rounded-full mt-2">
-                ✨ Premium
-              </span>
-            )}
+  if (!patient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F8F9FB] to-[#EDF2F7] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-xl p-8 text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">😔</span>
           </div>
-          <button onClick={handleLogout} className="text-sm underline">
-            Déconnexion
+          <h1 className="text-xl font-bold text-[#2D3748] mb-2">Compte non trouvé</h1>
+          <p className="text-[#718096] mb-4">
+            Votre profil patient n&apos;a pas été trouvé. Veuillez contacter votre naturopathe.
+          </p>
+          <button
+            onClick={handleLogout}
+            className="text-[#6B8DC9] hover:underline"
+          >
+            Retour à la connexion
           </button>
         </div>
       </div>
+    )
+  }
 
-      <div className="max-w-4xl mx-auto p-6 space-y-4">
-        {plan && (
-          <div className="bg-white rounded-xl p-6 shadow">
-            <h2 className="text-xl font-bold mb-2">💊 Mon plan de compléments</h2>
-            <p className="text-gray-600 mb-4">{plan.plan_name}</p>
+  const practitionerName = patient.practitioners?.name || patient.practitioners?.full_name || 'Votre naturopathe'
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#F8F9FB] to-[#EDF2F7]">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#6B8DC9] to-[#9B8DC9] text-white px-6 py-8 rounded-b-3xl">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-white/80 text-sm">{greeting}</p>
+              <h1 className="text-2xl font-bold mt-1">
+                {patient.name?.split(' ')[0] || 'Patient'}
+              </h1>
+              {patient.is_premium && (
+                <span className="inline-flex items-center gap-1 bg-white/20 text-white text-xs px-3 py-1 rounded-full mt-2">
+                  ✨ Premium
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-white/80 hover:text-white"
+            >
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 -mt-4">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => router.push('/patient/messages')}
+            className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all text-left relative"
+          >
+            <div className="w-10 h-10 bg-[#6B8DC9]/10 rounded-xl flex items-center justify-center mb-2">
+              <span className="text-xl">💬</span>
+            </div>
+            <p className="font-medium text-[#2D3748]">Messages</p>
+            <p className="text-xs text-[#718096]">
+              {unreadMessages > 0 ? `${unreadMessages} non lu(s)` : 'Discuter'}
+            </p>
+            {unreadMessages > 0 && (
+              <div className="absolute top-3 right-3 w-5 h-5 bg-[#E07A7A] text-white text-xs rounded-full flex items-center justify-center">
+                {unreadMessages}
+              </div>
+            )}
+          </button>
+
+          <button
+            onClick={() => router.push('/patient/journal')}
+            className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all text-left"
+          >
+            <div className="w-10 h-10 bg-[#9B8DC9]/10 rounded-xl flex items-center justify-center mb-2">
+              <span className="text-xl">📔</span>
+            </div>
+            <p className="font-medium text-[#2D3748]">Journal</p>
+            <p className="text-xs text-[#718096]">Mes humeurs</p>
+          </button>
+        </div>
+
+        {/* Naturopath Card */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-[#7BA591] to-[#6B8DC9] rounded-2xl flex items-center justify-center">
+              <span className="text-2xl">🌿</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-[#718096] uppercase tracking-wide">Mon naturopathe</p>
+              <p className="font-semibold text-[#2D3748]">{practitionerName}</p>
+              {patient.practitioners?.phone && (
+                <p className="text-sm text-[#718096]">{patient.practitioners.phone}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Plans Section */}
+        {plans.length > 0 && (
+          <div className="bg-white rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-[#2D3748]">Mes plans de santé</h2>
+              <span className="text-xs text-[#718096] bg-[#F7FAFC] px-2 py-1 rounded-full">
+                {plans.length} plan(s)
+              </span>
+            </div>
             <div className="space-y-3">
-              {plan.supplement_items?.map((item: any) => (
-                <div key={item.id} className="border-l-4 border-blue-500 pl-4">
-                  <h3 className="font-semibold">{item.name}</h3>
-                  <p className="text-sm text-gray-600">
-                    {item.dosage} • {item.frequency}
-                  </p>
-                  {item.timing && (
-                    <p className="text-xs text-gray-500">{item.timing}</p>
-                  )}
+              {plans.slice(0, 2).map((plan) => (
+                <div
+                  key={plan.id}
+                  className="border border-[#E2E8F0] rounded-xl p-4 hover:border-[#6B8DC9] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium text-[#2D3748]">{plan.title || 'Plan de suivi'}</p>
+                      {plan.description && (
+                        <p className="text-sm text-[#718096] mt-1 line-clamp-2">{plan.description}</p>
+                      )}
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      plan.status === 'sent' || plan.status === 'shared'
+                        ? 'bg-green-50 text-green-600'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {plan.status === 'sent' || plan.status === 'shared' ? 'Nouveau' : plan.status}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {latestSharedPlan && (
-          <div className="bg-white rounded-xl p-6 shadow">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-bold">🌿 Plan de naturopathie</h2>
-                <p className="text-sm text-gray-600">
-                  Version v{latestSharedPlan.version}
-                </p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-green-50 text-green-700 text-xs px-2 py-1">
-                Partagé
-              </span>
+        {/* Recent Messages */}
+        {messages.length > 0 && (
+          <div className="bg-white rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-[#2D3748]">Derniers messages</h2>
+              <button
+                onClick={() => router.push('/patient/messages')}
+                className="text-sm text-[#6B8DC9] hover:underline"
+              >
+                Voir tout
+              </button>
             </div>
-            <div className="mt-4 space-y-4">
-              {PLAN_SECTIONS.map((section) => {
-                const values = section.keys
-                  .map((field) => {
-                    const value = latestSharedPlan.content?.[field.key]?.trim()
-                    if (!value) return null
-                    return (
-                      <div key={field.key}>
-                        <p className="text-xs uppercase tracking-wide text-gray-500">{field.label}</p>
-                        <p className="text-sm text-gray-700 whitespace-pre-line">{value}</p>
-                      </div>
-                    )
-                  })
-                  .filter(Boolean)
-
-                if (values.length === 0) return null
-
+            <div className="space-y-3">
+              {messages.slice(0, 3).map((msg) => {
+                const isPractitioner = msg.sender_type === 'practitioner' || msg.sender_role === 'practitioner'
                 return (
-                  <div key={section.title} className="space-y-2">
-                    <h3 className="text-sm font-semibold text-gray-800">{section.title}</h3>
-                    <div className="space-y-3">{values}</div>
+                  <div
+                    key={msg.id}
+                    className="flex items-start gap-3"
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                      isPractitioner
+                        ? 'bg-[#7BA591]/10 text-[#7BA591]'
+                        : 'bg-[#6B8DC9]/10 text-[#6B8DC9]'
+                    }`}>
+                      {isPractitioner ? '🌿' : '👤'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-[#718096]">
+                        {isPractitioner ? practitionerName : 'Vous'}
+                      </p>
+                      <p className="text-sm text-[#2D3748] truncate">
+                        {msg.content || msg.body || 'Message'}
+                      </p>
+                    </div>
                   </div>
                 )
               })}
             </div>
-            {sharedPlans.length > 1 && (
-              <p className="mt-4 text-xs text-gray-500">
-                {sharedPlans.length} versions partagées disponibles.
-              </p>
-            )}
           </div>
         )}
 
-        <div className="bg-white rounded-xl p-6 shadow">
-          <h2 className="text-xl font-bold mb-4">👨‍⚕️ Mon naturopathe</h2>
-          <p className="font-semibold">{patient?.practitioners?.full_name}</p>
-          {patient?.practitioners?.phone && (
-            <p className="text-sm text-gray-600">{patient.practitioners.phone}</p>
-          )}
-          <button
-            onClick={() => router.push('/patient/messages')}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Envoyer un message
-          </button>
-        </div>
+        {/* Empty State */}
+        {messages.length === 0 && plans.length === 0 && (
+          <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
+            <div className="w-16 h-16 bg-[#6B8DC9]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">🌱</span>
+            </div>
+            <h2 className="font-semibold text-[#2D3748] mb-2">Bienvenue !</h2>
+            <p className="text-sm text-[#718096]">
+              Votre espace est prêt. Votre naturopathe va bientôt partager vos premiers conseils.
+            </p>
+          </div>
+        )}
 
-        <button
-          onClick={() => router.push('/patient/daily-log')}
-          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white p-6 rounded-xl shadow text-left"
-        >
-          <h2 className="text-xl font-bold mb-2">📝 Mon journal quotidien</h2>
-          <p className="text-white/90">
-            Partagez vos ressentis avec votre naturopathe
-          </p>
-        </button>
+        {/* Bottom Spacer */}
+        <div className="h-4" />
       </div>
     </div>
   )
