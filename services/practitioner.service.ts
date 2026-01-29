@@ -99,7 +99,7 @@ export async function createPatientActivationCode(
     console.log('🔐 Code généré:', code);
 
     // 5. Stocker le code OTP avec les infos du patient
-    // Colonnes correctes de otp_codes: patient_first_name, patient_last_name, patient_phone_number, patient_city
+    // Colonnes correctes de otp_codes: patient_first_name, patient_last_name, patient_phone, patient_city
     const firstName = patientData.firstName || patientData.name?.split(' ')[0] || '';
     const lastName = patientData.lastName || patientData.name?.split(' ').slice(1).join(' ') || '';
 
@@ -109,7 +109,7 @@ export async function createPatientActivationCode(
       practitioner_id: practitionerId,
       patient_first_name: firstName,
       patient_last_name: lastName,
-      patient_phone_number: patientData.phone || null,
+      patient_phone: patientData.phone || null,
       patient_city: patientData.city || null,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 jours
       used: false
