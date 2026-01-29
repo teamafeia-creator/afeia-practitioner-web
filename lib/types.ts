@@ -45,9 +45,52 @@ export type Anamnese = {
 export type PatientAnamnesis = {
   id: string;
   patient_id: string;
-  answers?: Record<string, string> | null;
+  naturopath_id?: string | null;
+  answers?: Record<string, Record<string, string>> | null;
+  version?: number;
+  source?: 'manual' | 'preliminary_questionnaire' | 'mobile_app';
+  preliminary_questionnaire_id?: string | null;
   created_at: string;
   updated_at: string;
+};
+
+// Preliminary questionnaire submitted publicly
+export type PreliminaryQuestionnaire = {
+  id: string;
+  naturopath_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string | null;
+  responses: Record<string, Record<string, string>>;
+  status: 'pending' | 'linked_to_patient' | 'archived';
+  linked_patient_id?: string | null;
+  linked_at?: string | null;
+  submitted_from_ip?: string | null;
+  user_agent?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// Anamnesis change history
+export type AnamnesisHistory = {
+  id: string;
+  anamnesis_id: string;
+  patient_id: string;
+  modified_section: string;
+  old_value?: Record<string, string> | null;
+  new_value?: Record<string, string> | null;
+  full_snapshot?: Record<string, Record<string, string>> | null;
+  version: number;
+  modified_by_type: 'patient' | 'practitioner' | 'system';
+  modified_by_id?: string | null;
+  modified_at: string;
+};
+
+// Public practitioner info for questionnaire dropdown
+export type PublicPractitioner = {
+  id: string;
+  full_name: string;
 };
 
 export type Consultation = {
@@ -150,14 +193,39 @@ export type WearableInsight = {
   created_at: string;
 };
 
+export type NotificationType =
+  | 'general'
+  | 'anamnesis_modified'
+  | 'new_preliminary_questionnaire'
+  | 'questionnaire_linked'
+  | 'message'
+  | 'appointment';
+
+export type NotificationMetadata = {
+  questionnaire_id?: string;
+  patient_name?: string;
+  patient_id?: string;
+  modified_sections?: string[];
+  version?: number;
+  modified_at?: string;
+  linked_at?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  submitted_at?: string;
+  [key: string]: unknown;
+};
+
 export type Notification = {
   id: string;
   practitioner_id: string;
-  patient_id: string;
+  patient_id?: string | null;
+  type?: NotificationType;
   title: string;
   description?: string;
   level: 'info' | 'attention';
   read: boolean;
+  metadata?: NotificationMetadata | null;
   created_at: string;
 };
 
@@ -189,6 +257,11 @@ export type PatientWithUnreadCounts = Patient & {
   unreadMessages: number;
   unreadNotifications: number;
   lastConsultationAt: string | null;
+};
+
+// Preliminary questionnaire with linked patient details
+export type PreliminaryQuestionnaireWithPatient = PreliminaryQuestionnaire & {
+  linked_patient?: Patient | null;
 };
 
 // Types enrichis (avec relations)

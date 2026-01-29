@@ -15,6 +15,8 @@ type Screen = 'welcome' | 'otp' | 'register' | 'anamnese' | 'dashboard' | 'journ
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
   const [otpData, setOtpData] = useState<any>(null);
+  // Track if user has anamnesis (used for optional access from profile)
+  const [hasAnamnesis, setHasAnamnesis] = useState(false);
 
   const handleNavigate = (screen: string) => {
     setCurrentScreen(screen as Screen);
@@ -22,7 +24,16 @@ export default function App() {
 
   const handleLogout = () => {
     setOtpData(null);
+    setHasAnamnesis(false);
     setCurrentScreen('welcome');
+  };
+
+  // Handle registration success - anamnesis is now OPTIONAL
+  // User goes directly to dashboard and can fill anamnesis later from profile
+  const handleRegistrationSuccess = (needsAnamnese: boolean) => {
+    setHasAnamnesis(!needsAnamnese);
+    // Go directly to dashboard - anamnesis is no longer mandatory
+    setCurrentScreen('dashboard');
   };
 
   return (
@@ -41,11 +52,17 @@ export default function App() {
       {currentScreen === 'register' && (
         <RegisterScreen
           otpData={otpData}
-          onSuccess={() => setCurrentScreen('anamnese')}
+          onSuccess={handleRegistrationSuccess}
         />
       )}
       {currentScreen === 'anamnese' && (
-        <AnamneseScreen onComplete={() => setCurrentScreen('dashboard')} />
+        <AnamneseScreen
+          onComplete={() => {
+            setHasAnamnesis(true);
+            setCurrentScreen('dashboard');
+          }}
+          onSkip={() => setCurrentScreen('dashboard')}
+        />
       )}
       {currentScreen === 'dashboard' && (
         <DashboardScreen onNavigate={handleNavigate} />
@@ -60,6 +77,8 @@ export default function App() {
         <ProfileScreen
           onBack={() => setCurrentScreen('dashboard')}
           onLogout={handleLogout}
+          onEditAnamnese={() => setCurrentScreen('anamnese')}
+          hasAnamnesis={hasAnamnesis}
         />
       )}
     </SafeAreaView>

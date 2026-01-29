@@ -213,9 +213,10 @@ const SECTIONS: Section[] = [
 
 interface AnamneseScreenProps {
   onComplete: () => void;
+  onSkip?: () => void;
 }
 
-export default function AnamneseScreen({ onComplete }: AnamneseScreenProps) {
+export default function AnamneseScreen({ onComplete, onSkip }: AnamneseScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
@@ -450,9 +451,16 @@ export default function AnamneseScreen({ onComplete }: AnamneseScreenProps) {
     >
       {/* Header avec progression */}
       <View style={styles.header}>
-        <Text style={styles.stepIndicator}>
-          {currentStep + 1} / {totalSteps}
-        </Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.stepIndicator}>
+            {currentStep + 1} / {totalSteps}
+          </Text>
+          {onSkip && (
+            <TouchableOpacity onPress={onSkip} style={styles.skipButton}>
+              <Text style={styles.skipButtonText}>Compléter plus tard</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
@@ -522,12 +530,25 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     paddingBottom: 10,
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   stepIndicator: {
     fontSize: 14,
     color: Colors.teal,
     fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 8,
+  },
+  skipButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+  },
+  skipButtonText: {
+    fontSize: 13,
+    color: Colors.grisChaud,
+    textDecorationLine: 'underline',
   },
   progressBar: {
     height: 6,
