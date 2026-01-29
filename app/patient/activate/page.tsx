@@ -50,52 +50,88 @@ export default function ActivatePage() {
     setError('')
 
     try {
-      console.log('🔍 Recherche du code:', codeString)
+      console.log('═══════════════════════════════════════')
+      console.log('🔍 VÉRIFICATION CODE ACTIVATION')
+      console.log('Code:', codeString)
 
-      // Chercher dans otp_codes (nouveau système)
+      // 1. Chercher dans otp_codes (nouveau système simplifié)
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
         .eq('code', codeString)
         .eq('used', false)
+        .eq('type', 'activation')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
 
       if (otpError) {
-        console.error('Erreur recherche OTP:', otpError)
+        console.error('❌ Erreur recherche OTP:', otpError)
         setError('Erreur lors de la vérification')
         return
       }
 
       if (!otpData) {
+        console.error('❌ Code non trouvé ou expiré')
         setError('Code invalide ou expiré')
         return
       }
 
-      console.log('✅ Code trouvé:', otpData.email)
+      console.log('✅ Code OTP trouvé')
+      console.log('   Email:', otpData.email)
+      console.log('   OTP ID:', otpData.id)
 
-      // Construire le nom complet à partir de first_name et last_name
-      const fullName = [otpData.patient_first_name, otpData.patient_last_name]
-        .filter(Boolean)
-        .join(' ')
+      const email = otpData.email
 
-      // Rediriger vers la page de création de mot de passe
+      // 2. Chercher l'invitation correspondante
+      const { data: invitation, error: invitError } = await supabase
+        .from('patient_invitations')
+        .select('*')
+        .eq('email', email)
+        .eq('status', 'pending')
+        .order('invited_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (invitError) {
+        console.error('❌ Erreur recherche invitation:', invitError)
+        setError('Erreur lors de la vérification')
+        return
+      }
+
+      if (!invitation) {
+        console.error('❌ Invitation non trouvée')
+        setError('Invitation non trouvée. Contactez votre naturopathe.')
+        return
+      }
+
+      console.log('✅ Invitation trouvée')
+      console.log('   Praticien ID:', invitation.practitioner_id)
+      console.log('   Nom:', invitation.full_name)
+
+      // 3. Rediriger vers la page de création de mot de passe
       const params = new URLSearchParams({
-        email: otpData.email,
-        name: fullName,
-        first_name: otpData.patient_first_name || '',
-        last_name: otpData.patient_last_name || '',
-        practitioner_id: otpData.practitioner_id || '',
+        email: email,
+        name: invitation.full_name || '',
+        first_name: invitation.first_name || '',
+        last_name: invitation.last_name || '',
+        practitioner_id: invitation.practitioner_id,
         otp_id: otpData.id,
-        city: otpData.patient_city || '',
-        phone: otpData.patient_phone || ''
+        invitation_id: invitation.id,
+        city: invitation.city || '',
+        phone: invitation.phone || '',
+        age: invitation.age?.toString() || '',
+        date_of_birth: invitation.date_of_birth || ''
       })
+
+      console.log('═══════════════════════════════════════')
+      console.log('✅ CODE VALIDE - REDIRECTION')
+      console.log('═══════════════════════════════════════')
 
       router.push(`/patient/register?${params.toString()}`)
     } catch (err) {
-      console.error('Erreur:', err)
+      console.error('❌ Exception:', err)
       setError('Erreur de vérification')
     } finally {
       setLoading(false)

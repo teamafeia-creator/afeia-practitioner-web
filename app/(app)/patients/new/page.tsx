@@ -7,7 +7,7 @@ import { Button } from '../../../../components/ui/Button';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/Card';
 import { Input } from '../../../../components/ui/Input';
 import { Toast } from '../../../../components/ui/Toast';
-import { createPatientActivationCode } from '../../../../services/practitioner.service';
+import { invitationService } from '../../../../services/invitation.service';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -49,10 +49,9 @@ export default function NewPatientPage() {
 
     setLoading(true);
     try {
-      // NOUVEAU FLUX: Ne crée PAS d'entrée dans `patients`
-      // Stocke les infos dans otp_codes et envoie le code d'activation
-      // L'entrée `patients` sera créée lors de l'activation par le patient
-      const result = await createPatientActivationCode({
+      // NOUVEAU FLUX: Crée une invitation dans `patient_invitations`
+      // Le patient sera créé dans `patients` lors de l'activation
+      const result = await invitationService.createInvitation({
         email: trimmedEmail,
         name: name.trim(),
         city: city.trim() || undefined,

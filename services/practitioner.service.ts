@@ -310,3 +310,98 @@ export async function resendActivationCode(email: string): Promise<CreatePatient
     return { success: false, error: String(err) };
   }
 }
+
+/**
+ * Récupérer patients + invitations du praticien connecté
+ *
+ * Retourne:
+ * - patients: Patients activés (ont complété leur inscription)
+ * - invitations: Invitations en attente (pas encore activées)
+ */
+export async function getMyPatientsAndInvitations(): Promise<{
+  success: boolean;
+  patients?: Array<{
+    id: string;
+    practitioner_id: string;
+    email: string;
+    full_name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone?: string | null;
+    city?: string | null;
+    age?: number | null;
+    activated: boolean;
+    activated_at?: string | null;
+    created_at: string;
+  }>;
+  invitations?: Array<{
+    id: string;
+    practitioner_id: string;
+    email: string;
+    full_name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    phone?: string | null;
+    city?: string | null;
+    invitation_code: string;
+    status: 'pending' | 'accepted' | 'cancelled';
+    invited_at: string;
+  }>;
+  error?: string;
+}> {
+  try {
+    console.log('═══════════════════════════════════════');
+    console.log('📋 RÉCUPÉRATION PATIENTS + INVITATIONS');
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('❌ Non authentifié');
+      throw new Error('Non authentifié');
+    }
+
+    console.log('✅ Praticien ID:', user.id);
+
+    // Récupérer les patients activés
+    const { data: patients, error: patientsError } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('practitioner_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (patientsError) {
+      console.error('❌ Erreur récupération patients:', patientsError);
+      throw patientsError;
+    }
+
+    // Récupérer les invitations en attente
+    const { data: invitations, error: invitationsError } = await supabase
+      .from('patient_invitations')
+      .select('*')
+      .eq('practitioner_id', user.id)
+      .eq('status', 'pending')
+      .order('invited_at', { ascending: false });
+
+    if (invitationsError) {
+      console.error('❌ Erreur récupération invitations:', invitationsError);
+      throw invitationsError;
+    }
+
+    console.log('═══════════════════════════════════════');
+    console.log(`✅ ${patients?.length || 0} patients actifs`);
+    console.log(`✅ ${invitations?.length || 0} invitations en attente`);
+    console.log('═══════════════════════════════════════');
+
+    return {
+      success: true,
+      patients: patients || [],
+      invitations: invitations || []
+    };
+
+  } catch (err) {
+    console.error('❌ Exception getMyPatientsAndInvitations:', err);
+    return {
+      success: false,
+      error: String(err)
+    };
+  }
+}
