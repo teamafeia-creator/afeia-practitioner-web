@@ -63,7 +63,14 @@ export const patientAuthService = {
   },
 
   /**
-   * Verify OTP code and create patient account (legacy method with email)
+   * Verify OTP code and create patient account
+   *
+   * NOUVEAU FLUX (correction duplication):
+   * 1. Le naturopathe crée un code OTP avec les infos patient stockées dans otp_codes
+   * 2. Aucune entrée n'est créée dans `patients` par le naturopathe
+   * 3. Lors de l'activation, on crée l'entrée `patients` avec les infos du code OTP
+   *
+   * Cela évite le conflit "Patient existe déjà"
    */
   async activateAccount(
     email: string,
@@ -72,15 +79,18 @@ export const patientAuthService = {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const normalizedEmail = email.toLowerCase().trim();
-      console.log(`🔐 Activation compte pour ${normalizedEmail} avec code ${code}`);
+      console.log('═══════════════════════════════════════');
+      console.log('🔐 ACTIVATION COMPTE PATIENT');
+      console.log('Email:', normalizedEmail);
+      console.log('Code:', code);
 
-      // 1. Verify that the code exists and is valid
-      // ✅ Now also retrieve practitioner_id and patient_id for proper linking
+      // 1. Chercher le code dans otp_codes
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
-        .select('*, practitioner_id, patient_id')
+        .select('*')
         .eq('email', normalizedEmail)
         .eq('code', code)
+        .eq('used', false)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
@@ -94,17 +104,53 @@ export const patientAuthService = {
         };
       }
 
-      console.log('✅ Code valide trouvé');
-      console.log('   Praticien ID (from OTP):', otpData.practitioner_id || 'non défini');
-      console.log('   Patient ID (from OTP):', otpData.patient_id || 'non défini');
+      console.log('✅ Code trouvé!');
+      console.log('   Praticien ID:', otpData.practitioner_id || 'non défini');
+      console.log('   Patient prénom:', otpData.patient_first_name || 'non défini');
+      console.log('   Patient nom:', otpData.patient_last_name || 'non défini');
 
-      // 2. Try to create Supabase Auth account
+      const practitionerId = otpData.practitioner_id;
+
+      if (!practitionerId) {
+        console.error('❌ Pas de practitioner_id dans le code OTP');
+        return {
+          success: false,
+          error: 'Code invalide. Contactez votre praticien.',
+        };
+      }
+
+      // 2. Vérifier si un patient existe déjà avec cet email
+      const { data: existingPatient } = await supabase
+        .from('patients')
+        .select('id, activated')
+        .eq('email', normalizedEmail)
+        .single();
+
+      if (existingPatient) {
+        if (existingPatient.activated) {
+          console.log('⚠️ Patient déjà activé');
+          return {
+            success: false,
+            error: 'Ce compte est déjà activé. Utilisez "Se connecter".',
+          };
+        } else {
+          // Supprimer l'ancien patient non activé pour éviter les conflits
+          console.log('⚠️ Suppression du patient non-activé existant:', existingPatient.id);
+          await supabase
+            .from('patients')
+            .delete()
+            .eq('id', existingPatient.id);
+        }
+      }
+
+      // 3. Créer le compte Auth Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
         options: {
           data: {
             role: 'patient',
+            practitioner_id: practitionerId,
             email_verified: true,
           },
         },
@@ -113,11 +159,11 @@ export const patientAuthService = {
       let userId: string | undefined;
 
       if (authError) {
-        console.error('❌ Erreur création compte:', authError);
+        console.error('❌ Erreur création compte auth:', authError);
 
-        // Handle "user already exists" error - try to sign in instead
+        // Gérer le cas "utilisateur existe déjà"
         if (authError.message.includes('already registered')) {
-          console.log('🔄 Compte existe déjà, tentative de connexion...');
+          console.log('🔄 Compte auth existe déjà, tentative de connexion...');
 
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: normalizedEmail,
@@ -128,7 +174,7 @@ export const patientAuthService = {
             console.error('❌ Connexion échouée:', signInError);
             return {
               success: false,
-              error: 'Un compte existe déjà. Utilisez "Se connecter" ou un mot de passe différent.',
+              error: 'Un compte existe déjà avec un mot de passe différent. Utilisez "Se connecter".',
             };
           }
 
@@ -138,145 +184,113 @@ export const patientAuthService = {
           return { success: false, error: authError.message };
         }
       } else {
-        console.log('✅ Compte créé:', authData.user?.id);
+        console.log('✅ Compte auth créé:', authData.user?.id);
         userId = authData.user?.id;
       }
 
-      // 3. Link the auth user to the patient via patient_memberships
-      if (userId) {
-        let patientId: string | null = null;
-        let practitionerId: string | null = otpData.practitioner_id || null;
+      if (!userId) {
+        return { success: false, error: 'Erreur lors de la création du compte.' };
+      }
 
-        // ✅ PRIORITY 1: Use patient_id from OTP if available (most reliable)
-        if (otpData.patient_id) {
-          console.log('✅ Utilisation du patient_id de l\'OTP:', otpData.patient_id);
-          patientId = otpData.patient_id;
+      // 4. Construire le nom du patient à partir des infos OTP
+      let patientName = '';
+      if (otpData.patient_first_name && otpData.patient_last_name) {
+        patientName = `${otpData.patient_first_name} ${otpData.patient_last_name}`;
+      } else if (otpData.patient_first_name) {
+        patientName = otpData.patient_first_name;
+      } else if (otpData.patient_last_name) {
+        patientName = otpData.patient_last_name;
+      } else {
+        // Fallback: utiliser la partie avant @ de l'email
+        patientName = normalizedEmail.split('@')[0];
+      }
 
-          // Verify the patient exists
-          const { data: patientCheck } = await supabase
-            .from('patients')
-            .select('id, practitioner_id')
-            .eq('id', otpData.patient_id)
-            .single();
+      // 5. Créer l'entrée patient avec les infos du code OTP
+      console.log('📝 Création du patient avec les infos du code OTP...');
 
-          if (patientCheck) {
-            practitionerId = patientCheck.practitioner_id;
-            console.log('✅ Patient vérifié, praticien:', practitionerId);
-          }
-        }
+      const { data: newPatient, error: patientError } = await supabase
+        .from('patients')
+        .insert({
+          id: userId, // Utiliser l'ID auth comme ID patient
+          practitioner_id: practitionerId,
+          email: normalizedEmail,
+          name: patientName,
+          first_name: otpData.patient_first_name || null,
+          last_name: otpData.patient_last_name || null,
+          phone: otpData.patient_phone_number || null,
+          date_of_birth: otpData.patient_date_of_birth || null,
+          city: otpData.patient_city || null,
+          status: otpData.patient_is_premium ? 'premium' : 'standard',
+          is_premium: otpData.patient_is_premium || false,
+          circular_enabled: otpData.patient_circular_enabled || false,
+          activated: true,
+          activated_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
 
-        // ✅ PRIORITY 2: Find patient by email if not found via OTP
-        if (!patientId) {
-          const { data: existingPatient } = await supabase
-            .from('patients')
-            .select('id, practitioner_id')
-            .eq('email', normalizedEmail)
-            .single();
+      if (patientError) {
+        console.error('❌ Erreur création patient:', patientError);
 
-          if (existingPatient) {
-            patientId = existingPatient.id;
-            practitionerId = existingPatient.practitioner_id;
-            console.log('✅ Patient trouvé par email:', patientId);
-            console.log('   Praticien associé:', practitionerId);
-          }
-        }
+        // Si l'erreur est due à un ID dupliqué, essayer sans spécifier l'ID
+        if (patientError.message.includes('duplicate') || patientError.message.includes('unique')) {
+          console.log('⚠️ Tentative de création sans ID spécifique...');
 
-        // ✅ PRIORITY 3: Create patient if we have practitioner_id from OTP
-        if (!patientId && practitionerId) {
-          console.log('⚠️ Patient non trouvé, création avec practitioner_id:', practitionerId);
-
-          const { data: newPatient, error: createError } = await supabase
+          const { data: newPatient2, error: patientError2 } = await supabase
             .from('patients')
             .insert({
               practitioner_id: practitionerId,
               email: normalizedEmail,
-              name: normalizedEmail.split('@')[0], // Default name from email
+              name: patientName,
+              first_name: otpData.patient_first_name || null,
+              last_name: otpData.patient_last_name || null,
+              phone: otpData.patient_phone_number || null,
+              date_of_birth: otpData.patient_date_of_birth || null,
+              city: otpData.patient_city || null,
+              status: otpData.patient_is_premium ? 'premium' : 'standard',
+              is_premium: otpData.patient_is_premium || false,
+              circular_enabled: otpData.patient_circular_enabled || false,
               activated: true,
               activated_at: new Date().toISOString(),
-              status: 'standard',
             })
             .select('id')
             .single();
 
-          if (createError) {
-            console.error('❌ Erreur création patient:', createError);
-          } else if (newPatient) {
-            patientId = newPatient.id;
-            console.log('✅ Patient créé:', patientId);
-          }
-        }
-
-        // ✅ Create membership if we have a patient
-        if (patientId) {
-          // Check if membership already exists
-          const { data: existingMembership } = await supabase
-            .from('patient_memberships')
-            .select('patient_id')
-            .eq('patient_id', patientId)
-            .eq('patient_user_id', userId)
-            .maybeSingle();
-
-          if (existingMembership) {
-            console.log('✅ Membership existe déjà');
-          } else {
-            // Create the membership link (patient_id -> patient_user_id)
-            const { error: membershipError } = await supabase
-              .from('patient_memberships')
-              .insert({
-                patient_id: patientId,
-                patient_user_id: userId,
-              });
-
-            if (membershipError) {
-              // Ignore duplicate key errors (membership might already exist)
-              if (!membershipError.message.includes('duplicate') &&
-                  !membershipError.message.includes('unique constraint')) {
-                console.error('❌ Erreur création membership:', membershipError);
-              } else {
-                console.log('✅ Membership existe déjà (ignoré)');
-              }
-            } else {
-              console.log('✅ Membership créé: patient', patientId, '↔ user', userId);
-            }
+          if (patientError2) {
+            console.error('❌ Erreur création patient (2ème tentative):', patientError2);
+            return { success: false, error: patientError2.message };
           }
 
-          // Update patient activated status (if column exists)
-          const { error: updateError } = await supabase
-            .from('patients')
-            .update({
-              activated: true,
-              activated_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', patientId);
+          if (newPatient2) {
+            console.log('✅ Patient créé (sans ID spécifique):', newPatient2.id);
 
-          if (updateError) {
-            // Columns might not exist yet - that's OK
-            console.log('⚠️ Mise à jour activated ignorée:', updateError.message);
-          } else {
-            console.log('✅ Patient marqué comme activé');
+            // Créer le membership
+            await this.createPatientMembership(newPatient2.id, userId);
           }
         } else {
-          console.error('═══════════════════════════════════════');
-          console.error('❌ ERREUR: Impossible de lier le patient');
-          console.error('   Email:', normalizedEmail);
-          console.error('   Practitioner ID from OTP:', otpData.practitioner_id || 'MANQUANT');
-          console.error('   Patient ID from OTP:', otpData.patient_id || 'MANQUANT');
-          console.error('   Le praticien doit d\'abord créer le patient dans son interface');
-          console.error('═══════════════════════════════════════');
-          // Don't fail - the auth account is created, they can be linked later
+          return { success: false, error: patientError.message };
+        }
+      } else if (newPatient) {
+        console.log('✅ Patient créé:', newPatient.id);
+
+        // Créer le membership si l'ID patient est différent de l'ID auth
+        if (newPatient.id !== userId) {
+          await this.createPatientMembership(newPatient.id, userId);
         }
       }
 
-      // 4. Delete the used OTP code
+      // 6. Marquer le code comme utilisé
       await supabase
         .from('otp_codes')
-        .delete()
+        .update({
+          used: true,
+          used_at: new Date().toISOString(),
+        })
         .eq('id', otpData.id);
 
-      console.log('✅ Code OTP supprimé');
+      console.log('✅ Code OTP marqué comme utilisé');
 
-      // 5. Sign in the user automatically (if not already signed in)
+      // 7. Connecter automatiquement l'utilisateur
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -285,16 +299,61 @@ export const patientAuthService = {
         });
 
         if (signInError) {
-          console.error('❌ Erreur connexion automatique:', signInError);
-          // Account was created, user can login manually
+          console.error('⚠️ Erreur connexion automatique:', signInError);
+          // Le compte est créé, l'utilisateur peut se connecter manuellement
         }
       }
 
-      console.log('✅ Compte activé avec succès!');
+      console.log('═══════════════════════════════════════');
+      console.log('✅ ACTIVATION RÉUSSIE');
+      console.log('Patient créé et lié au praticien:', practitionerId);
+      console.log('═══════════════════════════════════════');
+
       return { success: true };
     } catch (err) {
       console.error('❌ Exception activateAccount:', err);
       return { success: false, error: String(err) };
+    }
+  },
+
+  /**
+   * Helper pour créer le membership patient
+   */
+  async createPatientMembership(patientId: string, userId: string): Promise<void> {
+    try {
+      // Vérifier si le membership existe déjà
+      const { data: existingMembership } = await supabase
+        .from('patient_memberships')
+        .select('patient_id')
+        .eq('patient_id', patientId)
+        .eq('patient_user_id', userId)
+        .maybeSingle();
+
+      if (existingMembership) {
+        console.log('✅ Membership existe déjà');
+        return;
+      }
+
+      // Créer le membership
+      const { error: membershipError } = await supabase
+        .from('patient_memberships')
+        .insert({
+          patient_id: patientId,
+          patient_user_id: userId,
+        });
+
+      if (membershipError) {
+        if (!membershipError.message.includes('duplicate') &&
+            !membershipError.message.includes('unique constraint')) {
+          console.error('❌ Erreur création membership:', membershipError);
+        } else {
+          console.log('✅ Membership existe déjà (ignoré)');
+        }
+      } else {
+        console.log('✅ Membership créé: patient', patientId, '↔ user', userId);
+      }
+    } catch (err) {
+      console.error('⚠️ Exception createPatientMembership:', err);
     }
   },
 
