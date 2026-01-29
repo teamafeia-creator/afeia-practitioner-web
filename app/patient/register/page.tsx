@@ -8,15 +8,22 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const patientId = searchParams.get('id') || ''
+  // Données de otp_codes passées via URL params
+  const patientEmail = searchParams.get('email') || ''
   const patientName = searchParams.get('name') || ''
-  const [email, setEmail] = useState(searchParams.get('email') || '')
+  const practitionerId = searchParams.get('practitioner_id') || ''
+  const otpId = searchParams.get('otp_id') || ''
+  const patientCity = searchParams.get('city') || ''
+  const patientAge = searchParams.get('age') || ''
+
+  const [email, setEmail] = useState(patientEmail)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
 
-  const validatePassword = (pwd: string) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(pwd)
+  const validatePassword = (pwd: string) => pwd.length >= 8
 
   const handleRegister = async () => {
     if (!email || !password || !confirmPassword) {
@@ -25,7 +32,7 @@ function RegisterForm() {
     }
 
     if (!validatePassword(password)) {
-      setError('Mot de passe faible (8+ car., maj, min, chiffre)')
+      setError('Le mot de passe doit contenir au moins 8 caractères')
       return
     }
 
@@ -34,85 +41,201 @@ function RegisterForm() {
       return
     }
 
+    if (!practitionerId) {
+      setError('Données de praticien manquantes. Veuillez réessayer avec un nouveau code.')
+      return
+    }
+
     setLoading(true)
     setError('')
 
     try {
+      console.log('🔐 Création du compte patient...')
+      console.log('Email:', email)
+      console.log('Practitioner ID:', practitionerId)
+
+      // 1. Créer le compte auth Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: email.toLowerCase().trim(),
         password,
-        options: { data: { patient_id: patientId, role: 'patient' } }
+        options: {
+          data: {
+            role: 'patient',
+            practitioner_id: practitionerId,
+            name: patientName
+          }
+        }
       })
 
-      if (authError) throw authError
-
-      await supabase
-        .from('patients')
-        .update({
-          email,
-          auth_user_id: authData.user!.id,
-          is_activated: true,
-          activated_at: new Date().toISOString()
-        })
-        .eq('id', patientId)
-
-      const { error: membershipError } = await supabase.from('patient_memberships').upsert({
-        patient_id: patientId,
-        patient_user_id: authData.user!.id
-      })
-      if (membershipError) {
-        console.error('Erreur création membership patient:', membershipError)
+      if (authError) {
+        console.error('Erreur auth:', authError)
+        if (authError.message.includes('already registered')) {
+          setError('Cet email est déjà utilisé. Essayez de vous connecter.')
+        } else {
+          throw authError
+        }
+        return
       }
 
-      router.push('/patient/home')
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de la création')
+      if (!authData.user) {
+        throw new Error('Erreur lors de la création du compte')
+      }
+
+      console.log('✅ Compte auth créé:', authData.user.id)
+
+      // 2. Créer l'entrée patient
+      const patientPayload = {
+        id: authData.user.id,
+        practitioner_id: practitionerId,
+        email: email.toLowerCase().trim(),
+        name: patientName,
+        city: patientCity || null,
+        age: patientAge ? parseInt(patientAge) : null,
+        activated: true,
+        activated_at: new Date().toISOString(),
+        status: 'active'
+      }
+
+      console.log('📝 Création patient:', patientPayload)
+
+      const { error: patientError } = await supabase
+        .from('patients')
+        .insert(patientPayload)
+
+      if (patientError) {
+        console.error('Erreur création patient:', patientError)
+        // Ne pas bloquer si le patient existe déjà (peut arriver si l'utilisateur réessaie)
+        if (!patientError.message.includes('duplicate')) {
+          throw patientError
+        }
+      }
+
+      console.log('✅ Patient créé')
+
+      // 3. Marquer le code OTP comme utilisé
+      if (otpId) {
+        const { error: otpError } = await supabase
+          .from('otp_codes')
+          .update({
+            used: true,
+            used_at: new Date().toISOString()
+          })
+          .eq('id', otpId)
+
+        if (otpError) {
+          console.warn('⚠️ Erreur mise à jour OTP:', otpError)
+        } else {
+          console.log('✅ Code OTP marqué comme utilisé')
+        }
+      }
+
+      // 4. Connecter automatiquement l'utilisateur
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password
+      })
+
+      if (signInError) {
+        console.warn('⚠️ Auto-login échoué:', signInError)
+        // Pas bloquant, on redirige quand même
+      }
+
+      setSuccess(true)
+      console.log('✅ Inscription terminée avec succès!')
+
+      // Rediriger vers la home patient après un court délai
+      setTimeout(() => {
+        router.push('/patient/home')
+      }, 1500)
+
+    } catch (err: unknown) {
+      console.error('❌ Erreur inscription:', err)
+      setError(err instanceof Error ? err.message : 'Erreur lors de la création du compte')
     } finally {
       setLoading(false)
     }
   }
 
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6B8DC9] via-[#7B9DD9] to-[#9B8DC9] p-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-4xl">✅</span>
+          </div>
+          <h1 className="text-2xl font-bold text-[#2D3748] mb-2">
+            Compte créé !
+          </h1>
+          <p className="text-[#718096]">
+            Redirection vers votre espace...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-2">
-          Bonjour {patientName.split(' ')[0]} 👋
-        </h1>
-        <p className="text-gray-600 text-center mb-8">
-          Créez votre mot de passe
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6B8DC9] via-[#7B9DD9] to-[#9B8DC9] p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#7BA591] to-[#6B8DC9] rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">👋</span>
+          </div>
+          <h1 className="text-2xl font-bold text-[#2D3748]">
+            Bonjour {patientName.split(' ')[0] || 'vous'}
+          </h1>
+          <p className="text-[#718096] mt-1">
+            Créez votre mot de passe pour accéder à votre espace
+          </p>
+        </div>
 
         <div className="space-y-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 border-2 rounded-lg focus:border-blue-500 outline-none"
-          />
+          <div>
+            <label className="block text-sm font-medium text-[#4A5568] mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-[#E2E8F0] rounded-xl focus:border-[#6B8DC9] focus:ring-2 focus:ring-[#6B8DC9]/20 outline-none transition-all"
+              placeholder="votre@email.com"
+            />
+          </div>
 
-          <input
-            type="password"
-            placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 border-2 rounded-lg focus:border-blue-500 outline-none"
-          />
+          <div>
+            <label className="block text-sm font-medium text-[#4A5568] mb-1">
+              Mot de passe
+            </label>
+            <input
+              type="password"
+              placeholder="Minimum 8 caractères"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-[#E2E8F0] rounded-xl focus:border-[#6B8DC9] focus:ring-2 focus:ring-[#6B8DC9]/20 outline-none transition-all"
+            />
+          </div>
 
-          <input
-            type="password"
-            placeholder="Confirmer"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-4 py-3 border-2 rounded-lg focus:border-blue-500 outline-none"
-          />
+          <div>
+            <label className="block text-sm font-medium text-[#4A5568] mb-1">
+              Confirmer le mot de passe
+            </label>
+            <input
+              type="password"
+              placeholder="Retapez votre mot de passe"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-[#E2E8F0] rounded-xl focus:border-[#6B8DC9] focus:ring-2 focus:ring-[#6B8DC9]/20 outline-none transition-all"
+            />
+          </div>
 
-          <p className="text-xs text-gray-500">
-            • 8+ caractères • Maj + min • 1 chiffre
-          </p>
+          <div className="flex items-center gap-2 text-xs text-[#718096] bg-[#F7FAFC] p-3 rounded-xl">
+            <span>🔒</span>
+            <span>Vos données sont sécurisées et confidentielles</span>
+          </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -120,9 +243,9 @@ function RegisterForm() {
           <button
             onClick={handleRegister}
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
+            className="w-full bg-gradient-to-r from-[#6B8DC9] to-[#9B8DC9] text-white py-4 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg mt-2"
           >
-            {loading ? 'Création...' : 'Créer mon compte'}
+            {loading ? 'Création en cours...' : 'Créer mon compte'}
           </button>
         </div>
       </div>
@@ -132,7 +255,11 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div>Chargement...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6B8DC9] to-[#9B8DC9]">
+        <div className="text-white">Chargement...</div>
+      </div>
+    }>
       <RegisterForm />
     </Suspense>
   )

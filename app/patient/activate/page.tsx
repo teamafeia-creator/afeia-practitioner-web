@@ -1,18 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function ActivatePage() {
   const router = useRouter()
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const inputs = useRef<(HTMLInputElement | null)[]>([])
+
+  const handleCodeChange = (index: number, value: string) => {
+    // Only allow digits
+    const digit = value.replace(/\D/g, '').slice(-1)
+    const newCode = [...code]
+    newCode[index] = digit
+    setCode(newCode)
+
+    // Auto-focus next input
+    if (digit && index < 5) {
+      inputs.current[index + 1]?.focus()
+    }
+  }
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !code[index] && index > 0) {
+      inputs.current[index - 1]?.focus()
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    if (pastedData.length === 6) {
+      setCode(pastedData.split(''))
+      inputs.current[5]?.focus()
+    }
+  }
 
   const handleVerifyCode = async () => {
-    if (code.length !== 6) {
-      setError('Le code doit contenir 6 caractères')
+    const codeString = code.join('')
+    if (codeString.length !== 6) {
+      setError('Le code doit contenir 6 chiffres')
       return
     }
 
@@ -20,72 +50,107 @@ export default function ActivatePage() {
     setError('')
 
     try {
-      const { data, error: dbError } = await supabase
-        .from('patients')
-        .select('id, full_name, email, is_activated')
-        .eq('activation_code', code.toUpperCase())
-        .single()
+      console.log('🔍 Recherche du code:', codeString)
 
-      if (dbError || !data) {
-        setError('Code invalide')
+      // Chercher dans otp_codes (nouveau système)
+      const { data: otpData, error: otpError } = await supabase
+        .from('otp_codes')
+        .select('*')
+        .eq('code', codeString)
+        .eq('used', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (otpError) {
+        console.error('Erreur recherche OTP:', otpError)
+        setError('Erreur lors de la vérification')
         return
       }
 
-      if (data.is_activated) {
-        setError('Code déjà utilisé')
+      if (!otpData) {
+        setError('Code invalide ou expiré')
         return
       }
 
-      router.push(
-        `/patient/register?id=${data.id}&name=${encodeURIComponent(
-          data.full_name
-        )}&email=${encodeURIComponent(data.email || '')}`
-      )
+      console.log('✅ Code trouvé:', otpData.email)
+
+      // Rediriger vers la page de création de mot de passe
+      const params = new URLSearchParams({
+        email: otpData.email,
+        name: otpData.patient_name || '',
+        practitioner_id: otpData.practitioner_id || '',
+        otp_id: otpData.id,
+        city: otpData.patient_city || '',
+        age: otpData.patient_age?.toString() || ''
+      })
+
+      router.push(`/patient/register?${params.toString()}`)
     } catch (err) {
+      console.error('Erreur:', err)
       setError('Erreur de vérification')
     } finally {
       setLoading(false)
     }
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-2">
-          Bienvenue sur AFEIA 👋
-        </h1>
-        <p className="text-gray-600 text-center mb-8">
-          Entrez votre code d&apos;activation
-        </p>
+  const codeComplete = code.every(d => d !== '')
 
-        <input
-          type="text"
-          className="w-full px-4 py-3 text-2xl tracking-widest text-center border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none uppercase mb-4"
-          placeholder="000000"
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          maxLength={6}
-        />
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6B8DC9] via-[#7B9DD9] to-[#9B8DC9] p-4">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#6B8DC9] to-[#9B8DC9] rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">🌿</span>
+          </div>
+          <h1 className="text-2xl font-bold text-[#2D3748] mb-2">
+            Bienvenue sur AFEIA
+          </h1>
+          <p className="text-[#718096]">
+            Entrez le code à 6 chiffres reçu par email
+          </p>
+        </div>
+
+        <div className="flex justify-center gap-2 mb-6" onPaste={handlePaste}>
+          {code.map((digit, index) => (
+            <input
+              key={index}
+              ref={el => { inputs.current[index] = el }}
+              type="text"
+              inputMode="numeric"
+              className="w-12 h-14 text-2xl font-bold text-center border-2 border-[#E2E8F0] rounded-xl focus:border-[#6B8DC9] focus:ring-2 focus:ring-[#6B8DC9]/20 outline-none transition-all"
+              value={digit}
+              onChange={(e) => handleCodeChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              maxLength={1}
+            />
+          ))}
+        </div>
 
         {error && (
-          <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-4">
+          <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm mb-4 text-center">
             {error}
           </div>
         )}
 
         <button
           onClick={handleVerifyCode}
-          disabled={loading || code.length !== 6}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 transition"
+          disabled={loading || !codeComplete}
+          className="w-full bg-gradient-to-r from-[#6B8DC9] to-[#9B8DC9] text-white py-4 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg"
         >
           {loading ? 'Vérification...' : 'Continuer'}
         </button>
 
-        <div className="text-center mt-4">
-          <a href="/patient/login" className="text-blue-600 text-sm hover:underline">
+        <div className="text-center mt-6">
+          <a href="/patient/login" className="text-[#6B8DC9] text-sm hover:underline">
             J&apos;ai déjà un compte
           </a>
         </div>
+
+        <p className="text-xs text-[#A0AEC0] text-center mt-4">
+          Le code est valide pendant 7 jours
+        </p>
       </div>
     </div>
   )
