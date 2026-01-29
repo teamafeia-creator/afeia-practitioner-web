@@ -23,19 +23,19 @@ const getPatientId = async (): Promise<string | null> => {
     return null;
   }
 
-  // Get patient record for this user
-  const { data: patient, error } = await supabase
-    .from('patients')
-    .select('id')
-    .eq('user_id', userId)
+  // Get patient record for this user via patient_memberships
+  const { data: membership, error } = await supabase
+    .from('patient_memberships')
+    .select('patient_id')
+    .eq('patient_user_id', userId)
     .single();
 
   if (error) {
     console.log('📊 Patient lookup error (may be normal for new users):', error.message);
-    return userId; // Fall back to user ID
+    return null; // No patient linked to this user
   }
 
-  return patient?.id ?? userId;
+  return membership?.patient_id ?? null;
 };
 
 export const api = {
@@ -133,13 +133,27 @@ export const api = {
       throw error;
     }
 
+    // Handle both old schema (name) and new schema (first_name, last_name)
+    let firstName = data.first_name;
+    let lastName = data.last_name;
+    if (!firstName && data.name) {
+      const nameParts = data.name.split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || '';
+    }
+
     console.log('✅ Profile loaded:', data?.email);
     return {
       id: data.id,
       email: data.email,
-      firstName: data.first_name,
-      lastName: data.last_name,
+      firstName,
+      lastName,
       phone: data.phone,
+      practitioner: data.practitioners ? {
+        fullName: data.practitioners.full_name,
+        email: data.practitioners.email,
+        phone: data.practitioners.phone,
+      } : null,
     };
   },
 
@@ -151,14 +165,26 @@ export const api = {
       throw new Error('User not authenticated');
     }
 
+    // Build update object with both old and new column formats
+    const updateData: Record<string, string | undefined> = {
+      phone: profileData.phone,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (profileData.firstName !== undefined || profileData.lastName !== undefined) {
+      // Update new columns
+      updateData.first_name = profileData.firstName;
+      updateData.last_name = profileData.lastName;
+      // Also update legacy 'name' column for backwards compatibility
+      const fullName = [profileData.firstName, profileData.lastName].filter(Boolean).join(' ');
+      if (fullName) {
+        updateData.name = fullName;
+      }
+    }
+
     const { data, error } = await supabase
       .from('patients')
-      .update({
-        first_name: profileData.firstName,
-        last_name: profileData.lastName,
-        phone: profileData.phone,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', patientId)
       .select()
       .single();
@@ -542,10 +568,11 @@ export const api = {
       throw new Error('User not authenticated');
     }
 
+    // Messages are linked to patient via patient_id, not sender_id/receiver_id
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .or(`sender_id.eq.${patientId},receiver_id.eq.${patientId}`)
+      .eq('patient_id', patientId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -556,17 +583,20 @@ export const api = {
     const messages: Message[] =
       data?.map((m) => ({
         id: m.id,
-        senderId: m.sender_id,
-        content: m.content,
-        timestamp: m.created_at,
-        read: m.read || false,
+        // sender_role indicates if it's from patient or practitioner
+        senderId: m.sender_role === 'patient' ? patientId : 'practitioner',
+        // Support both old (body/text) and new (content) column names
+        content: m.content ?? m.body ?? m.text ?? '',
+        timestamp: m.created_at ?? m.sent_at,
+        read: m.read ?? m.read_by_practitioner ?? false,
+        senderRole: m.sender_role ?? m.sender,
       })) || [];
 
     console.log('✅ Messages loaded:', messages.length);
     return { messages };
   },
 
-  async sendMessage(content: string) {
+  async sendMessage(messageContent: string) {
     console.log('📊 Sending message...');
     const patientId = await getPatientId();
 
@@ -574,19 +604,14 @@ export const api = {
       throw new Error('User not authenticated');
     }
 
-    // Get patient's practitioner
-    const { data: patient } = await supabase
-      .from('patients')
-      .select('practitioner_id')
-      .eq('id', patientId)
-      .single();
-
+    // Insert message with patient_id and sender_role (patient sending)
     const { data, error } = await supabase
       .from('messages')
       .insert({
-        sender_id: patientId,
-        receiver_id: patient?.practitioner_id,
-        content,
+        patient_id: patientId,
+        sender_role: 'patient',
+        body: messageContent, // Use 'body' column (will be synced to 'content' by trigger)
+        content: messageContent,
         created_at: new Date().toISOString(),
       })
       .select()
