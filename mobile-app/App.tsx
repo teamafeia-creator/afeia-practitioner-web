@@ -3,9 +3,12 @@ import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
-import WelcomeScreen from './screens/WelcomeScreen';
-import OTPScreen from './screens/OTPScreen';
-import RegisterScreen from './screens/RegisterScreen';
+// New Patient Auth Screens
+import PatientWelcomeScreen from './screens/PatientWelcomeScreen';
+import PatientActivateScreen from './screens/PatientActivateScreen';
+import PatientLoginScreen from './screens/PatientLoginScreen';
+import PatientForgotPasswordScreen from './screens/PatientForgotPasswordScreen';
+// App Screens
 import AnamneseScreen from './screens/AnamneseScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import JournalScreen from './screens/JournalScreen';
@@ -14,20 +17,19 @@ import ProfileScreen from './screens/ProfileScreen';
 import { Colors } from './constants/Colors';
 
 type Screen =
-  | 'welcome'
-  | 'otp'
-  | 'register'
+  | 'patient-welcome'
+  | 'patient-activate'
+  | 'patient-login'
+  | 'patient-forgot-password'
   | 'anamnese'
   | 'dashboard'
   | 'journal'
   | 'messages'
-  | 'profile'
-  | 'login';
+  | 'profile';
 
 function AppContent() {
   const { user, loading, isAuthenticated, signOut } = useAuthContext();
-  const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
-  const [otpData, setOtpData] = useState<Record<string, unknown> | null>(null);
+  const [currentScreen, setCurrentScreen] = useState<Screen>('patient-welcome');
   const [hasAnamnesis, setHasAnamnesis] = useState(false);
 
   // Auto-navigate based on auth state
@@ -37,8 +39,8 @@ function AppContent() {
         console.log('✅ User authenticated, navigating to dashboard');
         setCurrentScreen('dashboard');
       } else {
-        console.log('⚠️ User not authenticated, showing welcome');
-        setCurrentScreen('welcome');
+        console.log('⚠️ User not authenticated, showing patient welcome');
+        setCurrentScreen('patient-welcome');
       }
     }
   }, [isAuthenticated, loading]);
@@ -49,13 +51,12 @@ function AppContent() {
 
   const handleLogout = async () => {
     await signOut();
-    setOtpData(null);
     setHasAnamnesis(false);
-    setCurrentScreen('welcome');
+    setCurrentScreen('patient-welcome');
   };
 
-  const handleRegistrationSuccess = (needsAnamnese: boolean) => {
-    setHasAnamnesis(!needsAnamnese);
+  const handleAuthSuccess = () => {
+    console.log('✅ Authentication successful, navigating to dashboard');
     setCurrentScreen('dashboard');
   };
 
@@ -71,20 +72,35 @@ function AppContent() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {currentScreen === 'welcome' && (
-        <WelcomeScreen onNext={() => setCurrentScreen('otp')} />
-      )}
-      {currentScreen === 'otp' && (
-        <OTPScreen
-          onSuccess={(data) => {
-            setOtpData(data);
-            setCurrentScreen('register');
-          }}
+      {/* Patient Auth Screens */}
+      {currentScreen === 'patient-welcome' && (
+        <PatientWelcomeScreen
+          onActivate={() => setCurrentScreen('patient-activate')}
+          onLogin={() => setCurrentScreen('patient-login')}
+          onForgotPassword={() => setCurrentScreen('patient-forgot-password')}
         />
       )}
-      {currentScreen === 'register' && (
-        <RegisterScreen otpData={otpData} onSuccess={handleRegistrationSuccess} />
+      {currentScreen === 'patient-activate' && (
+        <PatientActivateScreen
+          onBack={() => setCurrentScreen('patient-welcome')}
+          onSuccess={handleAuthSuccess}
+        />
       )}
+      {currentScreen === 'patient-login' && (
+        <PatientLoginScreen
+          onBack={() => setCurrentScreen('patient-welcome')}
+          onSuccess={handleAuthSuccess}
+          onForgotPassword={() => setCurrentScreen('patient-forgot-password')}
+        />
+      )}
+      {currentScreen === 'patient-forgot-password' && (
+        <PatientForgotPasswordScreen
+          onBack={() => setCurrentScreen('patient-welcome')}
+          onSuccess={() => setCurrentScreen('patient-login')}
+        />
+      )}
+
+      {/* App Screens */}
       {currentScreen === 'anamnese' && (
         <AnamneseScreen
           onComplete={() => {
