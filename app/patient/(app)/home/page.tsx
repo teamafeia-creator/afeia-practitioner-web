@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation'
 
 type PatientData = {
   id: string
-  name: string
+  full_name?: string
+  first_name?: string
+  last_name?: string
   email: string
   is_premium?: boolean
   practitioner_id: string
@@ -103,7 +105,7 @@ export default function PatientHomePage() {
         return
       }
 
-      console.log('✅ Patient trouvé:', patientData.name)
+      console.log('✅ Patient trouvé:', patientData.full_name || patientData.first_name)
       setPatient(patientData)
 
       // Charger les messages
@@ -197,7 +199,7 @@ export default function PatientHomePage() {
             <div>
               <p className="text-white/80 text-sm">{greeting}</p>
               <h1 className="text-2xl font-bold mt-1">
-                {patient.name?.split(' ')[0] || 'Patient'}
+                {patient.first_name || patient.full_name?.split(' ')[0] || 'Patient'}
               </h1>
               {patient.is_premium && (
                 <span className="inline-flex items-center gap-1 bg-white/20 text-white text-xs px-3 py-1 rounded-full mt-2">

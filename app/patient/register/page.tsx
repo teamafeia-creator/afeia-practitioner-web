@@ -86,12 +86,18 @@ function RegisterForm() {
       console.log('✅ Compte auth créé:', authData.user.id)
 
       // 2. Créer l'entrée patient
+      // Colonnes selon schema: full_name, first_name, last_name, phone, city, activated, activated_at
+      const fullName = patientName || `${patientFirstName} ${patientLastName}`.trim()
+
       const patientPayload: Record<string, unknown> = {
         id: authData.user.id,
         practitioner_id: practitionerId,
         email: email.toLowerCase().trim(),
-        name: patientName || `${patientFirstName} ${patientLastName}`.trim(),
-        status: 'active'
+        full_name: fullName,
+        first_name: patientFirstName || fullName.split(' ')[0] || null,
+        last_name: patientLastName || fullName.split(' ').slice(1).join(' ') || null,
+        activated: true,
+        activated_at: new Date().toISOString()
       }
 
       // Ajouter les champs optionnels s'ils existent
