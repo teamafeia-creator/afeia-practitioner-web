@@ -42,11 +42,16 @@ export type Anamnese = {
   updated_at: string;
 };
 
+// Answers can be flat (legacy: question_key -> value) or nested (new: section_id -> { question_key -> value })
+export type AnamnesisAnswersFlat = Record<string, string>;
+export type AnamnesisAnswersNested = Record<string, Record<string, string>>;
+export type AnamnesisAnswers = AnamnesisAnswersFlat | AnamnesisAnswersNested;
+
 export type PatientAnamnesis = {
   id: string;
   patient_id: string;
   naturopath_id?: string | null;
-  answers?: Record<string, Record<string, string>> | null;
+  answers?: AnamnesisAnswers | null;
   version?: number;
   source?: 'manual' | 'preliminary_questionnaire' | 'mobile_app';
   preliminary_questionnaire_id?: string | null;

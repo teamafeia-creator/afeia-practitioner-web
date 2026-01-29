@@ -27,6 +27,7 @@ import {
 } from '../../lib/queries';
 import { ANAMNESIS_SECTIONS } from '../../lib/anamnesis';
 import type {
+  AnamnesisAnswers,
   Appointment,
   JournalEntry,
   Message,
@@ -34,6 +35,34 @@ import type {
   PatientWithDetails,
   WearableInsight
 } from '../../lib/types';
+
+/**
+ * Helper to flatten nested anamnesis answers to flat format.
+ * Nested format: { section_id: { question_key: value } }
+ * Flat format: { question_key: value }
+ */
+function flattenAnamnesisAnswers(answers: AnamnesisAnswers | null | undefined): Record<string, string> {
+  if (!answers) return {};
+
+  // Check if it's already flat (values are strings, not objects)
+  const firstValue = Object.values(answers)[0];
+  if (typeof firstValue === 'string' || firstValue === undefined) {
+    return answers as Record<string, string>;
+  }
+
+  // It's nested - flatten it
+  const flat: Record<string, string> = {};
+  for (const sectionAnswers of Object.values(answers)) {
+    if (typeof sectionAnswers === 'object' && sectionAnswers !== null) {
+      for (const [key, value] of Object.entries(sectionAnswers)) {
+        if (typeof value === 'string') {
+          flat[key] = value;
+        }
+      }
+    }
+  }
+  return flat;
+}
 
 const TABS = [
   'Profil',
@@ -366,7 +395,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   const [anamnesisEditing, setAnamnesisEditing] = useState(false);
   const [anamnesisSaving, setAnamnesisSaving] = useState(false);
   const [anamnesisAnswers, setAnamnesisAnswers] = useState<Record<string, string>>(
-    patient.patient_anamnesis?.answers ?? {}
+    flattenAnamnesisAnswers(patient.patient_anamnesis?.answers)
   );
   const [journalEditing, setJournalEditing] = useState(false);
   const [journalSaving, setJournalSaving] = useState(false);
@@ -411,7 +440,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
   );
   const initialJournal = useMemo(() => buildJournalForm(journalEntries[0]), [journalEntries]);
   const initialAnamnesis = useMemo(
-    () => patientState.patient_anamnesis?.answers ?? {},
+    () => flattenAnamnesisAnswers(patientState.patient_anamnesis?.answers),
     [patientState.patient_anamnesis]
   );
   const initialNote = useMemo(
@@ -500,7 +529,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       consultation_reason: patient.consultation_reason ?? ''
     });
     setMessages(patient.messages ?? []);
-    setAnamnesisAnswers(patient.patient_anamnesis?.answers ?? {});
+    setAnamnesisAnswers(flattenAnamnesisAnswers(patient.patient_anamnesis?.answers));
     setNoteContent(patient.practitioner_note?.content ?? '');
     setJournalForm(buildJournalForm(patient.journal_entries?.[0]));
     setAppointments(patient.appointments ?? []);
