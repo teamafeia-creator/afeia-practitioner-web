@@ -7,9 +7,7 @@ import { Button } from '../../../../components/ui/Button';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/Card';
 import { Input } from '../../../../components/ui/Input';
 import { Toast } from '../../../../components/ui/Toast';
-import { createPatientRecord } from '../../../../services/patients';
-import { createAnamneseInstance } from '../../../../services/anamnese';
-import { sendQuestionnaireCode } from '../../../../services/questionnaire';
+import { createPatientActivationCode } from '../../../../services/practitioner.service';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +21,7 @@ export default function NewPatientPage() {
   const [circularEnabled, setCircularEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activationCode, setActivationCode] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     title: string;
     description?: string;
@@ -32,6 +31,7 @@ export default function NewPatientPage() {
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+    setActivationCode(null);
 
     if (!name.trim()) {
       setError('Le nom du patient est obligatoire.');
@@ -39,7 +39,12 @@ export default function NewPatientPage() {
     }
 
     const trimmedEmail = email.trim();
-    if (trimmedEmail && !EMAIL_REGEX.test(trimmedEmail)) {
+    if (!trimmedEmail) {
+      setError('L\'email du patient est obligatoire pour envoyer le code d\'activation.');
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
       setError('Merci de renseigner un email valide.');
       return;
     }
@@ -52,41 +57,43 @@ export default function NewPatientPage() {
 
     setLoading(true);
     try {
-      const { patientId } = await createPatientRecord({
+      // NOUVEAU FLUX: Ne crée PAS d'entrée dans `patients`
+      // Stocke les infos dans otp_codes et envoie le code d'activation
+      // L'entrée `patients` sera créée lors de l'activation par le patient
+      const result = await createPatientActivationCode({
+        email: trimmedEmail,
         name: name.trim(),
-        email: trimmedEmail || undefined,
         city: city.trim() || undefined,
-        age: parsedAge !== undefined && !Number.isNaN(parsedAge) ? parsedAge : null,
-        status: isPremium ? 'premium' : 'standard',
+        age: parsedAge !== undefined && !Number.isNaN(parsedAge) ? parsedAge : undefined,
         isPremium,
         circularEnabled
       });
 
-      // ✅ TOUJOURS envoyer l'email si un email est fourni
-      if (trimmedEmail) {
-        try {
-          await createAnamneseInstance(patientId);
-          await sendQuestionnaireCode(patientId);
-          setToast({
-            title: '✅ Email envoyé avec succès',
-            description: `Le code questionnaire a été envoyé à ${trimmedEmail}`,
-            variant: 'success'
-          });
-          console.log(`✅✅✅ Email envoyé avec succès à ${trimmedEmail}`);
-        } catch (emailErr) {
-          const errorMessage = emailErr instanceof Error ? emailErr.message : 'Erreur inconnue';
-          setToast({
-            title: '❌ Erreur lors de l\'envoi',
-            description: errorMessage,
-            variant: 'error'
-          });
-          console.error('❌❌❌ Erreur envoi email:', emailErr);
-          // Ne pas bloquer la création, continuer vers la page patient
-        }
+      if (!result.success) {
+        setError(result.error || 'Une erreur est survenue.');
+        setLoading(false);
+        return;
       }
 
-      // Redirect to patient detail page with created flag
-      router.push(`/patients/${patientId}?created=1`);
+      // Afficher le code en dev
+      if (result.code) {
+        setActivationCode(result.code);
+        console.log('Code d\'activation (dev):', result.code);
+      }
+
+      setToast({
+        title: 'Code d\'activation envoyé',
+        description: `Un email a été envoyé à ${trimmedEmail} avec le code d'activation.`,
+        variant: 'success'
+      });
+
+      console.log(`Code d'activation créé pour ${trimmedEmail}`);
+
+      // Rediriger vers la liste des patients après un délai
+      setTimeout(() => {
+        router.push('/patients?created=1');
+      }, 2000);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
       setLoading(false);
@@ -169,8 +176,18 @@ export default function NewPatientPage() {
               </div>
             ) : null}
 
+            {activationCode ? (
+              <div className="rounded-xl border border-teal/30 bg-teal/10 p-3 text-sm">
+                <p className="font-semibold">Code d&apos;activation (dev):</p>
+                <p className="font-mono text-lg">{activationCode}</p>
+                <p className="text-xs text-warmgray mt-1">
+                  Ce code sera envoyé par email au patient.
+                </p>
+              </div>
+            ) : null}
+
             <Button type="submit" loading={loading} className="w-full">
-              Créer le patient
+              Envoyer le code d&apos;activation
             </Button>
           </form>
         </CardContent>
