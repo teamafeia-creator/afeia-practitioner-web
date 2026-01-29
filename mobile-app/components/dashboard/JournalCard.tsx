@@ -18,8 +18,8 @@ export default function JournalCard({ onPress }: JournalCardProps) {
 
   const loadTodayEntry = async () => {
     try {
-      const data = await api.getTodayJournal();
-      setTodayEntry(data.entry);
+      const entry = await api.getTodayJournal();
+      setTodayEntry(entry);
     } catch (error) {
       console.error('Erreur chargement journal:', error);
       setTodayEntry(null);
