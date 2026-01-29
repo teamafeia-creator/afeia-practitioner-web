@@ -27,13 +27,21 @@ export default function PatientWelcomeScreen({
         <Text style={styles.cardIcon}>🆕</Text>
         <View style={styles.cardContent}>
           <Text style={styles.cardTitle}>Premiere connexion</Text>
-          <Text style={styles.cardSubtitle}>J'ai recu un code d'activation</Text>
+          <Text style={styles.cardSubtitle}>J'ai recu un code d'activation par email</Text>
         </View>
         <View style={styles.cardButton}>
           <Text style={styles.cardButtonText}>Activer mon compte</Text>
           <Text style={styles.cardArrow}>→</Text>
         </View>
       </TouchableOpacity>
+
+      {/* Info note */}
+      <View style={styles.noteBox}>
+        <Text style={styles.noteText}>
+          💡 Vous avez recu un email avec un code a 6 chiffres.{'\n'}
+          Entrez simplement ce code, pas besoin de votre adresse email !
+        </Text>
+      </View>
 
       {/* Option 2: Already registered */}
       <TouchableOpacity style={[styles.card, styles.cardSecondary]} onPress={onLogin}>
@@ -153,5 +161,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.teal,
     textDecorationLine: 'underline',
+  },
+  noteBox: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  noteText: {
+    fontSize: 12,
+    color: '#1E40AF',
+    lineHeight: 18,
+    textAlign: 'center',
   },
 });
