@@ -5,6 +5,7 @@ import ComplementsCard from '../components/dashboard/ComplementsCard';
 import ConseilsCard from '../components/dashboard/ConseilsCard';
 import JournalCard from '../components/dashboard/JournalCard';
 import MessagesCard from '../components/dashboard/MessagesCard';
+import PlansCard from '../components/dashboard/PlansCard';
 import WearableCard from '../components/dashboard/WearableCard';
 import ArticlesCard from '../components/dashboard/ArticlesCard';
 import { api } from '../services/api';
@@ -72,6 +73,7 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
         )}
       </View>
 
+      <PlansCard onPress={() => onNavigate?.('plans')} />
       <ComplementsCard />
       <ConseilsCard />
       <JournalCard onPress={() => onNavigate?.('journal')} />

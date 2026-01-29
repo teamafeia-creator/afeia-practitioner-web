@@ -84,3 +84,18 @@ export interface WearableData {
   calories: number;
   lastSync?: string;
 }
+
+export interface Plan {
+  id: string;
+  title: string;
+  description?: string;
+  content: any;
+  status: 'draft' | 'shared' | 'viewed' | 'completed';
+  sharedAt?: string;
+  createdAt: string;
+  practitioner?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}

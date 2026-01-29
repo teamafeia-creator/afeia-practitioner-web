@@ -7,6 +7,7 @@ import {
   Article,
   WearableData,
   AnamneseData,
+  Plan,
 } from '../types';
 
 // Helper to get current user ID
@@ -772,5 +773,186 @@ export const api = {
         lastSync: data.synced_at,
       },
     };
+  },
+
+  // Plans de soin
+  async getPlans(): Promise<{ plans: Plan[] }> {
+    console.log('📊 Loading plans...');
+    const patientId = await getPatientId();
+
+    if (!patientId) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get plans from patient_plans table (shared plans by practitioner)
+    const { data, error } = await supabase
+      .from('patient_plans')
+      .select(`
+        id,
+        version,
+        status,
+        content,
+        shared_at,
+        created_at,
+        updated_at,
+        practitioner_id,
+        practitioners:practitioner_id (
+          id,
+          full_name,
+          email
+        )
+      `)
+      .eq('patient_id', patientId)
+      .eq('status', 'shared')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Plans load error:', error);
+      // Try alternative table structure (care_plans)
+      const { data: carePlans, error: carePlansError } = await supabase
+        .from('care_plans')
+        .select('*')
+        .eq('patient_id', patientId)
+        .in('status', ['sent', 'viewed'])
+        .order('created_at', { ascending: false });
+
+      if (carePlansError) {
+        console.error('❌ Care plans load error:', carePlansError);
+        throw carePlansError;
+      }
+
+      const plans: Plan[] = carePlans?.map((p) => ({
+        id: p.id,
+        title: p.title || 'Plan de soin',
+        description: p.description,
+        content: p.content,
+        status: p.status === 'sent' ? 'shared' : p.status,
+        sharedAt: p.sent_at,
+        createdAt: p.created_at,
+      })) || [];
+
+      console.log('✅ Care plans loaded:', plans.length);
+      return { plans };
+    }
+
+    const plans: Plan[] = data?.map((p) => {
+      const practitioner = p.practitioners as any;
+      return {
+        id: p.id,
+        title: p.content?.title || 'Plan de soin',
+        description: p.content?.description,
+        content: p.content,
+        status: p.status,
+        sharedAt: p.shared_at,
+        createdAt: p.created_at,
+        practitioner: practitioner ? {
+          id: practitioner.id,
+          name: practitioner.full_name,
+          email: practitioner.email,
+        } : undefined,
+      };
+    }) || [];
+
+    console.log('✅ Plans loaded:', plans.length);
+    return { plans };
+  },
+
+  async getPlan(planId: string): Promise<Plan | null> {
+    console.log('📊 Loading plan:', planId);
+    const patientId = await getPatientId();
+
+    if (!patientId) {
+      throw new Error('User not authenticated');
+    }
+
+    // Try patient_plans first
+    const { data, error } = await supabase
+      .from('patient_plans')
+      .select(`
+        *,
+        practitioners:practitioner_id (
+          id,
+          full_name,
+          email
+        )
+      `)
+      .eq('id', planId)
+      .eq('patient_id', patientId)
+      .single();
+
+    if (error) {
+      // Try care_plans
+      const { data: carePlan, error: carePlanError } = await supabase
+        .from('care_plans')
+        .select('*')
+        .eq('id', planId)
+        .eq('patient_id', patientId)
+        .single();
+
+      if (carePlanError) {
+        console.error('❌ Plan load error:', carePlanError);
+        return null;
+      }
+
+      // Mark as viewed
+      await supabase
+        .from('care_plans')
+        .update({ status: 'viewed', viewed_at: new Date().toISOString() })
+        .eq('id', planId);
+
+      return {
+        id: carePlan.id,
+        title: carePlan.title || 'Plan de soin',
+        description: carePlan.description,
+        content: carePlan.content,
+        status: 'viewed',
+        sharedAt: carePlan.sent_at,
+        createdAt: carePlan.created_at,
+      };
+    }
+
+    const practitioner = data.practitioners as any;
+    console.log('✅ Plan loaded:', data.id);
+    return {
+      id: data.id,
+      title: data.content?.title || 'Plan de soin',
+      description: data.content?.description,
+      content: data.content,
+      status: data.status,
+      sharedAt: data.shared_at,
+      createdAt: data.created_at,
+      practitioner: practitioner ? {
+        id: practitioner.id,
+        name: practitioner.full_name,
+        email: practitioner.email,
+      } : undefined,
+    };
+  },
+
+  async markPlanViewed(planId: string) {
+    console.log('📊 Marking plan as viewed:', planId);
+    const patientId = await getPatientId();
+
+    if (!patientId) {
+      throw new Error('User not authenticated');
+    }
+
+    // Update patient_plans
+    const { error } = await supabase
+      .from('patient_plans')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', planId)
+      .eq('patient_id', patientId);
+
+    if (error) {
+      // Try care_plans
+      await supabase
+        .from('care_plans')
+        .update({ status: 'viewed', viewed_at: new Date().toISOString() })
+        .eq('id', planId)
+        .eq('patient_id', patientId);
+    }
+
+    console.log('✅ Plan marked as viewed');
   },
 };

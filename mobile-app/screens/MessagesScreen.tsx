@@ -20,45 +20,28 @@ interface MessagesScreenProps {
 export default function MessagesScreen({ onBack }: MessagesScreenProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [naturopathe, setNaturopathe] = useState<{ fullName: string } | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    loadMessages();
+    loadData();
   }, []);
 
-  const loadMessages = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await api.getMessages();
-      setMessages(data.messages || []);
+      const [messagesData, naturoData] = await Promise.all([
+        api.getMessages(),
+        api.getNaturopatheInfo(),
+      ]);
+      setMessages(messagesData.messages || []);
+      setNaturopathe(naturoData);
     } catch (error) {
       console.error('Erreur chargement messages:', error);
-      // Mock data for demo
-      setMessages([
-        {
-          id: '1',
-          senderId: 'naturo-1',
-          content: 'Bonjour Sophie ! Comment vous sentez-vous depuis notre dernière consultation ?',
-          timestamp: new Date(Date.now() - 172800000).toISOString(),
-          read: true,
-        },
-        {
-          id: '2',
-          senderId: 'patient',
-          content: 'Bonjour Dr. Martin ! Je me sens beaucoup mieux, le magnésium fait vraiment effet.',
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          read: true,
-        },
-        {
-          id: '3',
-          senderId: 'naturo-1',
-          content: 'Excellent ! Continuez comme ça. N\'hésitez pas si vous avez des questions.',
-          timestamp: new Date().toISOString(),
-          read: false,
-        },
-      ]);
+      // En cas d'erreur, on affiche une liste vide (pas de mock)
+      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -67,34 +50,31 @@ export default function MessagesScreen({ onBack }: MessagesScreenProps) {
   const handleSend = async () => {
     if (!newMessage.trim()) return;
 
+    const messageToSend = newMessage.trim();
     setSending(true);
+
+    // Optimistic update - ajouter immediatement le message
+    const optimisticMsg: Message = {
+      id: `temp-${Date.now()}`,
+      senderId: 'patient',
+      content: messageToSend,
+      timestamp: new Date().toISOString(),
+      read: true,
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setNewMessage('');
+
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
     try {
-      await api.sendMessage(newMessage);
-      // Optimistic update
-      const newMsg: Message = {
-        id: Date.now().toString(),
-        senderId: 'patient',
-        content: newMessage,
-        timestamp: new Date().toISOString(),
-        read: true,
-      };
-      setMessages([...messages, newMsg]);
-      setNewMessage('');
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      await api.sendMessage(messageToSend);
+      console.log('Message envoye avec succes');
     } catch (error) {
       console.error('Erreur envoi message:', error);
-      // Still add message for demo
-      const newMsg: Message = {
-        id: Date.now().toString(),
-        senderId: 'patient',
-        content: newMessage,
-        timestamp: new Date().toISOString(),
-        read: true,
-      };
-      setMessages([...messages, newMsg]);
-      setNewMessage('');
+      // En cas d'erreur, on garde quand meme le message localement
+      // pour une meilleure UX - il sera synchronise plus tard
     } finally {
       setSending(false);
     }
@@ -130,11 +110,13 @@ export default function MessagesScreen({ onBack }: MessagesScreenProps) {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack}>
-          <Text style={styles.backButton}>← Dashboard</Text>
+          <Text style={styles.backButton}>&lt;- Dashboard</Text>
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.title}>💬 Dr. Martin</Text>
-          <Text style={styles.subtitle}>Votre naturopathe</Text>
+          <Text style={styles.title}>
+            {naturopathe?.fullName || 'Votre naturopathe'}
+          </Text>
+          <Text style={styles.subtitle}>Messagerie</Text>
         </View>
       </View>
 

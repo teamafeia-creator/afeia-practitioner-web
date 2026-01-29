@@ -13,6 +13,7 @@ import AnamneseScreen from './screens/AnamneseScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import JournalScreen from './screens/JournalScreen';
 import MessagesScreen from './screens/MessagesScreen';
+import PlansScreen from './screens/PlansScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import { Colors } from './constants/Colors';
 
@@ -25,6 +26,7 @@ type Screen =
   | 'dashboard'
   | 'journal'
   | 'messages'
+  | 'plans'
   | 'profile';
 
 function AppContent() {
@@ -116,6 +118,9 @@ function AppContent() {
       )}
       {currentScreen === 'messages' && (
         <MessagesScreen onBack={() => setCurrentScreen('dashboard')} />
+      )}
+      {currentScreen === 'plans' && (
+        <PlansScreen onBack={() => setCurrentScreen('dashboard')} />
       )}
       {currentScreen === 'profile' && (
         <ProfileScreen
