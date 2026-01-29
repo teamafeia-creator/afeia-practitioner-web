@@ -128,7 +128,10 @@ export async function POST(
     email: patient.email.toLowerCase().trim(),
     code: code, // Plain code for mobile activation
     type: 'activation',
-    expires_at: expiresAt.toISOString()
+    expires_at: expiresAt.toISOString(),
+    // ✅ CRITICAL: Include practitioner_id and patient_id for proper linking
+    practitioner_id: authData.user.id,
+    patient_id: patientId
   });
 
   if (otpInsertError) {
