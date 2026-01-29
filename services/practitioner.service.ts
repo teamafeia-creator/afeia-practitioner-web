@@ -2,8 +2,12 @@ import { supabase } from '../lib/supabase';
 
 /**
  * Service pour les opérations du naturopathe
- * IMPORTANT: Ne crée PAS d'entrée dans `patients` - stocke les infos dans otp_codes
- * Le patient sera créé lors de l'activation par le patient
+ *
+ * NOUVEAU FLUX (correction visibilité patient):
+ * 1. Crée IMMÉDIATEMENT une entrée dans `patients` avec activated=false
+ * 2. Stocke aussi les infos dans otp_codes pour l'activation
+ * 3. Le patient apparaît dans la liste du naturo avec statut "En attente"
+ * 4. Lors de l'activation, le patient sera mis à jour avec l'ID auth
  */
 
 type CreatePatientInput = {
@@ -18,6 +22,7 @@ type CreatePatientInput = {
 type CreatePatientResult = {
   success: boolean;
   code?: string;
+  patientId?: string;
   error?: string;
 };
 
@@ -29,18 +34,20 @@ const isDev = typeof process !== 'undefined'
 /**
  * Crée un code d'activation pour un nouveau patient.
  *
- * IMPORTANT: Cette fonction NE crée PAS d'entrée dans la table `patients`.
- * Elle stocke les informations du patient dans la table `otp_codes`.
- * L'entrée `patients` sera créée lors de l'activation par le patient.
- *
- * Cela évite le conflit de duplication lors de l'activation.
+ * NOUVEAU FLUX:
+ * 1. Crée IMMÉDIATEMENT le patient dans la table `patients` avec activated=false
+ * 2. Stocke les informations dans `otp_codes` pour l'activation
+ * 3. Le naturopathe voit le patient dans sa liste avec statut "En attente"
+ * 4. Lors de l'activation, l'ancien patient sera supprimé et recréé avec l'ID auth
  */
 export async function createPatientActivationCode(
   patientData: CreatePatientInput
 ): Promise<CreatePatientResult> {
+  let tempPatientId: string | null = null;
+
   try {
     console.log('═══════════════════════════════════════');
-    console.log('👤 CRÉATION CODE D\'ACTIVATION PATIENT');
+    console.log('👤 CRÉATION PATIENT + CODE D\'ACTIVATION');
     console.log('Email:', patientData.email);
 
     // 1. Vérifier que le naturopathe est connecté
@@ -56,30 +63,12 @@ export async function createPatientActivationCode(
 
     const normalizedEmail = patientData.email.toLowerCase().trim();
 
-    // 2. Vérifier que ce patient n'a pas déjà un code actif
-    const { data: existingCode } = await supabase
-      .from('otp_codes')
-      .select('*')
-      .eq('email', normalizedEmail)
-      .eq('practitioner_id', practitionerId)
-      .eq('used', false)
-      .gt('expires_at', new Date().toISOString())
-      .single();
-
-    if (existingCode) {
-      console.log('⚠️ Code existant trouvé:', existingCode.code);
-      return {
-        success: true,
-        code: isDev ? existingCode.code : undefined,
-        error: `Un code actif existe déjà pour ${normalizedEmail}`
-      };
-    }
-
-    // 3. Vérifier si un patient existe déjà avec cet email
+    // 2. Vérifier si un patient existe déjà avec cet email pour ce praticien
     const { data: existingPatient } = await supabase
       .from('patients')
-      .select('id, activated')
+      .select('id, activated, practitioner_id')
       .eq('email', normalizedEmail)
+      .eq('practitioner_id', practitionerId)
       .single();
 
     if (existingPatient) {
@@ -89,24 +78,88 @@ export async function createPatientActivationCode(
           error: 'Ce patient a déjà un compte activé.'
         };
       }
-      // Si le patient existe mais pas activé, on peut continuer
-      // Il sera mis à jour lors de l'activation
-      console.log('⚠️ Patient non-activé existant trouvé, sera mis à jour lors activation');
+      // Si le patient existe mais pas activé, on retourne son ID et on peut régénérer un code
+      console.log('⚠️ Patient non-activé existant trouvé:', existingPatient.id);
+      tempPatientId = existingPatient.id;
+    }
+
+    // 3. Vérifier si un code actif existe déjà
+    const { data: existingCode } = await supabase
+      .from('otp_codes')
+      .select('*')
+      .eq('email', normalizedEmail)
+      .eq('practitioner_id', practitionerId)
+      .eq('used', false)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (existingCode && tempPatientId) {
+      console.log('⚠️ Code existant trouvé:', existingCode.code);
+      return {
+        success: true,
+        code: isDev ? existingCode.code : undefined,
+        patientId: tempPatientId || undefined,
+        error: `Un code actif existe déjà pour ${normalizedEmail}`
+      };
     }
 
     // 4. Générer un code à 6 chiffres
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     console.log('🔐 Code généré:', code);
 
-    // 5. Stocker le code OTP avec les infos du patient
-    // Colonnes correctes de otp_codes: patient_first_name, patient_last_name, patient_phone, patient_city
+    // Préparer les données du patient
     const firstName = patientData.firstName || patientData.name?.split(' ')[0] || '';
     const lastName = patientData.lastName || patientData.name?.split(' ').slice(1).join(' ') || '';
+    const fullName = patientData.name || `${firstName} ${lastName}`.trim();
 
+    // 5. CRÉER LE PATIENT IMMÉDIATEMENT (si n'existe pas déjà)
+    if (!tempPatientId) {
+      console.log('📝 Création du patient dans la table patients...');
+
+      const { data: newPatient, error: patientError } = await supabase
+        .from('patients')
+        .insert({
+          practitioner_id: practitionerId,
+          email: normalizedEmail,
+          name: fullName,
+          first_name: firstName,
+          last_name: lastName,
+          phone: patientData.phone || null,
+          city: patientData.city || null,
+          activated: false
+        })
+        .select('id')
+        .single();
+
+      if (patientError) {
+        console.error('❌ Erreur création patient:', patientError);
+        return { success: false, error: patientError.message };
+      }
+
+      tempPatientId = newPatient.id;
+      console.log('✅ Patient créé (pending):', tempPatientId);
+    } else {
+      // Mettre à jour les infos si le patient existe déjà
+      console.log('📝 Mise à jour du patient existant:', tempPatientId);
+
+      await supabase
+        .from('patients')
+        .update({
+          name: fullName,
+          first_name: firstName,
+          last_name: lastName,
+          phone: patientData.phone || null,
+          city: patientData.city || null
+        })
+        .eq('id', tempPatientId);
+    }
+
+    // 6. Stocker le code OTP avec les infos du patient
     const otpPayload = {
       email: normalizedEmail,
       code: code,
       practitioner_id: practitionerId,
+      patient_id: tempPatientId,
       patient_first_name: firstName,
       patient_last_name: lastName,
       patient_phone: patientData.phone || null,
@@ -118,8 +171,6 @@ export async function createPatientActivationCode(
     console.log('═══════════════════════════════════════');
     console.log('📝 INSERTION OTP_CODES');
     console.log('Payload:', JSON.stringify(otpPayload, null, 2));
-    console.log('practitioner_id:', practitionerId);
-    console.log('Type practitioner_id:', typeof practitionerId);
     console.log('═══════════════════════════════════════');
 
     const { data: insertedOtp, error: otpError } = await supabase
@@ -130,20 +181,17 @@ export async function createPatientActivationCode(
 
     if (otpError) {
       console.error('❌ Erreur stockage code:', otpError);
-      console.error('Payload était:', JSON.stringify(otpPayload, null, 2));
+      // Rollback: supprimer le patient créé
+      if (tempPatientId && !existingPatient) {
+        console.log('🔄 Rollback: suppression du patient créé');
+        await supabase.from('patients').delete().eq('id', tempPatientId);
+      }
       return { success: false, error: otpError.message };
     }
 
-    console.log('✅ Code stocké avec infos patient');
-    console.log('📋 OTP inséré - vérification:', JSON.stringify(insertedOtp, null, 2));
-    if (insertedOtp?.practitioner_id !== practitionerId) {
-      console.error('⚠️ ALERTE: practitioner_id ne correspond pas!');
-      console.error('   Envoyé:', practitionerId);
-      console.error('   Reçu:', insertedOtp?.practitioner_id);
-    }
+    console.log('✅ Code OTP créé:', insertedOtp?.id);
 
-    // 6. Envoyer l'email d'activation
-    const patientFullName = `${firstName} ${lastName}`.trim() || patientData.name;
+    // 7. Envoyer l'email d'activation
     try {
       const { error: emailError } = await supabase.functions.invoke('send-otp', {
         body: {
@@ -151,7 +199,7 @@ export async function createPatientActivationCode(
           code: code,
           type: 'patient-activation',
           practitionerEmail: user.email,
-          patientName: patientFullName
+          patientName: fullName
         }
       });
 
@@ -176,15 +224,18 @@ Code: ${code}
     }
 
     console.log('═══════════════════════════════════════');
-    console.log('✅ CODE CRÉÉ AVEC SUCCÈS');
-    console.log('Code:', code);
+    console.log('✅ PATIENT CRÉÉ + CODE GÉNÉRÉ');
     console.log('Email:', normalizedEmail);
-    console.log('Nom:', patientData.name);
+    console.log('Code:', code);
+    console.log('Patient ID:', tempPatientId);
+    console.log('Praticien ID:', practitionerId);
+    console.log('Statut: En attente d\'activation');
     console.log('═══════════════════════════════════════');
 
     return {
       success: true,
-      code: isDev ? code : undefined
+      code: isDev ? code : undefined,
+      patientId: tempPatientId || undefined
     };
 
   } catch (err) {

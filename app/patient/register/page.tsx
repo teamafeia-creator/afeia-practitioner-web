@@ -52,13 +52,36 @@ function RegisterForm() {
     setError('')
 
     try {
-      console.log('🔐 Création du compte patient...')
-      console.log('Email:', email)
+      const normalizedEmail = email.toLowerCase().trim()
+      console.log('═══════════════════════════════════════')
+      console.log('🔐 ACTIVATION COMPTE PATIENT')
+      console.log('Email:', normalizedEmail)
       console.log('Practitioner ID:', practitionerId)
 
-      // 1. Créer le compte auth Supabase
+      // 1. Trouver le patient pending créé par le naturo
+      const { data: pendingPatient } = await supabase
+        .from('patients')
+        .select('id, name, first_name, last_name, phone, city, activated')
+        .eq('email', normalizedEmail)
+        .eq('practitioner_id', practitionerId)
+        .single()
+
+      if (pendingPatient?.activated) {
+        setError('Ce compte est déjà activé. Utilisez "Se connecter".')
+        return
+      }
+
+      if (!pendingPatient) {
+        console.error('❌ Patient pending non trouvé')
+        setError('Patient non trouvé. Contactez votre naturopathe.')
+        return
+      }
+
+      console.log('✅ Patient pending trouvé:', pendingPatient.id)
+
+      // 2. Créer le compte auth Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         password,
         options: {
           data: {
@@ -69,42 +92,65 @@ function RegisterForm() {
         }
       })
 
+      let userId: string | undefined
+
       if (authError) {
         console.error('Erreur auth:', authError)
         if (authError.message.includes('already registered')) {
-          setError('Cet email est déjà utilisé. Essayez de vous connecter.')
+          // Tenter la connexion si le compte existe déjà
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password
+          })
+          if (signInError) {
+            setError('Un compte existe déjà avec un mot de passe différent. Utilisez "Se connecter".')
+            return
+          }
+          userId = signInData.user?.id
+          console.log('✅ Connexion au compte existant:', userId)
         } else {
           throw authError
         }
-        return
+      } else {
+        userId = authData.user?.id
+        console.log('✅ Compte auth créé:', userId)
       }
 
-      if (!authData.user) {
+      if (!userId) {
         throw new Error('Erreur lors de la création du compte')
       }
 
-      console.log('✅ Compte auth créé:', authData.user.id)
+      // 3. Construire les données du patient
+      const finalFirstName = pendingPatient.first_name || patientFirstName || ''
+      const finalLastName = pendingPatient.last_name || patientLastName || ''
+      const fullName = pendingPatient.name || patientName || `${finalFirstName} ${finalLastName}`.trim()
+      const finalCity = pendingPatient.city || patientCity || null
+      const finalPhone = pendingPatient.phone || patientPhone || null
 
-      // 2. Créer l'entrée patient
-      // Colonnes selon schema: full_name, first_name, last_name, phone, city, activated, activated_at
-      const fullName = patientName || `${patientFirstName} ${patientLastName}`.trim()
+      // 4. Supprimer l'ancien patient pending
+      console.log('🗑️ Suppression du patient pending:', pendingPatient.id)
+      await supabase
+        .from('patients')
+        .delete()
+        .eq('id', pendingPatient.id)
+
+      console.log('✅ Patient pending supprimé')
+
+      // 5. Créer le nouveau patient avec l'ID auth
+      console.log('📝 Création du nouveau patient avec ID auth:', userId)
 
       const patientPayload: Record<string, unknown> = {
-        id: authData.user.id,
+        id: userId, // ✅ VRAI ID auth
         practitioner_id: practitionerId,
-        email: email.toLowerCase().trim(),
-        full_name: fullName,
-        first_name: patientFirstName || fullName.split(' ')[0] || null,
-        last_name: patientLastName || fullName.split(' ').slice(1).join(' ') || null,
-        activated: true,
+        email: normalizedEmail,
+        name: fullName,
+        first_name: finalFirstName || null,
+        last_name: finalLastName || null,
+        phone: finalPhone,
+        city: finalCity,
+        activated: true, // ✅ ACTIVÉ
         activated_at: new Date().toISOString()
       }
-
-      // Ajouter les champs optionnels s'ils existent
-      if (patientCity) patientPayload.city = patientCity
-      if (patientPhone) patientPayload.phone = patientPhone
-
-      console.log('📝 Création patient:', patientPayload)
 
       const { error: patientError } = await supabase
         .from('patients')
@@ -112,15 +158,26 @@ function RegisterForm() {
 
       if (patientError) {
         console.error('Erreur création patient:', patientError)
-        // Ne pas bloquer si le patient existe déjà (peut arriver si l'utilisateur réessaie)
-        if (!patientError.message.includes('duplicate')) {
+        // Si erreur de duplicate, essayer sans spécifier l'ID
+        if (patientError.message.includes('duplicate') || patientError.message.includes('unique')) {
+          console.log('⚠️ Tentative sans ID spécifique...')
+          const { error: patientError2 } = await supabase
+            .from('patients')
+            .insert({
+              ...patientPayload,
+              id: undefined
+            })
+          if (patientError2) {
+            throw patientError2
+          }
+        } else {
           throw patientError
         }
       }
 
-      console.log('✅ Patient créé')
+      console.log('✅ Nouveau patient créé avec ID auth')
 
-      // 3. Marquer le code OTP comme utilisé
+      // 6. Marquer le code OTP comme utilisé
       if (otpId) {
         const { error: otpError } = await supabase
           .from('otp_codes')
@@ -137,19 +194,26 @@ function RegisterForm() {
         }
       }
 
-      // 4. Connecter automatiquement l'utilisateur
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase().trim(),
-        password
-      })
-
-      if (signInError) {
-        console.warn('⚠️ Auto-login échoué:', signInError)
-        // Pas bloquant, on redirige quand même
+      // 7. Connecter automatiquement l'utilisateur
+      const { data: session } = await supabase.auth.getSession()
+      if (!session?.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password
+        })
+        if (signInError) {
+          console.warn('⚠️ Auto-login échoué:', signInError)
+        }
       }
 
+      console.log('═══════════════════════════════════════')
+      console.log('✅ ACTIVATION RÉUSSIE')
+      console.log('Email:', normalizedEmail)
+      console.log('Patient ID:', userId)
+      console.log('Praticien ID:', practitionerId)
+      console.log('═══════════════════════════════════════')
+
       setSuccess(true)
-      console.log('✅ Inscription terminée avec succès!')
 
       // Rediriger vers la home patient après un court délai
       setTimeout(() => {
