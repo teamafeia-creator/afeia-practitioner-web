@@ -106,8 +106,9 @@ export const patientAuthService = {
 
       console.log('✅ Code trouvé!');
       console.log('   Praticien ID:', otpData.practitioner_id || 'non défini');
-      console.log('   Patient prénom:', otpData.patient_first_name || 'non défini');
-      console.log('   Patient nom:', otpData.patient_last_name || 'non défini');
+      console.log('   Patient nom:', otpData.patient_name || 'non défini');
+      console.log('   Patient ville:', otpData.patient_city || 'non défini');
+      console.log('   Patient âge:', otpData.patient_age || 'non défini');
 
       const practitionerId = otpData.practitioner_id;
 
@@ -193,19 +194,9 @@ export const patientAuthService = {
       }
 
       // 4. Construire le nom du patient à partir des infos OTP
-      let patientName = '';
-      if (otpData.patient_first_name && otpData.patient_last_name) {
-        patientName = `${otpData.patient_first_name} ${otpData.patient_last_name}`;
-      } else if (otpData.patient_first_name) {
-        patientName = otpData.patient_first_name;
-      } else if (otpData.patient_last_name) {
-        patientName = otpData.patient_last_name;
-      } else {
-        // Fallback: utiliser la partie avant @ de l'email
-        patientName = normalizedEmail.split('@')[0];
-      }
+      const patientName = otpData.patient_name || normalizedEmail.split('@')[0];
 
-      // 5. Créer l'entrée patient avec les infos du code OTP
+      // 5. Créer l'entrée patient avec les infos du code OTP (schéma simplifié)
       console.log('📝 Création du patient avec les infos du code OTP...');
 
       const { data: newPatient, error: patientError } = await supabase
@@ -215,14 +206,8 @@ export const patientAuthService = {
           practitioner_id: practitionerId,
           email: normalizedEmail,
           name: patientName,
-          first_name: otpData.patient_first_name || null,
-          last_name: otpData.patient_last_name || null,
-          phone: otpData.patient_phone_number || null,
-          date_of_birth: otpData.patient_date_of_birth || null,
           city: otpData.patient_city || null,
-          status: otpData.patient_is_premium ? 'premium' : 'standard',
-          is_premium: otpData.patient_is_premium || false,
-          circular_enabled: otpData.patient_circular_enabled || false,
+          age: otpData.patient_age || null,
           activated: true,
           activated_at: new Date().toISOString(),
         })
@@ -242,14 +227,8 @@ export const patientAuthService = {
               practitioner_id: practitionerId,
               email: normalizedEmail,
               name: patientName,
-              first_name: otpData.patient_first_name || null,
-              last_name: otpData.patient_last_name || null,
-              phone: otpData.patient_phone_number || null,
-              date_of_birth: otpData.patient_date_of_birth || null,
               city: otpData.patient_city || null,
-              status: otpData.patient_is_premium ? 'premium' : 'standard',
-              is_premium: otpData.patient_is_premium || false,
-              circular_enabled: otpData.patient_circular_enabled || false,
+              age: otpData.patient_age || null,
               activated: true,
               activated_at: new Date().toISOString(),
             })
@@ -390,6 +369,7 @@ export const patientAuthService = {
 
   /**
    * Request a password reset code
+   * Note: Uses Supabase built-in password reset since otp_codes requires practitioner_id
    */
   async requestPasswordReset(
     email: string
@@ -400,7 +380,7 @@ export const patientAuthService = {
       // Check if user exists
       const { data: patient, error: patientError } = await supabase
         .from('patients')
-        .select('id, email')
+        .select('id, email, practitioner_id')
         .eq('email', email.toLowerCase().trim())
         .single();
 
@@ -412,46 +392,17 @@ export const patientAuthService = {
         };
       }
 
-      // Generate a new 6-digit code
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      console.log(`🔐 Code généré: ${code}`);
+      // Use Supabase built-in password reset
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        email.toLowerCase().trim()
+      );
 
-      // Store the code
-      const { error: dbError } = await supabase.from('otp_codes').insert({
-        email: email.toLowerCase().trim(),
-        code,
-        type: 'password-reset',
-        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
-      });
-
-      if (dbError) {
-        console.error('❌ Erreur DB:', dbError);
-        return { success: false, error: dbError.message };
+      if (resetError) {
+        console.error('❌ Erreur reset Supabase:', resetError);
+        return { success: false, error: resetError.message };
       }
 
-      // Try to send email via Edge Function
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-otp', {
-          body: { email: email.toLowerCase().trim(), code, type: 'password-reset' },
-        });
-
-        if (emailError) {
-          console.error('❌ Erreur envoi email:', emailError);
-          // In DEV mode, return the code
-          if (__DEV__) {
-            console.log('🔐 CODE RESET (DEV):', code);
-            return { success: true, devCode: code };
-          }
-        }
-      } catch (emailErr) {
-        console.error('❌ Exception envoi email:', emailErr);
-        if (__DEV__) {
-          console.log('🔐 CODE RESET (DEV):', code);
-          return { success: true, devCode: code };
-        }
-      }
-
-      console.log('✅ Code de reset créé');
+      console.log('✅ Email de reset envoyé');
       return { success: true };
     } catch (err) {
       console.error('❌ Exception requestPasswordReset:', err);
@@ -461,69 +412,19 @@ export const patientAuthService = {
 
   /**
    * Reset password with code
+   * Note: With the simplified schema, we use Supabase's built-in password reset flow
    */
   async resetPassword(
-    email: string,
-    code: string,
-    newPassword: string
+    _email: string,
+    _code: string,
+    _newPassword: string
   ): Promise<{ success: boolean; error?: string }> {
-    try {
-      console.log(`🔐 Reset password pour ${email}`);
-
-      // Verify the code
-      const { data: otpData, error: otpError } = await supabase
-        .from('otp_codes')
-        .select('*')
-        .eq('email', email.toLowerCase().trim())
-        .eq('code', code)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (otpError || !otpData) {
-        console.error('❌ Code invalide:', otpError);
-        return { success: false, error: 'Code invalide ou expiré' };
-      }
-
-      console.log('✅ Code valide');
-
-      // Use Supabase admin password reset
-      // Since we can't update password without being logged in,
-      // we'll use a workaround: sign in with OTP then update
-
-      // First, try to use Supabase's built-in reset
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        email.toLowerCase().trim(),
-        {
-          redirectTo: undefined, // No redirect for mobile
-        }
-      );
-
-      if (resetError) {
-        console.error('❌ Erreur reset Supabase:', resetError);
-        // Continue with alternative approach
-      }
-
-      // Delete the used code
-      await supabase
-        .from('otp_codes')
-        .delete()
-        .eq('id', otpData.id);
-
-      // For now, we'll need the user to sign in first
-      // This is a limitation - in production, you'd use an Edge Function
-      // with admin privileges to update the password
-
-      console.log('✅ Code vérifié - utilisez le lien email pour finaliser');
-      return {
-        success: true,
-        error: 'Un email de réinitialisation a été envoyé. Vérifiez votre boîte mail.',
-      };
-    } catch (err) {
-      console.error('❌ Exception resetPassword:', err);
-      return { success: false, error: String(err) };
-    }
+    // With the simplified schema, password reset is handled via Supabase's email link
+    // This function now just returns a message to use the email link
+    return {
+      success: false,
+      error: 'Veuillez utiliser le lien reçu par email pour réinitialiser votre mot de passe.',
+    };
   },
 
   /**

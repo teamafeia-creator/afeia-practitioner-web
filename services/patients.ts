@@ -5,13 +5,9 @@ export type PatientOverview = {
   name: string;
   age: number | null;
   city: string | null;
-  status: 'standard' | 'premium';
-  circularEnabled: boolean;
-  lastCircularSyncAt: string | null;
-  lastConsultationAt: string | null;
-  nextAppointmentAt: string | null;
+  activated: boolean;
+  activatedAt: string | null;
   unreadMessages: number;
-  anamneseStatus: 'PENDING' | 'COMPLETED' | null;
 };
 
 export type PatientMessage = {
@@ -58,18 +54,10 @@ export type PatientDetail = {
   email: string | null;
   age: number | null;
   city: string | null;
-  status: 'standard' | 'premium';
-  isPremium: boolean;
-  circularEnabled: boolean;
-  circularConnected: boolean;
-  lastCircularSyncAt: string | null;
+  activated: boolean;
+  activatedAt: string | null;
   createdAt: string | null;
-  updatedAt: string | null;
-  anamnese: PatientAnamnese;
-  appointments: PatientAppointment[];
   messages: PatientMessage[];
-  wearableSummaries: PatientWearableSummary[];
-  wearableInsights: PatientWearableInsight[];
 };
 
 type PatientRow = {
@@ -77,14 +65,10 @@ type PatientRow = {
   name: string;
   age: number | null;
   city: string | null;
-  status: 'standard' | 'premium' | null;
-  is_premium?: boolean | null;
-  circular_enabled: boolean | null;
-  circular_connected?: boolean | null;
-  last_circular_sync_at: string | null;
   email?: string | null;
+  activated?: boolean | null;
+  activated_at?: string | null;
   created_at?: string | null;
-  updated_at?: string | null;
 };
 
 type AppointmentRow = {
@@ -147,8 +131,7 @@ type WearableInsightRow = {
 export async function fetchPatientsOverview(): Promise<PatientOverview[]> {
   const { data: patients, error } = await supabase
     .from('patients')
-    .select('id, name, age, city, status, circular_enabled, last_circular_sync_at')
-    .is('deleted_at', null)
+    .select('id, name, age, city, activated, activated_at')
     .order('name');
 
   if (error || !patients) {
@@ -161,65 +144,22 @@ export async function fetchPatientsOverview(): Promise<PatientOverview[]> {
     return [];
   }
 
-  const [appointmentsResult, messagesResult, anamneseResult] = await Promise.all([
-    supabase
-      .from('appointments')
-      .select('patient_id, starts_at, status')
-      .in('patient_id', patientIds),
-    supabase
-      .from('messages')
-      .select('patient_id')
-      .in('patient_id', patientIds)
-      .eq('sender_role', 'patient')
-      .eq('read_by_practitioner', false),
-    supabase
-      .from('anamnese_instances')
-      .select('patient_id, status')
-      .in('patient_id', patientIds)
-  ]);
+  // Fetch unread messages count
+  const messagesResult = await supabase
+    .from('messages')
+    .select('patient_id')
+    .in('patient_id', patientIds)
+    .eq('sender_type', 'patient')
+    .eq('read', false);
 
-  if (appointmentsResult.error) {
-    console.error('Error fetching appointments:', appointmentsResult.error);
-  }
   if (messagesResult.error) {
     console.error('Error fetching messages:', messagesResult.error);
   }
-  if (anamneseResult.error) {
-    console.error('Error fetching anamnese instances:', anamneseResult.error);
-  }
 
-  const appointments = (appointmentsResult.data ?? []) as AppointmentRow[];
   const messages = (messagesResult.data ?? []) as MessageRow[];
-  const anamneses = (anamneseResult.data ?? []) as AnamneseRow[];
-
-  const lastConsultationMap = new Map<string, string>();
-  const nextAppointmentMap = new Map<string, string>();
-  const now = new Date();
-
-  appointments.forEach((appointment) => {
-    const appointmentDate = new Date(appointment.starts_at);
-    if (appointment.status === 'done' || appointment.status === 'completed') {
-      const existing = lastConsultationMap.get(appointment.patient_id);
-      if (!existing || appointmentDate > new Date(existing)) {
-        lastConsultationMap.set(appointment.patient_id, appointment.starts_at);
-      }
-    }
-
-    if (appointment.status === 'scheduled' && appointmentDate >= now) {
-      const existing = nextAppointmentMap.get(appointment.patient_id);
-      if (!existing || appointmentDate < new Date(existing)) {
-        nextAppointmentMap.set(appointment.patient_id, appointment.starts_at);
-      }
-    }
-  });
 
   const unreadMessagesMap = messages.reduce<Record<string, number>>((acc, message) => {
     acc[message.patient_id] = (acc[message.patient_id] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const anamneseMap = anamneses.reduce<Record<string, AnamneseRow['status']>>((acc, item) => {
-    acc[item.patient_id] = item.status;
     return acc;
   }, {});
 
@@ -228,13 +168,9 @@ export async function fetchPatientsOverview(): Promise<PatientOverview[]> {
     name: patient.name,
     age: patient.age,
     city: patient.city,
-    status: patient.status ?? 'standard',
-    circularEnabled: patient.circular_enabled ?? false,
-    lastCircularSyncAt: patient.last_circular_sync_at,
-    lastConsultationAt: lastConsultationMap.get(patient.id) ?? null,
-    nextAppointmentAt: nextAppointmentMap.get(patient.id) ?? null,
-    unreadMessages: unreadMessagesMap[patient.id] ?? 0,
-    anamneseStatus: anamneseMap[patient.id] ?? null
+    activated: patient.activated ?? false,
+    activatedAt: patient.activated_at ?? null,
+    unreadMessages: unreadMessagesMap[patient.id] ?? 0
   }));
 }
 
@@ -243,9 +179,6 @@ type CreatePatientInput = {
   email?: string;
   age?: number | null;
   city?: string;
-  status: 'standard' | 'premium';
-  isPremium: boolean;
-  circularEnabled: boolean;
 };
 
 export async function createPatientRecord(input: CreatePatientInput) {
@@ -262,9 +195,7 @@ export async function createPatientRecord(input: CreatePatientInput) {
       email: input.email ?? null,
       age: input.age ?? null,
       city: input.city ?? null,
-      status: input.status,
-      is_premium: input.isPremium,
-      circular_enabled: input.circularEnabled
+      activated: false
     })
     .select('id')
     .single();
@@ -288,11 +219,8 @@ function normalizeSenderRole(value?: string | null): PatientMessage['senderRole'
 export async function fetchPatientDetail(patientId: string): Promise<PatientDetail | null> {
   const { data: patient, error: patientError } = await supabase
     .from('patients')
-    .select(
-      'id, name, email, age, city, phone, consultation_reason, status, is_premium, circular_enabled, circular_connected, last_circular_sync_at, created_at, updated_at'
-    )
+    .select('id, name, email, age, city, activated, activated_at, created_at')
     .eq('id', patientId)
-    .is('deleted_at', null)
     .single();
 
   if (patientError || !patient) {
@@ -300,57 +228,18 @@ export async function fetchPatientDetail(patientId: string): Promise<PatientDeta
     return null;
   }
 
-  const [anamneseResult, appointmentsResult, messagesResult, summariesResult, insightsResult] =
-    await Promise.all([
-      supabase
-        .from('anamnese_instances')
-        .select('status, answers, created_at, updated_at')
-        .eq('patient_id', patientId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase.from('appointments').select('*').eq('patient_id', patientId),
-      supabase.from('messages').select('*').eq('patient_id', patientId).order('created_at', { ascending: true }),
-      supabase.from('wearable_summaries').select('*').eq('patient_id', patientId).order('date', { ascending: false }),
-      supabase.from('wearable_insights').select('*').eq('patient_id', patientId).order('created_at', { ascending: false })
-    ]);
+  // Fetch messages for this patient
+  const messagesResult = await supabase
+    .from('messages')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('created_at', { ascending: true });
 
-  if (anamneseResult.error) {
-    console.error('Error fetching anamnese detail:', anamneseResult.error);
-  }
-  if (appointmentsResult.error) {
-    console.error('Error fetching appointments detail:', appointmentsResult.error);
-  }
   if (messagesResult.error) {
     console.error('Error fetching messages detail:', messagesResult.error);
   }
-  if (summariesResult.error) {
-    console.error('Error fetching wearable summaries:', summariesResult.error);
-  }
-  if (insightsResult.error) {
-    console.error('Error fetching wearable insights:', insightsResult.error);
-  }
 
   const patientRow = patient as PatientRow;
-  const status = patientRow.status ?? (patientRow.is_premium ? 'premium' : 'standard');
-  const isPremium = status === 'premium';
-
-  const anamneseRow = anamneseResult.data as AnamneseDetailRow | null;
-  const anamnese: PatientAnamnese = {
-    status: anamneseRow?.status ?? null,
-    answers: anamneseRow?.answers ?? null,
-    createdAt: anamneseRow?.created_at ?? null,
-    updatedAt: anamneseRow?.updated_at ?? null
-  };
-
-  const appointments = ((appointmentsResult.data ?? []) as AppointmentDetailRow[])
-    .filter((item) => item.starts_at)
-    .map((item) => ({
-      id: item.id,
-      startAt: item.starts_at,
-      status: item.status ?? 'scheduled'
-    }))
-    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
 
   const messages = ((messagesResult.data ?? []) as MessageDetailRow[]).map((item) => ({
     id: item.id,
@@ -359,41 +248,15 @@ export async function fetchPatientDetail(patientId: string): Promise<PatientDeta
     senderRole: normalizeSenderRole(item.sender_role ?? item.sender)
   }));
 
-  const wearableSummaries = ((summariesResult.data ?? []) as WearableSummaryRow[]).map((item) => ({
-    date: item.date,
-    sleepDuration: item.sleep_duration ?? null,
-    sleepScore: item.sleep_score ?? null,
-    hrvAvg: item.hrv_avg ?? null,
-    activityLevel: item.activity_level ?? null,
-    completeness: item.completeness ?? null
-  }));
-
-  const wearableInsights = ((insightsResult.data ?? []) as WearableInsightRow[]).map((item) => ({
-    id: item.id,
-    type: item.type ?? null,
-    level: item.level ?? null,
-    message: item.message ?? null,
-    suggestedAction: item.suggested_action ?? null,
-    createdAt: item.created_at ?? null
-  }));
-
   return {
     id: patientRow.id,
     name: patientRow.name,
     email: patientRow.email ?? null,
     age: patientRow.age ?? null,
     city: patientRow.city ?? null,
-    status,
-    isPremium,
-    circularEnabled: patientRow.circular_enabled ?? false,
-    circularConnected: patientRow.circular_connected ?? false,
-    lastCircularSyncAt: patientRow.last_circular_sync_at ?? null,
+    activated: patientRow.activated ?? false,
+    activatedAt: patientRow.activated_at ?? null,
     createdAt: patientRow.created_at ?? null,
-    updatedAt: patientRow.updated_at ?? null,
-    anamnese,
-    appointments,
-    messages,
-    wearableSummaries,
-    wearableInsights
+    messages
   };
 }

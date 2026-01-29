@@ -17,8 +17,6 @@ export default function NewPatientPage() {
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [age, setAge] = useState('');
-  const [isPremium, setIsPremium] = useState(false);
-  const [circularEnabled, setCircularEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activationCode, setActivationCode] = useState<string | null>(null);
@@ -64,9 +62,7 @@ export default function NewPatientPage() {
         email: trimmedEmail,
         name: name.trim(),
         city: city.trim() || undefined,
-        age: parsedAge !== undefined && !Number.isNaN(parsedAge) ? parsedAge : undefined,
-        isPremium,
-        circularEnabled
+        age: parsedAge !== undefined && !Number.isNaN(parsedAge) ? parsedAge : undefined
       });
 
       if (!result.success) {
@@ -148,27 +144,6 @@ export default function NewPatientPage() {
               onChange={(event) => setAge(event.target.value)}
               placeholder="35"
             />
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="flex items-center gap-3 text-sm text-charcoal">
-                <input
-                  type="checkbox"
-                  checked={isPremium}
-                  onChange={(event) => setIsPremium(event.target.checked)}
-                  className="h-4 w-4 rounded border-warmgray/40 text-teal focus:ring-teal/40"
-                />
-                Statut Premium
-              </label>
-              <label className="flex items-center gap-3 text-sm text-charcoal">
-                <input
-                  type="checkbox"
-                  checked={circularEnabled}
-                  onChange={(event) => setCircularEnabled(event.target.checked)}
-                  className="h-4 w-4 rounded border-warmgray/40 text-teal focus:ring-teal/40"
-                />
-                Circular activé
-              </label>
-            </div>
 
             {error ? (
               <div className="rounded-xl border border-gold/30 bg-gold/10 p-3 text-sm">
