@@ -10,13 +10,14 @@ export const patientAuthService = {
     password: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      console.log(`🔐 Activation compte pour ${email} avec code ${code}`);
+      const normalizedEmail = email.toLowerCase().trim();
+      console.log(`🔐 Activation compte pour ${normalizedEmail} avec code ${code}`);
 
       // 1. Verify that the code exists and is valid
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
-        .eq('email', email.toLowerCase().trim())
+        .eq('email', normalizedEmail)
         .eq('code', code)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
@@ -27,55 +28,100 @@ export const patientAuthService = {
         console.error('❌ Code invalide ou expiré:', otpError);
         return {
           success: false,
-          error: 'Code invalide ou expiré. Contactez votre praticien.',
+          error: 'Code invalide ou expiré. Vérifiez le code reçu par email.',
         };
       }
 
       console.log('✅ Code valide trouvé');
 
-      // 2. Create Supabase Auth account
+      // 2. Try to create Supabase Auth account
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         password,
         options: {
           data: {
             role: 'patient',
+            email_verified: true,
           },
         },
       });
 
+      let userId: string | undefined;
+
       if (authError) {
         console.error('❌ Erreur création compte:', authError);
 
-        // Handle "user already exists" error
+        // Handle "user already exists" error - try to sign in instead
         if (authError.message.includes('already registered')) {
-          return {
-            success: false,
-            error: 'Un compte existe déjà avec cet email. Utilisez la connexion.',
-          };
-        }
+          console.log('🔄 Compte existe déjà, tentative de connexion...');
 
-        return { success: false, error: authError.message };
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password,
+          });
+
+          if (signInError) {
+            console.error('❌ Connexion échouée:', signInError);
+            return {
+              success: false,
+              error: 'Un compte existe déjà. Utilisez "Se connecter" ou un mot de passe différent.',
+            };
+          }
+
+          console.log('✅ Connexion réussie au compte existant');
+          userId = signInData.user?.id;
+        } else {
+          return { success: false, error: authError.message };
+        }
+      } else {
+        console.log('✅ Compte créé:', authData.user?.id);
+        userId = authData.user?.id;
       }
 
-      console.log('✅ Compte créé:', authData.user?.id);
-
-      // 3. Update the patient record with the user_id
-      if (authData.user) {
-        const { error: patientError } = await supabase
+      // 3. Update the patient record with the user_id (use upsert logic)
+      if (userId) {
+        // First try to update existing patient record
+        const { data: existingPatient, error: findError } = await supabase
           .from('patients')
-          .update({
-            user_id: authData.user.id,
-            activated: true,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('email', email.toLowerCase().trim());
+          .select('id')
+          .eq('email', normalizedEmail)
+          .single();
 
-        if (patientError) {
-          console.error('❌ Erreur mise à jour patient:', patientError);
-          // Continue anyway - account is created
+        if (existingPatient) {
+          // Update existing patient
+          const { error: updateError } = await supabase
+            .from('patients')
+            .update({
+              user_id: userId,
+              activated: true,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('email', normalizedEmail);
+
+          if (updateError) {
+            console.error('❌ Erreur mise à jour patient:', updateError);
+          } else {
+            console.log('✅ Patient mis à jour');
+          }
         } else {
-          console.log('✅ Patient mis à jour');
+          console.log('⚠️ Pas de patient trouvé avec cet email, création...');
+          // Insert new patient record
+          const { error: insertError } = await supabase
+            .from('patients')
+            .insert({
+              user_id: userId,
+              email: normalizedEmail,
+              activated: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+
+          if (insertError) {
+            console.error('❌ Erreur création patient:', insertError);
+            // Continue anyway - auth account is created
+          } else {
+            console.log('✅ Patient créé');
+          }
         }
       }
 
@@ -87,15 +133,18 @@ export const patientAuthService = {
 
       console.log('✅ Code OTP supprimé');
 
-      // 5. Sign in the user automatically
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase().trim(),
-        password,
-      });
+      // 5. Sign in the user automatically (if not already signed in)
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password,
+        });
 
-      if (signInError) {
-        console.error('❌ Erreur connexion automatique:', signInError);
-        // Account was created, user can login manually
+        if (signInError) {
+          console.error('❌ Erreur connexion automatique:', signInError);
+          // Account was created, user can login manually
+        }
       }
 
       console.log('✅ Compte activé avec succès!');

@@ -13,6 +13,7 @@ import {
 import { useState, useRef } from 'react';
 import { Colors } from '../constants/Colors';
 import { patientAuthService } from '../services/patient-auth.service';
+import { supabase } from '../lib/supabase';
 
 interface PatientActivateScreenProps {
   onBack: () => void;
@@ -52,6 +53,69 @@ export default function PatientActivateScreen({
     if (key === 'Backspace' && !code[index] && index > 0) {
       codeInputs.current[index - 1]?.focus();
     }
+  };
+
+  // Debug function to reset test account (DEV only)
+  const handleDebugReset = async () => {
+    if (!__DEV__) return;
+
+    const testEmail = email.trim().toLowerCase() || 'team.afeia@gmail.com';
+
+    Alert.alert(
+      '⚠️ DEBUG: Reset compte',
+      `Supprimer le compte ${testEmail} et créer un nouveau code 123456 ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              console.log(`🔧 DEBUG: Reset compte ${testEmail}`);
+
+              // Delete old OTP codes for this email
+              const { error: otpDeleteError } = await supabase
+                .from('otp_codes')
+                .delete()
+                .eq('email', testEmail);
+
+              if (otpDeleteError) {
+                console.log('⚠️ Erreur suppression OTP:', otpDeleteError);
+              }
+
+              // Create a new test code
+              const { error: insertError } = await supabase
+                .from('otp_codes')
+                .insert({
+                  email: testEmail,
+                  code: '123456',
+                  expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+                });
+
+              if (insertError) {
+                console.error('❌ Erreur création code:', insertError);
+                Alert.alert('Erreur', insertError.message);
+              } else {
+                console.log('✅ Code test créé: 123456');
+                // Pre-fill the code
+                setCode(['1', '2', '3', '4', '5', '6']);
+                setEmail(testEmail);
+                Alert.alert(
+                  '✅ Reset effectué',
+                  `Email: ${testEmail}\nCode: 123456\n\nNote: Si un compte Auth existe déjà, supprimez-le via Supabase Dashboard.`
+                );
+              }
+            } catch (err) {
+              console.error('❌ Exception reset:', err);
+              Alert.alert('Erreur', String(err));
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleActivate = async () => {
@@ -216,6 +280,19 @@ export default function PatientActivateScreen({
 
         {/* Note */}
         <Text style={styles.note}>Code non recu ? Contactez votre praticien</Text>
+
+        {/* Debug button - DEV only */}
+        {__DEV__ && (
+          <TouchableOpacity
+            style={styles.debugButton}
+            onPress={handleDebugReset}
+            disabled={loading}
+          >
+            <Text style={styles.debugButtonText}>
+              🔧 DEBUG: Reset compte test
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -334,5 +411,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.grisChaud,
     marginTop: 16,
+  },
+  debugButton: {
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 24,
+    borderWidth: 2,
+    borderColor: '#DC2626',
+    borderStyle: 'dashed',
+  },
+  debugButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
