@@ -90,7 +90,7 @@ export default function ActivatePage() {
         practitioner_id: otpData.practitioner_id || '',
         otp_id: otpData.id,
         city: otpData.patient_city || '',
-        phone: otpData.patient_phone_number || ''
+        phone: otpData.patient_phone || ''
       })
 
       router.push(`/patient/register?${params.toString()}`)
