@@ -12,34 +12,24 @@ interface MessagesCardProps {
 export default function MessagesCard({ onPress }: MessagesCardProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [naturopathe, setNaturopathe] = useState<{ fullName: string } | null>(null);
 
   useEffect(() => {
-    loadMessages();
+    loadData();
   }, []);
 
-  const loadMessages = async () => {
+  const loadData = async () => {
     try {
-      const data = await api.getMessages();
-      setMessages(data.messages || []);
+      const [messagesData, naturoData] = await Promise.all([
+        api.getMessages(),
+        api.getNaturopatheInfo(),
+      ]);
+      setMessages(messagesData.messages || []);
+      setNaturopathe(naturoData);
     } catch (error) {
       console.error('Erreur chargement messages:', error);
-      // Mock data for demo
-      setMessages([
-        {
-          id: '1',
-          senderId: 'naturo-1',
-          content: 'Bonjour Sophie, comment vous sentez-vous après la dernière consultation ?',
-          timestamp: new Date().toISOString(),
-          read: false,
-        },
-        {
-          id: '2',
-          senderId: 'naturo-1',
-          content: 'N\'hésitez pas à me faire part de vos questions.',
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          read: true,
-        },
-      ]);
+      // En cas d'erreur, on affiche une liste vide (pas de mock)
+      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -84,7 +74,9 @@ export default function MessagesCard({ onPress }: MessagesCardProps) {
           messages.slice(0, 2).map((message) => (
             <View key={message.id} style={[styles.message, !message.read && styles.unread]}>
               <View style={styles.messageHeader}>
-                <Text style={styles.sender}>Dr. Martin</Text>
+                <Text style={styles.sender}>
+                  {message.senderId === 'patient' ? 'Vous' : (naturopathe?.fullName || 'Naturopathe')}
+                </Text>
                 <Text style={styles.date}>{formatDate(message.timestamp)}</Text>
               </View>
               <Text style={styles.preview} numberOfLines={1}>
