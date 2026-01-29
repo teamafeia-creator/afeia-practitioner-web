@@ -65,12 +65,14 @@ export const patientAuthService = {
   /**
    * Verify OTP code and create patient account
    *
-   * NOUVEAU FLUX (correction duplication):
-   * 1. Le naturopathe crée un code OTP avec les infos patient stockées dans otp_codes
-   * 2. Aucune entrée n'est créée dans `patients` par le naturopathe
-   * 3. Lors de l'activation, on crée l'entrée `patients` avec les infos du code OTP
-   *
-   * Cela évite le conflit "Patient existe déjà"
+   * NOUVEAU FLUX (correction visibilité patient):
+   * 1. Le naturopathe crée IMMÉDIATEMENT le patient avec activated=false
+   * 2. Le code OTP est stocké dans otp_codes avec patient_id
+   * 3. Lors de l'activation:
+   *    - On trouve le patient pending créé par le naturo
+   *    - On supprime l'ancien patient (ID temporaire)
+   *    - On crée un nouveau patient avec l'ID auth
+   *    - activated passe à true
    */
   async activateAccount(
     email: string,
@@ -106,9 +108,10 @@ export const patientAuthService = {
 
       console.log('✅ Code trouvé!');
       console.log('   Praticien ID:', otpData.practitioner_id || 'non défini');
-      console.log('   Patient nom:', otpData.patient_name || 'non défini');
+      console.log('   Patient ID (pending):', otpData.patient_id || 'non défini');
+      console.log('   Patient prénom:', otpData.patient_first_name || 'non défini');
+      console.log('   Patient nom:', otpData.patient_last_name || 'non défini');
       console.log('   Patient ville:', otpData.patient_city || 'non défini');
-      console.log('   Patient âge:', otpData.patient_age || 'non défini');
 
       const practitionerId = otpData.practitioner_id;
 
@@ -120,29 +123,31 @@ export const patientAuthService = {
         };
       }
 
-      // 2. Vérifier si un patient existe déjà avec cet email
-      const { data: existingPatient } = await supabase
+      // 2. Trouver le patient pending créé par le naturo
+      const { data: pendingPatient } = await supabase
         .from('patients')
-        .select('id, activated')
+        .select('id, name, first_name, last_name, phone, city, activated')
         .eq('email', normalizedEmail)
+        .eq('practitioner_id', practitionerId)
         .single();
 
-      if (existingPatient) {
-        if (existingPatient.activated) {
-          console.log('⚠️ Patient déjà activé');
-          return {
-            success: false,
-            error: 'Ce compte est déjà activé. Utilisez "Se connecter".',
-          };
-        } else {
-          // Supprimer l'ancien patient non activé pour éviter les conflits
-          console.log('⚠️ Suppression du patient non-activé existant:', existingPatient.id);
-          await supabase
-            .from('patients')
-            .delete()
-            .eq('id', existingPatient.id);
-        }
+      if (pendingPatient?.activated) {
+        console.log('⚠️ Patient déjà activé');
+        return {
+          success: false,
+          error: 'Ce compte est déjà activé. Utilisez "Se connecter".',
+        };
       }
+
+      if (!pendingPatient) {
+        console.error('❌ Patient pending non trouvé');
+        return {
+          success: false,
+          error: 'Patient non trouvé. Contactez votre naturopathe.',
+        };
+      }
+
+      console.log('✅ Patient pending trouvé:', pendingPatient.id);
 
       // 3. Créer le compte Auth Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -193,22 +198,37 @@ export const patientAuthService = {
         return { success: false, error: 'Erreur lors de la création du compte.' };
       }
 
-      // 4. Construire le nom du patient à partir des infos OTP
-      const patientName = otpData.patient_name || normalizedEmail.split('@')[0];
+      // 4. Construire le nom du patient
+      const patientFirstName = pendingPatient.first_name || otpData.patient_first_name || '';
+      const patientLastName = pendingPatient.last_name || otpData.patient_last_name || '';
+      const patientName = pendingPatient.name || `${patientFirstName} ${patientLastName}`.trim() || normalizedEmail.split('@')[0];
+      const patientCity = pendingPatient.city || otpData.patient_city || null;
+      const patientPhone = pendingPatient.phone || otpData.patient_phone || null;
 
-      // 5. Créer l'entrée patient avec les infos du code OTP (schéma simplifié)
-      console.log('📝 Création du patient avec les infos du code OTP...');
+      // 5. Supprimer l'ancien patient pending
+      console.log('🗑️ Suppression du patient pending:', pendingPatient.id);
+      await supabase
+        .from('patients')
+        .delete()
+        .eq('id', pendingPatient.id);
+
+      console.log('✅ Patient pending supprimé');
+
+      // 6. Créer le nouveau patient avec l'ID auth
+      console.log('📝 Création du nouveau patient avec ID auth:', userId);
 
       const { data: newPatient, error: patientError } = await supabase
         .from('patients')
         .insert({
-          id: userId, // Utiliser l'ID auth comme ID patient
+          id: userId, // ✅ VRAI ID auth
           practitioner_id: practitionerId,
           email: normalizedEmail,
           name: patientName,
-          city: otpData.patient_city || null,
-          age: otpData.patient_age || null,
-          activated: true,
+          first_name: patientFirstName,
+          last_name: patientLastName,
+          phone: patientPhone,
+          city: patientCity,
+          activated: true, // ✅ ACTIVÉ
           activated_at: new Date().toISOString(),
         })
         .select('id')
@@ -227,8 +247,10 @@ export const patientAuthService = {
               practitioner_id: practitionerId,
               email: normalizedEmail,
               name: patientName,
-              city: otpData.patient_city || null,
-              age: otpData.patient_age || null,
+              first_name: patientFirstName,
+              last_name: patientLastName,
+              phone: patientPhone,
+              city: patientCity,
               activated: true,
               activated_at: new Date().toISOString(),
             })
@@ -250,7 +272,7 @@ export const patientAuthService = {
           return { success: false, error: patientError.message };
         }
       } else if (newPatient) {
-        console.log('✅ Patient créé:', newPatient.id);
+        console.log('✅ Nouveau patient créé avec ID auth:', newPatient.id);
 
         // Créer le membership si l'ID patient est différent de l'ID auth
         if (newPatient.id !== userId) {
@@ -258,7 +280,7 @@ export const patientAuthService = {
         }
       }
 
-      // 6. Marquer le code comme utilisé
+      // 7. Marquer le code comme utilisé
       await supabase
         .from('otp_codes')
         .update({
@@ -269,7 +291,7 @@ export const patientAuthService = {
 
       console.log('✅ Code OTP marqué comme utilisé');
 
-      // 7. Connecter automatiquement l'utilisateur
+      // 8. Connecter automatiquement l'utilisateur
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -285,7 +307,9 @@ export const patientAuthService = {
 
       console.log('═══════════════════════════════════════');
       console.log('✅ ACTIVATION RÉUSSIE');
-      console.log('Patient créé et lié au praticien:', practitionerId);
+      console.log('Email:', normalizedEmail);
+      console.log('Patient ID:', userId);
+      console.log('Praticien ID:', practitionerId);
       console.log('═══════════════════════════════════════');
 
       return { success: true };
