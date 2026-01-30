@@ -38,7 +38,7 @@ export async function sendOTPEmail({ email, otpCode, patientName }: SendOTPEmail
           </span>
         </div>
         <p style="color: #666; font-size: 14px;">
-          Ce code expire dans 24 heures.
+          Ce code expire dans 7 jours.
         </p>
         <p style="color: #666; font-size: 14px;">
           Si vous n'avez pas demandé ce code, vous pouvez ignorer cet email.
@@ -57,7 +57,7 @@ Bienvenue ${patientName}
 
 Votre code d'accès à l'application AFEIA : ${otpCode}
 
-Ce code expire dans 24 heures.
+Ce code expire dans 7 jours.
 
 Si vous n'avez pas demandé ce code, vous pouvez ignorer cet email.
 

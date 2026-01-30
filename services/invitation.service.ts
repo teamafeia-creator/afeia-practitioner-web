@@ -435,7 +435,7 @@ export const invitationService = {
         .eq('type', 'activation')
         .eq('used', false);
 
-      // Créer le nouveau code
+      // Créer le nouveau code avec practitioner_id et patient_id pour l'app mobile
       const { error: otpError } = await supabase
         .from('otp_codes')
         .insert({
@@ -443,7 +443,9 @@ export const invitationService = {
           code: newCode,
           type: 'activation',
           expires_at: newExpiresAt,
-          used: false
+          used: false,
+          practitioner_id: user.id,
+          patient_id: invitation.patient_id || null
         });
 
       if (otpError) throw otpError;
