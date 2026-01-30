@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { PatientTabs } from '@/components/patients/PatientTabs';
+import { ActivationCard } from '@/components/patients/ActivationCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Toast } from '@/components/ui/Toast';
@@ -19,15 +20,69 @@ export default function PatientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resendingCode, setResendingCode] = useState(false);
+  const [activationCode, setActivationCode] = useState<string | null>(null);
+  const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     title: string;
     description?: string;
     variant?: 'success' | 'error' | 'info';
   } | null>(null);
 
-  // Handler pour renvoyer le code d'activation
-  const handleResendCode = async () => {
+  // Fetch activation code from database
+  const fetchActivationCode = useCallback(async () => {
     if (!patient?.email) return;
+
+    try {
+      // First check if code was passed via URL
+      const urlCode = searchParams.get('activation_code');
+      if (urlCode) {
+        setActivationCode(urlCode);
+        // Clean URL
+        router.replace(`/patients/${patientId}`, { scroll: false });
+        return;
+      }
+
+      // Otherwise, fetch from database
+      const { data: otpData } = await supabase
+        .from('otp_codes')
+        .select('code, expires_at')
+        .eq('email', patient.email.toLowerCase())
+        .eq('type', 'activation')
+        .eq('used', false)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (otpData) {
+        setActivationCode(otpData.code);
+        setCodeExpiresAt(otpData.expires_at);
+      } else {
+        // Try to get from invitation
+        const { data: invitationData } = await supabase
+          .from('patient_invitations')
+          .select('invitation_code, code_expires_at')
+          .eq('email', patient.email.toLowerCase())
+          .eq('status', 'pending')
+          .order('invited_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (invitationData) {
+          setActivationCode(invitationData.invitation_code);
+          setCodeExpiresAt(invitationData.code_expires_at);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching activation code:', err);
+    }
+  }, [patient?.email, patientId, router, searchParams]);
+
+  // Handler pour renvoyer le code d'activation
+  const handleResendCode = async (): Promise<{ success: boolean; code?: string; error?: string }> => {
+    if (!patient?.email) {
+      return { success: false, error: 'Email du patient manquant.' };
+    }
 
     setResendingCode(true);
     try {
@@ -37,10 +92,10 @@ export default function PatientDetailPage() {
       if (!accessToken) {
         setToast({
           title: 'Erreur',
-          description: 'Session expirée. Veuillez vous reconnecter.',
+          description: 'Session expiree. Veuillez vous reconnecter.',
           variant: 'error'
         });
-        return;
+        return { success: false, error: 'Session expiree.' };
       }
 
       const patientName = patient.name || 'Patient';
@@ -61,43 +116,49 @@ export default function PatientDetailPage() {
       const data = await response.json();
 
       if (data.ok) {
-        const codeDisplay = data.code ? `\n\nCode OTP : ${data.code}` : '';
-        setToast({
-          title: 'Code envoyé',
-          description: `Email envoyé à ${patient.email}${codeDisplay}`,
-          variant: 'success'
-        });
+        // Update the displayed code
+        if (data.code) {
+          setActivationCode(data.code);
+          setCodeExpiresAt(data.expiresAt || null);
+        }
+        return { success: true, code: data.code };
       } else {
-        setToast({
-          title: 'Erreur',
-          description: data.error || 'Impossible de renvoyer le code.',
-          variant: 'error'
-        });
+        return { success: false, error: data.error || 'Impossible de renvoyer le code.' };
       }
     } catch (err) {
       console.error('Erreur renvoi code:', err);
-      setToast({
-        title: 'Erreur',
-        description: 'Impossible de renvoyer le code.',
-        variant: 'error'
-      });
+      return { success: false, error: 'Impossible de renvoyer le code.' };
     } finally {
       setResendingCode(false);
     }
   };
 
-  // Handle created=1 query param for toast
+  // Handle created=1 query param for toast and fetch activation code
   useEffect(() => {
     if (searchParams.get('created') === '1') {
       setToast({
-        title: 'Patient créé',
-        description: 'Votre patient a bien été créé.',
+        title: 'Patient cree',
+        description: 'Votre patient a bien ete cree. Le code d\'activation est affiche ci-dessous.',
         variant: 'success'
       });
-      // Clean URL by removing query params
+    }
+    // Check for activation code in URL
+    const urlCode = searchParams.get('activation_code');
+    if (urlCode) {
+      setActivationCode(urlCode);
+    }
+    // Clean URL after reading params
+    if (searchParams.get('created') === '1' || urlCode) {
       router.replace(`/patients/${patientId}`, { scroll: false });
     }
   }, [searchParams, patientId, router]);
+
+  // Fetch activation code when patient is loaded and not activated
+  useEffect(() => {
+    if (patient && patient.activated === false && !activationCode) {
+      fetchActivationCode();
+    }
+  }, [patient, activationCode, fetchActivationCode]);
 
   useEffect(() => {
     let active = true;
@@ -151,39 +212,88 @@ export default function PatientDetailPage() {
     return null;
   }
 
-  // Vérifier si le patient est activé
-  // Note: activated field comes from DB but may not be in TypeScript type
-  const isActivated = (patient as { activated?: boolean }).activated !== false;
+  // Verifier si le patient est active
+  const isActivated = patient.activated !== false;
   const patientDisplayName = patient.name || 'Ce patient';
 
-  // Si le patient n'est pas activé, afficher un message d'avertissement
+  // Si le patient n'est pas active, afficher la carte d'activation
   if (!isActivated) {
     return (
-      <>
-        <Card className="p-8 text-center border-l-4 border-l-amber-400">
-          <div className="space-y-4">
-            <div className="text-4xl">⏳</div>
-            <h3 className="text-xl font-semibold text-charcoal">
-              Patient en attente d&apos;activation
-            </h3>
-            <p className="text-warmgray max-w-md mx-auto">
-              {patientDisplayName} n&apos;a pas encore activé son compte.
-              Un code d&apos;activation a été envoyé à {patient.email}.
-            </p>
-            <div className="flex gap-3 justify-center mt-6">
-              <Button variant="secondary" onClick={() => router.push('/patients')}>
-                Retour à la liste
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleResendCode}
-                loading={resendingCode}
-              >
-                Renvoyer le code
-              </Button>
+      <div className="space-y-6">
+        {/* Carte d'activation avec le code */}
+        {activationCode && patient.email ? (
+          <ActivationCard
+            code={activationCode}
+            patientEmail={patient.email}
+            patientName={patientDisplayName}
+            expiresAt={codeExpiresAt || undefined}
+            onResendCode={handleResendCode}
+          />
+        ) : (
+          <Card className="p-6 border-l-4 border-l-gold">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gold/20 flex items-center justify-center">
+                <span className="text-2xl">?</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-charcoal">
+                  En attente d&apos;activation
+                </h3>
+                <p className="text-sm text-warmgray mt-1">
+                  {patientDisplayName} n&apos;a pas encore active son compte.
+                </p>
+                {patient.email && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleResendCode}
+                    loading={resendingCode}
+                    className="mt-3"
+                  >
+                    Envoyer un code d&apos;activation
+                  </Button>
+                )}
+              </div>
             </div>
+          </Card>
+        )}
+
+        {/* Informations patient basiques */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-charcoal mb-4">
+            Informations du patient
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-sm text-warmgray">Nom</p>
+              <p className="text-charcoal">{patientDisplayName}</p>
+            </div>
+            {patient.email && (
+              <div>
+                <p className="text-sm text-warmgray">Email</p>
+                <p className="text-charcoal">{patient.email}</p>
+              </div>
+            )}
+            {patient.phone && (
+              <div>
+                <p className="text-sm text-warmgray">Telephone</p>
+                <p className="text-charcoal">{patient.phone}</p>
+              </div>
+            )}
+            {patient.city && (
+              <div>
+                <p className="text-sm text-warmgray">Ville</p>
+                <p className="text-charcoal">{patient.city}</p>
+              </div>
+            )}
+          </div>
+          <div className="mt-6 pt-4 border-t border-sable">
+            <Button variant="secondary" onClick={() => router.push('/patients')}>
+              Retour a la liste
+            </Button>
           </div>
         </Card>
+
         {toast ? (
           <Toast
             title={toast.title}
@@ -192,7 +302,7 @@ export default function PatientDetailPage() {
             onClose={() => setToast(null)}
           />
         ) : null}
-      </>
+      </div>
     );
   }
 

@@ -8,7 +8,7 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Données passées via URL params depuis la page d'activation
+  // Donnees passees via URL params depuis la page d'activation
   const patientEmail = searchParams.get('email') || ''
   const patientName = searchParams.get('name') || ''
   const patientFirstName = searchParams.get('first_name') || ''
@@ -16,6 +16,7 @@ function RegisterForm() {
   const practitionerId = searchParams.get('practitioner_id') || ''
   const otpId = searchParams.get('otp_id') || ''
   const invitationId = searchParams.get('invitation_id') || ''
+  const existingPatientId = searchParams.get('patient_id') || ''
   const patientCity = searchParams.get('city') || ''
   const patientPhone = searchParams.get('phone') || ''
   const patientAge = searchParams.get('age') || ''
@@ -129,22 +130,13 @@ function RegisterForm() {
       const finalLastName = patientLastName || patientName.split(' ').slice(1).join(' ') || ''
       const fullName = patientName || `${finalFirstName} ${finalLastName}`.trim()
 
-      // 4. Créer le patient dans la table patients
-      console.log('📝 Création patient dans la table patients...')
-
-      // Si un patient pending existe (ancien système), le supprimer d'abord
-      if (existingPatient && !existingPatient.activated) {
-        console.log('🗑️ Suppression patient pending existant:', existingPatient.id)
-        await supabase
-          .from('patients')
-          .delete()
-          .eq('id', existingPatient.id)
-      }
+      // 4. Creer ou mettre a jour le patient dans la table patients
+      console.log('Creation/MAJ patient dans la table patients...')
 
       const patientPayload: Record<string, unknown> = {
-        id: userId, // ✅ ID auth comme ID patient
         practitioner_id: practitionerId,
         email: normalizedEmail,
+        name: fullName || 'Patient',
         full_name: fullName || null,
         first_name: finalFirstName || null,
         last_name: finalLastName || null,
@@ -156,28 +148,74 @@ function RegisterForm() {
         activated_at: new Date().toISOString()
       }
 
-      const { error: patientError } = await supabase
-        .from('patients')
-        .insert(patientPayload)
+      let finalPatientId: string | null = null
 
-      if (patientError) {
-        console.error('❌ Erreur création patient:', patientError)
-        // Si erreur de duplicate, essayer sans spécifier l'ID
-        if (patientError.message.includes('duplicate') || patientError.message.includes('unique')) {
-          console.log('⚠️ Tentative sans ID spécifique...')
-          const { id: _, ...payloadWithoutId } = patientPayload
-          const { error: patientError2 } = await supabase
-            .from('patients')
-            .insert(payloadWithoutId)
-          if (patientError2) {
-            throw patientError2
+      // Si on a un patient_id existant (nouveau flux), mettre a jour
+      if (existingPatientId) {
+        console.log('Patient existant trouve, mise a jour:', existingPatientId)
+        const { error: updateError } = await supabase
+          .from('patients')
+          .update(patientPayload)
+          .eq('id', existingPatientId)
+
+        if (updateError) {
+          console.error('Erreur MAJ patient:', updateError)
+          throw updateError
+        }
+        finalPatientId = existingPatientId
+        console.log('Patient mis a jour:', finalPatientId)
+      } else if (existingPatient && !existingPatient.activated) {
+        // Ancien flux: patient pending existe
+        console.log('Patient pending existant, mise a jour:', existingPatient.id)
+        const { error: updateError } = await supabase
+          .from('patients')
+          .update(patientPayload)
+          .eq('id', existingPatient.id)
+
+        if (updateError) {
+          console.error('Erreur MAJ patient pending:', updateError)
+          throw updateError
+        }
+        finalPatientId = existingPatient.id
+        console.log('Patient pending mis a jour:', finalPatientId)
+      } else {
+        // Creer un nouveau patient
+        console.log('Creation nouveau patient...')
+        const insertPayload = {
+          id: userId, // Utiliser ID auth comme ID patient
+          ...patientPayload
+        }
+
+        const { data: newPatient, error: patientError } = await supabase
+          .from('patients')
+          .insert(insertPayload)
+          .select('id')
+          .single()
+
+        if (patientError) {
+          console.error('Erreur creation patient:', patientError)
+          // Si erreur de duplicate, essayer sans specifier l'ID
+          if (patientError.message.includes('duplicate') || patientError.message.includes('unique')) {
+            console.log('Tentative sans ID specifique...')
+            const { data: newPatient2, error: patientError2 } = await supabase
+              .from('patients')
+              .insert(patientPayload)
+              .select('id')
+              .single()
+            if (patientError2) {
+              throw patientError2
+            }
+            finalPatientId = newPatient2?.id || null
+          } else {
+            throw patientError
           }
         } else {
-          throw patientError
+          finalPatientId = newPatient?.id || userId
         }
+        console.log('Patient cree avec ID:', finalPatientId)
       }
 
-      console.log('✅ Patient créé avec ID auth:', userId)
+      console.log('Patient active avec ID:', finalPatientId || userId)
 
       // 5. Marquer l'invitation comme acceptée
       console.log('📝 Mise à jour invitation:', invitationId)

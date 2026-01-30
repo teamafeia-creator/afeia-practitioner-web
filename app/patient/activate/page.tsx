@@ -51,10 +51,10 @@ export default function ActivatePage() {
 
     try {
       console.log('═══════════════════════════════════════')
-      console.log('🔍 VÉRIFICATION CODE ACTIVATION')
+      console.log('VERIFICATION CODE ACTIVATION')
       console.log('Code:', codeString)
 
-      // 1. Chercher dans otp_codes (nouveau système simplifié)
+      // 1. Chercher dans otp_codes
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
@@ -67,58 +67,159 @@ export default function ActivatePage() {
         .maybeSingle()
 
       if (otpError) {
-        console.error('❌ Erreur recherche OTP:', otpError)
-        setError('Erreur lors de la vérification')
+        console.error('Erreur recherche OTP:', otpError)
+        setError('Erreur lors de la verification')
         return
       }
 
       if (!otpData) {
-        console.error('❌ Code non trouvé ou expiré')
-        setError('Code invalide ou expiré')
+        console.error('Code non trouve ou expire')
+        setError('Code invalide ou expire')
         return
       }
 
-      console.log('✅ Code OTP trouvé')
+      console.log('Code OTP trouve')
       console.log('   Email:', otpData.email)
       console.log('   OTP ID:', otpData.id)
+      console.log('   Patient ID:', otpData.patient_id)
+      console.log('   Practitioner ID:', otpData.practitioner_id)
 
-      const email = otpData.email
+      const email = otpData.email?.toLowerCase()?.trim()
 
-      // 2. Chercher l'invitation correspondante
-      const { data: invitation, error: invitError } = await supabase
-        .from('patient_invitations')
-        .select('*')
-        .eq('email', email)
-        .eq('status', 'pending')
-        .order('invited_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      // 2. Chercher l'invitation - plusieurs strategies
+      let invitation = null
 
-      if (invitError) {
-        console.error('❌ Erreur recherche invitation:', invitError)
-        setError('Erreur lors de la vérification')
-        return
+      // Strategie 1: Par patient_id si disponible
+      if (otpData.patient_id) {
+        console.log('Recherche invitation par patient_id:', otpData.patient_id)
+        const { data: invByPatient } = await supabase
+          .from('patient_invitations')
+          .select('*')
+          .eq('patient_id', otpData.patient_id)
+          .eq('status', 'pending')
+          .order('invited_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (invByPatient) {
+          invitation = invByPatient
+          console.log('Invitation trouvee par patient_id')
+        }
+      }
+
+      // Strategie 2: Par email et practitioner_id
+      if (!invitation && email && otpData.practitioner_id) {
+        console.log('Recherche invitation par email + practitioner_id')
+        const { data: invByEmailPractitioner } = await supabase
+          .from('patient_invitations')
+          .select('*')
+          .eq('email', email)
+          .eq('practitioner_id', otpData.practitioner_id)
+          .eq('status', 'pending')
+          .order('invited_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (invByEmailPractitioner) {
+          invitation = invByEmailPractitioner
+          console.log('Invitation trouvee par email + practitioner_id')
+        }
+      }
+
+      // Strategie 3: Par email seul (fallback)
+      if (!invitation && email) {
+        console.log('Recherche invitation par email seul')
+        const { data: invByEmail } = await supabase
+          .from('patient_invitations')
+          .select('*')
+          .eq('email', email)
+          .eq('status', 'pending')
+          .order('invited_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (invByEmail) {
+          invitation = invByEmail
+          console.log('Invitation trouvee par email')
+        }
+      }
+
+      // Strategie 4: Par code d'invitation (match direct)
+      if (!invitation) {
+        console.log('Recherche invitation par invitation_code')
+        const { data: invByCode } = await supabase
+          .from('patient_invitations')
+          .select('*')
+          .eq('invitation_code', codeString)
+          .eq('status', 'pending')
+          .order('invited_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (invByCode) {
+          invitation = invByCode
+          console.log('Invitation trouvee par invitation_code')
+        }
       }
 
       if (!invitation) {
-        console.error('❌ Invitation non trouvée')
-        setError('Invitation non trouvée. Contactez votre naturopathe.')
+        console.error('Invitation non trouvee avec toutes les strategies')
+        console.log('Debug info:')
+        console.log('   OTP email:', email)
+        console.log('   OTP patient_id:', otpData.patient_id)
+        console.log('   OTP practitioner_id:', otpData.practitioner_id)
+        console.log('   Code:', codeString)
+
+        // Essayer de recuperer les infos du patient directement si patient_id existe
+        if (otpData.patient_id) {
+          console.log('Tentative recuperation patient directement...')
+          const { data: patientData } = await supabase
+            .from('patients')
+            .select('*')
+            .eq('id', otpData.patient_id)
+            .single()
+
+          if (patientData) {
+            console.log('Patient trouve directement, creation invitation virtuelle')
+            // Creer une invitation virtuelle basee sur le patient
+            invitation = {
+              id: 'virtual-' + otpData.id,
+              practitioner_id: patientData.practitioner_id,
+              patient_id: patientData.id,
+              email: patientData.email || email,
+              full_name: patientData.name || patientData.full_name,
+              first_name: patientData.first_name,
+              last_name: patientData.last_name,
+              phone: patientData.phone,
+              city: patientData.city,
+              age: patientData.age,
+              date_of_birth: patientData.date_of_birth,
+              status: 'pending'
+            }
+          }
+        }
+      }
+
+      if (!invitation) {
+        setError('Invitation non trouvee. Contactez votre naturopathe.')
         return
       }
 
-      console.log('✅ Invitation trouvée')
+      console.log('Invitation trouvee')
+      console.log('   ID:', invitation.id)
       console.log('   Praticien ID:', invitation.practitioner_id)
       console.log('   Nom:', invitation.full_name)
 
-      // 3. Rediriger vers la page de création de mot de passe
+      // 3. Rediriger vers la page de creation de mot de passe
       const params = new URLSearchParams({
-        email: email,
+        email: email || invitation.email || '',
         name: invitation.full_name || '',
         first_name: invitation.first_name || '',
         last_name: invitation.last_name || '',
         practitioner_id: invitation.practitioner_id,
         otp_id: otpData.id,
         invitation_id: invitation.id,
+        patient_id: invitation.patient_id || otpData.patient_id || '',
         city: invitation.city || '',
         phone: invitation.phone || '',
         age: invitation.age?.toString() || '',
@@ -126,13 +227,13 @@ export default function ActivatePage() {
       })
 
       console.log('═══════════════════════════════════════')
-      console.log('✅ CODE VALIDE - REDIRECTION')
+      console.log('CODE VALIDE - REDIRECTION')
       console.log('═══════════════════════════════════════')
 
       router.push(`/patient/register?${params.toString()}`)
     } catch (err) {
-      console.error('❌ Exception:', err)
-      setError('Erreur de vérification')
+      console.error('Exception:', err)
+      setError('Erreur de verification')
     } finally {
       setLoading(false)
     }
