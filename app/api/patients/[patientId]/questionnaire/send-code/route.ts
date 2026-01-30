@@ -89,10 +89,13 @@ export async function POST(
   const now = new Date();
   const ttlMinutes = getQuestionnaireCodeTtlMinutes();
   const expiresAt = new Date(now.getTime() + ttlMinutes * 60 * 1000);
-  const isDev = process.env.NODE_ENV === 'development';
   // Use 6-digit numeric OTP for mobile app compatibility
-  const code = isDev ? '123456' : generateNumericOTP();
+  // TOUJOURS générer un code aléatoire (pas de code fixe en dev)
+  const code = generateNumericOTP();
   const codeHash = hashQuestionnaireCode(code);
+
+  console.log('✅ Code OTP généré:', code);
+  console.log('📧 Email:', patient.email);
 
   const { error: revokeError } = await supabase
     .from('patient_questionnaire_codes')
@@ -165,10 +168,11 @@ export async function POST(
     console.log(`✅✅✅ EMAIL ENVOYÉ AVEC SUCCÈS à ${patient.email}`);
     console.log(`Code OTP: ${code}`);
 
+    // TOUJOURS retourner le code au naturopathe pour faciliter le support
     return NextResponse.json({
       ok: true,
-      message: `📧 Email envoyé avec succès à ${patient.email}`,
-      code: isDev ? code : undefined, // Montre le code en dev seulement
+      message: `Email envoyé avec succès à ${patient.email}`,
+      code: code,
       expiresAt: expiresAt.toISOString(),
       sentToEmail: patient.email
     });
