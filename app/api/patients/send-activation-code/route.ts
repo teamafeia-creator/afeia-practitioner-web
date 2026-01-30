@@ -160,6 +160,49 @@ export async function POST(request: Request) {
     console.log('📧 Email:', normalizedEmail);
     console.log('⏰ Expire:', expiresAt.toISOString());
 
+    // 4b. CRITIQUE: S'assurer d'avoir le patient_id (requis pour l'app mobile)
+    // Si patientId n'est pas fourni, chercher le patient par email
+    let resolvedPatientId = patientId || null;
+    let patientData: {
+      id?: string;
+      first_name?: string | null;
+      last_name?: string | null;
+      full_name?: string | null;
+      phone?: string | null;
+      city?: string | null;
+    } | null = null;
+
+    // Chercher le patient par email pour ce praticien
+    const { data: existingPatient } = await supabase
+      .from('patients')
+      .select('id, first_name, last_name, full_name, phone, city')
+      .eq('email', normalizedEmail)
+      .eq('practitioner_id', practitionerId)
+      .maybeSingle();
+
+    if (existingPatient) {
+      resolvedPatientId = existingPatient.id;
+      patientData = existingPatient;
+      console.log('✅ Patient trouvé par email:', resolvedPatientId);
+    } else if (patientId) {
+      // Si on a un patientId mais pas trouvé par email, chercher par ID
+      const { data: patientById } = await supabase
+        .from('patients')
+        .select('id, first_name, last_name, full_name, phone, city')
+        .eq('id', patientId)
+        .single();
+
+      if (patientById) {
+        resolvedPatientId = patientById.id;
+        patientData = patientById;
+        console.log('✅ Patient trouvé par ID:', resolvedPatientId);
+      }
+    }
+
+    if (!resolvedPatientId) {
+      console.warn('⚠️ Aucun patient trouvé pour:', normalizedEmail);
+    }
+
     // 5. Invalider les anciens codes non utilisés
     await supabase
       .from('otp_codes')
@@ -176,7 +219,7 @@ export async function POST(request: Request) {
       expires_at: expiresAt.toISOString(),
       used: false,
       practitioner_id: practitionerId,
-      patient_id: patientId || null
+      patient_id: resolvedPatientId // CRITIQUE: doit être non-null pour l'app mobile
     };
 
     const { error: otpInsertError } = await supabase
@@ -196,27 +239,6 @@ export async function POST(request: Request) {
     // 6b. CRITIQUE: Stocker aussi dans patient_invitations pour la compatibilité app mobile
     // L'app mobile cherche dans les deux tables (otp_codes ET patient_invitations)
     // Sans cette entrée, l'activation échoue avec "Invitation non trouvée"
-
-    // D'abord, récupérer les infos du patient si on a un patientId
-    let patientData: {
-      first_name?: string | null;
-      last_name?: string | null;
-      full_name?: string | null;
-      phone?: string | null;
-      city?: string | null;
-    } | null = null;
-
-    if (patientId) {
-      const { data: existingPatient } = await supabase
-        .from('patients')
-        .select('first_name, last_name, full_name, phone, city')
-        .eq('id', patientId)
-        .single();
-
-      if (existingPatient) {
-        patientData = existingPatient;
-      }
-    }
 
     // Vérifier si une invitation existe déjà pour cet email et ce praticien
     const { data: existingInvitation } = await supabase
@@ -247,7 +269,7 @@ export async function POST(request: Request) {
       const invitationPayload = {
         email: normalizedEmail,
         practitioner_id: practitionerId,
-        patient_id: patientId || null,
+        patient_id: resolvedPatientId, // CRITIQUE: utiliser resolvedPatientId
         full_name: patientData?.full_name || patientName,
         first_name: patientData?.first_name || patientName.split(' ')[0] || null,
         last_name: patientData?.last_name || patientName.split(' ').slice(1).join(' ') || null,
