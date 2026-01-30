@@ -187,6 +187,109 @@ export default function PatientDetailPage() {
     };
   }, [patientId]);
 
+  // ✅ Écouter les changements en temps réel via Supabase Realtime
+  useEffect(() => {
+    if (!patientId || !patient) return;
+
+    // Ne pas écouter si le patient est déjà activé
+    if (patient.activated) return;
+
+    console.log('═══════════════════════════════════════');
+    console.log('👂 ÉCOUTE REALTIME ACTIVÉE');
+    console.log('Patient ID:', patientId);
+    console.log('Statut actuel:', patient.activated ? 'Activé' : 'En attente');
+    console.log('═══════════════════════════════════════');
+
+    const channel = supabase
+      .channel(`patient-${patientId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'patients',
+          filter: `id=eq.${patientId}`
+        },
+        (payload) => {
+          console.log('═══════════════════════════════════════');
+          console.log('🔔 CHANGEMENT DÉTECTÉ VIA REALTIME');
+          console.log('Payload:', payload);
+          console.log('═══════════════════════════════════════');
+
+          const newData = payload.new as { activated?: boolean };
+
+          // Si le patient vient d'être activé
+          if (newData.activated === true) {
+            console.log('═══════════════════════════════════════');
+            console.log('🎉 PATIENT ACTIVÉ ! Rechargement...');
+            console.log('═══════════════════════════════════════');
+
+            // Recharger toutes les données du patient
+            getPatientById(patientId).then((updatedPatient) => {
+              if (updatedPatient) {
+                setPatient(updatedPatient);
+                setToast({
+                  title: 'Patient activé !',
+                  description: `${updatedPatient.name || updatedPatient.first_name || 'Le patient'} a activé son compte. Les onglets sont maintenant accessibles.`,
+                  variant: 'success'
+                });
+              }
+            });
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Status Supabase Realtime:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Abonnement Realtime réussi');
+        }
+        if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Erreur Realtime');
+        }
+      });
+
+    return () => {
+      console.log('👋 Désinscription Realtime');
+      supabase.removeChannel(channel);
+    };
+  }, [patientId, patient?.activated]);
+
+  // ✅ Polling de secours (si Realtime ne fonctionne pas)
+  // Vérifie toutes les 5 secondes si le patient non activé a été activé
+  useEffect(() => {
+    if (!patient || patient.activated) return;
+
+    console.log('═══════════════════════════════════════');
+    console.log('⏱️ DÉMARRAGE POLLING (secours)');
+    console.log('Vérification toutes les 5 secondes');
+    console.log('═══════════════════════════════════════');
+
+    const interval = setInterval(async () => {
+      console.log('🔄 Vérification du statut...');
+
+      const updatedPatient = await getPatientById(patientId);
+
+      if (updatedPatient?.activated) {
+        console.log('═══════════════════════════════════════');
+        console.log('🎉 PATIENT ACTIVÉ ! (via polling)');
+        console.log('═══════════════════════════════════════');
+
+        setPatient(updatedPatient);
+        setToast({
+          title: 'Patient activé !',
+          description: `${updatedPatient.name || updatedPatient.first_name || 'Le patient'} a activé son compte.`,
+          variant: 'success'
+        });
+        clearInterval(interval);
+      }
+    }, 5000); // 5 secondes
+
+    return () => {
+      console.log('🛑 Arrêt du polling');
+      clearInterval(interval);
+    };
+  }, [patient?.activated, patientId]);
+
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
