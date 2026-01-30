@@ -156,11 +156,11 @@ export default function NewPatientPage() {
             ) : null}
 
             {activationCode ? (
-              <div className="rounded-xl border border-teal/30 bg-teal/10 p-3 text-sm">
-                <p className="font-semibold">Code d&apos;activation (dev):</p>
-                <p className="font-mono text-lg">{activationCode}</p>
-                <p className="text-xs text-warmgray mt-1">
-                  Ce code sera envoyé par email au patient.
+              <div className="rounded-xl border border-teal/30 bg-teal/10 p-4 text-sm">
+                <p className="font-semibold text-teal">Code d&apos;activation :</p>
+                <p className="font-mono text-2xl font-bold tracking-widest mt-2 text-charcoal">{activationCode}</p>
+                <p className="text-xs text-warmgray mt-2">
+                  Ce code a été envoyé par email au patient. Vous pouvez le lui transmettre directement si besoin.
                 </p>
               </div>
             ) : null}

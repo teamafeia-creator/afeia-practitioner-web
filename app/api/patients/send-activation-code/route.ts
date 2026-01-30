@@ -193,6 +193,84 @@ export async function POST(request: Request) {
 
     console.log('✅ Code OTP stocké dans otp_codes');
 
+    // 6b. CRITIQUE: Stocker aussi dans patient_invitations pour la compatibilité app mobile
+    // L'app mobile cherche dans les deux tables (otp_codes ET patient_invitations)
+    // Sans cette entrée, l'activation échoue avec "Invitation non trouvée"
+
+    // D'abord, récupérer les infos du patient si on a un patientId
+    let patientData: {
+      first_name?: string | null;
+      last_name?: string | null;
+      full_name?: string | null;
+      phone?: string | null;
+      city?: string | null;
+    } | null = null;
+
+    if (patientId) {
+      const { data: existingPatient } = await supabase
+        .from('patients')
+        .select('first_name, last_name, full_name, phone, city')
+        .eq('id', patientId)
+        .single();
+
+      if (existingPatient) {
+        patientData = existingPatient;
+      }
+    }
+
+    // Vérifier si une invitation existe déjà pour cet email et ce praticien
+    const { data: existingInvitation } = await supabase
+      .from('patient_invitations')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .eq('practitioner_id', practitionerId)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (existingInvitation) {
+      // Mettre à jour l'invitation existante avec le nouveau code
+      const { error: updateInvitationError } = await supabase
+        .from('patient_invitations')
+        .update({
+          invitation_code: code,
+          code_expires_at: expiresAt.toISOString()
+        })
+        .eq('id', existingInvitation.id);
+
+      if (updateInvitationError) {
+        console.error('⚠️ Erreur mise à jour invitation:', updateInvitationError);
+      } else {
+        console.log('✅ Invitation mise à jour dans patient_invitations');
+      }
+    } else {
+      // Créer une nouvelle invitation
+      const invitationPayload = {
+        email: normalizedEmail,
+        practitioner_id: practitionerId,
+        patient_id: patientId || null,
+        full_name: patientData?.full_name || patientName,
+        first_name: patientData?.first_name || patientName.split(' ')[0] || null,
+        last_name: patientData?.last_name || patientName.split(' ').slice(1).join(' ') || null,
+        phone: patientData?.phone || null,
+        city: patientData?.city || null,
+        invitation_code: code,
+        status: 'pending',
+        invited_at: new Date().toISOString(),
+        code_expires_at: expiresAt.toISOString()
+      };
+
+      const { error: invitationInsertError } = await supabase
+        .from('patient_invitations')
+        .insert(invitationPayload);
+
+      if (invitationInsertError) {
+        console.error('⚠️ Erreur création invitation:', invitationInsertError);
+        // Ne pas bloquer - continuer avec l'envoi d'email
+      } else {
+        console.log('✅ Invitation créée dans patient_invitations');
+      }
+    }
+
     // 7. Envoyer l'email
     const emailPayload = buildActivationEmail({
       to: normalizedEmail,

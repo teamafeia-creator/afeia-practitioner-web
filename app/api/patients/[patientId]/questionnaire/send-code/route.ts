@@ -155,6 +155,53 @@ export async function POST(
     console.log('═══════════════════════════════════════');
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // ✅ ALSO store the code in patient_invitations for mobile app
+  // The mobile app looks in both otp_codes AND patient_invitations
+  // ═══════════════════════════════════════════════════════════════
+  const normalizedEmail = patient.email.toLowerCase().trim();
+
+  // Check if invitation exists
+  const { data: existingInvitation } = await supabase
+    .from('patient_invitations')
+    .select('id')
+    .eq('email', normalizedEmail)
+    .eq('practitioner_id', authData.user.id)
+    .eq('status', 'pending')
+    .maybeSingle();
+
+  if (existingInvitation) {
+    // Update existing invitation with new code
+    await supabase
+      .from('patient_invitations')
+      .update({
+        invitation_code: code,
+        code_expires_at: expiresAt.toISOString()
+      })
+      .eq('id', existingInvitation.id);
+    console.log('✅ Invitation mise à jour dans patient_invitations');
+  } else {
+    // Create new invitation
+    const { error: invitationError } = await supabase
+      .from('patient_invitations')
+      .insert({
+        email: normalizedEmail,
+        practitioner_id: authData.user.id,
+        patient_id: patientId,
+        full_name: patient.name || null,
+        invitation_code: code,
+        status: 'pending',
+        invited_at: new Date().toISOString(),
+        code_expires_at: expiresAt.toISOString()
+      });
+
+    if (invitationError) {
+      console.error('⚠️ Erreur création invitation:', invitationError);
+    } else {
+      console.log('✅ Invitation créée dans patient_invitations');
+    }
+  }
+
   // ✅ TOUJOURS envoyer l'email (dev + prod)
   const emailPayload = buildQuestionnaireCodeEmail({
     to: patient.email,
