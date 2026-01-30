@@ -49,8 +49,7 @@ export default function NewPatientPage() {
 
     setLoading(true);
     try {
-      // NOUVEAU FLUX: Crée une invitation dans `patient_invitations`
-      // Le patient sera créé dans `patients` lors de l'activation
+      // Crée une invitation et un patient avec activated=false
       const result = await invitationService.createInvitation({
         email: trimmedEmail,
         name: name.trim(),
@@ -64,24 +63,37 @@ export default function NewPatientPage() {
         return;
       }
 
-      // Afficher le code en dev
+      // Afficher le code
       if (result.code) {
         setActivationCode(result.code);
-        console.log('Code d\'activation (dev):', result.code);
+        console.log('Code d\'activation:', result.code);
       }
 
+      console.log('Patient créé avec ID:', result.patientId);
+      console.log('Invitation créée avec ID:', result.invitationId);
+
       setToast({
-        title: 'Code d\'activation envoyé',
+        title: 'Patient créé',
         description: `Un email a été envoyé à ${trimmedEmail} avec le code d'activation.`,
         variant: 'success'
       });
 
-      console.log(`Code d'activation créé pour ${trimmedEmail}`);
-
-      // Rediriger vers la liste des patients après un délai
-      setTimeout(() => {
-        router.push('/patients?created=1');
-      }, 2000);
+      // Rediriger vers la fiche du patient avec le code d'activation
+      if (result.patientId) {
+        setTimeout(() => {
+          const params = new URLSearchParams();
+          params.set('created', '1');
+          if (result.code) {
+            params.set('activation_code', result.code);
+          }
+          router.push(`/patients/${result.patientId}?${params.toString()}`);
+        }, 1000);
+      } else {
+        // Fallback vers la liste si pas de patient ID
+        setTimeout(() => {
+          router.push('/patients?created=1');
+        }, 2000);
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');

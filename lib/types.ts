@@ -22,9 +22,45 @@ export type Patient = {
   consultation_reason?: string | null;
   status?: 'standard' | 'premium';
   is_premium: boolean;
+  activated?: boolean;
+  activated_at?: string | null;
   deleted_at?: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type PatientInvitation = {
+  id: string;
+  practitioner_id: string;
+  patient_id?: string | null;
+  email: string;
+  full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  age?: number | null;
+  date_of_birth?: string | null;
+  invitation_code: string;
+  code_expires_at: string;
+  status: 'pending' | 'accepted' | 'cancelled' | 'expired';
+  invited_at: string;
+  accepted_at?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OtpCode = {
+  id: string;
+  email: string;
+  code: string;
+  type: 'activation' | 'login' | 'reset';
+  practitioner_id?: string | null;
+  patient_id?: string | null;
+  expires_at: string;
+  used: boolean;
+  used_at?: string | null;
+  created_at: string;
 };
 
 export type Anamnese = {

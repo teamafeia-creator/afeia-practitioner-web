@@ -51,6 +51,8 @@ type CreateInvitationInput = {
 type CreateInvitationResult = {
   success: boolean;
   code?: string;
+  patientId?: string;
+  invitationId?: string;
   error?: string;
 };
 
@@ -75,6 +77,7 @@ type InvitationRow = {
 export const invitationService = {
   /**
    * Créer une invitation patient
+   * Crée aussi un patient avec activated=false pour permettre la redirection vers sa fiche
    */
   async createInvitation(data: CreateInvitationInput): Promise<CreateInvitationResult> {
     try {
@@ -96,14 +99,24 @@ export const invitationService = {
       // 2. Vérifier si invitation existe déjà
       const { data: existing } = await supabase
         .from('patient_invitations')
-        .select('email, status')
+        .select('id, email, status, patient_id')
         .eq('email', normalizedEmail)
         .eq('practitioner_id', practitionerId)
         .eq('status', 'pending')
         .single();
 
       if (existing) {
-        console.error('❌ Invitation déjà existante');
+        console.log('⚠️ Invitation déjà existante, renvoi du code');
+        // Renvoyer le code existant plutôt qu'échouer
+        const resendResult = await this.resendInvitationCode(normalizedEmail);
+        if (resendResult.success) {
+          return {
+            success: true,
+            code: resendResult.code,
+            patientId: existing.patient_id || undefined,
+            invitationId: existing.id
+          };
+        }
         throw new Error('Une invitation existe déjà pour cet email');
       }
 
@@ -120,7 +133,7 @@ export const invitationService = {
         throw new Error('Ce patient a déjà un compte activé');
       }
 
-      // 4. Générer code
+      // 4. Générer code unique
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       console.log('🔐 Code généré:', code);
 
@@ -130,13 +143,50 @@ export const invitationService = {
       const fullName = data.fullName || data.name || `${firstName} ${lastName}`.trim();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 jours
 
-      // 5. Créer invitation
+      // 5. Créer le patient avec activated=false (s'il n'existe pas déjà)
+      let patientId: string;
+
+      if (existingPatient) {
+        patientId = existingPatient.id;
+        console.log('✅ Patient existant non activé trouvé:', patientId);
+      } else {
+        console.log('📝 Création patient avec activated=false...');
+        const { data: newPatient, error: patientError } = await supabase
+          .from('patients')
+          .insert({
+            practitioner_id: practitionerId,
+            email: normalizedEmail,
+            name: fullName || 'Patient',
+            full_name: fullName || null,
+            first_name: firstName || null,
+            last_name: lastName || null,
+            phone: data.phone || null,
+            city: data.city || null,
+            age: data.age || null,
+            date_of_birth: data.dateOfBirth || null,
+            activated: false,
+            is_premium: false
+          })
+          .select('id')
+          .single();
+
+        if (patientError) {
+          console.error('❌ Erreur création patient:', patientError);
+          throw patientError;
+        }
+
+        patientId = newPatient.id;
+        console.log('✅ Patient créé avec ID:', patientId);
+      }
+
+      // 6. Créer invitation avec lien vers le patient
       console.log('📝 Création invitation dans patient_invitations...');
 
-      const { error: invitError } = await supabase
+      const { data: invitation, error: invitError } = await supabase
         .from('patient_invitations')
         .insert({
           practitioner_id: practitionerId,
+          patient_id: patientId,
           email: normalizedEmail,
           full_name: fullName || null,
           first_name: firstName || null,
@@ -148,74 +198,124 @@ export const invitationService = {
           invitation_code: code,
           code_expires_at: expiresAt,
           status: 'pending'
-        });
+        })
+        .select('id')
+        .single();
 
       if (invitError) {
         console.error('❌ Erreur création invitation:', invitError);
+        // Rollback patient si nouvellement créé
+        if (!existingPatient) {
+          await supabase.from('patients').delete().eq('id', patientId);
+        }
         throw invitError;
       }
 
-      console.log('✅ Invitation créée');
+      const invitationId = invitation.id;
+      console.log('✅ Invitation créée avec ID:', invitationId);
 
-      // 6. Créer OTP code (simple)
+      // 7. Créer OTP code avec liens
       console.log('📝 Création code OTP...');
 
-      const { error: otpError } = await supabase
+      const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .insert({
           email: normalizedEmail,
           code: code,
           type: 'activation',
+          practitioner_id: practitionerId,
+          patient_id: patientId,
           expires_at: expiresAt,
           used: false
-        });
+        })
+        .select('id')
+        .single();
 
       if (otpError) {
         console.error('❌ Erreur création OTP:', otpError);
-        // Rollback invitation
-        await supabase
-          .from('patient_invitations')
-          .delete()
-          .eq('email', normalizedEmail)
-          .eq('practitioner_id', practitionerId);
+        // Rollback invitation et patient
+        await supabase.from('patient_invitations').delete().eq('id', invitationId);
+        if (!existingPatient) {
+          await supabase.from('patients').delete().eq('id', patientId);
+        }
         throw otpError;
       }
 
-      console.log('✅ Code OTP créé');
+      console.log('✅ Code OTP créé avec ID:', otpData.id);
 
-      // 7. Envoyer email via API route
+      // 8. Envoyer email via API route (utilise le MEME code, pas de nouveau code)
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
-      let emailCode: string | undefined = code;
 
       if (accessToken) {
-        const emailResult = await sendActivationCodeViaAPI({
-          email: normalizedEmail,
-          name: fullName,
-          token: accessToken
-        });
+        // Envoyer l'email directement sans créer un nouveau code
+        try {
+          const response = await fetch('/api/patients/send-activation-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+              email: normalizedEmail,
+              name: fullName,
+              code: code, // Utiliser le code déjà généré
+              patientId: patientId
+            })
+          });
 
-        if (emailResult.ok) {
-          console.log('✅ Email envoyé via API route');
-          emailCode = emailResult.code || code;
-        } else {
-          console.warn('⚠️ Erreur email (API route):', emailResult.error);
+          if (response.ok) {
+            console.log('✅ Email envoyé via API route');
+          } else {
+            // Fallback: utiliser l'ancienne API qui crée un nouveau code
+            const emailResult = await sendActivationCodeViaAPI({
+              email: normalizedEmail,
+              name: fullName,
+              patientId: patientId,
+              token: accessToken
+            });
+
+            if (emailResult.ok) {
+              console.log('✅ Email envoyé via API fallback');
+              // Mettre à jour l'OTP avec le nouveau code si différent
+              if (emailResult.code && emailResult.code !== code) {
+                await supabase
+                  .from('otp_codes')
+                  .update({ code: emailResult.code })
+                  .eq('id', otpData.id);
+                await supabase
+                  .from('patient_invitations')
+                  .update({ invitation_code: emailResult.code })
+                  .eq('id', invitationId);
+                console.log('✅ Code mis à jour:', emailResult.code);
+              }
+            } else {
+              console.warn('⚠️ Erreur email (API fallback):', emailResult.error);
+            }
+          }
+        } catch (emailErr) {
+          console.warn('⚠️ Erreur envoi email:', emailErr);
+          // Continuer sans bloquer - le code est créé
         }
       } else {
         console.warn('⚠️ Pas de token de session pour envoyer l\'email');
       }
 
       console.log('═══════════════════════════════════════');
-      console.log('✅ INVITATION CRÉÉE');
+      console.log('✅ INVITATION CRÉÉE AVEC SUCCÈS');
       console.log('Email:', normalizedEmail);
-      console.log('Code:', emailCode);
+      console.log('Code:', code);
+      console.log('Patient ID:', patientId);
+      console.log('Invitation ID:', invitationId);
       console.log('Praticien ID:', practitionerId);
       console.log('Statut: En attente d\'activation');
       console.log('═══════════════════════════════════════');
 
       return {
         success: true,
-        code: emailCode
+        code: code,
+        patientId: patientId,
+        invitationId: invitationId
       };
 
     } catch (err: unknown) {
