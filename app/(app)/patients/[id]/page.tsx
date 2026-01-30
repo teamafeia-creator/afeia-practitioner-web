@@ -230,7 +230,7 @@ export default function PatientDetailPage() {
                 setPatient(updatedPatient);
                 setToast({
                   title: 'Patient activé !',
-                  description: `${updatedPatient.name || updatedPatient.first_name || 'Le patient'} a activé son compte. Les onglets sont maintenant accessibles.`,
+                  description: `${updatedPatient.name || 'Le patient'} a activé son compte. Les onglets sont maintenant accessibles.`,
                   variant: 'success'
                 });
               }
@@ -277,7 +277,7 @@ export default function PatientDetailPage() {
         setPatient(updatedPatient);
         setToast({
           title: 'Patient activé !',
-          description: `${updatedPatient.name || updatedPatient.first_name || 'Le patient'} a activé son compte.`,
+          description: `${updatedPatient.name || 'Le patient'} a activé son compte.`,
           variant: 'success'
         });
         clearInterval(interval);
