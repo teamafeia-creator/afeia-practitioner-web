@@ -140,8 +140,8 @@ export function LinkQuestionnaireModal({
 
         {/* Questionnaire info */}
         {questionnaireInfo && (
-          <div className="text-sm text-warmgray bg-teal/5 rounded-lg p-3">
-            <span className="font-medium text-marine">Questionnaire de :</span>{' '}
+          <div className="text-sm text-warmgray bg-teal-light/30 rounded-sm p-3 border border-teal/10">
+            <span className="font-medium text-charcoal">Questionnaire de :</span>{' '}
             {questionnaireInfo.firstName} {questionnaireInfo.lastName}
             {questionnaireInfo.email && (
               <span className="text-warmgray"> ({questionnaireInfo.email})</span>
@@ -151,13 +151,13 @@ export function LinkQuestionnaireModal({
 
         {/* Error message */}
         {error && (
-          <div className="text-sm text-accent-danger bg-red-50 rounded-lg p-3">
+          <div className="text-sm text-accent-danger bg-red-50 rounded-sm p-3 border border-red-200">
             {error}
           </div>
         )}
 
         {/* Patient list */}
-        <div className="max-h-[300px] overflow-y-auto rounded-lg border border-neutral-200">
+        <div className="max-h-[300px] overflow-y-auto rounded-sm border border-teal/15">
           {loading ? (
             <div className="p-4 text-center text-warmgray">
               Chargement des patients...
@@ -225,8 +225,8 @@ export function LinkQuestionnaireModal({
 
         {/* Selected patient summary */}
         {selectedPatient && (
-          <div className="text-sm text-marine bg-teal/10 rounded-lg p-3">
-            Patient sélectionné : <strong>{getDisplayName(selectedPatient)}</strong>
+          <div className="text-sm text-charcoal bg-teal/10 rounded-sm p-3 border border-teal/20">
+            Patient selectionne : <strong>{getDisplayName(selectedPatient)}</strong>
           </div>
         )}
       </div>

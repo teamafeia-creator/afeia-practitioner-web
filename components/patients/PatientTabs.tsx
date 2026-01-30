@@ -297,7 +297,7 @@ function areJournalEntriesEqual(
 
 function EditBanner({ label }: { label: string }) {
   return (
-    <div className="mt-4 rounded-2xl border border-teal/20 bg-teal/5 px-3 py-2 text-xs font-medium text-teal">
+    <div className="mt-4 rounded-lg border border-teal/20 bg-teal/5 px-3 py-2 text-xs font-medium text-teal">
       Mode edition active - {label}
     </div>
   );
@@ -355,7 +355,7 @@ function renderAdherence(entry: JournalEntry) {
 
 function renderInsight(insight: WearableInsight) {
   return (
-    <div key={insight.id} className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5">
+    <div key={insight.id} className="rounded-lg bg-white/60 p-4 border border-teal/10">
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wide text-warmgray">Insight {insight.type ?? ''}</span>
         <Badge variant={insight.level === 'attention' ? 'attention' : 'info'}>
@@ -894,10 +894,10 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[26px] bg-white/85 p-5 shadow-soft ring-1 ring-black/5">
+      <div className="glass-card p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal/10 text-lg font-semibold text-teal">
+            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-teal/10 text-lg font-semibold text-teal">
               {getInitials(patientState.name)}
             </div>
             <div>
@@ -941,7 +941,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
 
       <TabsPills tabs={TABS} active={tab} onChange={setTab} />
 
-      <div className="rounded-2xl bg-white/70 px-4 py-3 shadow-sm ring-1 ring-black/5">
+      <div className="rounded-lg bg-white/60 px-4 py-3 border border-teal/10">
         <h2 className="text-sm font-semibold text-charcoal">{activeMeta.title}</h2>
         <p className="text-xs text-warmgray">{activeMeta.description}</p>
       </div>
@@ -1179,7 +1179,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     {sortedAppointments.map((appointment) => (
                       <div
                         key={appointment.id}
-                        className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5"
+                        className="rounded-lg bg-white/60 p-4 border border-teal/10"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div>
@@ -1236,7 +1236,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     {section.questions.map((question) => (
                       <div
                         key={question.key}
-                        className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5"
+                        className="rounded-lg bg-white/60 p-4 border border-teal/10"
                       >
                         <p className="text-xs uppercase tracking-wide text-warmgray">{question.label}</p>
                         {anamnesisEditing ? (
@@ -1319,7 +1319,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardHeader>
           <CardContent>
             {!isPremium ? (
-              <div className="relative overflow-hidden rounded-2xl border border-dashed border-teal/20 bg-teal/5 p-6 text-sm text-marine">
+              <div className="relative overflow-hidden rounded-lg border border-dashed border-teal/20 bg-teal/5 p-6 text-sm text-marine">
                 <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-teal shadow-soft">
                   Premium
                 </div>
@@ -1418,7 +1418,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="rounded-2xl bg-white/90 p-5 shadow-sm ring-1 ring-black/5">
+              <div className="rounded-lg bg-white/60 p-5 border border-teal/10">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-charcoal">Dernière entrée</p>
                   <span className="text-xs text-warmgray">
@@ -1493,7 +1493,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                       { key: 'adherence_plantes', label: 'Plantes' }
                     ] as const
                   ).map((item) => (
-                    <div key={item.key} className="flex items-center justify-between rounded-2xl bg-sable/70 px-3 py-2">
+                    <div key={item.key} className="flex items-center justify-between rounded-sm bg-sable/50 px-3 py-2">
                       <span className="text-xs text-warmgray">{item.label}</span>
                       {journalEditing ? (
                         <Select
@@ -1564,7 +1564,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 ) : (
                   <div className="grid gap-3">
                     {journalEntries.map((entry) => (
-                      <div key={entry.id} className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5">
+                      <div key={entry.id} className="rounded-lg bg-white/60 p-4 border border-teal/10">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
                           <div className="flex items-center gap-2 text-sm">
@@ -1600,7 +1600,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
             {noteEditing ? <EditBanner label="Enregistrez vos notes confidentielles." /> : null}
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 text-sm text-marine shadow-sm ring-1 ring-black/5">
+            <div className="flex items-start gap-3 rounded-lg bg-white/60 p-4 text-sm text-charcoal border border-teal/10">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal/10 flex-shrink-0">
                 <svg className="w-4 h-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -1621,7 +1621,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 rows={6}
               />
             ) : (
-              <div className="rounded-2xl bg-white/90 p-4 text-sm shadow-sm ring-1 ring-black/5 whitespace-pre-line">
+              <div className="rounded-lg bg-white/60 p-4 text-sm border border-teal/10 whitespace-pre-line">
                 {renderValue(noteContent)}
               </div>
             )}
@@ -1690,7 +1690,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                         type="button"
                         onClick={() => setActivePlanId(planItem.id)}
                         className={cn(
-                          'text-left rounded-2xl border border-transparent bg-white/80 p-4 shadow-sm ring-1 ring-black/5 transition',
+                          'text-left rounded-lg border border-teal/10 bg-white/60 p-4 transition',
                           isActive ? 'border-teal/40 ring-2 ring-teal/20' : 'hover:border-teal/20'
                         )}
                       >
@@ -1774,7 +1774,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                       {section.fields.map((field) => (
                         <div
                           key={field.key}
-                          className="rounded-2xl bg-white/90 p-4 shadow-sm ring-1 ring-black/5"
+                          className="rounded-lg bg-white/60 p-4 border border-teal/10"
                         >
                           <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
                           {canEditPlan ? (
@@ -1899,12 +1899,12 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 description="Envoyez un premier message pour ouvrir la conversation."
               />
             ) : (
-              <div className="space-y-3 rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-black/5">
+              <div className="space-y-3 rounded-lg bg-white/60 p-4 border border-teal/10">
                 {messages.map((message) => (
                   <div
                     key={message.id}
                     className={cn(
-                      'max-w-[90%] rounded-2xl px-4 py-2 text-sm ring-1 ring-black/5 sm:max-w-[78%]',
+                      'max-w-[90%] rounded-lg px-4 py-2 text-sm sm:max-w-[78%]',
                       message.sender === 'patient'
                         ? 'bg-sable/80 text-marine'
                         : 'ml-auto bg-teal text-white'
@@ -1946,7 +1946,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       )}
       {appointmentModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
+          <div className="w-full max-w-md rounded-lg glass-card p-6">
             <h2 className="text-lg font-semibold text-charcoal">Planifier un rendez-vous</h2>
             <p className="mt-2 text-sm text-warmgray">
               Définissez la date, l’heure et la durée estimée du rendez-vous.
@@ -2003,7 +2003,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
       ) : null}
       {deleteModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-soft">
+          <div className="w-full max-w-md rounded-lg glass-card p-6">
             <h2 className="text-lg font-semibold text-charcoal">Suppression définitive</h2>
             <p className="mt-2 text-sm text-warmgray">
               Cette action est définitive. Le patient et toutes ses données associées seront supprimés.

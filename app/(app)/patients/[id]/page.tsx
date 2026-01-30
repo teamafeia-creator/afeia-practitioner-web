@@ -198,7 +198,7 @@ export default function PatientDetailPage() {
   if (error) {
     return (
       <div className="space-y-4">
-        <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4 text-sm text-marine">
+        <div className="rounded-lg border border-gold/30 bg-gold/10 p-4 text-sm text-charcoal">
           {error}
         </div>
         <Button variant="secondary" onClick={() => router.push('/patients')}>
@@ -232,7 +232,7 @@ export default function PatientDetailPage() {
         ) : (
           <Card className="p-6 border-l-4 border-l-gold">
             <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gold/20 flex items-center justify-center">
+              <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gold/20 flex items-center justify-center">
                 <span className="text-2xl">?</span>
               </div>
               <div className="flex-1">

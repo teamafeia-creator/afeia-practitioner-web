@@ -14,12 +14,12 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 rounded-[24px] glass-header px-5 py-4 md:flex-row md:items-center md:justify-between',
+        'flex flex-col gap-4 rounded-lg glass-card px-5 py-4 md:flex-row md:items-center md:justify-between',
         className
       )}
     >
       <div>
-        <h1 className="text-2xl font-semibold text-charcoal md:text-3xl">{title}</h1>
+        <h1 className="text-xl font-semibold text-charcoal tracking-tight">{title}</h1>
         {subtitle ? <p className="mt-1 text-sm text-warmgray">{subtitle}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}

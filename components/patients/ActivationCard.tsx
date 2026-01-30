@@ -138,11 +138,9 @@ export function ActivationCard({
           exit={{ opacity: 0, y: -20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className={cn(
-            'relative rounded-2xl p-6 mb-6',
-            'bg-gradient-to-br from-sable/80 to-sable/40',
-            'backdrop-blur-md',
+            'relative rounded-lg p-6 mb-6',
+            'glass-card',
             'border-2 border-gold',
-            'shadow-lg shadow-gold/10',
             className
           )}
         >
@@ -157,7 +155,7 @@ export function ActivationCard({
 
           {/* Header */}
           <div className="flex items-start gap-4 mb-4">
-            <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gold/20 flex items-center justify-center">
+            <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gold/20 flex items-center justify-center">
               <Clock className="h-6 w-6 text-gold" />
             </div>
             <div className="flex-1 min-w-0">
@@ -176,7 +174,7 @@ export function ActivationCard({
           </div>
 
           {/* Code display */}
-          <div className="bg-white/70 rounded-xl p-4 mb-4">
+          <div className="bg-white/60 rounded-lg p-4 mb-4 border border-teal/10">
             <div className="flex items-center justify-center gap-2">
               <span
                 className={cn(

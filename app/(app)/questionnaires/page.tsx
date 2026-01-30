@@ -157,11 +157,11 @@ export default function QuestionnairesPage() {
   const getStatusBadge = (status: PreliminaryQuestionnaire['status']) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="standard">En attente</Badge>;
+        return <Badge variant="pending">En attente</Badge>;
       case 'linked_to_patient':
-        return <Badge variant="premium">Associé</Badge>;
+        return <Badge variant="completed">Associe</Badge>;
       case 'archived':
-        return <Badge variant="standard">Archivé</Badge>;
+        return <Badge variant="archived">Archive</Badge>;
       default:
         return null;
     }
@@ -205,11 +205,11 @@ export default function QuestionnairesPage() {
       />
 
       {/* Info banner */}
-      <div className="bg-teal/10 rounded-xl p-4 text-sm text-marine">
-        <p className="font-medium">Comment ça marche ?</p>
+      <div className="glass-card bg-teal-light/30 p-4 text-sm text-charcoal">
+        <p className="font-medium text-teal">Comment ca marche ?</p>
         <p className="mt-1 text-warmgray">
           Partagez le lien public avec vos patients. Ils peuvent remplir le questionnaire avant leur
-          première consultation. Créez ensuite leur dossier patient en un clic.
+          premiere consultation. Creez ensuite leur dossier patient en un clic.
         </p>
       </div>
 
@@ -231,7 +231,7 @@ export default function QuestionnairesPage() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-semibold text-charcoal">
+                  <h3 className="text-base font-semibold text-charcoal">
                     {q.first_name} {q.last_name}
                   </h3>
                   {getStatusBadge(q.status)}
@@ -239,10 +239,10 @@ export default function QuestionnairesPage() {
 
                 <div className="space-y-1 text-sm text-warmgray">
                   <p>
-                    <span className="text-marine">{q.email}</span>
+                    <span className="text-charcoal">{q.email}</span>
                     {q.phone && (
                       <span className="ml-3">
-                        Tél: <span className="text-marine">{q.phone}</span>
+                        Tel: <span className="text-charcoal">{q.phone}</span>
                       </span>
                     )}
                   </p>
