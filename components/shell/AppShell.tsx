@@ -14,15 +14,18 @@ import {
   LayoutDashboard,
   Users,
   ClipboardList,
+  MessageSquare,
   Settings,
   Menu,
   X,
   LogOut
 } from 'lucide-react';
+import { useMessageNotifications } from '@/hooks/useMessageNotifications';
 
 const NAV = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/patients', label: 'Patients', icon: Users },
+  { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
   { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/settings', label: 'Parametres', icon: Settings }
 ];
@@ -36,6 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [userName, setUserName] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const { unreadCount: unreadMessages } = useMessageNotifications();
 
   const active = useMemo(() => NAV.find((n) => pathname.startsWith(n.href))?.href ?? '/dashboard', [pathname]);
 
@@ -46,6 +50,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const labelMap: Record<string, string> = {
       dashboard: 'Tableau de bord',
       patients: 'Patients',
+      messages: 'Messages',
       questionnaires: 'Questionnaires',
       settings: 'Parametres',
       plans: 'Plans',
@@ -158,18 +163,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {NAV.map((item) => {
             const isActive = active === item.href;
             const Icon = item.icon;
+            const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 relative',
                   isActive
                     ? 'bg-teal text-white shadow-teal-glow'
                     : 'text-charcoal hover:bg-teal/10 hover:text-teal'
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <div className="relative">
+                  <Icon className="h-5 w-5" />
+                  {showBadge && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {unreadMessages > 9 ? '9+' : unreadMessages}
+                    </span>
+                  )}
+                </div>
                 <span>{item.label}</span>
               </Link>
             );
@@ -214,19 +227,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {NAV.map((item) => {
             const isActive = active === item.href;
             const Icon = item.icon;
+            const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center justify-center rounded-lg p-3 transition-all duration-200',
+                  'flex items-center justify-center rounded-lg p-3 transition-all duration-200 relative',
                   isActive
                     ? 'bg-teal text-white shadow-teal-glow'
                     : 'text-charcoal hover:bg-teal/10 hover:text-teal'
                 )}
                 title={item.label}
               >
-                <Icon className="h-5 w-5" />
+                <div className="relative">
+                  <Icon className="h-5 w-5" />
+                  {showBadge && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {unreadMessages > 9 ? '9+' : unreadMessages}
+                    </span>
+                  )}
+                </div>
               </Link>
             );
           })}
@@ -350,6 +371,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {NAV.map((item) => {
                 const isActive = active === item.href;
                 const Icon = item.icon;
+                const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
                 return (
                   <Link
                     key={item.href}
@@ -362,7 +384,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         : 'text-charcoal hover:bg-teal/10 hover:text-teal'
                     )}
                   >
-                    <Icon className="h-5 w-5" />
+                    <div className="relative">
+                      <Icon className="h-5 w-5" />
+                      {showBadge && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                          {unreadMessages > 9 ? '9+' : unreadMessages}
+                        </span>
+                      )}
+                    </div>
                     <span>{item.label}</span>
                   </Link>
                 );

@@ -19,33 +19,8 @@ export default function ArticlesCard() {
       setArticles(data.articles || []);
     } catch (error) {
       console.error('Erreur chargement articles:', error);
-      // Mock data for demo
-      setArticles([
-        {
-          id: '1',
-          title: 'Les bienfaits du magnésium',
-          category: 'Compléments',
-          summary: 'Découvrez pourquoi le magnésium est essentiel pour votre santé...',
-          content: '',
-          date: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          title: 'Améliorer son sommeil naturellement',
-          category: 'Sommeil',
-          summary: 'Des conseils pratiques pour retrouver un sommeil réparateur...',
-          content: '',
-          date: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          title: 'Alimentation anti-inflammatoire',
-          category: 'Nutrition',
-          summary: 'Comment réduire l\'inflammation par l\'alimentation...',
-          content: '',
-          date: new Date().toISOString(),
-        },
-      ]);
+      // Ne pas utiliser de donnees mockees - afficher une liste vide
+      setArticles([]);
     } finally {
       setLoading(false);
     }

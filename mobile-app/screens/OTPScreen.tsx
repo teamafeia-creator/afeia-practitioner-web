@@ -44,19 +44,11 @@ export default function OTPScreen({
         Alert.alert('Erreur', result?.error || 'Code invalide');
       }
     } catch (error) {
-      console.log('⚠️ OTP verification error, using fallback:', error);
-
-      // Fallback for testing - accept any 6-digit code
-      // In production, this should show an error
-      const mockData: OTPData = {
-        success: true,
-        email: 'team.afeia@gmail.com',
-        patientId: 'test-patient-123',
-        tempToken: 'temp-token-123',
-      };
-
-      console.log('📊 Using mock data for testing');
-      onSuccess(mockData);
+      console.error('❌ OTP verification error:', error);
+      Alert.alert(
+        'Erreur',
+        'Impossible de verifier le code. Verifiez votre connexion et reessayez.'
+      );
     } finally {
       setLoading(false);
     }

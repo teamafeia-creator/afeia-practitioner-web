@@ -34,18 +34,9 @@ export default function ProfileScreen({ onBack, onLogout, onEditAnamnese, hasAna
       setNaturopathe(naturoData);
     } catch (error) {
       console.error('Erreur chargement profil:', error);
-      // Mock data for demo
-      setProfile({
-        firstName: 'Sophie',
-        lastName: 'Martin',
-        email: 'sophie.martin@email.com',
-        phone: '06 12 34 56 78',
-      });
-      setNaturopathe({
-        fullName: 'Dr. Martin',
-        email: 'dr.martin@afeia.com',
-        phone: '01 23 45 67 89',
-      });
+      // Ne pas utiliser de donnees mockees - afficher l'etat reel
+      setProfile(null);
+      setNaturopathe(null);
     } finally {
       setLoading(false);
     }

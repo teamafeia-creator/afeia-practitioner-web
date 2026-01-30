@@ -7,6 +7,7 @@ import { Button } from '../../../../components/ui/Button';
 import { Card, CardContent, CardHeader } from '../../../../components/ui/Card';
 import { Input } from '../../../../components/ui/Input';
 import { Toast } from '../../../../components/ui/Toast';
+import { ActivationCodeModal } from '../../../../components/patients/ActivationCodeModal';
 import { invitationService } from '../../../../services/invitation.service';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -20,6 +21,8 @@ export default function NewPatientPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activationCode, setActivationCode] = useState<string | null>(null);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [createdPatientId, setCreatedPatientId] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     title: string;
     description?: string;
@@ -63,43 +66,49 @@ export default function NewPatientPage() {
         return;
       }
 
-      // Afficher le code
+      // Afficher le code dans la modale
       if (result.code) {
         setActivationCode(result.code);
+        setCreatedPatientId(result.patientId || null);
+        setShowCodeModal(true);
+        setLoading(false);
         console.log('Code d\'activation:', result.code);
-      }
-
-      console.log('Patient créé avec ID:', result.patientId);
-      console.log('Invitation créée avec ID:', result.invitationId);
-
-      setToast({
-        title: 'Patient créé',
-        description: `Un email a été envoyé à ${trimmedEmail} avec le code d'activation.`,
-        variant: 'success'
-      });
-
-      // Rediriger vers la fiche du patient avec le code d'activation
-      if (result.patientId) {
-        setTimeout(() => {
-          const params = new URLSearchParams();
-          params.set('created', '1');
-          if (result.code) {
-            params.set('activation_code', result.code);
-          }
-          router.push(`/patients/${result.patientId}?${params.toString()}`);
-        }, 1000);
       } else {
-        // Fallback vers la liste si pas de patient ID
-        setTimeout(() => {
-          router.push('/patients?created=1');
-        }, 2000);
+        // Pas de code, rediriger directement
+        setToast({
+          title: 'Patient cree',
+          description: `Un email a ete envoye a ${trimmedEmail}.`,
+          variant: 'success'
+        });
+        if (result.patientId) {
+          setTimeout(() => {
+            router.push(`/patients/${result.patientId}?created=1`);
+          }, 1000);
+        } else {
+          setTimeout(() => {
+            router.push('/patients?created=1');
+          }, 1000);
+        }
       }
+
+      console.log('Patient cree avec ID:', result.patientId);
+      console.log('Invitation creee avec ID:', result.invitationId);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
       setLoading(false);
     }
   }
+
+  // Fermeture de la modale et redirection vers la fiche patient
+  const handleModalClose = () => {
+    setShowCodeModal(false);
+    if (createdPatientId) {
+      router.push(`/patients/${createdPatientId}`);
+    } else {
+      router.push('/patients');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -155,22 +164,23 @@ export default function NewPatientPage() {
               </div>
             ) : null}
 
-            {activationCode ? (
-              <div className="rounded-xl border border-teal/30 bg-teal/10 p-4 text-sm">
-                <p className="font-semibold text-teal">Code d&apos;activation :</p>
-                <p className="font-mono text-2xl font-bold tracking-widest mt-2 text-charcoal">{activationCode}</p>
-                <p className="text-xs text-warmgray mt-2">
-                  Ce code a été envoyé par email au patient. Vous pouvez le lui transmettre directement si besoin.
-                </p>
-              </div>
-            ) : null}
-
             <Button type="submit" loading={loading} className="w-full">
               Envoyer le code d&apos;activation
             </Button>
           </form>
         </CardContent>
       </Card>
+
+      {/* Modale d'affichage du code d'activation */}
+      {activationCode && email && (
+        <ActivationCodeModal
+          isOpen={showCodeModal}
+          onClose={handleModalClose}
+          code={activationCode}
+          patientEmail={email}
+          patientName={name}
+        />
+      )}
 
       {toast ? (
         <Toast

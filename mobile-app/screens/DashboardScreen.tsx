@@ -31,14 +31,10 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       setProfile(profileData);
       setNaturopathe(naturoData);
     } catch (error) {
-      console.error('Erreur chargement données:', error);
-      // Mock data for demo
-      setProfile({ firstName: 'Sophie' });
-      setNaturopathe({
-        fullName: 'Dr. Martin',
-        phone: '06 12 34 56 78',
-        nextConsultation: '15/02/2026',
-      });
+      console.error('Erreur chargement donnees:', error);
+      // Ne pas utiliser de donnees mockees - afficher l'etat reel
+      setProfile(null);
+      setNaturopathe(null);
     }
   };
 
