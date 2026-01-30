@@ -26,6 +26,7 @@ serve(async (req) => {
 
     // Récupérer la clé API Resend depuis les secrets Supabase
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+    const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'AFEIA <contact@afeia.fr>'
 
     if (RESEND_API_KEY) {
       console.log('📤 Envoi email via Resend...')
@@ -39,7 +40,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'AFEIA <onboarding@resend.dev>',
+          from: RESEND_FROM_EMAIL,
           to: [email],
           subject: 'Bienvenue chez AFEIA - Votre code d\'accès',
           html: `

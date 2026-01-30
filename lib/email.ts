@@ -11,6 +11,7 @@ type SendOTPEmailOptions = {
 
 export async function sendOTPEmail({ email, otpCode, patientName }: SendOTPEmailOptions) {
   const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'AFEIA <contact@afeia.fr>';
 
   if (!apiKey) {
     console.info('[EMAIL] RESEND_API_KEY not configured. OTP email would be sent to:', email);
@@ -71,7 +72,7 @@ AFEIA - Votre assistant santé personnalisé
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'AFEIA <onboarding@resend.dev>',
+        from: fromEmail,
         to: email,
         subject: "Bienvenue chez AFEIA - Votre code d'accès",
         html: htmlContent,
