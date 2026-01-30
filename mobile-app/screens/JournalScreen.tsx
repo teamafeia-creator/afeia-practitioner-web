@@ -34,27 +34,8 @@ export default function JournalScreen({ onBack }: JournalScreenProps) {
       setHistory(data.entries || []);
     } catch (error) {
       console.error('Erreur chargement historique:', error);
-      // Mock data for demo
-      setHistory([
-        {
-          id: '1',
-          date: new Date().toISOString(),
-          mood: 7,
-          alimentation: 8,
-          sleep: 7.5,
-          energy: 6,
-          complementsTaken: ['1', '2'],
-        },
-        {
-          id: '2',
-          date: new Date(Date.now() - 86400000).toISOString(),
-          mood: 6,
-          alimentation: 7,
-          sleep: 6,
-          energy: 5,
-          complementsTaken: ['1'],
-        },
-      ]);
+      // Ne pas utiliser de donnees mockees - afficher une liste vide
+      setHistory([]);
     }
   };
 

@@ -17,19 +17,19 @@ export default function WearableCard() {
   const loadWearableData = async () => {
     try {
       const response = await api.getWearableData();
-      setData(response.data);
-      setConnected(true);
+      if (response.data) {
+        setData(response.data);
+        setConnected(true);
+      } else {
+        // Pas de donnees - fonctionnalite a venir
+        setData(null);
+        setConnected(false);
+      }
     } catch (error) {
       console.error('Erreur chargement wearable:', error);
-      // Mock data for demo
-      setData({
-        steps: 8547,
-        heartRate: 72,
-        sleep: 7.5,
-        calories: 1850,
-        lastSync: new Date().toISOString(),
-      });
-      setConnected(true);
+      // Ne pas utiliser de donnees mockees
+      setData(null);
+      setConnected(false);
     } finally {
       setLoading(false);
     }
@@ -52,13 +52,14 @@ export default function WearableCard() {
   if (!connected || !data) {
     return (
       <Card>
-        <Text style={styles.title}>⌚ Données connectées</Text>
-        <Text style={styles.description}>
-          Connectez votre montre ou bracelet connecté pour suivre vos données de santé.
-        </Text>
-        <TouchableOpacity style={styles.connectButton} onPress={handleConnect}>
-          <Text style={styles.connectButtonText}>Connecter un appareil</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>⌚ Donnees connectees</Text>
+        <View style={styles.comingSoon}>
+          <Text style={styles.comingSoonEmoji}>🔜</Text>
+          <Text style={styles.comingSoonText}>Prochainement</Text>
+          <Text style={styles.description}>
+            La connexion avec votre montre ou bracelet connecte sera bientot disponible.
+          </Text>
+        </View>
       </Card>
     );
   }
@@ -113,15 +114,19 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     lineHeight: 20,
   },
-  connectButton: {
-    backgroundColor: Colors.teal,
-    paddingVertical: 12,
-    borderRadius: 8,
+  comingSoon: {
     alignItems: 'center',
+    paddingVertical: 10,
   },
-  connectButtonText: {
-    color: Colors.blanc,
+  comingSoonEmoji: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  comingSoonText: {
+    fontSize: 16,
     fontWeight: '600',
+    color: Colors.teal,
+    marginBottom: 8,
   },
   statsGrid: {
     flexDirection: 'row',

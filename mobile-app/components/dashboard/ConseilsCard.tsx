@@ -19,25 +19,8 @@ export default function ConseilsCard() {
       setConseils(data.conseils || []);
     } catch (error) {
       console.error('Erreur chargement conseils:', error);
-      // Mock data for demo
-      setConseils([
-        {
-          id: '1',
-          category: 'Alimentation',
-          title: 'Réduire le sucre',
-          content: 'Essayez de réduire votre consommation de sucre raffiné pendant les prochaines semaines.',
-          date: new Date().toISOString(),
-          read: false,
-        },
-        {
-          id: '2',
-          category: 'Sommeil',
-          title: 'Routine du soir',
-          content: 'Établissez une routine de coucher régulière pour améliorer la qualité de votre sommeil.',
-          date: new Date().toISOString(),
-          read: true,
-        },
-      ]);
+      // Ne pas utiliser de donnees mockees - afficher une liste vide
+      setConseils([]);
     } finally {
       setLoading(false);
     }

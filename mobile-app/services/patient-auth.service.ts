@@ -340,6 +340,8 @@ export const patientAuthService = {
         } else {
           finalPatientId = existingPatientId;
           console.log('Patient mis a jour:', finalPatientId);
+          // ✅ CRITIQUE : Créer le lien patient_memberships
+          await this.createPatientMembership(existingPatientId, userId);
         }
       } else if (existingPatient && !existingPatient.activated) {
         // Mettre à jour l'ancien patient pending
@@ -354,6 +356,8 @@ export const patientAuthService = {
         } else {
           finalPatientId = existingPatient.id;
           console.log('Patient pending mis a jour:', finalPatientId);
+          // ✅ CRITIQUE : Créer le lien patient_memberships
+          await this.createPatientMembership(existingPatient.id, userId);
         }
       }
 

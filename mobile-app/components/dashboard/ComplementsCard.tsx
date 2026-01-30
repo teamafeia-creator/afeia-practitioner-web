@@ -18,34 +18,9 @@ export default function ComplementsCard() {
       const data = await api.getComplements();
       setComplements(data.complements || []);
     } catch (error) {
-      console.error('Erreur chargement compléments:', error);
-      // Mock data for demo
-      setComplements([
-        {
-          id: '1',
-          name: 'Magnésium',
-          dosage: '300mg',
-          frequency: '1x/jour',
-          duration: 30,
-          takenToday: false,
-        },
-        {
-          id: '2',
-          name: 'Vitamine D3',
-          dosage: '2000 UI',
-          frequency: '1x/jour',
-          duration: 60,
-          takenToday: true,
-        },
-        {
-          id: '3',
-          name: 'Oméga 3',
-          dosage: '1000mg',
-          frequency: '2x/jour',
-          duration: 90,
-          takenToday: false,
-        },
-      ]);
+      console.error('Erreur chargement complements:', error);
+      // Ne pas utiliser de donnees mockees - afficher une liste vide
+      setComplements([]);
     } finally {
       setLoading(false);
     }
