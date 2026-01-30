@@ -8,15 +8,18 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Données de otp_codes passées via URL params
+  // Données passées via URL params depuis la page d'activation
   const patientEmail = searchParams.get('email') || ''
   const patientName = searchParams.get('name') || ''
   const patientFirstName = searchParams.get('first_name') || ''
   const patientLastName = searchParams.get('last_name') || ''
   const practitionerId = searchParams.get('practitioner_id') || ''
   const otpId = searchParams.get('otp_id') || ''
+  const invitationId = searchParams.get('invitation_id') || ''
   const patientCity = searchParams.get('city') || ''
   const patientPhone = searchParams.get('phone') || ''
+  const patientAge = searchParams.get('age') || ''
+  const patientDateOfBirth = searchParams.get('date_of_birth') || ''
 
   const [email, setEmail] = useState(patientEmail)
   const [password, setPassword] = useState('')
@@ -48,6 +51,11 @@ function RegisterForm() {
       return
     }
 
+    if (!invitationId) {
+      setError('Données d\'invitation manquantes. Veuillez réessayer avec un nouveau code.')
+      return
+    }
+
     setLoading(true)
     setError('')
 
@@ -56,30 +64,25 @@ function RegisterForm() {
       console.log('═══════════════════════════════════════')
       console.log('🔐 ACTIVATION COMPTE PATIENT')
       console.log('Email:', normalizedEmail)
-      console.log('Practitioner ID:', practitionerId)
+      console.log('Praticien ID:', practitionerId)
+      console.log('Invitation ID:', invitationId)
 
-      // 1. Trouver le patient pending créé par le naturo
-      const { data: pendingPatient } = await supabase
+      // 1. Vérifier que le patient n'existe pas déjà
+      const { data: existingPatient } = await supabase
         .from('patients')
-        .select('id, full_name, first_name, last_name, phone, city, activated')
+        .select('id, activated')
         .eq('email', normalizedEmail)
         .eq('practitioner_id', practitionerId)
         .single()
 
-      if (pendingPatient?.activated) {
+      if (existingPatient?.activated) {
         setError('Ce compte est déjà activé. Utilisez "Se connecter".')
         return
       }
 
-      if (!pendingPatient) {
-        console.error('❌ Patient pending non trouvé')
-        setError('Patient non trouvé. Contactez votre naturopathe.')
-        return
-      }
-
-      console.log('✅ Patient pending trouvé:', pendingPatient.id)
-
       // 2. Créer le compte auth Supabase
+      console.log('📝 Création compte auth...')
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
@@ -95,9 +98,10 @@ function RegisterForm() {
       let userId: string | undefined
 
       if (authError) {
-        console.error('Erreur auth:', authError)
+        console.error('❌ Erreur auth:', authError)
         if (authError.message.includes('already registered')) {
           // Tenter la connexion si le compte existe déjà
+          console.log('🔄 Compte auth existe déjà, tentative de connexion...')
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: normalizedEmail,
             password
@@ -121,34 +125,34 @@ function RegisterForm() {
       }
 
       // 3. Construire les données du patient
-      const finalFirstName = pendingPatient.first_name || patientFirstName || ''
-      const finalLastName = pendingPatient.last_name || patientLastName || ''
-      const fullName = pendingPatient.full_name || patientName || `${finalFirstName} ${finalLastName}`.trim()
-      const finalCity = pendingPatient.city || patientCity || null
-      const finalPhone = pendingPatient.phone || patientPhone || null
+      const finalFirstName = patientFirstName || patientName.split(' ')[0] || ''
+      const finalLastName = patientLastName || patientName.split(' ').slice(1).join(' ') || ''
+      const fullName = patientName || `${finalFirstName} ${finalLastName}`.trim()
 
-      // 4. Supprimer l'ancien patient pending
-      console.log('🗑️ Suppression du patient pending:', pendingPatient.id)
-      await supabase
-        .from('patients')
-        .delete()
-        .eq('id', pendingPatient.id)
+      // 4. Créer le patient dans la table patients
+      console.log('📝 Création patient dans la table patients...')
 
-      console.log('✅ Patient pending supprimé')
-
-      // 5. Créer le nouveau patient avec l'ID auth
-      console.log('📝 Création du nouveau patient avec ID auth:', userId)
+      // Si un patient pending existe (ancien système), le supprimer d'abord
+      if (existingPatient && !existingPatient.activated) {
+        console.log('🗑️ Suppression patient pending existant:', existingPatient.id)
+        await supabase
+          .from('patients')
+          .delete()
+          .eq('id', existingPatient.id)
+      }
 
       const patientPayload: Record<string, unknown> = {
-        id: userId, // ✅ VRAI ID auth
+        id: userId, // ✅ ID auth comme ID patient
         practitioner_id: practitionerId,
         email: normalizedEmail,
-        full_name: fullName,
+        full_name: fullName || null,
         first_name: finalFirstName || null,
         last_name: finalLastName || null,
-        phone: finalPhone,
-        city: finalCity,
-        activated: true, // ✅ ACTIVÉ
+        phone: patientPhone || null,
+        city: patientCity || null,
+        age: patientAge ? parseInt(patientAge, 10) : null,
+        date_of_birth: patientDateOfBirth || null,
+        activated: true,
         activated_at: new Date().toISOString()
       }
 
@@ -157,16 +161,14 @@ function RegisterForm() {
         .insert(patientPayload)
 
       if (patientError) {
-        console.error('Erreur création patient:', patientError)
+        console.error('❌ Erreur création patient:', patientError)
         // Si erreur de duplicate, essayer sans spécifier l'ID
         if (patientError.message.includes('duplicate') || patientError.message.includes('unique')) {
           console.log('⚠️ Tentative sans ID spécifique...')
+          const { id: _, ...payloadWithoutId } = patientPayload
           const { error: patientError2 } = await supabase
             .from('patients')
-            .insert({
-              ...patientPayload,
-              id: undefined
-            })
+            .insert(payloadWithoutId)
           if (patientError2) {
             throw patientError2
           }
@@ -175,7 +177,25 @@ function RegisterForm() {
         }
       }
 
-      console.log('✅ Nouveau patient créé avec ID auth')
+      console.log('✅ Patient créé avec ID auth:', userId)
+
+      // 5. Marquer l'invitation comme acceptée
+      console.log('📝 Mise à jour invitation:', invitationId)
+
+      const { error: invitError } = await supabase
+        .from('patient_invitations')
+        .update({
+          status: 'accepted',
+          accepted_at: new Date().toISOString()
+        })
+        .eq('id', invitationId)
+
+      if (invitError) {
+        console.warn('⚠️ Erreur mise à jour invitation:', invitError)
+        // Ne pas bloquer, le patient est créé
+      } else {
+        console.log('✅ Invitation marquée comme acceptée')
+      }
 
       // 6. Marquer le code OTP comme utilisé
       if (otpId) {
@@ -197,12 +217,15 @@ function RegisterForm() {
       // 7. Connecter automatiquement l'utilisateur
       const { data: session } = await supabase.auth.getSession()
       if (!session?.session) {
+        console.log('🔐 Connexion automatique...')
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: normalizedEmail,
           password
         })
         if (signInError) {
           console.warn('⚠️ Auto-login échoué:', signInError)
+        } else {
+          console.log('✅ Connecté automatiquement')
         }
       }
 
