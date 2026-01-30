@@ -1,9 +1,40 @@
 import { supabase } from '../lib/supabase';
 
-// Détection mode dev - safe pour browser et Node
-const isDev = typeof process !== 'undefined'
-  ? process.env.NODE_ENV === 'development'
-  : false;
+/**
+ * Envoie un code d'activation via l'API route
+ */
+async function sendActivationCodeViaAPI(params: {
+  email: string;
+  name: string;
+  patientId?: string;
+  token: string;
+}): Promise<{ ok: boolean; code?: string; error?: string }> {
+  try {
+    const response = await fetch('/api/patients/send-activation-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${params.token}`
+      },
+      body: JSON.stringify({
+        email: params.email,
+        name: params.name,
+        patientId: params.patientId
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { ok: false, error: data.error || 'Erreur lors de l\'envoi du code' };
+    }
+
+    return { ok: true, code: data.code };
+  } catch (err) {
+    console.error('❌ Erreur appel API send-activation-code:', err);
+    return { ok: false, error: String(err) };
+  }
+}
 
 type CreateInvitationInput = {
   email: string;
@@ -152,49 +183,39 @@ export const invitationService = {
 
       console.log('✅ Code OTP créé');
 
-      // 7. Envoyer email
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-otp', {
-          body: {
-            email: normalizedEmail,
-            code: code,
-            type: 'patient-activation',
-            practitionerEmail: user.email,
-            patientName: fullName
-          }
+      // 7. Envoyer email via API route
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      let emailCode: string | undefined = code;
+
+      if (accessToken) {
+        const emailResult = await sendActivationCodeViaAPI({
+          email: normalizedEmail,
+          name: fullName,
+          token: accessToken
         });
 
-        if (emailError) {
-          console.warn('⚠️ Erreur email (edge function):', emailError);
-
-          if (isDev) {
-            console.log(`
-═══════════════════════════════════════
-📧 CODE D'ACTIVATION (DEV)
-Email: ${normalizedEmail}
-Code: ${code}
-═══════════════════════════════════════
-            `);
-          }
+        if (emailResult.ok) {
+          console.log('✅ Email envoyé via API route');
+          emailCode = emailResult.code || code;
         } else {
-          console.log('✅ Email envoyé via edge function');
+          console.warn('⚠️ Erreur email (API route):', emailResult.error);
         }
-      } catch (emailErr) {
-        console.warn('⚠️ Exception envoi email:', emailErr);
-        // Ne pas bloquer si l'email échoue
+      } else {
+        console.warn('⚠️ Pas de token de session pour envoyer l\'email');
       }
 
       console.log('═══════════════════════════════════════');
       console.log('✅ INVITATION CRÉÉE');
       console.log('Email:', normalizedEmail);
-      console.log('Code:', code);
+      console.log('Code:', emailCode);
       console.log('Praticien ID:', practitionerId);
       console.log('Statut: En attente d\'activation');
       console.log('═══════════════════════════════════════');
 
       return {
         success: true,
-        code: isDev ? code : undefined
+        code: emailCode
       };
 
     } catch (err: unknown) {
@@ -327,31 +348,38 @@ Code: ${code}
 
       if (otpError) throw otpError;
 
-      // Envoyer l'email
-      try {
-        await supabase.functions.invoke('send-otp', {
-          body: {
-            email: normalizedEmail,
-            code: newCode,
-            type: 'patient-activation',
-            practitionerEmail: user.email,
-            patientName: invitation.full_name || invitation.first_name || 'Patient'
-          }
+      // Envoyer l'email via API route
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      let emailCode: string | undefined = newCode;
+
+      if (accessToken) {
+        const patientName = invitation.full_name || invitation.first_name || 'Patient';
+        const emailResult = await sendActivationCodeViaAPI({
+          email: normalizedEmail,
+          name: patientName,
+          token: accessToken
         });
-        console.log('✅ Email renvoyé');
-      } catch (emailErr) {
-        console.warn('⚠️ Erreur envoi email:', emailErr);
+
+        if (emailResult.ok) {
+          console.log('✅ Email renvoyé via API route');
+          emailCode = emailResult.code || newCode;
+        } else {
+          console.warn('⚠️ Erreur envoi email (API route):', emailResult.error);
+        }
+      } else {
+        console.warn('⚠️ Pas de token de session pour envoyer l\'email');
       }
 
       console.log('═══════════════════════════════════════');
       console.log('✅ CODE RENVOYÉ');
       console.log('Email:', normalizedEmail);
-      console.log('Nouveau code:', newCode);
+      console.log('Nouveau code:', emailCode);
       console.log('═══════════════════════════════════════');
 
       return {
         success: true,
-        code: isDev ? newCode : undefined
+        code: emailCode
       };
 
     } catch (err: unknown) {

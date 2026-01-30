@@ -10,10 +10,12 @@ import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { TabsPills } from '@/components/ui/TabsPills';
 import { Toast } from '@/components/ui/Toast';
+import { LinkQuestionnaireModal } from '@/components/questionnaires/LinkQuestionnaireModal';
 import {
   getPreliminaryQuestionnaires,
   createPatientFromQuestionnaire,
-  archivePreliminaryQuestionnaire
+  archivePreliminaryQuestionnaire,
+  linkQuestionnaireToExistingPatient
 } from '@/services/preliminary-questionnaire';
 import type { PreliminaryQuestionnaire } from '@/lib/types';
 
@@ -46,6 +48,7 @@ export default function QuestionnairesPage() {
   const [activeTabLabel, setActiveTabLabel] = useState<TabLabel>('En attente');
   const activeTab = TAB_LABELS[activeTabLabel];
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [linkingQuestionnaire, setLinkingQuestionnaire] = useState<PreliminaryQuestionnaire | null>(null);
   const [toast, setToast] = useState<{
     title: string;
     description?: string;
@@ -91,16 +94,18 @@ export default function QuestionnairesPage() {
   const handleCreatePatient = async (questionnaireId: string) => {
     setActionLoading(questionnaireId);
     try {
-      const patientId = await createPatientFromQuestionnaire(questionnaireId);
+      const result = await createPatientFromQuestionnaire(questionnaireId);
+      const codeDisplay = result.code ? `\n\nCode OTP : ${result.code}` : '';
+      const emailDisplay = result.email ? ` (${result.email})` : '';
       setToast({
-        title: 'Patient créé',
-        description: 'Le patient a été créé et le questionnaire associé.',
+        title: 'Patient créé et code envoyé',
+        description: `Le patient a été créé et le questionnaire associé.${emailDisplay}${codeDisplay}`,
         variant: 'success'
       });
       // Redirect to patient page after short delay
       setTimeout(() => {
-        window.location.href = `/patients/${patientId}`;
-      }, 1000);
+        window.location.href = `/patients/${result.patientId}`;
+      }, 2000);
     } catch (err) {
       console.error('Error creating patient:', err);
       setToast({
@@ -133,6 +138,19 @@ export default function QuestionnairesPage() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  // Link questionnaire to existing patient
+  const handleLinkToPatient = async (patientId: string) => {
+    if (!linkingQuestionnaire) return;
+
+    await linkQuestionnaireToExistingPatient(linkingQuestionnaire.id, patientId);
+    setToast({
+      title: 'Questionnaire associé',
+      description: 'Les données du questionnaire ont été ajoutées à l\'anamnèse du patient.',
+      variant: 'success'
+    });
+    loadQuestionnaires();
   };
 
   // Get status badge
@@ -255,6 +273,14 @@ export default function QuestionnairesPage() {
                     <Button
                       variant="secondary"
                       className="text-xs"
+                      onClick={() => setLinkingQuestionnaire(q)}
+                      disabled={actionLoading === q.id}
+                    >
+                      Associer patient
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="text-xs"
                       onClick={() => handleArchive(q.id)}
                       disabled={actionLoading === q.id}
                     >
@@ -300,6 +326,18 @@ export default function QuestionnairesPage() {
           onClose={() => setToast(null)}
         />
       )}
+
+      {/* Modal pour associer un questionnaire à un patient existant */}
+      <LinkQuestionnaireModal
+        isOpen={linkingQuestionnaire !== null}
+        onClose={() => setLinkingQuestionnaire(null)}
+        onLink={handleLinkToPatient}
+        questionnaireInfo={linkingQuestionnaire ? {
+          firstName: linkingQuestionnaire.first_name,
+          lastName: linkingQuestionnaire.last_name,
+          email: linkingQuestionnaire.email
+        } : undefined}
+      />
     </div>
   );
 }

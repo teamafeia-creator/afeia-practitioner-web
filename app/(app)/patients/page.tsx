@@ -245,13 +245,14 @@ export default function PatientsPage() {
     try {
       const result = await invitationService.resendInvitationCode(email);
       if (result.success) {
+        const codeDisplay = result.code ? `\n\nCode OTP : ${result.code}` : '';
         setToast({
           title: 'Code renvoyé',
-          description: `Un nouveau code a été envoyé à ${email}`,
+          description: `Un nouveau code a été envoyé à ${email}${codeDisplay}`,
           variant: 'success'
         });
         if (result.code) {
-          console.log('Code renvoyé (dev):', result.code);
+          console.log('Code OTP renvoyé:', result.code);
         }
       } else {
         setToast({

@@ -111,8 +111,14 @@ export async function getPreliminaryQuestionnaireById(
 
 /**
  * Create a patient from a preliminary questionnaire
+ * Returns { patientId, code } - code is the OTP sent to the patient
  */
-export async function createPatientFromQuestionnaire(questionnaireId: string): Promise<string> {
+export async function createPatientFromQuestionnaire(questionnaireId: string): Promise<{
+  patientId: string;
+  code?: string;
+  email?: string;
+}> {
+  // 1. Créer le patient depuis le questionnaire (RPC existant)
   const { data, error } = await supabase.rpc('create_patient_from_questionnaire', {
     p_questionnaire_id: questionnaireId
   });
@@ -124,7 +130,67 @@ export async function createPatientFromQuestionnaire(questionnaireId: string): P
     throw new Error(error.message ?? 'Erreur lors de la création du patient.');
   }
 
-  return data as string;
+  const patientId = data as string;
+
+  // 2. Récupérer les infos du patient créé
+  const { data: patient, error: patientError } = await supabase
+    .from('patients')
+    .select('email, full_name, first_name, last_name')
+    .eq('id', patientId)
+    .single();
+
+  if (patientError || !patient) {
+    console.error('❌ Erreur récupération patient après création:', patientError);
+    return { patientId };
+  }
+
+  // 3. Récupérer le token de session pour l'API
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+
+  if (!accessToken) {
+    console.error('⚠️ Pas de token de session pour envoyer le code d\'activation');
+    return { patientId, email: patient.email };
+  }
+
+  // 4. Envoyer le code d'activation via l'API route
+  const patientName = patient.full_name ||
+    [patient.first_name, patient.last_name].filter(Boolean).join(' ') ||
+    'Patient';
+
+  try {
+    const response = await fetch('/api/patients/send-activation-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        email: patient.email,
+        name: patientName,
+        patientId: patientId
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.ok) {
+      console.log('✅ Code d\'activation envoyé pour patient créé depuis questionnaire');
+      console.log('📧 Email:', patient.email);
+      console.log('🔑 Code:', result.code);
+      return {
+        patientId,
+        code: result.code,
+        email: patient.email
+      };
+    } else {
+      console.error('⚠️ Erreur envoi code activation:', result.error);
+      return { patientId, email: patient.email };
+    }
+  } catch (err) {
+    console.error('⚠️ Exception envoi code activation:', err);
+    return { patientId, email: patient.email };
+  }
 }
 
 /**
@@ -139,6 +205,107 @@ export async function archivePreliminaryQuestionnaire(questionnaireId: string): 
   if (error) {
     throw new Error(error.message ?? 'Impossible d\'archiver le questionnaire.');
   }
+}
+
+/**
+ * Link a preliminary questionnaire to an existing patient
+ * Merges the questionnaire responses into the patient's anamnesis
+ */
+export async function linkQuestionnaireToExistingPatient(
+  questionnaireId: string,
+  patientId: string
+): Promise<void> {
+  console.log('═══════════════════════════════════════');
+  console.log('🔗 LIAISON QUESTIONNAIRE → PATIENT');
+  console.log('Questionnaire ID:', questionnaireId);
+  console.log('Patient ID:', patientId);
+
+  // 1. Récupérer les données du questionnaire
+  const { data: questionnaire, error: qError } = await supabase
+    .from('preliminary_questionnaires')
+    .select('responses, status')
+    .eq('id', questionnaireId)
+    .single();
+
+  if (qError || !questionnaire) {
+    console.error('❌ Questionnaire non trouvé:', qError);
+    throw new Error('Questionnaire non trouvé.');
+  }
+
+  if (questionnaire.status !== 'pending') {
+    throw new Error('Ce questionnaire est déjà associé à un patient.');
+  }
+
+  // 2. Récupérer l'anamnèse du patient (si elle existe)
+  const { data: anamnesis, error: aError } = await supabase
+    .from('patient_anamnesis')
+    .select('answers, version')
+    .eq('patient_id', patientId)
+    .maybeSingle();
+
+  if (aError) {
+    console.error('❌ Erreur récupération anamnèse:', aError);
+    throw new Error('Impossible de récupérer l\'anamnèse du patient.');
+  }
+
+  // 3. Fusionner les réponses (les données du questionnaire complètent l'anamnèse)
+  const existingAnswers = anamnesis?.answers || {};
+  const questionnaireResponses = questionnaire.responses || {};
+
+  // Convertir les réponses du questionnaire au format anamnèse si nécessaire
+  const mergedAnswers = {
+    ...existingAnswers,
+    // Les réponses du questionnaire préliminaire remplacent les valeurs vides
+    ...Object.fromEntries(
+      Object.entries(questionnaireResponses).map(([section, values]) => {
+        const existingSection = (existingAnswers as Record<string, unknown>)[section] || {};
+        return [section, { ...existingSection, ...(values as Record<string, unknown>) }];
+      })
+    )
+  };
+
+  console.log('📝 Fusion des réponses...');
+
+  // 4. Mettre à jour ou créer l'anamnèse
+  const newVersion = (anamnesis?.version || 0) + 1;
+
+  const { error: upsertError } = await supabase
+    .from('patient_anamnesis')
+    .upsert({
+      patient_id: patientId,
+      answers: mergedAnswers,
+      version: newVersion,
+      status: 'COMPLETED',
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'patient_id'
+    });
+
+  if (upsertError) {
+    console.error('❌ Erreur mise à jour anamnèse:', upsertError);
+    throw new Error('Impossible de mettre à jour l\'anamnèse.');
+  }
+
+  console.log('✅ Anamnèse mise à jour (version', newVersion, ')');
+
+  // 5. Marquer le questionnaire comme lié
+  const { error: linkError } = await supabase
+    .from('preliminary_questionnaires')
+    .update({
+      status: 'linked_to_patient',
+      linked_patient_id: patientId,
+      linked_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', questionnaireId);
+
+  if (linkError) {
+    console.error('❌ Erreur liaison questionnaire:', linkError);
+    throw new Error('Impossible de lier le questionnaire.');
+  }
+
+  console.log('✅ Questionnaire lié au patient');
+  console.log('═══════════════════════════════════════');
 }
 
 /**
