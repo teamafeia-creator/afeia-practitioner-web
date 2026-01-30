@@ -13,20 +13,20 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', interactive = false, children, ...props }, ref) => {
     const variants = {
       default: 'glass-card',
-      hover: 'glass-card hover:shadow-card-hover hover:ring-teal/20',
+      hover: 'glass-card hover:shadow-teal-hover hover:border-teal/20',
       selected: 'glass-card ring-2 ring-teal',
-      gradient: 'bg-gradient-to-br from-white/70 to-sable/40 backdrop-blur-md shadow-card ring-1 ring-white/50'
+      gradient: 'bg-gradient-to-br from-white/70 to-sable/40 backdrop-blur-md shadow-md ring-1 ring-white/50'
     };
 
     if (interactive) {
       return (
         <motion.div
           ref={ref}
-          whileHover={{ y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
+          whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(26, 108, 108, 0.12)' }}
           whileTap={{ scale: 0.98 }}
           transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           className={cn(
-            'rounded-2xl p-6 transition-all duration-200 cursor-pointer',
+            'rounded-lg p-5 transition-all duration-200 cursor-pointer',
             variants[variant],
             className
           )}
@@ -44,7 +44,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          'rounded-2xl transition-all duration-200',
+          'rounded-lg transition-all duration-200',
           variants[variant],
           className
         )}
@@ -67,7 +67,7 @@ function CardHeader({ className, gradient, ...props }: CardHeaderProps) {
     <div
       className={cn(
         'p-5 pb-0',
-        gradient && 'bg-gradient-to-r from-teal/5 to-emerald-50 rounded-t-2xl p-5',
+        gradient && 'bg-gradient-to-r from-teal/5 to-teal-light rounded-t-lg p-5',
         className
       )}
       {...props}

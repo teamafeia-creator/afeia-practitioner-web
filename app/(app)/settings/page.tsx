@@ -180,8 +180,8 @@ export default function SettingsPage() {
                   />
                 ) : (
                   <div>
-                    <p className="text-xs font-medium text-warmgray">Nom</p>
-                    <div className="mt-2 text-sm text-marine">{profileName}</div>
+                    <p className="text-xs font-medium text-warmgray uppercase tracking-wide">Nom</p>
+                    <div className="mt-2 text-sm text-charcoal">{profileName}</div>
                   </div>
                 )}
               </div>
@@ -198,8 +198,8 @@ export default function SettingsPage() {
                   />
                 ) : (
                   <div>
-                    <p className="text-xs font-medium text-warmgray">Email</p>
-                    <div className="mt-2 text-sm text-marine">{profileEmail}</div>
+                    <p className="text-xs font-medium text-warmgray uppercase tracking-wide">Email</p>
+                    <div className="mt-2 text-sm text-charcoal">{profileEmail}</div>
                   </div>
                 )}
               </div>
@@ -218,10 +218,10 @@ export default function SettingsPage() {
                 />
               ) : (
                 <div>
-                  <p className="text-xs font-medium text-warmgray">Lien Calendly</p>
-                  <div className="mt-2 text-sm text-marine">{profileCalendly}</div>
+                  <p className="text-xs font-medium text-warmgray uppercase tracking-wide">Lien Calendly</p>
+                  <div className="mt-2 text-sm text-charcoal">{profileCalendly}</div>
                   <p className="mt-1 text-xs text-warmgray">
-                    Ajoutez une URL complète ou un slug Calendly. Exemple : https://calendly.com/mon-profil.
+                    Ajoutez une URL complete ou un slug Calendly. Exemple : https://calendly.com/mon-profil.
                   </p>
                 </div>
               )}
@@ -270,8 +270,8 @@ export default function SettingsPage() {
               <div className="text-sm text-charcoal">Plan</div>
               <Badge variant="premium">Premium</Badge>
             </div>
-            <div className="rounded-2xl bg-white/80 p-3 text-sm text-marine ring-1 ring-black/5">
-              Circular (sommeil, HRV, activité) activé pour les patients Premium.
+            <div className="rounded-lg bg-white/60 p-3 text-sm text-charcoal border border-teal/10">
+              Circular (sommeil, HRV, activite) active pour les patients Premium.
             </div>
             <Button variant="secondary" onClick={() => router.push('/billing')}>
               Gérer la facturation

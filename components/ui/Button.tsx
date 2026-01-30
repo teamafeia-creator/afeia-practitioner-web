@@ -32,33 +32,33 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseClasses =
-      'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+      'inline-flex items-center justify-center gap-2 rounded-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants: Record<Variant, string> = {
       primary:
-        'bg-gradient-to-r from-teal to-teal-deep text-white hover:from-teal-deep hover:to-teal shadow-lg shadow-teal/30 focus-visible:ring-teal/50',
+        'bg-gradient-to-br from-teal to-teal-deep text-white hover:shadow-teal-glow focus-visible:ring-teal/50',
       secondary:
-        'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30 focus-visible:ring-emerald-500/50',
+        'bg-transparent border border-teal text-teal hover:bg-teal hover:text-white focus-visible:ring-teal/30',
       ghost:
-        'bg-transparent text-marine hover:bg-sable/70 focus-visible:ring-teal/30',
+        'bg-transparent text-charcoal hover:bg-sable/70 focus-visible:ring-teal/30',
       destructive:
-        'bg-gradient-to-r from-accent-danger to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-lg shadow-red-500/30 focus-visible:ring-red-500/50',
+        'bg-gradient-to-br from-accent-danger to-red-600 text-white hover:shadow-lg hover:shadow-red-500/30 focus-visible:ring-red-500/50',
       success:
-        'bg-gradient-to-r from-accent-success to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/30 focus-visible:ring-green-500/50',
+        'bg-gradient-to-br from-sage to-green-600 text-white hover:shadow-lg hover:shadow-green-500/30 focus-visible:ring-green-500/50',
       outline:
-        'border-2 border-teal/30 bg-white text-teal hover:border-teal/50 hover:bg-teal/5 focus-visible:ring-teal/30'
+        'border border-teal/30 bg-white text-teal hover:border-teal hover:bg-teal/5 focus-visible:ring-teal/30'
     };
 
     const sizes: Record<Size, string> = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2.5 text-sm',
-      lg: 'px-6 py-3 text-base'
+      sm: 'px-3 py-1.5 text-[13px]',
+      md: 'px-4 py-2.5 text-[13px]',
+      lg: 'px-6 py-3 text-sm'
     };
 
     return (
       <motion.button
         ref={ref}
-        whileHover={{ scale: disabled || loading ? 1 : 1.02 }}
+        whileHover={{ y: disabled || loading ? 0 : -1 }}
         whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
         transition={{ type: 'spring', stiffness: 400, damping: 17 }}
         className={cn(baseClasses, variants[variant], sizes[size], className)}
