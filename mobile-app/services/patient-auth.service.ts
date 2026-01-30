@@ -473,6 +473,12 @@ export const patientAuthService = {
    */
   async createPatientMembership(patientId: string, userId: string): Promise<void> {
     try {
+      console.log('═══════════════════════════════════════');
+      console.log('📝 CRÉATION PATIENT_MEMBERSHIPS');
+      console.log('Patient ID:', patientId);
+      console.log('User ID (auth):', userId);
+      console.log('═══════════════════════════════════════');
+
       // Vérifier si le membership existe déjà
       const { data: existingMembership } = await supabase
         .from('patient_memberships')
@@ -482,30 +488,53 @@ export const patientAuthService = {
         .maybeSingle();
 
       if (existingMembership) {
-        console.log('✅ Membership existe déjà');
+        console.log('═══════════════════════════════════════');
+        console.log('✅ MEMBERSHIP EXISTE DÉJÀ');
+        console.log('Patient ID:', patientId);
+        console.log('User ID:', userId);
+        console.log('═══════════════════════════════════════');
         return;
       }
 
       // Créer le membership
-      const { error: membershipError } = await supabase
+      const { data: membershipData, error: membershipError } = await supabase
         .from('patient_memberships')
         .insert({
           patient_id: patientId,
           patient_user_id: userId,
-        });
+          created_at: new Date().toISOString()
+        })
+        .select();
 
       if (membershipError) {
-        if (!membershipError.message.includes('duplicate') &&
-            !membershipError.message.includes('unique constraint')) {
-          console.error('❌ Erreur création membership:', membershipError);
-        } else {
+        console.error('═══════════════════════════════════════');
+        console.error('❌ ERREUR CRITIQUE MEMBERSHIP');
+        console.error('Code:', membershipError.code);
+        console.error('Message:', membershipError.message);
+        console.error('Details:', membershipError.details);
+        console.error('Hint:', membershipError.hint);
+        console.error('═══════════════════════════════════════');
+
+        // Vérifier si c'est une erreur de duplicat (pas critique)
+        if (membershipError.message.includes('duplicate') ||
+            membershipError.message.includes('unique constraint')) {
           console.log('✅ Membership existe déjà (ignoré)');
         }
+        // ⚠️ NE PAS bloquer l'activation - le patient pourra quand même utiliser l'app
+        // Mais les policies RLS devront être corrigées dans Supabase
       } else {
-        console.log('✅ Membership créé: patient', patientId, '↔ user', userId);
+        console.log('═══════════════════════════════════════');
+        console.log('✅ MEMBERSHIP CRÉÉ AVEC SUCCÈS');
+        console.log('Membership ID:', membershipData?.[0]?.id);
+        console.log('Patient ID:', membershipData?.[0]?.patient_id);
+        console.log('User ID:', membershipData?.[0]?.patient_user_id);
+        console.log('═══════════════════════════════════════');
       }
     } catch (err) {
-      console.error('⚠️ Exception createPatientMembership:', err);
+      console.error('═══════════════════════════════════════');
+      console.error('⚠️ EXCEPTION createPatientMembership');
+      console.error('Error:', err);
+      console.error('═══════════════════════════════════════');
     }
   },
 
