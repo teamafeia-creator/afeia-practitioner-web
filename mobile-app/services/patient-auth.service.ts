@@ -67,9 +67,9 @@ export const patientAuthService = {
    *
    * NOUVEAU FLUX (architecture patient_invitations):
    * 1. Vérifie le code OTP dans otp_codes
-   * 2. Récupère l'invitation dans patient_invitations
+   * 2. Récupère l'invitation via plusieurs stratégies
    * 3. Crée le compte auth Supabase
-   * 4. Crée le patient dans la table patients
+   * 4. Crée/met à jour le patient dans la table patients
    * 5. Marque l'invitation comme acceptée
    */
   async activateAccount(
@@ -80,7 +80,7 @@ export const patientAuthService = {
     try {
       const normalizedEmail = email.toLowerCase().trim();
       console.log('═══════════════════════════════════════');
-      console.log('🔐 ACTIVATION COMPTE PATIENT');
+      console.log('ACTIVATION COMPTE PATIENT');
       console.log('Email:', normalizedEmail);
       console.log('Code:', code);
 
@@ -88,50 +88,150 @@ export const patientAuthService = {
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
-        .eq('email', normalizedEmail)
         .eq('code', code)
         .eq('used', false)
         .eq('type', 'activation')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (otpError || !otpData) {
-        console.error('❌ Code invalide ou expiré:', otpError);
+        console.error('Code invalide ou expire:', otpError);
         return {
           success: false,
           error: 'Code invalide ou expiré. Vérifiez le code reçu par email.',
         };
       }
 
-      console.log('✅ Code OTP trouvé');
+      console.log('Code OTP trouve');
       console.log('   OTP ID:', otpData.id);
+      console.log('   Patient ID:', otpData.patient_id);
+      console.log('   Practitioner ID:', otpData.practitioner_id);
 
-      // 2. Récupérer l'invitation correspondante
-      const { data: invitation, error: invitError } = await supabase
-        .from('patient_invitations')
-        .select('*')
-        .eq('email', normalizedEmail)
-        .eq('status', 'pending')
-        .order('invited_at', { ascending: false })
-        .limit(1)
-        .single();
+      // 2. Récupérer l'invitation - plusieurs stratégies
+      let invitation: Record<string, unknown> | null = null;
 
-      if (invitError || !invitation) {
-        console.error('❌ Invitation non trouvée:', invitError);
+      // Stratégie 1: Par patient_id si disponible
+      if (otpData.patient_id) {
+        console.log('Recherche invitation par patient_id:', otpData.patient_id);
+        const { data: invByPatient } = await supabase
+          .from('patient_invitations')
+          .select('*')
+          .eq('patient_id', otpData.patient_id)
+          .eq('status', 'pending')
+          .order('invited_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (invByPatient) {
+          invitation = invByPatient;
+          console.log('Invitation trouvee par patient_id');
+        }
+      }
+
+      // Stratégie 2: Par email et practitioner_id
+      if (!invitation && normalizedEmail && otpData.practitioner_id) {
+        console.log('Recherche invitation par email + practitioner_id');
+        const { data: invByEmailPractitioner } = await supabase
+          .from('patient_invitations')
+          .select('*')
+          .eq('email', normalizedEmail)
+          .eq('practitioner_id', otpData.practitioner_id)
+          .eq('status', 'pending')
+          .order('invited_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (invByEmailPractitioner) {
+          invitation = invByEmailPractitioner;
+          console.log('Invitation trouvee par email + practitioner_id');
+        }
+      }
+
+      // Stratégie 3: Par email seul (fallback)
+      if (!invitation && normalizedEmail) {
+        console.log('Recherche invitation par email seul');
+        const { data: invByEmail } = await supabase
+          .from('patient_invitations')
+          .select('*')
+          .eq('email', normalizedEmail)
+          .eq('status', 'pending')
+          .order('invited_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (invByEmail) {
+          invitation = invByEmail;
+          console.log('Invitation trouvee par email');
+        }
+      }
+
+      // Stratégie 4: Par code d'invitation (match direct)
+      if (!invitation) {
+        console.log('Recherche invitation par invitation_code');
+        const { data: invByCode } = await supabase
+          .from('patient_invitations')
+          .select('*')
+          .eq('invitation_code', code)
+          .eq('status', 'pending')
+          .order('invited_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (invByCode) {
+          invitation = invByCode;
+          console.log('Invitation trouvee par invitation_code');
+        }
+      }
+
+      // Stratégie 5: Fallback - créer invitation virtuelle depuis patient
+      if (!invitation && otpData.patient_id) {
+        console.log('Fallback: recuperation patient directement...');
+        const { data: patientData } = await supabase
+          .from('patients')
+          .select('*')
+          .eq('id', otpData.patient_id)
+          .single();
+
+        if (patientData) {
+          console.log('Patient trouve, creation invitation virtuelle');
+          invitation = {
+            id: 'virtual-' + otpData.id,
+            practitioner_id: patientData.practitioner_id,
+            patient_id: patientData.id,
+            email: patientData.email || normalizedEmail,
+            full_name: patientData.name || patientData.full_name,
+            first_name: patientData.first_name,
+            last_name: patientData.last_name,
+            phone: patientData.phone,
+            city: patientData.city,
+            age: patientData.age,
+            date_of_birth: patientData.date_of_birth,
+            status: 'pending'
+          };
+        }
+      }
+
+      if (!invitation) {
+        console.error('Invitation non trouvee avec toutes les strategies');
+        console.log('Debug info:');
+        console.log('   OTP email:', otpData.email);
+        console.log('   OTP patient_id:', otpData.patient_id);
+        console.log('   OTP practitioner_id:', otpData.practitioner_id);
         return {
           success: false,
           error: 'Invitation non trouvée. Contactez votre naturopathe.',
         };
       }
 
-      console.log('✅ Invitation trouvée');
+      console.log('Invitation trouvee');
       console.log('   Praticien ID:', invitation.practitioner_id);
       console.log('   Invitation ID:', invitation.id);
       console.log('   Nom:', invitation.full_name);
 
-      const practitionerId = invitation.practitioner_id;
+      const practitionerId = invitation.practitioner_id as string;
+      const existingPatientId = (invitation.patient_id || otpData.patient_id) as string | null;
 
       // 3. Vérifier si le patient existe déjà
       const { data: existingPatient } = await supabase
@@ -139,10 +239,10 @@ export const patientAuthService = {
         .select('id, activated')
         .eq('email', normalizedEmail)
         .eq('practitioner_id', practitionerId)
-        .single();
+        .maybeSingle();
 
       if (existingPatient?.activated) {
-        console.log('⚠️ Patient déjà activé');
+        console.log('Patient deja active');
         return {
           success: false,
           error: 'Ce compte est déjà activé. Utilisez "Se connecter".',
@@ -150,7 +250,7 @@ export const patientAuthService = {
       }
 
       // 4. Créer le compte Auth Supabase
-      console.log('📝 Création compte auth...');
+      console.log('Creation compte auth...');
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
@@ -167,11 +267,11 @@ export const patientAuthService = {
       let userId: string | undefined;
 
       if (authError) {
-        console.error('❌ Erreur création compte auth:', authError);
+        console.error('Erreur creation compte auth:', authError);
 
         // Gérer le cas "utilisateur existe déjà"
         if (authError.message.includes('already registered')) {
-          console.log('🔄 Compte auth existe déjà, tentative de connexion...');
+          console.log('Compte auth existe deja, tentative de connexion...');
 
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: normalizedEmail,
@@ -179,20 +279,20 @@ export const patientAuthService = {
           });
 
           if (signInError) {
-            console.error('❌ Connexion échouée:', signInError);
+            console.error('Connexion echouee:', signInError);
             return {
               success: false,
               error: 'Un compte existe déjà avec un mot de passe différent. Utilisez "Se connecter".',
             };
           }
 
-          console.log('✅ Connexion réussie au compte existant');
+          console.log('Connexion reussie au compte existant');
           userId = signInData.user?.id;
         } else {
           return { success: false, error: authError.message };
         }
       } else {
-        console.log('✅ Compte auth créé:', authData.user?.id);
+        console.log('Compte auth cree:', authData.user?.id);
         userId = authData.user?.id;
       }
 
@@ -201,112 +301,130 @@ export const patientAuthService = {
       }
 
       // 5. Construire le nom du patient
-      const patientFirstName = invitation.first_name || '';
-      const patientLastName = invitation.last_name || '';
-      const patientFullName = invitation.full_name || `${patientFirstName} ${patientLastName}`.trim() || normalizedEmail.split('@')[0];
-      const patientCity = invitation.city || null;
-      const patientPhone = invitation.phone || null;
-      const patientAge = invitation.age || null;
-      const patientDateOfBirth = invitation.date_of_birth || null;
+      const patientFirstName = (invitation.first_name as string) || '';
+      const patientLastName = (invitation.last_name as string) || '';
+      const patientFullName = (invitation.full_name as string) || `${patientFirstName} ${patientLastName}`.trim() || normalizedEmail.split('@')[0];
+      const patientCity = (invitation.city as string) || null;
+      const patientPhone = (invitation.phone as string) || null;
+      const patientAge = (invitation.age as number) || null;
+      const patientDateOfBirth = (invitation.date_of_birth as string) || null;
 
-      // 6. Supprimer l'ancien patient pending s'il existe
-      if (existingPatient && !existingPatient.activated) {
-        console.log('🗑️ Suppression du patient pending:', existingPatient.id);
-        await supabase
+      // 6. Créer ou mettre à jour le patient
+      let finalPatientId: string | null = null;
+
+      const patientPayload = {
+        practitioner_id: practitionerId,
+        email: normalizedEmail,
+        name: patientFullName,
+        full_name: patientFullName,
+        first_name: patientFirstName || null,
+        last_name: patientLastName || null,
+        phone: patientPhone,
+        city: patientCity,
+        age: patientAge,
+        date_of_birth: patientDateOfBirth,
+        activated: true,
+        activated_at: new Date().toISOString(),
+      };
+
+      if (existingPatientId) {
+        // Mettre à jour le patient existant (nouveau flux)
+        console.log('Patient existant, mise a jour:', existingPatientId);
+        const { error: updateError } = await supabase
           .from('patients')
-          .delete()
-          .eq('id', existingPatient.id);
-        console.log('✅ Patient pending supprimé');
-      }
+          .update(patientPayload)
+          .eq('id', existingPatientId);
 
-      // 7. Créer le nouveau patient avec l'ID auth
-      console.log('📝 Création du patient avec ID auth:', userId);
-
-      const { data: newPatient, error: patientError } = await supabase
-        .from('patients')
-        .insert({
-          id: userId, // ✅ VRAI ID auth
-          practitioner_id: practitionerId,
-          email: normalizedEmail,
-          full_name: patientFullName,
-          first_name: patientFirstName || null,
-          last_name: patientLastName || null,
-          phone: patientPhone,
-          city: patientCity,
-          age: patientAge,
-          date_of_birth: patientDateOfBirth,
-          activated: true, // ✅ ACTIVÉ
-          activated_at: new Date().toISOString(),
-        })
-        .select('id')
-        .single();
-
-      if (patientError) {
-        console.error('❌ Erreur création patient:', patientError);
-
-        // Si l'erreur est due à un ID dupliqué, essayer sans spécifier l'ID
-        if (patientError.message.includes('duplicate') || patientError.message.includes('unique')) {
-          console.log('⚠️ Tentative de création sans ID spécifique...');
-
-          const { data: newPatient2, error: patientError2 } = await supabase
-            .from('patients')
-            .insert({
-              practitioner_id: practitionerId,
-              email: normalizedEmail,
-              full_name: patientFullName,
-              first_name: patientFirstName || null,
-              last_name: patientLastName || null,
-              phone: patientPhone,
-              city: patientCity,
-              age: patientAge,
-              date_of_birth: patientDateOfBirth,
-              activated: true,
-              activated_at: new Date().toISOString(),
-            })
-            .select('id')
-            .single();
-
-          if (patientError2) {
-            console.error('❌ Erreur création patient (2ème tentative):', patientError2);
-            return { success: false, error: patientError2.message };
-          }
-
-          if (newPatient2) {
-            console.log('✅ Patient créé (sans ID spécifique):', newPatient2.id);
-
-            // Créer le membership
-            await this.createPatientMembership(newPatient2.id, userId);
-          }
+        if (updateError) {
+          console.error('Erreur MAJ patient:', updateError);
         } else {
-          return { success: false, error: patientError.message };
+          finalPatientId = existingPatientId;
+          console.log('Patient mis a jour:', finalPatientId);
         }
-      } else if (newPatient) {
-        console.log('✅ Nouveau patient créé avec ID auth:', newPatient.id);
+      } else if (existingPatient && !existingPatient.activated) {
+        // Mettre à jour l'ancien patient pending
+        console.log('Patient pending, mise a jour:', existingPatient.id);
+        const { error: updateError } = await supabase
+          .from('patients')
+          .update(patientPayload)
+          .eq('id', existingPatient.id);
 
-        // Créer le membership si l'ID patient est différent de l'ID auth
-        if (newPatient.id !== userId) {
-          await this.createPatientMembership(newPatient.id, userId);
+        if (updateError) {
+          console.error('Erreur MAJ patient pending:', updateError);
+        } else {
+          finalPatientId = existingPatient.id;
+          console.log('Patient pending mis a jour:', finalPatientId);
         }
       }
 
-      // 8. Marquer l'invitation comme acceptée
-      console.log('📝 Mise à jour invitation:', invitation.id);
+      // Si pas de patient existant ou mise à jour échouée, créer nouveau
+      if (!finalPatientId) {
+        console.log('Creation nouveau patient avec ID auth:', userId);
 
-      const { error: invitUpdateError } = await supabase
-        .from('patient_invitations')
-        .update({
-          status: 'accepted',
-          accepted_at: new Date().toISOString(),
-        })
-        .eq('id', invitation.id);
+        const { data: newPatient, error: patientError } = await supabase
+          .from('patients')
+          .insert({
+            id: userId,
+            ...patientPayload,
+          })
+          .select('id')
+          .single();
 
-      if (invitUpdateError) {
-        console.warn('⚠️ Erreur mise à jour invitation:', invitUpdateError);
-      } else {
-        console.log('✅ Invitation marquée comme acceptée');
+        if (patientError) {
+          console.error('Erreur creation patient:', patientError);
+
+          if (patientError.message.includes('duplicate') || patientError.message.includes('unique')) {
+            console.log('Tentative de creation sans ID specifique...');
+
+            const { data: newPatient2, error: patientError2 } = await supabase
+              .from('patients')
+              .insert(patientPayload)
+              .select('id')
+              .single();
+
+            if (patientError2) {
+              console.error('Erreur creation patient (2eme tentative):', patientError2);
+              return { success: false, error: patientError2.message };
+            }
+
+            if (newPatient2) {
+              finalPatientId = newPatient2.id;
+              console.log('Patient cree (sans ID specifique):', finalPatientId);
+              await this.createPatientMembership(newPatient2.id, userId);
+            }
+          } else {
+            return { success: false, error: patientError.message };
+          }
+        } else if (newPatient) {
+          finalPatientId = newPatient.id;
+          console.log('Nouveau patient cree avec ID auth:', finalPatientId);
+
+          if (newPatient.id !== userId) {
+            await this.createPatientMembership(newPatient.id, userId);
+          }
+        }
       }
 
-      // 9. Marquer le code OTP comme utilisé
+      // 7. Marquer l'invitation comme acceptée (si c'est une vraie invitation)
+      if (invitation.id && !String(invitation.id).startsWith('virtual-')) {
+        console.log('Mise a jour invitation:', invitation.id);
+
+        const { error: invitUpdateError } = await supabase
+          .from('patient_invitations')
+          .update({
+            status: 'accepted',
+            accepted_at: new Date().toISOString(),
+          })
+          .eq('id', invitation.id);
+
+        if (invitUpdateError) {
+          console.warn('Erreur mise a jour invitation:', invitUpdateError);
+        } else {
+          console.log('Invitation marquee comme acceptee');
+        }
+      }
+
+      // 8. Marquer le code OTP comme utilisé
       await supabase
         .from('otp_codes')
         .update({
@@ -315,9 +433,9 @@ export const patientAuthService = {
         })
         .eq('id', otpData.id);
 
-      console.log('✅ Code OTP marqué comme utilisé');
+      console.log('Code OTP marque comme utilise');
 
-      // 10. Connecter automatiquement l'utilisateur
+      // 9. Connecter automatiquement l'utilisateur
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -326,23 +444,22 @@ export const patientAuthService = {
         });
 
         if (signInError) {
-          console.error('⚠️ Erreur connexion automatique:', signInError);
-          // Le compte est créé, l'utilisateur peut se connecter manuellement
+          console.error('Erreur connexion automatique:', signInError);
         } else {
-          console.log('✅ Connecté automatiquement');
+          console.log('Connecte automatiquement');
         }
       }
 
       console.log('═══════════════════════════════════════');
-      console.log('✅ ACTIVATION RÉUSSIE');
+      console.log('ACTIVATION REUSSIE');
       console.log('Email:', normalizedEmail);
-      console.log('Patient ID:', userId);
+      console.log('Patient ID:', finalPatientId || userId);
       console.log('Praticien ID:', practitionerId);
       console.log('═══════════════════════════════════════');
 
       return { success: true };
     } catch (err) {
-      console.error('❌ Exception activateAccount:', err);
+      console.error('Exception activateAccount:', err);
       return { success: false, error: String(err) };
     }
   },
