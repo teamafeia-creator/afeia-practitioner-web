@@ -469,73 +469,57 @@ export const patientAuthService = {
   },
 
   /**
-   * Helper pour créer le membership patient
+   * Helper pour créer le membership patient via RPC ULTIME
    */
   async createPatientMembership(patientId: string, userId: string): Promise<void> {
+    // ═══════════════════════════════════════════════════════════════
+    // CRÉATION PATIENT_MEMBERSHIPS via FONCTION RPC ULTIME
+    // ═══════════════════════════════════════════════════════════════
+
+    const finalPatientId = patientId;
+
+    console.log('═══════════════════════════════════════');
+    console.log('📝 CRÉATION MEMBERSHIP via RPC ULTIME');
+    console.log('   Patient ID:', finalPatientId);
+    console.log('   User ID:', userId);
+    console.log('   Auth UID:', (await supabase.auth.getUser()).data.user?.id);
+    console.log('═══════════════════════════════════════');
+
     try {
-      console.log('═══════════════════════════════════════');
-      console.log('📝 CRÉATION PATIENT_MEMBERSHIPS');
-      console.log('Patient ID:', patientId);
-      console.log('User ID (auth):', userId);
-      console.log('═══════════════════════════════════════');
-
-      // Vérifier si le membership existe déjà
-      const { data: existingMembership } = await supabase
-        .from('patient_memberships')
-        .select('patient_id')
-        .eq('patient_id', patientId)
-        .eq('patient_user_id', userId)
-        .maybeSingle();
-
-      if (existingMembership) {
-        console.log('═══════════════════════════════════════');
-        console.log('✅ MEMBERSHIP EXISTE DÉJÀ');
-        console.log('Patient ID:', patientId);
-        console.log('User ID:', userId);
-        console.log('═══════════════════════════════════════');
-        return;
-      }
-
-      // Créer le membership
-      const { data: membershipData, error: membershipError } = await supabase
-        .from('patient_memberships')
-        .insert({
-          patient_id: patientId,
-          patient_user_id: userId,
-          created_at: new Date().toISOString()
+      const { data: rpcResult, error: rpcError } = await supabase
+        .rpc('create_patient_membership_ultimate', {
+          p_patient_id: finalPatientId,
+          p_patient_user_id: userId
         })
-        .select();
+        .single();
 
-      if (membershipError) {
-        console.error('═══════════════════════════════════════');
-        console.error('❌ ERREUR CRITIQUE MEMBERSHIP');
-        console.error('Code:', membershipError.code);
-        console.error('Message:', membershipError.message);
-        console.error('Details:', membershipError.details);
-        console.error('Hint:', membershipError.hint);
-        console.error('═══════════════════════════════════════');
+      console.log('═══════════════════════════════════════');
+      console.log('📊 RÉSULTAT RPC:');
+      console.log('   Data:', JSON.stringify(rpcResult, null, 2));
+      console.log('   Error:', rpcError);
+      console.log('═══════════════════════════════════════');
 
-        // Vérifier si c'est une erreur de duplicat (pas critique)
-        if (membershipError.message.includes('duplicate') ||
-            membershipError.message.includes('unique constraint')) {
-          console.log('✅ Membership existe déjà (ignoré)');
+      if (rpcError) {
+        console.error('❌ ERREUR RPC:', rpcError.message);
+        console.error('   Code:', rpcError.code);
+        console.error('   Details:', rpcError.details);
+        console.error('   Hint:', rpcError.hint);
+      } else if (rpcResult) {
+        if (rpcResult.success) {
+          console.log('✅ MEMBERSHIP CRÉÉ !');
+          console.log('   Membership ID:', rpcResult.membership_id);
+          console.log('   Message:', rpcResult.error_message);
+        } else {
+          console.error('❌ RPC a échoué:', rpcResult.error_message);
         }
-        // ⚠️ NE PAS bloquer l'activation - le patient pourra quand même utiliser l'app
-        // Mais les policies RLS devront être corrigées dans Supabase
       } else {
-        console.log('═══════════════════════════════════════');
-        console.log('✅ MEMBERSHIP CRÉÉ AVEC SUCCÈS');
-        console.log('Membership ID:', membershipData?.[0]?.id);
-        console.log('Patient ID:', membershipData?.[0]?.patient_id);
-        console.log('User ID:', membershipData?.[0]?.patient_user_id);
-        console.log('═══════════════════════════════════════');
+        console.error('⚠️ RPC retourné null');
       }
     } catch (err) {
-      console.error('═══════════════════════════════════════');
-      console.error('⚠️ EXCEPTION createPatientMembership');
-      console.error('Error:', err);
-      console.error('═══════════════════════════════════════');
+      console.error('❌ Exception lors de l\'appel RPC:', err);
     }
+
+    console.log('═══════════════════════════════════════');
   },
 
   /**
