@@ -14,7 +14,7 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 rounded-[24px] bg-white/80 px-5 py-4 shadow-sm ring-1 ring-black/5 md:flex-row md:items-center md:justify-between',
+        'flex flex-col gap-4 rounded-[24px] glass-header px-5 py-4 md:flex-row md:items-center md:justify-between',
         className
       )}
     >

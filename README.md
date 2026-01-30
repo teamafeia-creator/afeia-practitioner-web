@@ -20,6 +20,13 @@
 - **Auth** : Supabase Auth
 - **Déploiement** : Vercel
 
+## 🎨 Direction artistique (2024)
+
+- Palette beige/sable dominante, accents teal, aubergine et doré.
+- Glassmorphism (backdrop blur) et grandes zones respirantes.
+- Illustrations abstraites nature en fond pour l’ambiance wellness premium.
+- Favicon blanc décliné en `.svg` et routes dynamiques (PNG/ICO) via `app/icon.tsx` et `app/favicon.ico/route.tsx`.
+
 ## 🚀 Installation
 
 ### Prérequis

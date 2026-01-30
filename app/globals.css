@@ -11,7 +11,7 @@ html, body {
 }
 
 body {
-  @apply bg-white text-charcoal;
+  @apply bg-sable text-charcoal;
 }
 
 /* Subtle background orbs (Hero-like) */
@@ -20,6 +20,26 @@ body {
     radial-gradient(800px 600px at 10% 10%, rgba(42, 128, 128, 0.10), transparent 60%),
     radial-gradient(700px 500px at 90% 20%, rgba(133, 0, 79, 0.06), transparent 55%),
     radial-gradient(900px 700px at 50% 100%, rgba(255, 154, 61, 0.06), transparent 55%);
+}
+
+/* Glassmorphism utilities */
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-lg border border-white/50 shadow-soft;
+}
+
+.glass-card {
+  @apply bg-white/60 backdrop-blur-md border border-white/40 shadow-card;
+}
+
+.glass-header {
+  @apply bg-white/80 backdrop-blur-md border border-white/60 shadow-soft;
+}
+
+.background-texture {
+  background-image: url('/background-nature.svg');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
 }
 
 /* Focus ring utility for non-inputs */
