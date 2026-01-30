@@ -246,9 +246,9 @@ const PLAN_SECTIONS: Array<{
 ];
 
 function getInitials(name?: string | null) {
-  if (!name) return '👤';
+  if (!name) return '?';
   const parts = name.trim().split(' ').filter(Boolean);
-  if (parts.length === 0) return '👤';
+  if (parts.length === 0) return '?';
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
 }
 
@@ -298,7 +298,7 @@ function areJournalEntriesEqual(
 function EditBanner({ label }: { label: string }) {
   return (
     <div className="mt-4 rounded-2xl border border-teal/20 bg-teal/5 px-3 py-2 text-xs font-medium text-teal">
-      ✏️ Mode édition activé — {label}
+      Mode edition active - {label}
     </div>
   );
 }
@@ -962,7 +962,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 </div>
                 {!profileEditing ? (
                   <Button variant="secondary" onClick={() => setProfileEditing(true)}>
-                    ✏️ Modifier le profil
+                    Modifier le profil
                   </Button>
                 ) : null}
               </div>
@@ -1150,9 +1150,9 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   </div>
                 ) : (
                   <EmptyState
-                    icon="📆"
-                    title="À planifier"
-                    description="Aucune consultation programmée pour le moment."
+                    icon="calendar"
+                    title="A planifier"
+                    description="Aucune consultation programmee pour le moment."
                     action={
                       <Button variant="primary" onClick={openAppointmentModal}>
                         Planifier un rendez-vous
@@ -1170,9 +1170,9 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
               <CardContent>
                 {sortedAppointments.length === 0 ? (
                   <EmptyState
-                    icon="🗂️"
-                    title="Aucun rendez-vous enregistré"
-                    description="L’historique des consultations apparaîtra ici."
+                    icon="appointments"
+                    title="Aucun rendez-vous enregistre"
+                    description="L'historique des consultations apparaitra ici."
                   />
                 ) : (
                   <div className="space-y-3">
@@ -1321,15 +1321,14 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
             {!isPremium ? (
               <div className="relative overflow-hidden rounded-2xl border border-dashed border-teal/20 bg-teal/5 p-6 text-sm text-marine">
                 <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-teal shadow-soft">
-                  🔒 Premium
+                  Premium
                 </div>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-charcoal">
-                    <span className="text-lg">🌀</span>
-                    <p className="text-sm font-semibold">Fonctionnalité Circular verrouillée</p>
+                    <p className="text-sm font-semibold">Fonctionnalite Circular verrouillee</p>
                   </div>
                   <p>
-                    Proposez l’offre Premium à votre client afin d’avoir accès à cette fonctionnalité.
+                    Proposez l'offre Premium a votre client afin d'avoir acces a cette fonctionnalite.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="primary" onClick={handleUpgradePremium} loading={premiumLoading}>
@@ -1346,9 +1345,9 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
               </div>
             ) : wearableSummaries.length === 0 ? (
               <EmptyState
-                icon="🌀"
-                title="Aucune donnée Circular disponible"
-                description="Les données s’afficheront dès la première synchronisation."
+                icon="inbox"
+                title="Aucune donnee Circular disponible"
+                description="Les donnees s'afficheront des la premiere synchronisation."
               />
             ) : (
               <div className="space-y-4">
@@ -1393,9 +1392,9 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                   </div>
                 ) : (
                   <EmptyState
-                    icon="💡"
+                    icon="notifications"
                     title="Aucun insight Circular disponible"
-                    description="Les suggestions apparaîtront après analyse."
+                    description="Les suggestions apparaitront apres analyse."
                   />
                 )}
               </div>
@@ -1437,10 +1436,10 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                           setJournalForm((prev) => ({ ...prev, mood: event.target.value as JournalEntry['mood'] }))
                         }
                       >
-                        <option value="">Sélectionner</option>
-                        <option value="🙂">🙂</option>
-                        <option value="😐">😐</option>
-                        <option value="🙁">🙁</option>
+                        <option value="">Selectionner</option>
+                        <option value="Positif">Positif</option>
+                        <option value="Neutre">Neutre</option>
+                        <option value="Negatif">Negatif</option>
                       </Select>
                     ) : (
                       <p className="mt-2 text-sm">{renderValue(journalForm.mood)}</p>
@@ -1547,9 +1546,9 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                 <p className="text-xs uppercase tracking-wide text-warmgray">Historique</p>
                 {journalEntries.length === 0 ? (
                   <EmptyState
-                    icon="📓"
-                    title="Aucune entrée de journal"
-                    description="Commencez un suivi quotidien en ajoutant une première note."
+                    icon="documents"
+                    title="Aucune entree de journal"
+                    description="Commencez un suivi quotidien en ajoutant une premiere note."
                     action={
                       <Button
                         variant="secondary"
@@ -1558,7 +1557,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                           setJournalEditing(true);
                         }}
                       >
-                        Ajouter une entrée
+                        Ajouter une entree
                       </Button>
                     }
                   />
@@ -1602,11 +1601,15 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-4 text-sm text-marine shadow-sm ring-1 ring-black/5">
-              <span className="text-lg">🔒</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal/10 flex-shrink-0">
+                <svg className="w-4 h-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
               <div>
-                <p className="text-sm font-semibold text-charcoal">Notes privées</p>
+                <p className="text-sm font-semibold text-charcoal">Notes privees</p>
                 <p className="mt-1 text-xs text-warmgray">
-                  Visibles uniquement par le naturopathe. Non partagées avec le patient.
+                  Visibles uniquement par le naturopathe. Non partagees avec le patient.
                 </p>
               </div>
             </div>
@@ -1671,9 +1674,9 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
             <CardContent>
               {plans.length === 0 ? (
                 <EmptyState
-                  icon="🌿"
-                  title="Aucun plan créé"
-                  description="Créez la première version du plan de naturopathie."
+                  icon="documents"
+                  title="Aucun plan cree"
+                  description="Creez la premiere version du plan de naturopathie."
                 />
               ) : (
                 <div className="grid gap-3 md:grid-cols-2">
@@ -1831,9 +1834,9 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           <CardContent>
             {!patient.analysis_results || patient.analysis_results.length === 0 ? (
               <EmptyState
-                icon="📋"
-                title="Aucun résultat d'analyse"
-                description="Les résultats d'analyses médicaux apparaîtront ici lorsqu'ils seront disponibles."
+                icon="documents"
+                title="Aucun resultat d'analyse"
+                description="Les resultats d'analyses medicaux apparaitront ici lorsqu'ils seront disponibles."
               />
             ) : (
               <div className="space-y-3">
@@ -1891,7 +1894,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
           <CardContent className="space-y-4">
             {messages.length === 0 ? (
               <EmptyState
-                icon="💬"
+                icon="messages"
                 title="Aucun message pour le moment"
                 description="Envoyez un premier message pour ouvrir la conversation."
               />
