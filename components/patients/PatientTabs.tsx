@@ -1328,7 +1328,7 @@ export function PatientTabs({ patient }: { patient: PatientWithDetails }) {
                     <p className="text-sm font-semibold">Fonctionnalite Circular verrouillee</p>
                   </div>
                   <p>
-                    Proposez l'offre Premium a votre client afin d'avoir acces a cette fonctionnalite.
+                    Proposez l&apos;offre Premium a votre client afin d&apos;avoir acces a cette fonctionnalite.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="primary" onClick={handleUpgradePremium} loading={premiumLoading}>
