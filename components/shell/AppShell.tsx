@@ -6,17 +6,25 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { Button } from '../ui/Button';
-import { PageShell } from '../ui/PageShell';
 import { NotificationDropdown } from '../notifications/NotificationDropdown';
 import { supabase } from '../../lib/supabase';
 import { Avatar } from '../ui/Avatar';
-import { ChevronDown } from 'lucide-react';
+import {
+  ChevronDown,
+  LayoutDashboard,
+  Users,
+  ClipboardList,
+  Settings,
+  Menu,
+  X,
+  LogOut
+} from 'lucide-react';
 
 const NAV = [
-  { href: '/dashboard', label: 'Tableau de bord' },
-  { href: '/patients', label: 'Patients' },
-  { href: '/questionnaires', label: 'Questionnaires' },
-  { href: '/settings', label: 'Paramètres' }
+  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { href: '/patients', label: 'Patients', icon: Users },
+  { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
+  { href: '/settings', label: 'Parametres', icon: Settings }
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -25,39 +33,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const active = useMemo(() => NAV.find((n) => pathname.startsWith(n.href))?.href ?? '/dashboard', [pathname]);
-  const breadcrumb = useMemo(() => {
+
+  const pageTitle = useMemo(() => {
     const segments = pathname.split('/').filter(Boolean);
-    if (segments.length === 0) return [{ label: 'Tableau de bord', href: '/dashboard' }];
+    if (segments.length === 0) return 'Tableau de bord';
 
     const labelMap: Record<string, string> = {
       dashboard: 'Tableau de bord',
       patients: 'Patients',
       questionnaires: 'Questionnaires',
-      settings: 'Paramètres',
+      settings: 'Parametres',
       plans: 'Plans',
       consultations: 'Consultations',
       billing: 'Facturation',
-      circular: 'Circular',
-      onboarding: 'Onboarding'
+      new: 'Nouveau patient'
     };
 
-    return segments.map((segment, index) => {
-      const href = `/${segments.slice(0, index + 1).join('/')}`;
-      let label = labelMap[segment];
-
-      if (!label && segments[0] === 'patients' && index === 1) label = 'Dossier patient';
-      if (!label && segments[0] === 'questionnaires' && index === 1) label = 'Questionnaire';
-      if (!label) label = segment.replace(/-/g, ' ');
-
-      return { label, href };
-    });
+    const lastSegment = segments[segments.length - 1];
+    return labelMap[lastSegment] || lastSegment.replace(/-/g, ' ');
   }, [pathname]);
-
-  const pageTitle = breadcrumb[breadcrumb.length - 1]?.label ?? 'Tableau de bord';
 
   useEffect(() => {
     let isMounted = true;
@@ -73,6 +72,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
 
       setUserEmail(data.session.user.email ?? null);
+
+      // Load practitioner name
+      const { data: practitioner } = await supabase
+        .from('practitioners')
+        .select('name')
+        .eq('id', data.session.user.id)
+        .single();
+
+      if (practitioner?.name) {
+        setUserName(practitioner.name);
+      }
+
       setCheckingAuth(false);
     }
 
@@ -82,6 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (!isMounted) return;
       if (!session) {
         setUserEmail(null);
+        setUserName(null);
         router.replace('/login');
         return;
       }
@@ -111,216 +123,270 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   async function logout() {
     await supabase.auth.signOut();
     setUserEmail(null);
+    setUserName(null);
     router.replace('/login');
   }
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-sable flex items-center justify-center">
-        <div className="text-warmgray">Chargement…</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-warmgray">Chargement...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-sable/80 text-charcoal">
-      <div className="pointer-events-none fixed inset-0 -z-10 background-texture opacity-15" aria-hidden="true" />
-      {/* Mobile topbar */}
-      <div className="sticky top-0 z-30 border-b border-white/30 bg-white/80 backdrop-blur md:hidden">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <button
-              aria-label="Ouvrir le menu"
-              onClick={() => setMobileOpen(true)}
-              className="rounded-xl bg-white/70 px-3 py-2 shadow-sm ring-1 ring-white/60 transition hover:bg-white"
-            >
-              <span className="block h-0.5 w-5 bg-marine" />
-              <span className="mt-1 block h-0.5 w-5 bg-marine" />
-              <span className="mt-1 block h-0.5 w-5 bg-marine" />
-            </button>
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <Image src="/afeia_symbol.svg" alt="Afeia" width={34} height={34} />
-              <div>
-                <span className="block text-sm font-semibold text-marine">Afeia</span>
-                <span className="block text-[11px] text-warmgray">Espace praticien</span>
-              </div>
-            </Link>
+    <div className="min-h-screen text-charcoal">
+      {/* Fixed Sidebar - Desktop */}
+      <aside className="hidden lg:flex lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-[240px] lg:flex-col glass-sidebar z-50">
+        {/* Logo */}
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-3 px-5 py-5 border-b border-white/10"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal">
+            <Image src="/afeia_symbol_white.svg" alt="Afeia" width={24} height={24} />
           </div>
-          <div className="flex items-center gap-2">
-            <NotificationDropdown />
-            <Button variant="ghost" onClick={logout}>Déconnexion</Button>
+          <div>
+            <div className="text-base font-semibold text-charcoal">Afeia</div>
+            <div className="text-xs text-warmgray">Espace praticien</div>
+          </div>
+        </Link>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {NAV.map((item) => {
+            const isActive = active === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                  isActive
+                    ? 'bg-teal text-white shadow-teal-glow'
+                    : 'text-charcoal hover:bg-teal/10 hover:text-teal'
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User section at bottom */}
+        <div className="border-t border-white/10 p-4">
+          <div className="flex items-center gap-3">
+            <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-charcoal truncate">
+                {userName || 'Naturopathe'}
+              </div>
+              <div className="text-xs text-warmgray truncate">{userEmail}</div>
+            </div>
+            <button
+              onClick={logout}
+              className="p-2 rounded-lg text-warmgray hover:text-charcoal hover:bg-white/50 transition-colors"
+              title="Deconnexion"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* Sidebar + content */}
-      <div className="mx-auto flex max-w-[1400px]">
-        <aside className="hidden w-[288px] shrink-0 p-4 md:block">
-          <div className="sticky top-4 rounded-[24px] bg-sable/95 backdrop-blur-xl shadow-soft ring-1 ring-white/70">
-            <Link
-              href="/dashboard"
-              className="group flex items-center gap-4 rounded-[18px] px-4 py-5 transition hover:bg-white/70"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal shadow-sm ring-1 ring-white/40">
-                <Image src="/afeia_symbol_white.svg" alt="Afeia" width={28} height={28} />
-              </div>
-              <div>
-                <div className="text-lg font-semibold text-marine">Afeia</div>
-                <div className="text-xs text-warmgray">Espace praticien</div>
-              </div>
-            </Link>
-            <nav className="px-3 pb-3">
-              {NAV.map((item) => {
-                const isActive = active === item.href;
-                return (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      'group flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition duration-200',
-                      isActive
-                        ? 'bg-gradient-to-r from-teal/20 via-teal/10 to-transparent text-teal shadow-[0_12px_24px_rgba(42,128,128,0.16)] ring-1 ring-teal/20'
-                        : 'text-marine hover:bg-teal/10 hover:translate-x-1'
-                    )}
-                  >
-                    <span className="flex items-center gap-3">
-                      <span
-                        className={cn(
-                          'h-2 w-2 rounded-full transition',
-                          isActive ? 'bg-teal/70 shadow-[0_0_0_4px_rgba(42,128,128,0.12)]' : 'bg-transparent'
-                        )}
-                      />
-                      {item.label}
-                    </span>
-                    <span className={cn('text-xs text-warmgray transition group-hover:text-teal', isActive && 'text-teal')}>
-                      →
-                    </span>
-                  </a>
-                );
-              })}
-            </nav>
-            <div className="border-t border-white/60 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar name={userEmail ?? 'Naturopathe'} size="sm" />
-                  <div>
-                    <div className="text-xs text-warmgray">Connecté</div>
-                    <div className="text-sm font-semibold text-charcoal">{userEmail ?? 'Naturopathe'}</div>
-                  </div>
-                </div>
-                <Button variant="secondary" size="sm" onClick={logout}>
-                  Logout
-                </Button>
-              </div>
-            </div>
+      {/* Tablet Sidebar - Collapsed */}
+      <aside className="hidden md:flex lg:hidden fixed left-0 top-0 h-screen w-20 flex-col glass-sidebar z-50">
+        {/* Logo */}
+        <Link
+          href="/dashboard"
+          className="flex items-center justify-center py-5 border-b border-white/10"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal">
+            <Image src="/afeia_symbol_white.svg" alt="Afeia" width={24} height={24} />
           </div>
-        </aside>
+        </Link>
 
-        <main className="min-w-0 flex-1 p-4 md:p-6">
-          <div className="mb-6 rounded-[24px] glass-header px-5 py-4 md:px-6">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <nav className="text-xs text-warmgray">
-                  <ol className="flex flex-wrap items-center gap-2">
-                    {breadcrumb.map((item, index) => (
-                      <li key={item.href} className="flex items-center gap-2">
-                        <Link href={item.href} className="transition hover:text-teal">
-                          {item.label}
-                        </Link>
-                        {index < breadcrumb.length - 1 ? <span className="text-warmgray/60">/</span> : null}
-                      </li>
-                    ))}
-                  </ol>
-                </nav>
-                <h1 className="text-2xl font-semibold text-charcoal md:text-3xl">{pageTitle}</h1>
-              </div>
-              <div className="flex items-center gap-3">
-                <NotificationDropdown />
-                <div className="relative" ref={userMenuRef}>
-                  <button
-                    onClick={() => setUserMenuOpen((open) => !open)}
-                    className="flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-medium text-charcoal shadow-sm ring-1 ring-white/60 transition hover:bg-white"
-                  >
-                    <Avatar name={userEmail ?? 'Naturopathe'} size="sm" />
-                    <span className="hidden md:inline">{userEmail ?? 'Mon compte'}</span>
-                    <ChevronDown className="h-4 w-4 text-warmgray" />
-                  </button>
-                  {userMenuOpen ? (
-                    <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white/90 backdrop-blur-lg shadow-soft ring-1 ring-white/60">
-                      <div className="px-4 py-3 text-xs text-warmgray">Compte praticien</div>
-                      <button
-                        onClick={logout}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-charcoal transition hover:bg-teal/10"
-                      >
-                        Se déconnecter
-                      </button>
+        {/* Navigation */}
+        <nav className="flex-1 px-2 py-4 space-y-1">
+          {NAV.map((item) => {
+            const isActive = active === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex items-center justify-center rounded-lg p-3 transition-all duration-200',
+                  isActive
+                    ? 'bg-teal text-white shadow-teal-glow'
+                    : 'text-charcoal hover:bg-teal/10 hover:text-teal'
+                )}
+                title={item.label}
+              >
+                <Icon className="h-5 w-5" />
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* User section */}
+        <div className="border-t border-white/10 p-3">
+          <button
+            onClick={logout}
+            className="w-full flex items-center justify-center p-3 rounded-lg text-warmgray hover:text-charcoal hover:bg-white/50 transition-colors"
+            title="Deconnexion"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
+        </div>
+      </aside>
+
+      {/* Fixed Header */}
+      <header className="fixed top-0 right-0 left-0 lg:left-[240px] md:left-20 h-16 glass-header z-40 px-4 lg:px-6">
+        <div className="h-full flex items-center justify-between">
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="md:hidden p-2 rounded-lg text-charcoal hover:bg-white/50 transition-colors"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+
+          {/* Mobile logo */}
+          <Link href="/dashboard" className="md:hidden flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal">
+              <Image src="/afeia_symbol_white.svg" alt="Afeia" width={18} height={18} />
+            </div>
+            <span className="font-semibold text-charcoal">Afeia</span>
+          </Link>
+
+          {/* Page title - desktop/tablet */}
+          <h1 className="hidden md:block text-xl font-semibold text-charcoal tracking-tight">
+            {pageTitle}
+          </h1>
+
+          {/* Header actions */}
+          <div className="flex items-center gap-3">
+            <NotificationDropdown />
+
+            {/* User menu - desktop only */}
+            <div className="hidden md:block relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen((open) => !open)}
+                className="flex items-center gap-2 rounded-lg glass-card px-3 py-2 text-sm font-medium text-charcoal transition-all hover:shadow-md"
+              >
+                <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
+                <span className="hidden lg:inline max-w-[120px] truncate">
+                  {userName || userEmail || 'Mon compte'}
+                </span>
+                <ChevronDown className="h-4 w-4 text-warmgray" />
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 rounded-lg glass-panel shadow-lg overflow-hidden">
+                  <div className="px-4 py-3 border-b border-white/10">
+                    <div className="text-xs text-warmgray">Compte praticien</div>
+                    <div className="text-sm font-medium text-charcoal truncate">
+                      {userEmail}
                     </div>
-                  ) : null}
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="w-full px-4 py-3 text-left text-sm font-medium text-charcoal transition hover:bg-teal/10 flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Se deconnecter
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-          <PageShell>{children}</PageShell>
-        </main>
-      </div>
+        </div>
+      </header>
 
-      {/* Mobile drawer */}
+      {/* Main Content */}
+      <main className="pt-16 lg:pl-[240px] md:pl-20 min-h-screen">
+        <div className="p-4 md:p-6 lg:p-8">
+          {children}
+        </div>
+      </main>
+
+      {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-[300px] bg-sable/95 backdrop-blur-xl shadow-soft">
-            <div className="flex items-center justify-between px-4 py-4">
-              <Link href="/dashboard" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal shadow-sm ring-1 ring-white/40">
+        <div className="fixed inset-0 z-[200] md:hidden" role="dialog" aria-modal="true">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="absolute left-0 top-0 h-full w-[280px] glass-sidebar shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-3"
+                onClick={() => setMobileOpen(false)}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal">
                   <Image src="/afeia_symbol_white.svg" alt="Afeia" width={24} height={24} />
                 </div>
                 <div>
-                  <div className="font-semibold text-marine">Afeia</div>
+                  <div className="font-semibold text-charcoal">Afeia</div>
                   <div className="text-xs text-warmgray">Espace praticien</div>
                 </div>
               </Link>
               <button
-                aria-label="Fermer le menu"
-                className="rounded-xl bg-white/80 px-3 py-2 shadow-sm ring-1 ring-black/10 transition hover:bg-white"
                 onClick={() => setMobileOpen(false)}
+                className="p-2 rounded-lg text-charcoal hover:bg-white/50 transition-colors"
               >
-                ✕
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <nav className="px-3">
+
+            {/* Navigation */}
+            <nav className="px-3 py-4 space-y-1">
               {NAV.map((item) => {
                 const isActive = active === item.href;
+                const Icon = item.icon;
                 return (
-                  <a
+                  <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
-                      'flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition duration-200',
+                      'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200',
                       isActive
-                        ? 'bg-gradient-to-r from-teal/20 via-teal/10 to-transparent text-teal shadow-[0_6px_16px_rgba(42,128,128,0.12)] ring-1 ring-teal/10'
-                        : 'text-marine hover:bg-teal/10'
+                        ? 'bg-teal text-white shadow-teal-glow'
+                        : 'text-charcoal hover:bg-teal/10 hover:text-teal'
                     )}
                   >
-                    <span className="flex items-center gap-3">
-                      <span
-                        className={cn(
-                          'h-2 w-2 rounded-full transition',
-                          isActive ? 'bg-teal/70 shadow-[0_0_0_4px_rgba(42,128,128,0.12)]' : 'bg-transparent'
-                        )}
-                      />
-                      {item.label}
-                    </span>
-                    <span className={cn('text-xs text-warmgray transition', isActive && 'text-teal')}>
-                      →
-                    </span>
-                  </a>
+                    <Icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Link>
                 );
               })}
             </nav>
-            <div className="mt-4 border-t border-black/5 p-4">
-              <Button variant="secondary" className="w-full" onClick={logout}>
-                Déconnexion
+
+            {/* User section */}
+            <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-charcoal truncate">
+                    {userName || 'Naturopathe'}
+                  </div>
+                  <div className="text-xs text-warmgray truncate">{userEmail}</div>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={logout}
+                icon={<LogOut className="h-4 w-4" />}
+              >
+                Deconnexion
               </Button>
             </div>
           </div>

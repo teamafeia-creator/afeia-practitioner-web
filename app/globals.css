@@ -4,6 +4,22 @@
 
 :root {
   color-scheme: light;
+  --teal-dark: #1A6C6C;
+  --teal-medium: #2A8080;
+  --teal-light: #E8F0F0;
+  --aubergine: #85004F;
+  --gold: #FF9A3D;
+  --sage: #89A889;
+  --charcoal: #3D3D3D;
+  --warmgray: #8C8680;
+  --warmgray-light: #C4C0BC;
+  --sable: #F5EFE7;
+  --sable-light: #FFF8F0;
+  --sable-dark: #EDE5D8;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html, body {
@@ -11,28 +27,64 @@ html, body {
 }
 
 body {
-  @apply bg-sable text-charcoal;
+  @apply text-charcoal;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  background: linear-gradient(135deg, #EDE5D8 0%, #F5EFE7 25%, #FFF8F0 50%, #F5F4F0 75%, #EDE5D8 100%);
+  background-attachment: fixed;
 }
 
-/* Subtle background orbs (Hero-like) */
-.bg-orbs {
-  background:
-    radial-gradient(800px 600px at 10% 10%, rgba(42, 128, 128, 0.10), transparent 60%),
-    radial-gradient(700px 500px at 90% 20%, rgba(133, 0, 79, 0.06), transparent 55%),
-    radial-gradient(900px 700px at 50% 100%, rgba(255, 154, 61, 0.06), transparent 55%);
-}
-
-/* Glassmorphism utilities */
+/* Glassmorphism utilities - Enhanced visibility */
 .glass-panel {
-  @apply bg-white/70 backdrop-blur-lg border border-white/50 shadow-soft;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border: 1px solid rgba(26, 108, 108, 0.1);
+  box-shadow: 0 4px 20px rgba(26, 108, 108, 0.06);
 }
 
 .glass-card {
-  @apply bg-white/60 backdrop-blur-md border border-white/40 shadow-card;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid rgba(26, 108, 108, 0.12);
+  box-shadow: 0 4px 20px rgba(26, 108, 108, 0.06);
+  border-radius: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  box-shadow: 0 8px 24px rgba(26, 108, 108, 0.12);
+  border-color: rgba(26, 108, 108, 0.2);
+}
+
+.glass-sidebar {
+  background: rgba(255, 248, 240, 0.7);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border-right: 1px solid rgba(26, 108, 108, 0.1);
 }
 
 .glass-header {
-  @apply bg-white/80 backdrop-blur-md border border-white/60 shadow-soft;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border-bottom: 1px solid rgba(26, 108, 108, 0.1);
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(12px)) {
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.92);
+  }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.92);
+  }
+  .glass-sidebar {
+    background: rgba(255, 248, 240, 0.95);
+  }
+  .glass-header {
+    background: rgba(255, 255, 255, 0.92);
+  }
 }
 
 .background-texture {
@@ -45,4 +97,231 @@ body {
 /* Focus ring utility for non-inputs */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-teal/30 focus:ring-offset-2;
+}
+
+/* Alert card styles */
+.alert-card {
+  @apply glass-card p-5;
+}
+
+.alert-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Action card styles */
+.action-card {
+  @apply glass-card p-5 cursor-pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-card:hover {
+  background: linear-gradient(135deg, #1A6C6C 0%, #155858 100%);
+  border-color: #1A6C6C;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(26, 108, 108, 0.25);
+}
+
+.action-card:hover .action-icon,
+.action-card:hover .action-title,
+.action-card:hover .action-desc {
+  color: white;
+}
+
+/* Patient card styles */
+.patient-card {
+  @apply glass-card p-5 cursor-pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.patient-card:hover {
+  transform: translateX(6px);
+  border-color: rgba(26, 108, 108, 0.3);
+  box-shadow: 0 6px 24px rgba(26, 108, 108, 0.12);
+}
+
+/* Badge styles */
+.badge-urgent {
+  background: rgba(255, 154, 61, 0.15);
+  color: #FF9A3D;
+  border: 1px solid rgba(255, 154, 61, 0.3);
+}
+
+.badge-info {
+  background: rgba(133, 0, 79, 0.15);
+  color: #85004F;
+  border: 1px solid rgba(133, 0, 79, 0.2);
+}
+
+.badge-premium {
+  background: rgba(133, 0, 79, 0.12);
+  color: #85004F;
+  border: 1px solid rgba(133, 0, 79, 0.2);
+}
+
+.badge-standard {
+  background: rgba(26, 108, 108, 0.08);
+  color: #1A6C6C;
+  border: 1px solid rgba(26, 108, 108, 0.15);
+}
+
+/* Toggle group styles */
+.toggle-group {
+  display: flex;
+  background: rgba(26, 108, 108, 0.08);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.toggle-btn {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: #8C8680;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggle-btn.active {
+  background: #1A6C6C;
+  color: white;
+  box-shadow: 0 2px 8px rgba(26, 108, 108, 0.2);
+}
+
+/* Chip styles */
+.chip {
+  padding: 6px 14px;
+  border: 1px solid rgba(26, 108, 108, 0.2);
+  background: transparent;
+  color: #3D3D3D;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip.active {
+  background: #85004F;
+  border-color: #85004F;
+  color: white;
+}
+
+/* Progress bar styles */
+.progress-bar {
+  width: 120px;
+  height: 6px;
+  background: rgba(26, 108, 108, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1A6C6C 0%, #2A8080 100%);
+  transition: width 0.3s ease;
+}
+
+/* Alphabet index styles */
+.alphabet-index {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 20px;
+}
+
+.alphabet-letter {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1A6C6C;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.alphabet-letter:hover {
+  background: rgba(26, 108, 108, 0.1);
+  transform: scale(1.1);
+}
+
+.alphabet-letter.active {
+  background: #1A6C6C;
+  color: white;
+  box-shadow: 0 2px 8px rgba(26, 108, 108, 0.3);
+}
+
+.alphabet-letter.disabled {
+  opacity: 0.2;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Section letter (giant transparent) */
+.section-letter {
+  font-size: 64px;
+  font-weight: 700;
+  color: rgba(26, 108, 108, 0.12);
+  margin-bottom: 20px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* Message badge */
+.message-badge {
+  padding: 4px 10px;
+  background: rgba(255, 154, 61, 0.15);
+  color: #FF9A3D;
+  border: 1px solid rgba(255, 154, 61, 0.3);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Status dot */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #89A889;
+}
+
+.status-dot.inactive {
+  background: #8C8680;
+}
+
+/* Alert action button */
+.alert-action {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #1A6C6C 0%, #155858 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.alert-action:hover {
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(26, 108, 108, 0.3);
+}
+
+/* Typography helpers */
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8C8680;
 }

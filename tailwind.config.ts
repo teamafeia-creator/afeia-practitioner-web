@@ -8,12 +8,17 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif']
+      },
       colors: {
-        // Primary AFEIA colors
+        // Primary AFEIA colors - Updated design system
         teal: {
-          deep: '#1A5C5C',
-          DEFAULT: '#2A8080',
-          light: '#5BA6A6'
+          dark: '#1A6C6C',
+          deep: '#155858',
+          DEFAULT: '#1A6C6C',
+          medium: '#2A8080',
+          light: '#E8F0F0'
         },
         aubergine: {
           DEFAULT: '#85004F'
@@ -28,10 +33,13 @@ export default {
           DEFAULT: '#89A889'
         },
         sable: {
-          DEFAULT: '#F5EFE7'
+          DEFAULT: '#F5EFE7',
+          light: '#FFF8F0',
+          dark: '#EDE5D8'
         },
         warmgray: {
-          DEFAULT: '#8C8680'
+          DEFAULT: '#8C8680',
+          light: '#C4C0BC'
         },
         charcoal: {
           DEFAULT: '#3D3D3D'
@@ -87,9 +95,19 @@ export default {
         'card-hover': '0 20px 40px rgba(0,0,0,0.1)',
         glow: '0 0 20px rgba(65, 105, 225, 0.3)',
         'glow-emerald': '0 0 20px rgba(16, 185, 129, 0.3)',
-        'glow-orange': '0 0 20px rgba(245, 158, 11, 0.3)'
+        'glow-orange': '0 0 20px rgba(245, 158, 11, 0.3)',
+        // New shadows for design system
+        sm: '0 2px 8px rgba(26, 108, 108, 0.04)',
+        md: '0 4px 20px rgba(26, 108, 108, 0.08)',
+        lg: '0 8px 32px rgba(26, 108, 108, 0.12)',
+        'teal-glow': '0 4px 12px rgba(26, 108, 108, 0.3)',
+        'teal-hover': '0 6px 24px rgba(26, 108, 108, 0.12)',
+        'action-hover': '0 12px 32px rgba(26, 108, 108, 0.25)'
       },
       borderRadius: {
+        sm: '6px',
+        DEFAULT: '10px',
+        lg: '12px',
         xl: '1rem',
         '2xl': '1.25rem',
         '3xl': '1.5rem'
@@ -138,7 +156,17 @@ export default {
         'gradient-wellness': 'linear-gradient(135deg, #4169E1 0%, #5B7FE8 50%, #10B981 100%)',
         'gradient-calm': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         'gradient-sunset': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        'gradient-ocean': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+        'gradient-ocean': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        // New gradients for design system
+        'gradient-sable': 'linear-gradient(135deg, #EDE5D8 0%, #F5EFE7 25%, #FFF8F0 50%, #F5F4F0 75%, #EDE5D8 100%)',
+        'gradient-teal-btn': 'linear-gradient(135deg, #1A6C6C 0%, #155858 100%)'
+      },
+      transitionTimingFunction: {
+        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)'
+      },
+      spacing: {
+        'sidebar': '240px',
+        'header': '64px'
       }
     }
   },
