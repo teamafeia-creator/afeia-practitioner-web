@@ -236,7 +236,7 @@ export default function PatientsPage() {
                           {invitation.city || 'Ville non renseignée'}
                         </p>
                       </div>
-                      <Badge variant={isExpired ? 'default' : 'attention'}>
+                      <Badge variant={isExpired ? 'info' : 'attention'}>
                         {isExpired ? 'Expiré' : 'En attente'}
                       </Badge>
                     </div>
