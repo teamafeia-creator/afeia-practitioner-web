@@ -43,9 +43,7 @@ export default function PatientDetailPage() {
         return;
       }
 
-      const patientName = patient.full_name ||
-        [patient.first_name, patient.last_name].filter(Boolean).join(' ') ||
-        'Patient';
+      const patientName = patient.name || 'Patient';
 
       const response = await fetch('/api/patients/send-activation-code', {
         method: 'POST',
@@ -154,10 +152,9 @@ export default function PatientDetailPage() {
   }
 
   // Vérifier si le patient est activé
-  const isActivated = patient.activated !== false;
-  const patientDisplayName = patient.full_name ||
-    [patient.first_name, patient.last_name].filter(Boolean).join(' ') ||
-    'Ce patient';
+  // Note: activated field comes from DB but may not be in TypeScript type
+  const isActivated = (patient as { activated?: boolean }).activated !== false;
+  const patientDisplayName = patient.name || 'Ce patient';
 
   // Si le patient n'est pas activé, afficher un message d'avertissement
   if (!isActivated) {
