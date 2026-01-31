@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
-import { AdminDataTable } from '@/components/admin/AdminDataTable';
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/lib/cn';
 import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
 
 export const revalidate = 0;
+// Keep this page server-rendered without AdminDataTable to avoid client render props.
 
 const DASHBOARD_PREVIEW_LIMIT = 8;
 
@@ -194,45 +194,45 @@ export default async function AdminDashboardPage() {
             Voir tous
           </Link>
         </div>
-        <AdminDataTable
-          rows={practitioners}
-          columns={[
-            {
-              key: 'full_name',
-              header: 'Nom',
-              render: (row) => row.full_name ?? '—'
-            },
-            {
-              key: 'email',
-              header: 'Email',
-              render: (row) => row.email ?? '—'
-            },
-            {
-              key: 'status',
-              header: 'Statut',
-              render: (row) => row.status ?? '—'
-            },
-            {
-              key: 'subscription_status',
-              header: 'Abonnement',
-              render: (row) => row.subscription_status ?? '—'
-            },
-            {
-              key: 'action',
-              header: 'Action',
-              className: 'text-right',
-              render: (row) => (
-                <Link
-                  href={`/admin/practitioners/${row.id}`}
-                  className={cn(buttonClasses, buttonVariants.outline, buttonSizes.sm)}
-                >
-                  Voir
-                </Link>
-              )
-            }
-          ]}
-          emptyMessage="Aucun praticien récent."
-        />
+        <div className="overflow-hidden rounded-2xl border border-white/20 bg-white/80 shadow-sm">
+          <table className="min-w-full text-sm">
+            <thead className="bg-sand">
+              <tr className="text-left text-xs uppercase tracking-wide text-warmgray">
+                <th className="px-4 py-3">Nom</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Statut</th>
+                <th className="px-4 py-3">Abonnement</th>
+                <th className="px-4 py-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {practitioners.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-warmgray">
+                    Aucun praticien récent.
+                  </td>
+                </tr>
+              ) : (
+                practitioners.map((row) => (
+                  <tr key={row.id} className="text-charcoal">
+                    <td className="px-4 py-3">{row.full_name ?? '—'}</td>
+                    <td className="px-4 py-3">{row.email ?? '—'}</td>
+                    <td className="px-4 py-3">{row.status ?? '—'}</td>
+                    <td className="px-4 py-3">{row.subscription_status ?? '—'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/admin/practitioners/${row.id}`}
+                        className={cn(buttonClasses, buttonVariants.outline, buttonSizes.sm)}
+                      >
+                        Voir
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </PageShell>
 
       <PageShell className="space-y-6">
@@ -250,46 +250,49 @@ export default async function AdminDashboardPage() {
             Voir tous
           </Link>
         </div>
-        <AdminDataTable
-          rows={patients}
-          columns={[
-            {
-              key: 'full_name',
-              header: 'Nom',
-              render: (row) => row.full_name ?? '—'
-            },
-            {
-              key: 'email',
-              header: 'Email',
-              render: (row) => row.email ?? '—'
-            },
-            {
-              key: 'practitioner',
-              header: 'Naturopathe associé',
-              render: (row) => practitionerNameMap.get(row.practitioner_id ?? '') ?? '—'
-            },
-            {
-              key: 'status',
-              header: 'Statut',
-              render: (row) =>
-                row.is_premium || row.status === 'premium' ? 'premium' : 'standard'
-            },
-            {
-              key: 'action',
-              header: 'Action',
-              className: 'text-right',
-              render: (row) => (
-                <Link
-                  href={`/admin/patients/${row.id}`}
-                  className={cn(buttonClasses, buttonVariants.outline, buttonSizes.sm)}
-                >
-                  Voir
-                </Link>
-              )
-            }
-          ]}
-          emptyMessage="Aucun patient récent."
-        />
+        <div className="overflow-hidden rounded-2xl border border-white/20 bg-white/80 shadow-sm">
+          <table className="min-w-full text-sm">
+            <thead className="bg-sand">
+              <tr className="text-left text-xs uppercase tracking-wide text-warmgray">
+                <th className="px-4 py-3">Nom</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Naturopathe associé</th>
+                <th className="px-4 py-3">Statut</th>
+                <th className="px-4 py-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {patients.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-warmgray">
+                    Aucun patient récent.
+                  </td>
+                </tr>
+              ) : (
+                patients.map((row) => (
+                  <tr key={row.id} className="text-charcoal">
+                    <td className="px-4 py-3">{row.full_name ?? '—'}</td>
+                    <td className="px-4 py-3">{row.email ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      {practitionerNameMap.get(row.practitioner_id ?? '') ?? '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {row.is_premium || row.status === 'premium' ? 'premium' : 'standard'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/admin/patients/${row.id}`}
+                        className={cn(buttonClasses, buttonVariants.outline, buttonSizes.sm)}
+                      >
+                        Voir
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </PageShell>
     </div>
   );
