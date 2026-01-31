@@ -98,6 +98,7 @@ export default function DashboardPage() {
     else setGreeting('Bonsoir');
   }, []);
 
+
   const loadDashboardData = useCallback(async () => {
     if (authLoading || !isAuthenticated || !user) {
       return;
