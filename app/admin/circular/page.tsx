@@ -19,7 +19,7 @@ type CircularRow = {
   last_circular_sync_status: string | null;
   practitioners_public?: {
     full_name: string | null;
-  } | null;
+  }[] | null;
 };
 
 export default function AdminCircularPage() {
@@ -109,7 +109,7 @@ export default function AdminCircularPage() {
           {
             key: 'practitioner',
             header: 'Praticien',
-            render: (row) => row.practitioners_public?.full_name ?? '—'
+            render: (row) => row.practitioners_public?.[0]?.full_name ?? '—'
           },
           {
             key: 'last_sync',
