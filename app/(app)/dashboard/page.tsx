@@ -99,26 +99,6 @@ export default function DashboardPage() {
     else setGreeting('Bonsoir');
   }, []);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function checkAdmin() {
-      if (!user?.email) return;
-      const { data: adminRecord } = await supabase
-        .from('admin_allowlist')
-        .select('email')
-        .eq('email', user.email)
-        .maybeSingle();
-      if (!isMounted) return;
-      setIsAdmin(!!adminRecord);
-    }
-
-    checkAdmin();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.email]);
 
   const loadDashboardData = useCallback(async () => {
     if (authLoading || !isAuthenticated || !user) {

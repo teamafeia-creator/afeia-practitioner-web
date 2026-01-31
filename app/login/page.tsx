@@ -149,6 +149,18 @@ function LoginForm() {
             </Button>
           </form>
 
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              size="lg"
+              onClick={() => router.push('/admin')}
+            >
+              Accès Admin
+            </Button>
+          </div>
+
           <div className="mt-6 text-center">
             <p className="text-sm text-warmgray">
               Pas encore de compte ?{' '}
