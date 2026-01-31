@@ -18,7 +18,8 @@ import {
   Settings,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Shield
 } from 'lucide-react';
 import { useMessageNotifications } from '@/hooks/useMessageNotifications';
 
@@ -30,6 +31,15 @@ const NAV = [
   { href: '/settings', label: 'Parametres', icon: Settings }
 ];
 
+const ADMIN_NAV = [
+  { href: '/admin', label: 'Dashboard admin', icon: Shield },
+  { href: '/admin/admins', label: 'Admins', icon: Shield },
+  { href: '/admin/practitioners', label: 'Praticiens', icon: Users },
+  { href: '/admin/patients', label: 'Patients', icon: Users },
+  { href: '/admin/billing', label: 'Billing', icon: ClipboardList },
+  { href: '/admin/circular', label: 'Circular', icon: MessageSquare }
+];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -38,10 +48,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { unreadCount: unreadMessages } = useMessageNotifications();
 
-  const active = useMemo(() => NAV.find((n) => pathname.startsWith(n.href))?.href ?? '/dashboard', [pathname]);
+  const active = useMemo(() => {
+    const match = [...NAV, ...ADMIN_NAV].find((n) => pathname.startsWith(n.href));
+    return match?.href ?? '/dashboard';
+  }, [pathname]);
 
   const pageTitle = useMemo(() => {
     const segments = pathname.split('/').filter(Boolean);
@@ -56,7 +70,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       plans: 'Plans',
       consultations: 'Consultations',
       billing: 'Facturation',
-      new: 'Nouveau patient'
+      new: 'Nouveau patient',
+      admin: 'Admin',
+      admins: 'Admins',
+      practitioners: 'Praticiens',
+      circular: 'Circular'
     };
 
     const lastSegment = segments[segments.length - 1];
@@ -76,7 +94,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setUserEmail(data.session.user.email ?? null);
+      const email = data.session.user.email ?? null;
+      setUserEmail(email);
 
       // Load practitioner name
       const { data: practitioner } = await supabase
@@ -89,6 +108,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setUserName(practitioner.name);
       }
 
+      if (email) {
+        const { data: adminRecord, error } = await supabase
+          .from('admin_allowlist')
+          .select('email')
+          .eq('email', email)
+          .maybeSingle();
+        setIsAdmin(!error && !!adminRecord);
+      } else {
+        setIsAdmin(false);
+      }
+
       setCheckingAuth(false);
     }
 
@@ -99,10 +129,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (!session) {
         setUserEmail(null);
         setUserName(null);
+        setIsAdmin(false);
         router.replace('/login');
         return;
       }
-      setUserEmail(session.user.email ?? null);
+      const email = session.user.email ?? null;
+      setUserEmail(email);
+      if (email) {
+        const { data: adminRecord } = await supabase
+          .from('admin_allowlist')
+          .select('email')
+          .eq('email', email)
+          .maybeSingle();
+        setIsAdmin(!!adminRecord);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     return () => {
@@ -129,6 +171,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUserEmail(null);
     setUserName(null);
+    setIsAdmin(false);
     router.replace('/login');
   }
 
@@ -159,34 +202,62 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV.map((item) => {
-            const isActive = active === item.href;
-            const Icon = item.icon;
-            const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 relative',
-                  isActive
-                    ? 'bg-teal text-white shadow-teal-glow'
-                    : 'text-charcoal hover:bg-teal/10 hover:text-teal'
-                )}
-              >
-                <div className="relative">
-                  <Icon className="h-5 w-5" />
-                  {showBadge && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      {unreadMessages > 9 ? '9+' : unreadMessages}
-                    </span>
+        <nav className="flex-1 px-3 py-4 space-y-4">
+          <div className="space-y-1">
+            {NAV.map((item) => {
+              const isActive = active === item.href;
+              const Icon = item.icon;
+              const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 relative',
+                    isActive
+                      ? 'bg-teal text-white shadow-teal-glow'
+                      : 'text-charcoal hover:bg-teal/10 hover:text-teal'
                   )}
-                </div>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+                >
+                  <div className="relative">
+                    <Icon className="h-5 w-5" />
+                    {showBadge && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </div>
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+          {isAdmin ? (
+            <div className="space-y-1">
+              <div className="px-3 text-xs font-semibold uppercase tracking-wide text-warmgray">
+                Admin
+              </div>
+              {ADMIN_NAV.map((item) => {
+                const isActive = active === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                      isActive
+                        ? 'bg-aubergine text-white shadow-teal-glow'
+                        : 'text-charcoal hover:bg-aubergine/10 hover:text-aubergine'
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : null}
         </nav>
 
         {/* User section at bottom */}
@@ -223,34 +294,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-4 space-y-1">
-          {NAV.map((item) => {
-            const isActive = active === item.href;
-            const Icon = item.icon;
-            const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center justify-center rounded-lg p-3 transition-all duration-200 relative',
-                  isActive
-                    ? 'bg-teal text-white shadow-teal-glow'
-                    : 'text-charcoal hover:bg-teal/10 hover:text-teal'
-                )}
-                title={item.label}
-              >
-                <div className="relative">
-                  <Icon className="h-5 w-5" />
-                  {showBadge && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      {unreadMessages > 9 ? '9+' : unreadMessages}
-                    </span>
+        <nav className="flex-1 px-2 py-4 space-y-3">
+          <div className="space-y-1">
+            {NAV.map((item) => {
+              const isActive = active === item.href;
+              const Icon = item.icon;
+              const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center justify-center rounded-lg p-3 transition-all duration-200 relative',
+                    isActive
+                      ? 'bg-teal text-white shadow-teal-glow'
+                      : 'text-charcoal hover:bg-teal/10 hover:text-teal'
                   )}
-                </div>
-              </Link>
-            );
-          })}
+                  title={item.label}
+                >
+                  <div className="relative">
+                    <Icon className="h-5 w-5" />
+                    {showBadge && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+          {isAdmin ? (
+            <div className="space-y-1">
+              {ADMIN_NAV.map((item) => {
+                const isActive = active === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center justify-center rounded-lg p-3 transition-all duration-200',
+                      isActive
+                        ? 'bg-aubergine text-white shadow-teal-glow'
+                        : 'text-charcoal hover:bg-aubergine/10 hover:text-aubergine'
+                    )}
+                    title={item.label}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </Link>
+                );
+              })}
+            </div>
+          ) : null}
         </nav>
 
         {/* User section */}
@@ -367,35 +463,64 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Navigation */}
-            <nav className="px-3 py-4 space-y-1">
-              {NAV.map((item) => {
-                const isActive = active === item.href;
-                const Icon = item.icon;
-                const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200',
-                      isActive
-                        ? 'bg-teal text-white shadow-teal-glow'
-                        : 'text-charcoal hover:bg-teal/10 hover:text-teal'
-                    )}
-                  >
-                    <div className="relative">
-                      <Icon className="h-5 w-5" />
-                      {showBadge && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                          {unreadMessages > 9 ? '9+' : unreadMessages}
-                        </span>
+            <nav className="px-3 py-4 space-y-4">
+              <div className="space-y-1">
+                {NAV.map((item) => {
+                  const isActive = active === item.href;
+                  const Icon = item.icon;
+                  const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200',
+                        isActive
+                          ? 'bg-teal text-white shadow-teal-glow'
+                          : 'text-charcoal hover:bg-teal/10 hover:text-teal'
                       )}
-                    </div>
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
+                    >
+                      <div className="relative">
+                        <Icon className="h-5 w-5" />
+                        {showBadge && (
+                          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                            {unreadMessages > 9 ? '9+' : unreadMessages}
+                          </span>
+                        )}
+                      </div>
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+              {isAdmin ? (
+                <div className="space-y-1">
+                  <div className="px-3 text-xs font-semibold uppercase tracking-wide text-warmgray">
+                    Admin
+                  </div>
+                  {ADMIN_NAV.map((item) => {
+                    const isActive = active === item.href;
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(
+                          'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200',
+                          isActive
+                            ? 'bg-aubergine text-white shadow-teal-glow'
+                            : 'text-charcoal hover:bg-aubergine/10 hover:text-aubergine'
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : null}
             </nav>
 
             {/* User section */}

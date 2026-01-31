@@ -90,6 +90,7 @@ export default function DashboardPage() {
   const [calendlyLoading, setCalendlyLoading] = useState(true);
   const [greeting, setGreeting] = useState('Bonjour');
   const [practitionerName, setPractitionerName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -97,6 +98,27 @@ export default function DashboardPage() {
     else if (hour < 18) setGreeting('Bon apres-midi');
     else setGreeting('Bonsoir');
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkAdmin() {
+      if (!user?.email) return;
+      const { data: adminRecord } = await supabase
+        .from('admin_allowlist')
+        .select('email')
+        .eq('email', user.email)
+        .maybeSingle();
+      if (!isMounted) return;
+      setIsAdmin(!!adminRecord);
+    }
+
+    checkAdmin();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.email]);
 
   const loadDashboardData = useCallback(async () => {
     if (authLoading || !isAuthenticated || !user) {
@@ -285,6 +307,11 @@ export default function DashboardPage() {
             >
               Creer consultation
             </Button>
+            {isAdmin ? (
+              <Button variant="ghost" onClick={() => router.push('/admin')}>
+                Admin
+              </Button>
+            ) : null}
           </div>
         </div>
       </motion.div>
