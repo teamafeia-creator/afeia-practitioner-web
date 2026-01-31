@@ -25,7 +25,7 @@ type PatientRow = {
   created_at: string | null;
   practitioners_public?: {
     full_name: string | null;
-  } | null;
+  }[] | null;
 };
 
 type PractitionerOption = {
@@ -246,7 +246,7 @@ export default function AdminPatientsPage() {
           {
             key: 'practitioner',
             header: 'Praticien',
-            render: (row) => row.practitioners_public?.full_name ?? '—'
+            render: (row) => row.practitioners_public?.[0]?.full_name ?? '—'
           },
           {
             key: 'status',
