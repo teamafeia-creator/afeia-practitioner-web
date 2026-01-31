@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { AppShell } from '@/components/shell/AppShell';
-import { supabase } from '@/lib/supabase';
-import { Toaster, showToast } from '@/components/ui/Toaster';
+import { Button } from '@/components/ui/Button';
+
+const ADMIN_LOGIN_PATH = '/admin/login';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -12,61 +13,64 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const isLoginRoute = useMemo(() => pathname === ADMIN_LOGIN_PATH, [pathname]);
+
   useEffect(() => {
-    let isMounted = true;
+    const storedAdmin = localStorage.getItem('isAdmin') === 'true';
 
-    async function checkAdminAccess() {
-      const { data } = await supabase.auth.getSession();
-      if (!isMounted) return;
-
-      const session = data.session;
-      if (!session?.user?.email) {
-        router.replace(`/login?from=${encodeURIComponent(pathname)}`);
-        setChecking(false);
-        return;
-      }
-
-      const { data: adminRecord, error } = await supabase
-        .from('admin_allowlist')
-        .select('email')
-        .eq('email', session.user.email)
-        .maybeSingle();
-
-      if (error || !adminRecord) {
-        showToast.error('Acces refuse.');
-        router.replace('/');
-        setIsAdmin(false);
-        setChecking(false);
-        return;
-      }
-
-      setIsAdmin(true);
-      setChecking(false);
+    if (!storedAdmin && !isLoginRoute) {
+      router.replace(ADMIN_LOGIN_PATH);
+      setIsAdmin(false);
+    } else {
+      setIsAdmin(storedAdmin);
     }
 
-    checkAdminAccess();
+    setChecking(false);
+  }, [isLoginRoute, router]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [pathname, router]);
+  function handleLogout() {
+    localStorage.removeItem('isAdmin');
+    router.push(ADMIN_LOGIN_PATH);
+  }
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-warmgray">Chargement...</div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-200">
+        <div>Chargement de l&apos;espace admin...</div>
       </div>
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isLoginRoute) {
     return null;
   }
 
+  if (isLoginRoute) {
+    return <>{children}</>;
+  }
+
   return (
-    <AppShell>
-      <Toaster />
-      {children}
-    </AppShell>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.2em] text-teal-200/70">AFEIA Admin</p>
+            <p className="text-lg font-semibold">Administration</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-sm text-slate-200/80 transition hover:text-white"
+            >
+              Retour à l&apos;espace praticien
+            </Link>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
+    </div>
   );
 }
