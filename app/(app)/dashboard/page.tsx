@@ -90,6 +90,7 @@ export default function DashboardPage() {
   const [calendlyLoading, setCalendlyLoading] = useState(true);
   const [greeting, setGreeting] = useState('Bonjour');
   const [practitionerName, setPractitionerName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -286,6 +287,11 @@ export default function DashboardPage() {
             >
               Creer consultation
             </Button>
+            {isAdmin ? (
+              <Button variant="ghost" onClick={() => router.push('/admin')}>
+                Admin
+              </Button>
+            ) : null}
           </div>
         </div>
       </motion.div>
