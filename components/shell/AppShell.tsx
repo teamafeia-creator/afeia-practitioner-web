@@ -135,16 +135,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
       const email = session.user.email ?? null;
       setUserEmail(email);
-      if (email) {
+      if (!email) {
+        setIsAdmin(false);
+        return;
+      }
+
+      void (async () => {
         const { data: adminRecord } = await supabase
           .from('admin_allowlist')
           .select('email')
           .eq('email', email)
           .maybeSingle();
+        if (!isMounted) return;
         setIsAdmin(!!adminRecord);
-      } else {
-        setIsAdmin(false);
-      }
+      })();
     });
 
     return () => {
