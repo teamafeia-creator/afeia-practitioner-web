@@ -155,7 +155,7 @@ function LoginForm() {
               variant="outline"
               className="w-full"
               size="lg"
-              onClick={() => router.push('/admin')}
+              onClick={() => router.push('/admin/login')}
             >
               Accès Admin
             </Button>
