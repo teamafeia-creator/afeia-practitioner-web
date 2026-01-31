@@ -254,7 +254,7 @@ export default function SettingsPage() {
                   </Button>
                 </>
               ) : null}
-              <Button variant="secondary" onClick={() => alert('📄 Documents pro (à brancher)')}>
+              <Button variant="secondary" onClick={() => router.push('/settings/documents')}>
                 Gérer mes documents
               </Button>
             </div>
