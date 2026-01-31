@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { AdminDataTable } from '@/components/admin/AdminDataTable';
@@ -28,7 +28,7 @@ export default function AdminCircularPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
-  async function loadCircular() {
+  const loadCircular = useCallback(async () => {
     setLoading(true);
     const from = (page - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
@@ -49,11 +49,11 @@ export default function AdminCircularPage() {
     setRows(data ?? []);
     setTotal(count ?? 0);
     setLoading(false);
-  }
+  }, [page]);
 
   useEffect(() => {
     loadCircular();
-  }, [page]);
+  }, [loadCircular]);
 
   async function triggerSync(patientId: string) {
     const { data: sessionData } = await supabase.auth.getSession();

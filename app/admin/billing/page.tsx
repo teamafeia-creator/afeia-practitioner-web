@@ -23,7 +23,7 @@ type BillingRow = {
   practitioners_public?: {
     full_name: string | null;
     email: string | null;
-  } | null;
+  }[] | null;
 };
 
 export default function AdminBillingPage() {
@@ -143,12 +143,17 @@ export default function AdminBillingPage() {
           {
             key: 'practitioner',
             header: 'Praticien',
-            render: (row) => (
-              <div className="flex flex-col">
-                <span className="font-medium text-charcoal">{row.practitioners_public?.full_name ?? row.practitioner_id}</span>
-                <span className="text-xs text-warmgray">{row.practitioners_public?.email ?? ''}</span>
-              </div>
-            )
+            render: (row) => {
+              const practitioner = row.practitioners_public?.[0];
+              return (
+                <div className="flex flex-col">
+                  <span className="font-medium text-charcoal">
+                    {practitioner?.full_name ?? row.practitioner_id}
+                  </span>
+                  <span className="text-xs text-warmgray">{practitioner?.email ?? ''}</span>
+                </div>
+              );
+            }
           },
           {
             key: 'plan',
