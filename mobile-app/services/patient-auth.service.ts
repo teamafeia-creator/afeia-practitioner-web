@@ -515,6 +515,18 @@ export const patientAuthService = {
       } else {
         console.error('⚠️ RPC retourné null');
       }
+
+      console.log('🔎 Vérification lecture patient_memberships après RPC...');
+      const { data: membershipCheck, error: membershipCheckError } = await supabase
+        .from('patient_memberships')
+        .select('id, patient_id, patient_user_id, created_at')
+        .eq('patient_id', finalPatientId)
+        .eq('patient_user_id', userId)
+        .maybeSingle();
+
+      console.log('📊 Résultat vérification membership:');
+      console.log('   Data:', membershipCheck);
+      console.log('   Error:', membershipCheckError);
     } catch (err) {
       console.error('❌ Exception lors de l\'appel RPC:', err);
     }

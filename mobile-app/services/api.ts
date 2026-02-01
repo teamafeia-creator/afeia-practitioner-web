@@ -10,6 +10,39 @@ import {
   Plan,
 } from '../types';
 
+type ApiAuthErrorCode = 'AUTH_REQUIRED' | 'PATIENT_NOT_READY';
+
+class ApiAuthError extends Error {
+  code: ApiAuthErrorCode;
+
+  constructor(code: ApiAuthErrorCode, message: string) {
+    super(message);
+    this.code = code;
+    this.name = 'ApiAuthError';
+  }
+}
+
+export const isApiAuthError = (
+  error: unknown,
+  code?: ApiAuthErrorCode
+): error is ApiAuthError => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const candidate = error as ApiAuthError;
+  if (!candidate.code || candidate.name !== 'ApiAuthError') {
+    return false;
+  }
+
+  return code ? candidate.code === code : true;
+};
+
+const createAuthError = (code: ApiAuthErrorCode, message: string) =>
+  new ApiAuthError(code, message);
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Helper to get current user ID
 const getCurrentUserId = async (): Promise<string | null> => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -17,26 +50,76 @@ const getCurrentUserId = async (): Promise<string | null> => {
 };
 
 // Helper to get patient ID from current user
-const getPatientId = async (): Promise<string | null> => {
-  const userId = await getCurrentUserId();
+const getPatientId = async (userIdOverride?: string): Promise<string | null> => {
+  const userId = userIdOverride ?? await getCurrentUserId();
+
+  console.log('═══════════════════════════════════════');
+  console.log('🔍 GET PATIENT ID');
+  console.log('   User ID:', userId);
+
   if (!userId) {
     console.log('❌ No authenticated user');
+    console.log('═══════════════════════════════════════');
     return null;
   }
 
-  // Get patient record for this user via patient_memberships
-  const { data: membership, error } = await supabase
-    .from('patient_memberships')
-    .select('patient_id')
-    .eq('patient_user_id', userId)
-    .single();
+  const maxAttempts = 4;
 
-  if (error) {
-    console.log('📊 Patient lookup error (may be normal for new users):', error.message);
-    return null; // No patient linked to this user
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    // Get patient record for this user via patient_memberships
+    const { data: membership, error } = await supabase
+      .from('patient_memberships')
+      .select('patient_id')
+      .eq('patient_user_id', userId)
+      .maybeSingle();
+
+    console.log(`📊 Résultat query patient_memberships (tentative ${attempt}/${maxAttempts}):`);
+    console.log('   Data:', membership);
+    console.log('   Error:', error);
+    console.log('   Patient ID:', membership?.patient_id);
+
+    if (error) {
+      console.log('❌ Patient lookup error:', error.message);
+      console.log('   Code:', (error as any).code);
+      console.log('   Details:', (error as any).details);
+      console.log('   Hint:', (error as any).hint);
+      console.log('═══════════════════════════════════════');
+      return null;
+    }
+
+    if (membership?.patient_id) {
+      console.log('✅ Patient ID trouvé:', membership.patient_id);
+      console.log('═══════════════════════════════════════');
+      return membership.patient_id;
+    }
+
+    if (attempt < maxAttempts) {
+      const delayMs = 500 * attempt;
+      console.log(`⏳ Membership non disponible, retry dans ${delayMs}ms...`);
+      await sleep(delayMs);
+    }
   }
 
-  return membership?.patient_id ?? null;
+  console.log('⚠️ Patient ID introuvable après retries.');
+  console.log('═══════════════════════════════════════');
+  return null;
+};
+
+const requirePatientContext = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id ?? null;
+
+  if (!userId) {
+    throw createAuthError('AUTH_REQUIRED', 'Session utilisateur absente');
+  }
+
+  const patientId = await getPatientId(userId);
+
+  if (!patientId) {
+    throw createAuthError('PATIENT_NOT_READY', 'Patient non prêt');
+  }
+
+  return { patientId, userId };
 };
 
 export const api = {
@@ -117,11 +200,7 @@ export const api = {
   // Patient Profile
   async getProfile() {
     console.log('📊 Loading profile...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     const { data, error } = await supabase
       .from('patients')
@@ -160,11 +239,7 @@ export const api = {
 
   async updateProfile(profileData: { firstName?: string; lastName?: string; phone?: string }) {
     console.log('📊 Updating profile...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     // Build update object with both old and new column formats
     const updateData: Record<string, string | undefined> = {
@@ -201,11 +276,7 @@ export const api = {
 
   async getNaturopatheInfo() {
     console.log('📊 Loading naturopathe info...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     // Get patient's practitioner
     const { data: patient, error: patientError } = await supabase
@@ -246,11 +317,7 @@ export const api = {
   // Anamnese
   async submitAnamnese(anamneseData: AnamneseData) {
     console.log('📊 Submitting anamnese...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     const { data, error } = await supabase
       .from('patient_anamnesis')
@@ -273,11 +340,7 @@ export const api = {
 
   async getAnamnese() {
     console.log('📊 Loading anamnese...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     const { data, error } = await supabase
       .from('patient_anamnesis')
@@ -298,11 +361,7 @@ export const api = {
   // Complements
   async getComplements(): Promise<{ complements: Complement[] }> {
     console.log('📊 Loading complements...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -349,11 +408,7 @@ export const api = {
 
   async trackComplement(complementId: string, taken: boolean) {
     console.log('📊 Tracking complement:', complementId, taken);
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -381,11 +436,7 @@ export const api = {
   // Conseils
   async getConseils(category?: string): Promise<{ conseils: Conseil[] }> {
     console.log('📊 Loading conseils...', category ? `category: ${category}` : '');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     let query = supabase
       .from('conseils')
@@ -420,6 +471,7 @@ export const api = {
 
   async markConseilRead(conseilId: string) {
     console.log('📊 Marking conseil as read:', conseilId);
+    await requirePatientContext();
 
     const { error } = await supabase
       .from('conseils')
@@ -437,11 +489,7 @@ export const api = {
   // Journal
   async submitJournal(entry: Partial<JournalEntry>) {
     console.log('📊 Submitting journal entry...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -476,11 +524,7 @@ export const api = {
     endDate?: string
   ): Promise<{ entries: JournalEntry[] }> {
     console.log('📊 Loading journal history...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     let query = supabase
       .from('journal_entries')
@@ -521,11 +565,7 @@ export const api = {
 
   async getTodayJournal(): Promise<JournalEntry | null> {
     console.log('📊 Loading today journal...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -563,11 +603,7 @@ export const api = {
   // Messages
   async getMessages(): Promise<{ messages: Message[] }> {
     console.log('📊 Loading messages...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     // Messages are linked to patient via patient_id, not sender_id/receiver_id
     const { data, error } = await supabase
@@ -599,11 +635,7 @@ export const api = {
 
   async sendMessage(messageContent: string) {
     console.log('📊 Sending message...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     // Insert message with patient_id and sender_role (patient sending)
     const { data, error } = await supabase
@@ -629,6 +661,7 @@ export const api = {
 
   async markMessageRead(messageId: string) {
     console.log('📊 Marking message as read:', messageId);
+    await requirePatientContext();
 
     const { error } = await supabase
       .from('messages')
@@ -708,11 +741,7 @@ export const api = {
   // Wearables
   async syncWearableData(wearableData: WearableData) {
     console.log('📊 Syncing wearable data...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     const { data, error } = await supabase
       .from('wearable_data')
@@ -738,11 +767,7 @@ export const api = {
 
   async getWearableData(): Promise<{ data: WearableData | null }> {
     console.log('📊 Loading wearable data...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     // Get latest wearable data
     const { data, error } = await supabase
@@ -778,11 +803,7 @@ export const api = {
   // Plans de soin
   async getPlans(): Promise<{ plans: Plan[] }> {
     console.log('📊 Loading plans...');
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     // Get plans from patient_plans table (shared plans by practitioner)
     const { data, error } = await supabase
@@ -859,11 +880,7 @@ export const api = {
 
   async getPlan(planId: string): Promise<Plan | null> {
     console.log('📊 Loading plan:', planId);
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     // Try patient_plans first
     const { data, error } = await supabase
@@ -931,11 +948,7 @@ export const api = {
 
   async markPlanViewed(planId: string) {
     console.log('📊 Marking plan as viewed:', planId);
-    const patientId = await getPatientId();
-
-    if (!patientId) {
-      throw new Error('User not authenticated');
-    }
+    const { patientId } = await requirePatientContext();
 
     // Update patient_plans
     const { error } = await supabase
