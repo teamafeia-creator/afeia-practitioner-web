@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import { ScrollView, Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import { Colors } from '../constants/Colors';
 import ComplementsCard from '../components/dashboard/ComplementsCard';
 import ConseilsCard from '../components/dashboard/ConseilsCard';
@@ -8,7 +15,7 @@ import MessagesCard from '../components/dashboard/MessagesCard';
 import PlansCard from '../components/dashboard/PlansCard';
 import WearableCard from '../components/dashboard/WearableCard';
 import ArticlesCard from '../components/dashboard/ArticlesCard';
-import { api } from '../services/api';
+import { api, isApiAuthError } from '../services/api';
 
 interface DashboardScreenProps {
   onNavigate?: (screen: string) => void;
@@ -17,6 +24,8 @@ interface DashboardScreenProps {
 export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const [profile, setProfile] = useState<any>(null);
   const [naturopathe, setNaturopathe] = useState<any>(null);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'pending' | 'error'>('loading');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -24,26 +33,62 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 
   const loadData = async () => {
     try {
+      setStatus('loading');
+      setErrorMessage(null);
       const [profileData, naturoData] = await Promise.all([
         api.getProfile(),
         api.getNaturopatheInfo(),
       ]);
       setProfile(profileData);
       setNaturopathe(naturoData);
+      setStatus('ready');
     } catch (error) {
       console.error('Erreur chargement donnees:', error);
-      // Ne pas utiliser de donnees mockees - afficher l'etat reel
       setProfile(null);
       setNaturopathe(null);
+
+      if (isApiAuthError(error, 'PATIENT_NOT_READY')) {
+        setStatus('pending');
+        return;
+      }
+
+      if (isApiAuthError(error, 'AUTH_REQUIRED')) {
+        setErrorMessage('Session expirée. Veuillez vous reconnecter.');
+      } else {
+        setErrorMessage('Impossible de charger vos données pour le moment.');
+      }
+
+      setStatus('error');
     }
   };
+
+  if (status !== 'ready') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingState}>
+          <ActivityIndicator size="large" color={Colors.teal} />
+          <Text style={styles.loadingText}>
+            {status === 'pending' ? 'Finalisation de la connexion…' : 'Chargement…'}
+          </Text>
+          {status === 'error' && errorMessage && (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          )}
+          {status !== 'loading' && (
+            <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+              <Text style={styles.retryButtonText}>Réessayer</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.greeting}>
-            Bonjour, {profile?.firstName || 'Patient'} 👋
+            {profile?.firstName ? `Bonjour, ${profile.firstName} 👋` : 'Bonjour 👋'}
           </Text>
           <TouchableOpacity
             style={styles.profileButton}
@@ -87,6 +132,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.sable,
     padding: 20,
+  },
+  loadingState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.charcoal,
+    textAlign: 'center',
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: Colors.grisChaud,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    backgroundColor: Colors.teal,
+  },
+  retryButtonText: {
+    color: Colors.blanc,
+    fontWeight: '600',
   },
   header: {
     marginBottom: 20,
