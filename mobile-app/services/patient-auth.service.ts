@@ -11,25 +11,11 @@ type FinalizeAuthResponse = {
 };
 
 const getApiBaseUrl = () => {
-  const expoExtra =
-    Constants.expoConfig?.extra ||
-    (Constants as any).manifest?.extra ||
-    (Constants as any).manifest2?.extra ||
-    {};
   const apiBaseUrl =
-    expoExtra.apiBaseUrl ||
+    Constants.expoConfig?.extra?.apiBaseUrl ||
     process.env.EXPO_PUBLIC_API_URL ||
     '';
-  const normalized = typeof apiBaseUrl === 'string' ? apiBaseUrl.replace(/\/$/, '') : '';
-  if (normalized) {
-    return normalized;
-  }
-
-  if (typeof __DEV__ !== 'undefined' && __DEV__) {
-    return 'http://localhost:3000';
-  }
-
-  return '';
+  return apiBaseUrl.replace(/\/$/, '');
 };
 
 const finalizeAuth = async ({
