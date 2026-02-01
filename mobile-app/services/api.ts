@@ -45,8 +45,8 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Helper to get current user ID
 const getCurrentUserId = async (): Promise<string | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id ?? null;
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.user?.id ?? null;
 };
 
 // Helper to get patient ID from current user
