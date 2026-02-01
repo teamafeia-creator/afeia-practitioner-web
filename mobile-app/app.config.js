@@ -33,6 +33,10 @@ export default {
     extra: {
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || "https://ldlojanehidmykveuqop.supabase.co",
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkbG9qYW5laGlkbXlrdmV1cW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNjkyODIsImV4cCI6MjA4NDY0NTI4Mn0.fdw5qvl6OTPKbOhc5ZGi0bnkGGRPyivT_ENTxQsLj9w",
+      apiBaseUrl: process.env.EXPO_PUBLIC_API_URL
+        || process.env.EXPO_PUBLIC_SITE_URL
+        || process.env.EXPO_PUBLIC_APP_URL
+        || (process.env.NODE_ENV === "development" ? "http://localhost:3000" : ""),
     }
   }
 };
