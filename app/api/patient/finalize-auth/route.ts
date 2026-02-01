@@ -118,6 +118,39 @@ async function resolvePatientId(
   return null;
 }
 
+async function findUserByEmail(email: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  let page = 1;
+  const perPage = 1000;
+
+  while (page) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (error) {
+      return { user: null, error };
+    }
+
+    const match = data.users.find(
+      (user) => user.email?.toLowerCase() === email.toLowerCase()
+    );
+
+    if (match) {
+      return { user: match, error: null };
+    }
+
+    if (!data.nextPage) {
+      break;
+    }
+
+    page = data.nextPage;
+  }
+
+  return { user: null, error: null };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as FinalizeAuthRequest;
@@ -188,8 +221,8 @@ export async function POST(request: NextRequest) {
     console.log('   Patient ID:', patientId);
     console.log('   Invitation ID:', invitation?.id ?? null);
 
-    const { data: userLookup, error: userLookupError } =
-      await supabaseAdmin.auth.admin.getUserByEmail(email);
+    const { user: userLookup, error: userLookupError } =
+      await findUserByEmail(email);
 
     if (userLookupError) {
       console.error('❌ finalize-auth: user lookup error', userLookupError);
@@ -199,7 +232,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let userId = userLookup?.user?.id ?? null;
+    let userId = userLookup?.id ?? null;
 
     if (!userId) {
       console.warn('⚠️ finalize-auth: aucun user trouvé, création optionnelle');
