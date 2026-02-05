@@ -159,30 +159,32 @@ export const useAuth = () => {
   const signOut = useCallback(async () => {
     try {
       console.log('🚪 Signing out...');
-      setState((prev) => ({ ...prev, loading: true }));
 
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        console.error('❌ Sign out error:', error);
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: error.message,
-        }));
-        return { success: false, error: error.message };
+        console.error('❌ Sign out error (clearing session anyway):', error);
+      } else {
+        console.log('✅ Sign out successful');
       }
 
-      console.log('✅ Sign out successful');
+      // Always clear local state regardless of API result
       setState({
         user: null,
         session: null,
         loading: false,
         error: null,
       });
-      return { success: true };
+      return error ? { success: false, error: error.message } : { success: true };
     } catch (err) {
-      console.error('❌ Sign out exception:', err);
+      console.error('❌ Sign out exception (clearing session anyway):', err);
+      // Always clear local state so the user is never stuck
+      setState({
+        user: null,
+        session: null,
+        loading: false,
+        error: null,
+      });
       return { success: false, error: 'Erreur de déconnexion' };
     }
   }, []);
