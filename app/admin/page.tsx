@@ -1,11 +1,14 @@
-'use client';
-
-import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/lib/cn';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { getAdminEmailFromCookies, isAdminEmail } from '@/lib/server/adminAuth';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const DASHBOARD_PREVIEW_LIMIT = 8;
 
@@ -75,71 +78,97 @@ const buttonSizes = {
   md: 'px-4 py-2.5 text-[13px]'
 };
 
-export default function AdminDashboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats>({
-    practitioners: null,
-    patients: null,
-    premiumPatients: null,
-    suspendedPractitioners: null
-  });
-  const [practitioners, setPractitioners] = useState<PractitionerPreview[]>([]);
-  const [patients, setPatients] = useState<PatientPreview[]>([]);
+export default async function AdminDashboardPage() {
+  const adminEmail = getAdminEmailFromCookies();
+  if (!adminEmail || !(await isAdminEmail(adminEmail))) {
+    redirect('/admin/login');
+  }
 
-  useEffect(() => {
-    let isMounted = true;
+  const supabase = createAdminClient();
 
-    async function loadDashboard() {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/admin/dashboard', { credentials: 'include' });
-        if (!response.ok) {
-          throw new Error('Erreur lors du chargement des statistiques.');
-        }
+  let hasError = false;
 
-        const data = await response.json();
-        if (!isMounted) return;
+  const [
+    practitionersCountResult,
+    patientsCountResult,
+    premiumPatientsCountResult,
+    suspendedPractitionersCountResult,
+    practitionersResult,
+    patientsResult
+  ] = await Promise.all([
+    supabase.from('practitioners_public').select('id', { count: 'exact', head: true }),
+    supabase.from('patients_identity').select('id', { count: 'exact', head: true }),
+    supabase
+      .from('patients_identity')
+      .select('id', { count: 'exact', head: true })
+      .or('is_premium.eq.true,status.eq.premium'),
+    supabase
+      .from('practitioners_public')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'suspended'),
+    supabase
+      .from('practitioners_public')
+      .select('id, full_name, email, status, subscription_status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(DASHBOARD_PREVIEW_LIMIT),
+    supabase
+      .from('patients_identity')
+      .select(
+        'id, practitioner_id, full_name, email, status, is_premium, created_at, practitioners_public(full_name)'
+      )
+      .order('created_at', { ascending: false })
+      .limit(DASHBOARD_PREVIEW_LIMIT)
+  ]);
 
-        setStats(data.stats);
-        setPractitioners(data.practitioners ?? []);
-        setPatients(data.patients ?? []);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+  const errors = [
+    practitionersCountResult.error,
+    patientsCountResult.error,
+    premiumPatientsCountResult.error,
+    suspendedPractitionersCountResult.error,
+    practitionersResult.error,
+    patientsResult.error
+  ].filter(Boolean);
+
+  if (errors.length > 0) {
+    hasError = true;
+    errors.forEach((error) => {
+      console.error('[admin] dashboard query error:', error);
+    });
+  }
+
+  const stats: DashboardStats = {
+    practitioners: hasError ? null : practitionersCountResult.count ?? null,
+    patients: hasError ? null : patientsCountResult.count ?? null,
+    premiumPatients: hasError ? null : premiumPatientsCountResult.count ?? null,
+    suspendedPractitioners: hasError ? null : suspendedPractitionersCountResult.count ?? null
+  };
+
+  const practitioners = hasError ? [] : practitionersResult.data ?? [];
+  const patients: PatientPreview[] = hasError
+    ? []
+    : (patientsResult.data?.map((patient) => ({
+        ...patient,
+        practitioner_name: patient.practitioners_public?.[0]?.full_name ?? null
+      })) ?? []);
+
+  const statsRows = [
+    {
+      label: 'Naturopathes total',
+      value: stats.practitioners
+    },
+    {
+      label: 'Patients total',
+      value: stats.patients
+    },
+    {
+      label: 'Patients premium',
+      value: stats.premiumPatients
+    },
+    {
+      label: 'Naturopathes suspendus',
+      value: stats.suspendedPractitioners
     }
-
-    loadDashboard();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const statsRows = useMemo(
-    () => [
-      {
-        label: 'Naturopathes total',
-        value: stats.practitioners
-      },
-      {
-        label: 'Patients total',
-        value: stats.patients
-      },
-      {
-        label: 'Patients premium',
-        value: stats.premiumPatients
-      },
-      {
-        label: 'Naturopathes suspendus',
-        value: stats.suspendedPractitioners
-      }
-    ],
-    [stats]
-  );
+  ];
 
   return (
     <div className="space-y-8">
@@ -156,6 +185,14 @@ export default function AdminDashboardPage() {
         }
       />
 
+      {hasError ? (
+        <PageShell>
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            Erreur de chargement.
+          </div>
+        </PageShell>
+      ) : null}
+
       <PageShell className="space-y-6">
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-charcoal">Vue d&apos;ensemble</h2>
@@ -168,7 +205,7 @@ export default function AdminDashboardPage() {
             <Card key={stat.label} className="glass-card p-5">
               <p className="text-xs uppercase tracking-[0.3em] text-warmgray">{stat.label}</p>
               <p className="mt-3 text-3xl font-semibold text-charcoal">
-                {loading ? '—' : stat.value ?? '—'}
+                {hasError ? 'Erreur de chargement' : stat.value ?? '—'}
               </p>
             </Card>
           ))}
@@ -219,10 +256,16 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {practitioners.length === 0 ? (
+              {hasError ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-red-600">
+                    Erreur de chargement.
+                  </td>
+                </tr>
+              ) : practitioners.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-warmgray">
-                    {loading ? 'Chargement...' : 'Aucun praticien récent.'}
+                    Aucun praticien récent.
                   </td>
                 </tr>
               ) : (
@@ -252,9 +295,7 @@ export default function AdminDashboardPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-charcoal">Derniers patients</h2>
-            <p className="text-sm text-warmgray">
-              Identités patients sans données médicales.
-            </p>
+            <p className="text-sm text-warmgray">Identités patients sans données médicales.</p>
           </div>
           <Link
             href="/admin/patients"
@@ -275,10 +316,16 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {patients.length === 0 ? (
+              {hasError ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-red-600">
+                    Erreur de chargement.
+                  </td>
+                </tr>
+              ) : patients.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-warmgray">
-                    {loading ? 'Chargement...' : 'Aucun patient récent.'}
+                    Aucun patient récent.
                   </td>
                 </tr>
               ) : (

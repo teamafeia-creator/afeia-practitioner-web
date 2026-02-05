@@ -24,7 +24,7 @@ const sizes = {
 
 export function AdminBackBar({ secondaryHref, secondaryLabel, className }: AdminBackBarProps) {
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+    <div className={cn('mb-4 flex w-full flex-wrap items-center justify-start gap-2', className)}>
       <Link href="/admin" className={cn(baseClasses, variants.ghost, sizes.md)}>
         ← Retour au dashboard admin
       </Link>

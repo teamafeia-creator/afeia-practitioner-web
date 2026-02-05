@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const supabase = createAdminClient();
 
     let query = supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .select('id, email, full_name, status, subscription_status, created_at', { count: 'exact' });
 
     if (status) {
