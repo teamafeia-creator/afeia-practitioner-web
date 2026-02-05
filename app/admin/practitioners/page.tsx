@@ -11,6 +11,8 @@ import { Select } from '@/components/ui/Select';
 import { AdminDataTable } from '@/components/admin/AdminDataTable';
 import { Modal, ModalFooter } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toaster';
+import { useDeletePractitioner } from '@/hooks/useAdmin';
+import { Trash2 } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
@@ -47,7 +49,31 @@ export default function AdminPractitionersPage() {
     full_name: '',
     calendly_url: ''
   });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [practitionerToDelete, setPractitionerToDelete] = useState<PractitionerRow | null>(null);
   const totalPages = useMemo(() => Math.ceil(total / PAGE_SIZE), [total]);
+
+  const deletePractitionerMutation = useDeletePractitioner();
+
+  const handleDeletePractitioner = async () => {
+    if (!practitionerToDelete) return;
+
+    try {
+      await deletePractitionerMutation.mutateAsync(practitionerToDelete.id);
+      showToast.success('Praticien supprime avec succes.');
+      setDeleteModalOpen(false);
+      setPractitionerToDelete(null);
+      // Recharger la liste
+      setPage(1);
+    } catch (error) {
+      showToast.error(error instanceof Error ? error.message : 'Erreur lors de la suppression.');
+    }
+  };
+
+  const openDeleteModal = (practitioner: PractitionerRow) => {
+    setPractitionerToDelete(practitioner);
+    setDeleteModalOpen(true);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -256,13 +282,23 @@ export default function AdminPractitionersPage() {
             header: 'Actions',
             className: 'text-right',
             render: (row) => (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push(`/admin/practitioners/${row.id}`)}
-              >
-                Voir
-              </Button>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push(`/admin/practitioners/${row.id}`)}
+                >
+                  Voir
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:bg-red-50"
+                  onClick={() => openDeleteModal(row)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             )
           }
         ]}
@@ -322,6 +358,38 @@ export default function AdminPractitionersPage() {
             Annuler
           </Button>
           <Button onClick={handleInvite}>Envoyer</Button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Supprimer le praticien"
+        description="Cette action est irreversible. Le compte praticien et toutes ses donnees seront supprimes."
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-warmgray">
+            Etes-vous sur de vouloir supprimer le praticien{' '}
+            <strong>{practitionerToDelete?.full_name || practitionerToDelete?.email}</strong> ?
+          </p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p className="text-sm text-red-800">
+              Attention : Cette action supprimera egalement tous les patients associes a ce praticien.
+            </p>
+          </div>
+        </div>
+        <ModalFooter>
+          <Button variant="ghost" onClick={() => setDeleteModalOpen(false)}>
+            Annuler
+          </Button>
+          <Button
+            variant="primary"
+            className="bg-red-600 hover:bg-red-700"
+            onClick={handleDeletePractitioner}
+            loading={deletePractitionerMutation.isPending}
+          >
+            {deletePractitionerMutation.isPending ? 'Suppression...' : 'Supprimer'}
+          </Button>
         </ModalFooter>
       </Modal>
     </div>
