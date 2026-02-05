@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { showToast } from '@/components/ui/Toaster';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const statusLabels: Record<string, string> = {
   standard: 'Standard',
@@ -41,23 +42,23 @@ export default function AdminPatientDetailPage() {
     let isMounted = true;
 
     async function loadPatient() {
-      const { data, error } = await supabase
-        .from('patients_identity')
-        .select(
-          'id, practitioner_id, full_name, email, phone, age, city, status, is_premium, circular_enabled, last_circular_sync_at, last_circular_sync_status'
-        )
-        .eq('id', patientId)
-        .single();
+      if (!UUID_REGEX.test(patientId)) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`/api/admin/patients/${patientId}`, { credentials: 'include' });
 
       if (!isMounted) return;
 
-      if (error) {
+      if (!response.ok) {
         showToast.error('Patient introuvable.');
         setLoading(false);
         return;
       }
 
-      setPatient(data);
+      const data = await response.json();
+      setPatient(data.patient ?? null);
       setLoading(false);
     }
 
@@ -74,9 +75,13 @@ export default function AdminPatientDetailPage() {
     if (!patient) return;
     setSaving(true);
 
-    const { error } = await supabase
-      .from('patients_identity')
-      .update({
+    const response = await fetch(`/api/admin/patients/${patient.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
         full_name: patient.full_name,
         email: patient.email,
         phone: patient.phone,
@@ -84,12 +89,11 @@ export default function AdminPatientDetailPage() {
         city: patient.city,
         status: patient.status,
         is_premium: patient.is_premium,
-        circular_enabled: patient.circular_enabled,
-        updated_at: new Date().toISOString()
+        circular_enabled: patient.circular_enabled
       })
-      .eq('id', patient.id);
+    });
 
-    if (error) {
+    if (!response.ok) {
       showToast.error('Erreur lors de la mise a jour.');
     } else {
       showToast.success('Patient mis a jour.');
@@ -101,20 +105,12 @@ export default function AdminPatientDetailPage() {
   async function triggerCircularSync() {
     if (!patient) return;
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
-
-    if (!accessToken) {
-      showToast.error('Session invalide.');
-      return;
-    }
-
     const response = await fetch('/api/admin/circular-sync', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ patient_id: patient.id })
     });
 
@@ -134,7 +130,7 @@ export default function AdminPatientDetailPage() {
   if (loading || !patient) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Patient" subtitle="Chargement..." />
+        <PageHeader title="Patient" subtitle={loading ? 'Chargement...' : 'Patient introuvable.'} />
       </div>
     );
   }
@@ -228,7 +224,9 @@ export default function AdminPatientDetailPage() {
               <option value="yes">Oui</option>
             </Select>
           </div>
-          <div className="text-xs text-warmgray">Statut actuel : {statusLabels[patient.status ?? 'standard']}</div>
+          <div className="text-xs text-warmgray">
+            Statut actuel : {statusLabels[patient.status ?? 'standard']}
+          </div>
         </Card>
       </div>
 

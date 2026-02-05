@@ -12,10 +12,6 @@ function getNumber(value: string | null, fallback: number) {
 
 const SORT_FIELDS = new Set(['created_at', 'full_name', 'status']);
 
-/**
- * GET /api/admin/practitioners
- * Liste tous les praticiens (admin seulement)
- */
 export async function GET(request: NextRequest) {
   const guard = await requireAdmin(request);
   if ('response' in guard) {
@@ -28,6 +24,7 @@ export async function GET(request: NextRequest) {
     const pageSize = getNumber(searchParams.get('pageSize'), DEFAULT_PAGE_SIZE);
     const search = searchParams.get('search')?.trim() ?? '';
     const status = searchParams.get('status')?.trim() ?? '';
+    const practitionerId = searchParams.get('practitioner')?.trim() ?? '';
     const sortField = SORT_FIELDS.has(searchParams.get('sortField') ?? '')
       ? (searchParams.get('sortField') as string)
       : 'created_at';
@@ -39,11 +36,18 @@ export async function GET(request: NextRequest) {
     const supabase = createSupabaseAdminClient();
 
     let query = supabase
-      .from('practitioners')
-      .select('id, email, full_name, status, subscription_status, created_at', { count: 'exact' });
+      .from('patients')
+      .select(
+        'id, practitioner_id, full_name, name, email, phone, city, status, is_premium, created_at, practitioners(full_name)',
+        { count: 'exact' }
+      );
 
     if (status) {
       query = query.eq('status', status);
+    }
+
+    if (practitionerId) {
+      query = query.eq('practitioner_id', practitionerId);
     }
 
     if (search) {
@@ -56,13 +60,19 @@ export async function GET(request: NextRequest) {
     const { data, count, error } = await query;
 
     if (error) {
-      console.error('Erreur liste praticiens:', error);
-      return NextResponse.json({ error: 'Erreur lors de la récupération des praticiens.' }, { status: 500 });
+      console.error('[admin] patients list error:', error);
+      return NextResponse.json({ error: 'Erreur lors de la récupération des patients.' }, { status: 500 });
     }
 
-    return NextResponse.json({ practitioners: data || [], total: count ?? 0 });
-  } catch (err) {
-    console.error('Exception GET practitioners:', err);
+    const patients = (data ?? []).map((patient) => ({
+      ...patient,
+      full_name: patient.full_name ?? patient.name ?? '',
+      practitioner_name: patient.practitioners?.[0]?.full_name ?? null
+    }));
+
+    return NextResponse.json({ patients, total: count ?? 0 });
+  } catch (error) {
+    console.error('[admin] patients list exception:', error);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }

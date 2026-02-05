@@ -7,9 +7,6 @@ import { Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 
-const ADMIN_EMAIL = 'team.afeia@gmail.com';
-const ADMIN_PASSWORD = '123456';
-
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -17,23 +14,32 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setLoading(true);
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const normalizedPassword = password.trim();
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.trim()
+        })
+      });
 
-    // TODO: Migrer vers Supabase Auth + allowlist plus tard.
-    if (normalizedEmail === ADMIN_EMAIL && normalizedPassword === ADMIN_PASSWORD) {
-      localStorage.setItem('isAdmin', 'true');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Identifiants admin incorrects');
+      }
+
       router.push('/admin');
-      return;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Identifiants admin incorrects');
+      setLoading(false);
     }
-
-    setLoading(false);
-    setError('Identifiants admin incorrects');
   }
 
   return (

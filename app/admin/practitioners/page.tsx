@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { Button } from '@/components/ui/Button';
@@ -63,7 +62,6 @@ export default function AdminPractitionersPage() {
       showToast.success('Praticien supprime avec succes.');
       setDeleteModalOpen(false);
       setPractitionerToDelete(null);
-      // Recharger la liste
       setPage(1);
     } catch (error) {
       showToast.error(error instanceof Error ? error.message : 'Erreur lors de la suppression.');
@@ -80,34 +78,38 @@ export default function AdminPractitionersPage() {
 
     async function loadPractitioners() {
       setLoading(true);
-      const from = (page - 1) * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-
-      let query = supabase
-        .from('practitioners_public')
-        .select('id, email, full_name, status, subscription_status, created_at', { count: 'exact' });
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(PAGE_SIZE),
+        sortField,
+        sortDirection
+      });
 
       if (statusFilter) {
-        query = query.eq('status', statusFilter);
+        params.set('status', statusFilter);
       }
 
       if (search.trim()) {
-        const term = `%${search.trim()}%`;
-        query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
+        params.set('search', search.trim());
       }
 
-      query = query.order(sortField, { ascending: sortDirection === 'asc' }).range(from, to);
-
-      const { data, count, error } = await query;
+      const response = await fetch(`/api/admin/practitioners?${params.toString()}`, {
+        credentials: 'include'
+      });
 
       if (!isMounted) return;
 
-      if (error) {
+      if (!response.ok) {
         showToast.error('Erreur lors du chargement des praticiens.');
+        setRows([]);
+        setTotal(0);
+        setLoading(false);
+        return;
       }
 
-      setRows(data ?? []);
-      setTotal(count ?? 0);
+      const data = await response.json();
+      setRows(data.practitioners ?? []);
+      setTotal(data.total ?? 0);
       setLoading(false);
     }
 
@@ -121,20 +123,12 @@ export default function AdminPractitionersPage() {
   async function handleInvite() {
     if (!inviteForm.email.trim()) return;
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
-
-    if (!accessToken) {
-      showToast.error('Session invalide.');
-      return;
-    }
-
     const response = await fetch('/api/admin/invite-practitioner', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify(inviteForm)
     });
 
@@ -275,7 +269,8 @@ export default function AdminPractitionersPage() {
           {
             key: 'created_at',
             header: 'Cree le',
-            render: (row) => (row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : '—')
+            render: (row) =>
+              row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : '—'
           },
           {
             key: 'actions',
@@ -308,7 +303,12 @@ export default function AdminPractitionersPage() {
               Page {page} / {totalPages || 1}
             </span>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage(page - 1)}
+              >
                 Precedent
               </Button>
               <Button
