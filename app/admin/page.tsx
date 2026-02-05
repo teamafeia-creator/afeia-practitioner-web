@@ -145,7 +145,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-8">
       <PageHeader
         title="Dashboard Admin"
-        subtitle="Vue d'ensemble de la plateforme AFEIA."
+        subtitle="Vue d&apos;ensemble de la plateforme AFEIA."
         actions={
           <Link
             href="/admin/admins"
