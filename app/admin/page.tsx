@@ -158,7 +158,7 @@ export default function AdminDashboardPage() {
 
       <PageShell className="space-y-6">
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold text-charcoal">Vue d'ensemble</h2>
+          <h2 className="text-lg font-semibold text-charcoal">Vue d&apos;ensemble</h2>
           <p className="text-sm text-warmgray">
             Indicateurs clefs issus des données Supabase.
           </p>
