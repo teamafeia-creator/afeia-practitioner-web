@@ -200,11 +200,16 @@ export const api = {
   // Patient Profile
   async getProfile() {
     const startTime = Date.now();
-    console.log('📊 [APP] Loading profile...');
+    console.log('═══════════════════════════════════════');
+    console.log('[APP] Loading profile...');
+
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('[APP] Session present:', !!session);
+    console.log('[APP] Session user:', session?.user?.id, session?.user?.email);
 
     const { patientId, userId } = await requirePatientContext();
-    console.log('   Patient ID:', patientId);
-    console.log('   User ID:', userId);
+    console.log('[APP] Patient ID:', patientId);
+    console.log('[APP] User ID:', userId);
 
     const { data, error } = await supabase
       .from('patients')
@@ -213,19 +218,21 @@ export const api = {
       .maybeSingle();
 
     const queryDuration = Date.now() - startTime;
-    console.log(`   Query duration: ${queryDuration}ms`);
+    console.log(`[APP] Patient query duration: ${queryDuration}ms`);
+    console.log('[APP] Patient data present:', !!data);
+    console.log('[APP] Patient query error:', error ? error.message : 'none');
 
     if (error) {
-      console.error('❌ Profile load error:', error);
-      console.error('   Error code:', (error as any).code);
-      console.error('   Error details:', (error as any).details);
-      console.error('   Error hint:', (error as any).hint);
+      console.error('[APP] Profile load error:', error);
+      console.error('[APP] Error code:', (error as any).code);
+      console.error('[APP] Error details:', (error as any).details);
+      console.error('[APP] Error hint:', (error as any).hint);
       throw error;
     }
 
     if (!data) {
-      console.log('❌ Profile not found for patient:', patientId);
-      console.log('   Checking membership integrity...');
+      console.log('[APP] Profile not found for patient:', patientId);
+      console.log('[APP] Checking membership integrity...');
 
       // Extra diagnostic: check if the membership row points to a valid patient
       const { data: membership } = await supabase
@@ -235,11 +242,21 @@ export const api = {
         .maybeSingle();
 
       if (membership) {
-        console.log('   Membership exists:', JSON.stringify(membership));
-        console.log('   But patient row is missing for patient_id:', membership.patient_id);
+        console.log('[APP] Membership exists:', JSON.stringify(membership));
+        console.log('[APP] But patient row is missing for patient_id:', membership.patient_id);
       } else {
-        console.log('   No membership found for user_id:', userId);
+        console.log('[APP] No membership found for user_id:', userId);
       }
+
+      // Check if patient exists at all in the DB
+      const { data: patientExists } = await supabase
+        .from('patients')
+        .select('id, email, activated, practitioner_id')
+        .eq('id', patientId)
+        .maybeSingle();
+
+      console.log('[APP] Direct patient lookup:', patientExists ? JSON.stringify(patientExists) : 'not found');
+      console.log('═══════════════════════════════════════');
 
       throw new Error('Patient profile not found');
     }
@@ -254,7 +271,12 @@ export const api = {
     }
 
     const duration = Date.now() - startTime;
-    console.log(`✅ Profile loaded in ${duration}ms:`, data?.email);
+    console.log(`[APP] Profile loaded in ${duration}ms: ${data?.email}`);
+    console.log('[APP] Patient name:', firstName, lastName);
+    console.log('[APP] Practitioner:', data.practitioners ? (data.practitioners as any).full_name : 'none');
+    console.log('[APP] Activated:', data.activated, '| Premium:', data.is_premium);
+    console.log('═══════════════════════════════════════');
+
     return {
       id: data.id,
       email: data.email,
@@ -262,9 +284,9 @@ export const api = {
       lastName,
       phone: data.phone,
       practitioner: data.practitioners ? {
-        fullName: data.practitioners.full_name,
-        email: data.practitioners.email,
-        phone: data.practitioners.phone,
+        fullName: (data.practitioners as any).full_name,
+        email: (data.practitioners as any).email,
+        phone: (data.practitioners as any).phone,
       } : null,
     };
   },
