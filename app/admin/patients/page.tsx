@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { Button } from '@/components/ui/Button';
@@ -23,9 +22,7 @@ type PatientRow = {
   status: string | null;
   is_premium: boolean | null;
   created_at: string | null;
-  practitioners_public?: {
-    full_name: string | null;
-  }[] | null;
+  practitioner_name?: string | null;
 };
 
 type PractitionerOption = {
@@ -61,13 +58,15 @@ export default function AdminPatientsPage() {
     let isMounted = true;
 
     async function loadPractitioners() {
-      const { data } = await supabase
-        .from('practitioners_public')
-        .select('id, full_name')
-        .order('full_name', { ascending: true });
+      const response = await fetch('/api/admin/practitioners/options', { credentials: 'include' });
+      if (!response.ok) {
+        showToast.error('Erreur lors du chargement des praticiens.');
+        return;
+      }
 
+      const data = await response.json();
       if (!isMounted) return;
-      setPractitioners(data ?? []);
+      setPractitioners(data.practitioners ?? []);
     }
 
     loadPractitioners();
@@ -82,40 +81,41 @@ export default function AdminPatientsPage() {
 
     async function loadPatients() {
       setLoading(true);
-      const from = (page - 1) * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
 
-      let query = supabase
-        .from('patients_identity')
-        .select('id, practitioner_id, full_name, email, phone, city, status, is_premium, created_at, practitioners_public(full_name)', {
-          count: 'exact'
-        });
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(PAGE_SIZE),
+        sortField,
+        sortDirection
+      });
 
       if (statusFilter) {
-        query = query.eq('status', statusFilter);
+        params.set('status', statusFilter);
       }
 
       if (practitionerFilter) {
-        query = query.eq('practitioner_id', practitionerFilter);
+        params.set('practitioner', practitionerFilter);
       }
 
       if (search.trim()) {
-        const term = `%${search.trim()}%`;
-        query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
+        params.set('search', search.trim());
       }
 
-      query = query.order(sortField, { ascending: sortDirection === 'asc' }).range(from, to);
-
-      const { data, count, error } = await query;
+      const response = await fetch(`/api/admin/patients?${params.toString()}`, { credentials: 'include' });
 
       if (!isMounted) return;
 
-      if (error) {
+      if (!response.ok) {
         showToast.error('Erreur lors du chargement des patients.');
+        setRows([]);
+        setTotal(0);
+        setLoading(false);
+        return;
       }
 
-      setRows(data ?? []);
-      setTotal(count ?? 0);
+      const data = await response.json();
+      setRows(data.patients ?? []);
+      setTotal(data.total ?? 0);
       setLoading(false);
     }
 
@@ -246,7 +246,7 @@ export default function AdminPatientsPage() {
           {
             key: 'practitioner',
             header: 'Praticien',
-            render: (row) => row.practitioners_public?.[0]?.full_name ?? '—'
+            render: (row) => row.practitioner_name ?? '—'
           },
           {
             key: 'status',
@@ -256,7 +256,8 @@ export default function AdminPatientsPage() {
           {
             key: 'created_at',
             header: 'Cree le',
-            render: (row) => (row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : '—')
+            render: (row) =>
+              row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : '—'
           },
           {
             key: 'actions',

@@ -37,6 +37,52 @@ export async function GET(
 }
 
 /**
+ * PATCH /api/admin/practitioners/[practitionerId]
+ * Mettre à jour un praticien (admin seulement)
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ practitionerId: string }> }
+) {
+  const guard = await requireAdmin(request);
+  if ('response' in guard) {
+    return guard.response;
+  }
+
+  try {
+    const payload = (await request.json()) as Record<string, unknown>;
+    const { practitionerId } = await params;
+
+    const updates = {
+      email: payload.email,
+      full_name: payload.full_name,
+      status: payload.status,
+      calendly_url: payload.calendly_url,
+      subscription_status: payload.subscription_status,
+      updated_at: new Date().toISOString()
+    };
+
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from('practitioners')
+      .update(updates)
+      .eq('id', practitionerId)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('Erreur update practitioner:', error);
+      return NextResponse.json({ error: 'Erreur lors de la mise à jour.' }, { status: 500 });
+    }
+
+    return NextResponse.json({ practitioner: data });
+  } catch (err) {
+    console.error('Exception PATCH practitioner:', err);
+    return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
+  }
+}
+
+/**
  * DELETE /api/admin/practitioners/[practitionerId]
  * Supprimer un praticien (admin seulement)
  */
@@ -73,7 +119,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Erreur lors de la suppression du compte.' }, { status: 500 });
     }
 
-    console.log(`✅ Praticien ${practitioner.full_name} (${practitionerId}) supprimé par admin ${guard.user.email}`);
+    console.log(
+      `✅ Praticien ${practitioner.full_name} (${practitionerId}) supprimé par admin ${guard.user.email}`
+    );
 
     return NextResponse.json({
       success: true,

@@ -1,0 +1,11 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/server/adminGuard';
+
+export async function GET(request: NextRequest) {
+  const guard = await requireAdmin(request);
+  if ('response' in guard) {
+    return guard.response;
+  }
+
+  return NextResponse.json({ isAdmin: true, email: guard.user.email });
+}

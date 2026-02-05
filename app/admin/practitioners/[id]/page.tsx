@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { Card } from '@/components/ui/Card';
@@ -10,6 +9,8 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { showToast } from '@/components/ui/Toaster';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type PractitionerDetail = {
   id: string;
@@ -33,21 +34,26 @@ export default function AdminPractitionerDetailPage() {
     let isMounted = true;
 
     async function loadPractitioner() {
-      const { data, error } = await supabase
-        .from('practitioners_public')
-        .select('id, email, full_name, status, calendly_url, subscription_status, created_at')
-        .eq('id', practitionerId)
-        .single();
+      if (!UUID_REGEX.test(practitionerId)) {
+        setLoading(false);
+        setPractitioner(null);
+        return;
+      }
+
+      const response = await fetch(`/api/admin/practitioners/${practitionerId}`, {
+        credentials: 'include'
+      });
 
       if (!isMounted) return;
 
-      if (error) {
-        showToast.error('Practicien introuvable.');
+      if (!response.ok) {
+        showToast.error('Praticien introuvable.');
         router.replace('/admin/practitioners');
         return;
       }
 
-      setPractitioner(data);
+      const data = await response.json();
+      setPractitioner(data.practitioner ?? null);
       setLoading(false);
     }
 
@@ -64,19 +70,22 @@ export default function AdminPractitionerDetailPage() {
     if (!practitioner) return;
     setSaving(true);
 
-    const { error } = await supabase
-      .from('practitioners_public')
-      .update({
+    const response = await fetch(`/api/admin/practitioners/${practitioner.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
         email: practitioner.email,
         full_name: practitioner.full_name,
         status: practitioner.status,
         calendly_url: practitioner.calendly_url,
-        subscription_status: practitioner.subscription_status,
-        updated_at: new Date().toISOString()
+        subscription_status: practitioner.subscription_status
       })
-      .eq('id', practitioner.id);
+    });
 
-    if (error) {
+    if (!response.ok) {
       showToast.error('Erreur lors de la mise a jour.');
     } else {
       showToast.success('Infos mises a jour.');
@@ -88,20 +97,12 @@ export default function AdminPractitionerDetailPage() {
   async function triggerPasswordReset() {
     if (!practitioner?.email) return;
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
-
-    if (!accessToken) {
-      showToast.error('Session invalide.');
-      return;
-    }
-
     const response = await fetch('/api/admin/reset-password', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ email: practitioner.email })
     });
 
@@ -116,20 +117,12 @@ export default function AdminPractitionerDetailPage() {
   async function resendInvite() {
     if (!practitioner?.email) return;
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
-
-    if (!accessToken) {
-      showToast.error('Session invalide.');
-      return;
-    }
-
     const response = await fetch('/api/admin/invite-practitioner', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({
         email: practitioner.email,
         full_name: practitioner.full_name ?? '',
@@ -145,10 +138,18 @@ export default function AdminPractitionerDetailPage() {
     showToast.success('Invitation envoyee.');
   }
 
-  if (loading || !practitioner) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <PageHeader title="Praticien" subtitle="Chargement..." />
+      </div>
+    );
+  }
+
+  if (!practitioner) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Praticien" subtitle="Praticien introuvable." />
       </div>
     );
   }
@@ -251,7 +252,10 @@ export default function AdminPractitionerDetailPage() {
             </Select>
           </div>
           <div className="text-xs text-warmgray">
-            Cree le {practitioner.created_at ? new Date(practitioner.created_at).toLocaleDateString('fr-FR') : '—'}
+            Cree le{' '}
+            {practitioner.created_at
+              ? new Date(practitioner.created_at).toLocaleDateString('fr-FR')
+              : '—'}
           </div>
           <Button onClick={saveChanges} disabled={saving}>
             {saving ? 'Enregistrement...' : 'Enregistrer'}
@@ -264,10 +268,7 @@ export default function AdminPractitionerDetailPage() {
         <p className="text-sm text-warmgray">
           Consultez les informations Stripe associees a ce praticien.
         </p>
-        <Button
-          variant="outline"
-          onClick={() => router.push(`/admin/billing?practitioner=${practitioner.id}`)}
-        >
+        <Button variant="outline" onClick={() => router.push(`/admin/billing?practitioner=${practitioner.id}`)}>
           Ouvrir la vue billing
         </Button>
       </PageShell>

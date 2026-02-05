@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { AdminDataTable } from '@/components/admin/AdminDataTable';
 import { Button } from '@/components/ui/Button';
@@ -17,7 +16,7 @@ type CircularRow = {
   circular_enabled: boolean | null;
   last_circular_sync_at: string | null;
   last_circular_sync_status: string | null;
-  practitioners_public?: {
+  practitioners?: {
     full_name: string | null;
   }[] | null;
 };
@@ -30,24 +29,26 @@ export default function AdminCircularPage() {
 
   const loadCircular = useCallback(async () => {
     setLoading(true);
-    const from = (page - 1) * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(PAGE_SIZE)
+    });
 
-    const { data, count, error } = await supabase
-      .from('patients_identity')
-      .select('id, full_name, email, practitioner_id, circular_enabled, last_circular_sync_at, last_circular_sync_status, practitioners_public(full_name)', {
-        count: 'exact'
-      })
-      .eq('circular_enabled', true)
-      .order('last_circular_sync_at', { ascending: false })
-      .range(from, to);
+    const response = await fetch(`/api/admin/circular?${params.toString()}`, {
+      credentials: 'include'
+    });
 
-    if (error) {
+    if (!response.ok) {
       showToast.error('Erreur lors du chargement Circular.');
+      setRows([]);
+      setTotal(0);
+      setLoading(false);
+      return;
     }
 
-    setRows(data ?? []);
-    setTotal(count ?? 0);
+    const data = await response.json();
+    setRows(data.patients ?? []);
+    setTotal(data.total ?? 0);
     setLoading(false);
   }, [page]);
 
@@ -56,20 +57,12 @@ export default function AdminCircularPage() {
   }, [loadCircular]);
 
   async function triggerSync(patientId: string) {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
-
-    if (!accessToken) {
-      showToast.error('Session invalide.');
-      return;
-    }
-
     const response = await fetch('/api/admin/circular-sync', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ patient_id: patientId })
     });
 
@@ -86,10 +79,7 @@ export default function AdminCircularPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Circular"
-        subtitle="Patients actives et synchronisation manuelle."
-      />
+      <PageHeader title="Circular" subtitle="Patients actives et synchronisation manuelle." />
 
       <AdminDataTable
         rows={rows}
@@ -109,7 +99,7 @@ export default function AdminCircularPage() {
           {
             key: 'practitioner',
             header: 'Praticien',
-            render: (row) => row.practitioners_public?.[0]?.full_name ?? '—'
+            render: (row) => row.practitioners?.[0]?.full_name ?? '—'
           },
           {
             key: 'last_sync',

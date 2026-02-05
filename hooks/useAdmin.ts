@@ -1,7 +1,6 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 
 export type AdminPractitioner = {
   id: string;
@@ -20,14 +19,7 @@ export function usePractitioners() {
   return useQuery({
     queryKey: ['admin', 'practitioners'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Non authentifié');
-
-      const response = await fetch('/api/admin/practitioners', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
+      const response = await fetch('/api/admin/practitioners', { credentials: 'include' });
 
       if (!response.ok) {
         const error = await response.json();
@@ -36,7 +28,7 @@ export function usePractitioners() {
 
       const json = await response.json();
       return json.practitioners as AdminPractitioner[];
-    },
+    }
   });
 }
 
@@ -48,14 +40,9 @@ export function useDeletePractitioner() {
 
   return useMutation({
     mutationFn: async (practitionerId: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Non authentifié');
-
       const response = await fetch(`/api/admin/practitioners/${practitionerId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -67,7 +54,7 @@ export function useDeletePractitioner() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'practitioners'] });
-    },
+    }
   });
 }
 
@@ -77,16 +64,13 @@ export function useDeletePractitioner() {
 export function useFreshDatabase() {
   return useMutation({
     mutationFn: async (confirmationCode: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Non authentifié');
-
       const response = await fetch('/api/admin/fresh-database', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ confirmationCode }),
+        body: JSON.stringify({ confirmationCode })
       });
 
       if (!response.ok) {
@@ -95,6 +79,6 @@ export function useFreshDatabase() {
       }
 
       return response.json();
-    },
+    }
   });
 }
