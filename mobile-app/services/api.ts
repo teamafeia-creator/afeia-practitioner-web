@@ -206,11 +206,16 @@ export const api = {
       .from('patients')
       .select('*, practitioners(full_name, email, phone)')
       .eq('id', patientId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('❌ Profile load error:', error);
       throw error;
+    }
+
+    if (!data) {
+      console.log('❌ Profile not found for patient:', patientId);
+      throw new Error('Patient profile not found');
     }
 
     // Handle both old schema (name) and new schema (first_name, last_name)
@@ -283,7 +288,7 @@ export const api = {
       .from('patients')
       .select('practitioner_id')
       .eq('id', patientId)
-      .single();
+      .maybeSingle();
 
     if (patientError) {
       console.error('❌ Patient lookup error:', patientError);
@@ -291,6 +296,7 @@ export const api = {
     }
 
     if (!patient?.practitioner_id) {
+      console.log('ℹ️ No practitioner assigned to patient');
       return null;
     }
 
@@ -298,11 +304,16 @@ export const api = {
       .from('practitioners')
       .select('*')
       .eq('id', patient.practitioner_id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('❌ Naturopathe load error:', error);
       throw error;
+    }
+
+    if (!practitioner) {
+      console.log('ℹ️ Practitioner not found');
+      return null;
     }
 
     console.log('✅ Naturopathe info loaded:', practitioner?.full_name);
@@ -719,11 +730,16 @@ export const api = {
       .from('articles')
       .select('*')
       .eq('id', articleId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('❌ Article load error:', error);
       throw error;
+    }
+
+    if (!data) {
+      console.log('ℹ️ Article not found:', articleId);
+      return null;
     }
 
     console.log('✅ Article loaded:', data.title);
