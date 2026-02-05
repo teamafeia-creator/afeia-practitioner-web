@@ -224,6 +224,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (!patient) {
+      console.error('[MOBILE API] Patient introuvable après auto-fix');
+      console.error('[MOBILE API] Patient ID:', patientId);
+      console.error('[MOBILE API] User email:', userEmail);
+
       // Diagnostic: check membership integrity
       const { data: membership } = await supabase
         .from('patient_memberships')
@@ -237,7 +241,52 @@ export async function GET(request: NextRequest) {
         console.log('[MOBILE API] No membership found for patientId:', patientId);
       }
 
-      return NextResponse.json({ message: 'Patient non trouve' }, { status: 404 });
+      // Forced creation fallback: try to create patient with any available practitioner
+      const { data: practitioners } = await supabase
+        .from('practitioners')
+        .select('id, full_name')
+        .limit(1);
+
+      console.error('[MOBILE API] Praticiens disponibles:', practitioners?.length || 0);
+
+      if (!practitioners?.length) {
+        return NextResponse.json(
+          { message: 'Configuration invalide: aucun praticien dans la base' },
+          { status: 500 }
+        );
+      }
+
+      console.log('[MOBILE API] Tentative création manuelle forcée...');
+      const { data: forceCreated, error: forceError } = await supabase
+        .from('patients')
+        .insert({
+          id: patientId,
+          email: userEmail || `patient-${patientId.slice(0, 8)}@unknown.local`,
+          name: userEmail?.split('@')[0] || 'Patient',
+          practitioner_id: practitioners[0].id,
+          status: 'standard',
+          is_premium: false,
+          activated: true,
+          activated_at: new Date().toISOString(),
+        })
+        .select(`
+          id, name, email, phone, status, is_premium, activated, practitioner_id,
+          practitioners:practitioner_id (
+            id, full_name, email, phone, avatar_url
+          )
+        `)
+        .single();
+
+      if (forceError) {
+        console.error('[MOBILE API] Échec création forcée:', forceError);
+        return NextResponse.json(
+          { message: 'Impossible de créer le patient: ' + forceError.message },
+          { status: 500 }
+        );
+      }
+
+      console.log('[MOBILE API] Patient créé manuellement:', forceCreated.email);
+      patient = forceCreated;
     }
 
     // --- Auto-fix: activate patient if not activated ---
