@@ -232,21 +232,25 @@ body {
   gap: 2px;
   padding: 8px 10px;
   border-radius: 20px;
+  --alphabet-size: 32px;
 }
 
 .alphabet-letter {
-  width: 28px;
-  height: 28px;
+  width: var(--alphabet-size);
+  height: var(--alphabet-size);
+  min-width: var(--alphabet-size);
+  min-height: var(--alphabet-size);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: #1A6C6C;
   text-decoration: none;
   cursor: pointer;
   border-radius: 6px;
   transition: all 0.15s ease;
+  touch-action: manipulation;
 }
 
 .alphabet-letter:hover {
@@ -260,10 +264,22 @@ body {
   box-shadow: 0 2px 8px rgba(26, 108, 108, 0.3);
 }
 
+.alphabet-letter:focus-visible {
+  outline: 2px solid rgba(26, 108, 108, 0.8);
+  outline-offset: 2px;
+}
+
 .alphabet-letter.disabled {
   opacity: 0.2;
   cursor: default;
   pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .alphabet-index {
+    --alphabet-size: 36px;
+    gap: 4px;
+  }
 }
 
 /* Section letter (giant transparent) */

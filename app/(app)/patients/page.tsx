@@ -83,6 +83,7 @@ export default function PatientsPage() {
   const [activeSection, setActiveSection] = useState<string>('A');
   const searchParams = useSearchParams();
   const sectionsRef = useRef<Map<string, HTMLElement>>(new Map());
+  const topAnchorRef = useRef<HTMLDivElement | null>(null);
   const [toast, setToast] = useState<{
     title: string;
     description?: string;
@@ -332,6 +333,23 @@ export default function PatientsPage() {
     }
   };
 
+  const scrollToTop = () => {
+    if (topAnchorRef.current) {
+      topAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const indexItems = useMemo(
+    () => [
+      { key: 'all', label: 'Tous', value: 'all' },
+      ...alphabet.map((letter) => ({ key: letter, label: letter, value: letter })),
+      { key: '#', label: '#', value: '#' }
+    ],
+    []
+  );
+
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -342,125 +360,379 @@ export default function PatientsPage() {
 
   return (
     <div className="relative">
-      {/* Sticky Filters Bar */}
-      <div className="sticky top-0 z-20 glass-panel rounded-lg p-4 mb-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Status Toggle */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-warmgray">Statut :</span>
-              <div className="toggle-group">
-                {([
-                  { key: 'active', label: 'Actifs' },
-                  { key: 'all', label: 'Tous' },
-                  { key: 'inactive', label: 'Inactifs' }
-                ] as const).map((item) => (
+      <div className="md:flex md:items-start md:gap-6">
+        {/* Desktop/Tablet Alphabet Index (left, sticky) */}
+        <aside className="hidden md:block md:w-12 lg:w-14">
+          <div className="sticky top-[108px]">
+            <nav
+              aria-label="Index alphabetique des patients"
+              className="glass-panel alphabet-index max-h-[calc(100vh-160px)] overflow-y-auto"
+            >
+              {indexItems.map((item) => {
+                const isAll = item.value === 'all';
+                const isDisabled = !isAll && !availableLetters.has(item.value);
+                const isActive = !isAll && activeSection === item.value && availableLetters.has(item.value);
+                return (
                   <button
                     key={item.key}
-                    onClick={() => setStatusFilter(item.key)}
-                    className={cn('toggle-btn', statusFilter === item.key && 'active')}
+                    type="button"
+                    onClick={() => (isAll ? scrollToTop() : scrollToSection(item.value))}
+                    disabled={isDisabled}
+                    aria-label={isAll ? 'Aller en haut de la liste' : `Aller a la section ${item.label}`}
+                    aria-current={isActive ? 'true' : undefined}
+                    className={cn(
+                      'alphabet-letter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2',
+                      isActive && 'active',
+                      isDisabled && 'disabled'
+                    )}
                   >
                     {item.label}
                   </button>
-                ))}
-              </div>
-            </div>
+                );
+              })}
+            </nav>
+          </div>
+        </aside>
 
-            {/* Type Chips */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-warmgray">Type :</span>
-              <div className="flex gap-2">
-                {([
-                  { key: 'all', label: 'Tous' },
-                  { key: 'premium', label: 'Premium' },
-                  { key: 'standard', label: 'Standard' }
-                ] as const).map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setTierFilter(item.key)}
-                    className={cn('chip', tierFilter === item.key && 'active')}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+        {/* Main Content */}
+        <div className="flex-1" ref={topAnchorRef}>
+          {/* Sticky Filters Bar */}
+          <div className="sticky top-0 z-20 glass-panel rounded-lg p-4 mb-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              {/* Filters */}
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Status Toggle */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-warmgray">Statut :</span>
+                  <div className="toggle-group">
+                    {([
+                      { key: 'active', label: 'Actifs' },
+                      { key: 'all', label: 'Tous' },
+                      { key: 'inactive', label: 'Inactifs' }
+                    ] as const).map((item) => (
+                      <button
+                        key={item.key}
+                        onClick={() => setStatusFilter(item.key)}
+                        className={cn('toggle-btn', statusFilter === item.key && 'active')}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Type Chips */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-warmgray">Type :</span>
+                  <div className="flex gap-2">
+                    {([
+                      { key: 'all', label: 'Tous' },
+                      { key: 'premium', label: 'Premium' },
+                      { key: 'standard', label: 'Standard' }
+                    ] as const).map((item) => (
+                      <button
+                        key={item.key}
+                        onClick={() => setTierFilter(item.key)}
+                        className={cn('chip', tierFilter === item.key && 'active')}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Search & Add */}
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1 lg:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-warmgray" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Rechercher un patient..."
+                    className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-warmgray-light/30 bg-white/50 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/30"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-warmgray hover:text-charcoal"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                <Link href="/patients/new">
+                  <Button variant="primary" icon={<Plus className="h-4 w-4" />}>
+                    Ajouter
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
 
-          {/* Search & Add */}
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 lg:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-warmgray" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher un patient..."
-                className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-warmgray-light/30 bg-white/50 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/30"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-warmgray hover:text-charcoal"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
+          {/* Empty State */}
+          {filteredPatients.length === 0 && (
+            <div className="glass-card p-8 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-teal/10 mx-auto mb-4">
+                <Users className="h-8 w-8 text-teal" />
+              </div>
+              <h4 className="text-lg font-semibold text-charcoal mb-2">
+                Aucun patient
+              </h4>
+              <p className="text-sm text-warmgray mb-4">
+                {search ? 'Aucun patient ne correspond a votre recherche.' : 'Commencez par ajouter votre premier patient.'}
+              </p>
+              <Link href="/patients/new">
+                <Button variant="primary" icon={<Plus className="h-4 w-4" />}>
+                  Creer un patient
+                </Button>
+              </Link>
             </div>
-            <Link href="/patients/new">
-              <Button variant="primary" icon={<Plus className="h-4 w-4" />}>
-                Ajouter
-              </Button>
-            </Link>
-          </div>
+          )}
+
+          {/* Alphabetical Sections */}
+          {filteredPatients.length > 0 && (
+            <div className="space-y-8">
+              {[...alphabet, '#'].map((letter) => {
+                const sectionPatients = groupedPatients[letter] ?? [];
+                if (sectionPatients.length === 0) return null;
+
+                return (
+                  <section
+                    key={letter}
+                    id={`section-${letter}`}
+                    ref={(el) => {
+                      if (el) sectionsRef.current.set(letter, el);
+                    }}
+                    className="scroll-mt-32"
+                  >
+                    {/* Giant Letter */}
+                    <div className="section-letter">{letter}</div>
+
+                    {/* Patient Cards Grid */}
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                      {sectionPatients.map((patient) => {
+                        const meta = patientMeta[patient.id] ?? {};
+                        const isPremium = patient.is_premium || patient.status === 'premium';
+                        const isActive = patient.activated !== false;
+                        const lastContact = meta.lastConsultation
+                          ? new Date(meta.lastConsultation).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })
+                          : 'Aucun RDV';
+                        const planLabel = meta.planStatus
+                          ? meta.planStatus === 'shared'
+                            ? 'Programme partage'
+                            : 'Bilan en brouillon'
+                          : 'Programme non defini';
+                        const progress = meta.progress ?? 0;
+
+                        return (
+                          <Link
+                            key={patient.id}
+                            href={`/patients/${patient.id}`}
+                            className="patient-card block"
+                          >
+                            {/* Header */}
+                            <div className="flex items-start justify-between gap-3 mb-4">
+                              <div className="flex items-center gap-3">
+                                <Avatar name={getDisplayName(patient)} size="md" />
+                                <div>
+                                  <div className="text-base font-semibold text-charcoal">
+                                    {getDisplayName(patient)}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-warmgray">
+                                    <span className={cn('status-dot', !isActive && 'inactive')} />
+                                    {isActive ? 'Actif' : 'Inactif'}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <span className={cn(
+                                  'px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wide',
+                                  isPremium ? 'badge-premium' : 'badge-standard'
+                                )}>
+                                  {isPremium ? 'Premium' : 'Standard'}
+                                </span>
+                                {meta.unreadMessages && meta.unreadMessages > 0 && (
+                                  <span className="message-badge flex items-center gap-1">
+                                    <MessageSquare className="h-3 w-3" />
+                                    {meta.unreadMessages}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Meta Info */}
+                            <div className="space-y-2 text-sm text-warmgray mb-4">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 flex-shrink-0" />
+                                <span>Dernier RDV : <span className="text-charcoal">{lastContact}</span></span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Briefcase className="h-4 w-4 flex-shrink-0" />
+                                <span>Programme : <span className="text-charcoal">{planLabel}</span></span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="progress-bar">
+                                  <div className="progress-fill" style={{ width: `${progress}%` }} />
+                                </div>
+                                <span className="text-xs text-charcoal">{progress}%</span>
+                              </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center justify-between pt-3 border-t border-white/20">
+                              <span className="text-xs text-warmgray">
+                                {patient.city || 'Ville non renseignee'}
+                              </span>
+                              <span className="flex items-center gap-1 text-sm font-medium text-teal">
+                                Voir dossier
+                                <ChevronRight className="h-4 w-4" />
+                              </span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Pending Invitations */}
+          {filteredInvitations.length > 0 && (
+            <section className="mt-12">
+              <h2 className="section-title flex items-center gap-2 mb-4">
+                <Clock className="h-4 w-4" />
+                INVITATIONS EN ATTENTE ({filteredInvitations.length})
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {filteredInvitations.map((invitation) => {
+                  const isExpired = invitation.code_expires_at
+                    ? new Date(invitation.code_expires_at) < new Date()
+                    : false;
+
+                  return (
+                    <div key={invitation.id} className="glass-card p-5">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                          <h3 className="text-base font-semibold text-charcoal">
+                            {getDisplayName(invitation)}
+                          </h3>
+                          <p className="text-xs text-warmgray">
+                            {invitation.city || 'Ville non renseignee'}
+                          </p>
+                        </div>
+                        <span className={cn(
+                          'px-2.5 py-1 rounded-md text-xs font-semibold',
+                          isExpired ? 'badge-info' : 'badge-urgent'
+                        )}>
+                          {isExpired ? 'Expire' : 'En attente'}
+                        </span>
+                      </div>
+
+                      {/* Contact Info */}
+                      <div className="space-y-2 text-sm mb-4">
+                        <div className="flex items-center gap-2 text-warmgray">
+                          <Mail className="h-4 w-4" />
+                          <span className="text-teal">{invitation.email}</span>
+                        </div>
+                        {invitation.phone && (
+                          <div className="flex items-center gap-2 text-warmgray">
+                            <Phone className="h-4 w-4" />
+                            <span className="text-teal">{invitation.phone}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-warmgray">
+                          <Calendar className="h-4 w-4" />
+                          <span>Invite le : <span className="text-charcoal">
+                            {new Date(invitation.invited_at).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </span></span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex justify-end gap-2 pt-3 border-t border-white/20">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:bg-red-50"
+                          onClick={() => handleCancelInvitation(invitation.id, invitation.email)}
+                        >
+                          Annuler
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleResendCode(invitation.email)}
+                          disabled={resendingCode === invitation.email}
+                        >
+                          {resendingCode === invitation.email ? 'Envoi...' : 'Renvoyer le code'}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
-      {/* Mobile Alphabet Index (horizontal) */}
-      <div className="md:hidden sticky top-[88px] z-10 mb-4">
-        <div className="glass-panel rounded-lg p-2 overflow-x-auto">
-          <div className="flex gap-1">
-            {alphabet.map((letter) => (
+      {/* Mobile Alphabet Index (floating) */}
+      <div className="md:hidden fixed left-2 top-1/2 -translate-y-1/2 z-30">
+        <nav
+          aria-label="Index alphabetique des patients"
+          className="glass-panel alphabet-index rounded-2xl px-2 py-3 shadow-lg max-h-[70vh] overflow-y-auto"
+        >
+          {indexItems.map((item) => {
+            const isAll = item.value === 'all';
+            const isDisabled = !isAll && !availableLetters.has(item.value);
+            const isActive = !isAll && activeSection === item.value && availableLetters.has(item.value);
+            return (
               <button
-                key={letter}
-                onClick={() => scrollToSection(letter)}
-                disabled={!availableLetters.has(letter)}
+                key={item.key}
+                type="button"
+                onClick={() => (isAll ? scrollToTop() : scrollToSection(item.value))}
+                disabled={isDisabled}
+                aria-label={isAll ? 'Aller en haut de la liste' : `Aller a la section ${item.label}`}
+                aria-current={isActive ? 'true' : undefined}
                 className={cn(
-                  'alphabet-letter flex-shrink-0',
-                  activeSection === letter && availableLetters.has(letter) && 'active',
-                  !availableLetters.has(letter) && 'disabled'
+                  'alphabet-letter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2',
+                  isActive && 'active',
+                  isDisabled && 'disabled'
                 )}
               >
-                {letter}
+                {item.label}
               </button>
-            ))}
-          </div>
-        </div>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Desktop Alphabet Index (fixed right) */}
-      <div className="hidden md:block fixed right-6 top-1/2 -translate-y-1/2 z-30">
-        <div className="glass-panel alphabet-index">
-          {alphabet.map((letter) => (
-            <button
-              key={letter}
-              onClick={() => scrollToSection(letter)}
-              disabled={!availableLetters.has(letter)}
-              className={cn(
-                'alphabet-letter',
-                activeSection === letter && availableLetters.has(letter) && 'active',
-                !availableLetters.has(letter) && 'disabled'
-              )}
-            >
-              {letter}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Content - with right margin for alphabet index on desktop */}
-      <div className="md:mr-16">
+      {/* Toast */}
+      {toast && (
+        <Toast
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
+    </div>
+  );
+}
         {/* Empty State */}
         {filteredPatients.length === 0 && (
           <div className="glass-card p-8 text-center">
