@@ -12,6 +12,19 @@ function getNumber(value: string | null, fallback: number) {
 
 const SORT_FIELDS = new Set(['created_at', 'name', 'status']);
 
+type PatientRecord = {
+  id: string;
+  practitioner_id: string | null;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+  status: string | null;
+  is_premium: boolean | null;
+  created_at: string | null;
+  practitioners?: { full_name: string | null }[] | { full_name: string | null } | null;
+};
+
 export async function GET(request: NextRequest) {
   const guard = await requireAdmin(request);
   if ('response' in guard) {
@@ -67,7 +80,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors de la récupération des patients.' }, { status: 500 });
     }
 
-    const patients = (data ?? []).map((patient) => ({
+    const patients = ((data ?? []) as PatientRecord[]).map((patient) => ({
       ...patient,
       practitioner_name: Array.isArray(patient.practitioners)
         ? patient.practitioners[0]?.full_name ?? null
