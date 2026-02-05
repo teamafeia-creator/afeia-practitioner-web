@@ -17,7 +17,7 @@ export async function GET(request: Request, context: RouteContext) {
 
   try {
     await verifyApiJwt(token);
-    const item = getItemById(context.params.id);
+    const item = await getItemById(context.params.id);
     if (!item) {
       return NextResponse.json({ error: 'Élément introuvable.' }, { status: 404 });
     }

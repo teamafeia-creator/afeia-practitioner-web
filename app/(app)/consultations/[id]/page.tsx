@@ -1,12 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { mockPatients } from '../../../../lib/mock';
-import { Card, CardContent, CardHeader } from '../../../../components/ui/Card';
-import { Button } from '../../../../components/ui/Button';
-import { Badge } from '../../../../components/ui/Badge';
+import { getConsultationById, getPatientById } from '@/lib/queries';
+import { supabase } from '@/lib/supabase';
+import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Toast } from '@/components/ui/Toast';
+import type { Consultation, PatientWithDetails } from '@/lib/types';
 
 function fakeAiSummary(notes: string) {
   const trimmed = notes.trim();
@@ -29,26 +32,123 @@ export default function ConsultationPage() {
   const router = useRouter();
   const consultationId = params.id;
 
-  const patient = useMemo(() => {
-    return mockPatients.find((p) => p.consultations.some((c) => c.id === consultationId));
+  const [consultation, setConsultation] = useState<Consultation | null>(null);
+  const [patient, setPatient] = useState<PatientWithDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notes, setNotes] = useState('');
+  const [ai, setAi] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{
+    title: string;
+    description?: string;
+    variant?: 'success' | 'error' | 'info';
+  } | null>(null);
+
+  // Load consultation and patient data
+  useEffect(() => {
+    let active = true;
+
+    async function loadData() {
+      setLoading(true);
+
+      // Fetch consultation
+      const consultationData = await getConsultationById(consultationId);
+      if (!active) return;
+
+      if (!consultationData) {
+        setLoading(false);
+        return;
+      }
+
+      setConsultation(consultationData);
+      setNotes(consultationData.notes ?? '');
+
+      // Fetch full patient details
+      if (consultationData.patient_id) {
+        const patientData = await getPatientById(consultationData.patient_id);
+        if (!active) return;
+        setPatient(patientData);
+      }
+
+      setLoading(false);
+    }
+
+    if (consultationId) {
+      loadData();
+    }
+
+    return () => {
+      active = false;
+    };
   }, [consultationId]);
 
-  const consultation = useMemo(() => {
-    return patient?.consultations.find((c) => c.id === consultationId);
-  }, [patient, consultationId]);
+  // Save consultation notes
+  async function handleSaveNotes() {
+    if (!consultation) return;
 
-  const [notes, setNotes] = useState(consultation?.notes ?? '');
-  const [ai, setAi] = useState('');
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('consultations')
+        .update({
+          notes: notes.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', consultation.id);
 
-  if (!patient || !consultation) {
+      if (error) {
+        throw error;
+      }
+
+      setToast({
+        title: 'Notes enregistrées',
+        description: 'Les notes de consultation ont été mises à jour.',
+        variant: 'success'
+      });
+    } catch (err) {
+      console.error('Error saving notes:', err);
+      setToast({
+        title: 'Erreur',
+        description: 'Impossible d\'enregistrer les notes.',
+        variant: 'error'
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
+        Chargement de la consultation…
+      </div>
+    );
+  }
+
+  if (!consultation) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold">Consultation introuvable</h1>
-        <p className="text-sm text-warmgray">Vérifiez l’identifiant ou revenez à la liste des patients.</p>
+        <p className="text-sm text-warmgray">Vérifiez l&apos;identifiant ou revenez à la liste des patients.</p>
         <Button variant="secondary" onClick={() => router.push('/patients')}>Retour patients</Button>
       </div>
     );
   }
+
+  // Get anamnesis data from patient_anamnesis or anamnese
+  const anamnesisAnswers = patient?.patient_anamnesis?.answers ?? {};
+  const motif = (typeof anamnesisAnswers === 'object' && 'motif' in anamnesisAnswers)
+    ? (anamnesisAnswers as Record<string, string>).motif
+    : patient?.anamnese?.motif ?? patient?.consultation_reason ?? '—';
+  const objectifs = (typeof anamnesisAnswers === 'object' && 'objectifs' in anamnesisAnswers)
+    ? (anamnesisAnswers as Record<string, string>).objectifs
+    : patient?.anamnese?.objectifs ?? '—';
+
+  // Get last journal entry
+  const lastJournalEntry = patient?.journal_entries?.[0]?.text ?? '—';
+
+  // Get first patient plan ID for navigation
+  const firstPlanId = patient?.patient_plans?.[0]?.id;
 
   return (
     <div className="space-y-4">
@@ -56,10 +156,14 @@ export default function ConsultationPage() {
         <div>
           <h1 className="text-2xl font-semibold text-charcoal">Consultation</h1>
           <div className="mt-1 text-sm text-warmgray">
-            <Link className="text-teal hover:underline" href={`/patients/${patient.id}`}>{patient.name}</Link>
+            {patient ? (
+              <Link className="text-teal hover:underline" href={`/patients/${patient.id}`}>{patient.name}</Link>
+            ) : (
+              <span>Patient inconnu</span>
+            )}
             <span className="mx-2">•</span>
             <span>{new Date(consultation.date).toLocaleString('fr-FR')}</span>
-            {patient.isPremium ? (
+            {patient?.is_premium ? (
               <>
                 <span className="mx-2">•</span>
                 <Badge variant="premium">Premium</Badge>
@@ -68,8 +172,14 @@ export default function ConsultationPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="primary" onClick={() => router.push(`/plans/${patient.plan.id}`)}>Ouvrir le plan</Button>
-          <Button variant="secondary" onClick={() => alert('🧾 Export PDF (à brancher)')}>Exporter</Button>
+          {firstPlanId && (
+            <Button variant="primary" onClick={() => router.push(`/patients/${patient?.id}?tab=Plan%20de%20naturopathie`)}>
+              Ouvrir le plan
+            </Button>
+          )}
+          <Button variant="secondary" onClick={() => setToast({ title: 'Export PDF', description: 'Fonctionnalité en cours de développement.', variant: 'info' })}>
+            Exporter
+          </Button>
         </div>
       </div>
 
@@ -81,7 +191,7 @@ export default function ConsultationPage() {
                 <h2 className="text-sm font-semibold">Notes de séance</h2>
                 <div className="flex gap-2">
                   <Button variant="secondary" onClick={() => setAi(fakeAiSummary(notes))}>Générer résumé IA</Button>
-                  <Button onClick={() => alert('✅ Enregistré (mock)')}>Enregistrer</Button>
+                  <Button onClick={handleSaveNotes} loading={saving}>Enregistrer</Button>
                 </div>
               </div>
             </CardHeader>
@@ -93,7 +203,7 @@ export default function ConsultationPage() {
                 placeholder="Saisissez vos observations, questions clés, hypothèses (non médicales), et éléments validés avec le client..."
               />
               <p className="mt-2 text-xs text-warmgray">
-                Rappel éthique : pas de diagnostic, pas d’interprétation médicale. Utilisez un ton neutre et factuel.
+                Rappel éthique : pas de diagnostic, pas d&apos;interprétation médicale. Utilisez un ton neutre et factuel.
               </p>
             </CardContent>
           </Card>
@@ -122,20 +232,20 @@ export default function ConsultationPage() {
             <CardContent className="space-y-3">
               <div>
                 <div className="text-xs text-warmgray">Motif</div>
-                <div className="text-sm text-charcoal">{patient.anamnese.motif}</div>
+                <div className="text-sm text-charcoal">{motif}</div>
               </div>
               <div>
                 <div className="text-xs text-warmgray">Objectifs</div>
-                <div className="text-sm text-charcoal">{patient.anamnese.objectifs}</div>
+                <div className="text-sm text-charcoal">{objectifs}</div>
               </div>
               <div>
                 <div className="text-xs text-warmgray">Dernière entrée journal</div>
-                <div className="text-sm text-charcoal">{patient.journal[0]?.text ?? '—'}</div>
+                <div className="text-sm text-charcoal">{lastJournalEntry}</div>
               </div>
               <div className="rounded-2xl bg-white ring-1 ring-black/5 p-3">
                 <div className="text-xs text-warmgray">Prochaine action</div>
                 <div className="mt-1 text-sm text-charcoal">
-                  {patient.isPremium ? 'Analyser la semaine Circular et ajuster le plan.' : 'Finaliser les objectifs mesurables.'}
+                  {patient?.is_premium ? 'Analyser la semaine Circular et ajuster le plan.' : 'Finaliser les objectifs mesurables.'}
                 </div>
               </div>
             </CardContent>
@@ -146,15 +256,32 @@ export default function ConsultationPage() {
               <h2 className="text-sm font-semibold">Actions rapides</h2>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <Button variant="primary" onClick={() => router.push(`/plans/${patient.plan.id}`)}>Créer / ajuster le plan</Button>
-              <Button variant="secondary" onClick={() => alert('📩 Message envoyé (mock)')}>Envoyer un message au patient</Button>
-              <Button variant="ghost" onClick={() => alert('🩺 Orientation médecin (template)')}>
+              {patient && (
+                <>
+                  <Button variant="primary" onClick={() => router.push(`/patients/${patient.id}?tab=Plan%20de%20naturopathie`)}>
+                    Créer / ajuster le plan
+                  </Button>
+                  <Button variant="secondary" onClick={() => router.push(`/patients/${patient.id}?tab=Messages`)}>
+                    Envoyer un message au patient
+                  </Button>
+                </>
+              )}
+              <Button variant="ghost" onClick={() => setToast({ title: 'Orientation médicale', description: 'Fonctionnalité en cours de développement.', variant: 'info' })}>
                 Proposer une orientation médicale (si nécessaire)
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {toast ? (
+        <Toast
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      ) : null}
     </div>
   );
 }

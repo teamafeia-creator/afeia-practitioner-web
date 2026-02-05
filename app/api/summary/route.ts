@@ -11,7 +11,8 @@ export async function GET(request: Request) {
 
   try {
     await verifyApiJwt(token);
-    return NextResponse.json({ summary: getSummary() });
+    const summary = await getSummary();
+    return NextResponse.json({ summary });
   } catch {
     return NextResponse.json({ error: 'Jeton invalide.' }, { status: 401 });
   }

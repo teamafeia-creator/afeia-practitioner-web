@@ -1,64 +1,288 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { mockPatients, PlanVersion } from '../../../../lib/mock';
-import { Card, CardContent, CardHeader } from '../../../../components/ui/Card';
-import { Button } from '../../../../components/ui/Button';
-import { Badge } from '../../../../components/ui/Badge';
-import { Input } from '../../../../components/ui/Input';
+import { getPlanById } from '@/lib/queries';
+import { supabase } from '@/lib/supabase';
+import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Input } from '@/components/ui/Input';
+import { Toast } from '@/components/ui/Toast';
+import type { Patient, Plan, PlanVersion, PlanSection } from '@/lib/types';
+
+type PlanWithDetails = Plan & {
+  patient?: Patient;
+  versions?: (PlanVersion & { sections?: PlanSection[] })[];
+};
+
+type Section = {
+  title: string;
+  body: string;
+};
 
 export default function PlanPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const planId = params.id;
 
-  const patient = useMemo(() => mockPatients.find((p) => p.plan.id === planId), [planId]);
-  const plan = patient?.plan;
+  const [plan, setPlan] = useState<PlanWithDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<number>(0);
+  const [title, setTitle] = useState('');
+  const [sections, setSections] = useState<Section[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{
+    title: string;
+    description?: string;
+    variant?: 'success' | 'error' | 'info';
+  } | null>(null);
 
-  const [selected, setSelected] = useState<number>(plan?.versions.length ? plan.versions.length - 1 : 0);
-  const current: PlanVersion | undefined = plan?.versions[selected];
+  // Load plan data
+  useEffect(() => {
+    let active = true;
 
-  const [title, setTitle] = useState(current?.title ?? '');
-  const [sections, setSections] = useState(current?.sections ?? []);
+    async function loadPlan() {
+      setLoading(true);
+      const planData = await getPlanById(planId);
+      if (!active) return;
 
-  if (!patient || !plan || !current) {
+      if (!planData) {
+        setLoading(false);
+        return;
+      }
+
+      setPlan(planData);
+
+      // Initialize with the latest version
+      const versions = planData.versions || [];
+      if (versions.length > 0) {
+        const latestIdx = versions.length - 1;
+        setSelected(latestIdx);
+        setTitle(versions[latestIdx].title || '');
+        setSections(
+          (versions[latestIdx].sections || []).map((s) => ({
+            title: s.title || '',
+            body: s.body || ''
+          }))
+        );
+      }
+
+      setLoading(false);
+    }
+
+    if (planId) {
+      loadPlan();
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [planId]);
+
+  // Handle version selection
+  function handleVersionSelect(idx: number) {
+    if (!plan?.versions) return;
+    setSelected(idx);
+    const version = plan.versions[idx];
+    setTitle(version.title || '');
+    setSections(
+      (version.sections || []).map((s) => ({
+        title: s.title || '',
+        body: s.body || ''
+      }))
+    );
+  }
+
+  // Save plan changes
+  async function handleSave() {
+    if (!plan?.versions) return;
+
+    setSaving(true);
+    try {
+      const currentVersion = plan.versions[selected];
+
+      // Update the plan version title
+      await supabase
+        .from('plan_versions')
+        .update({
+          title
+        })
+        .eq('id', currentVersion.id);
+
+      // Update sections - for simplicity, delete and recreate
+      // In a production app, you might want to do a more intelligent diff
+      await supabase
+        .from('plan_sections')
+        .delete()
+        .eq('plan_version_id', currentVersion.id);
+
+      if (sections.length > 0) {
+        await supabase.from('plan_sections').insert(
+          sections.map((s, idx) => ({
+            plan_version_id: currentVersion.id,
+            title: s.title,
+            body: s.body,
+            sort_order: idx
+          }))
+        );
+      }
+
+      setToast({
+        title: 'Plan enregistré',
+        description: 'Les modifications ont été sauvegardées.',
+        variant: 'success'
+      });
+
+      // Reload plan data
+      const updatedPlan = await getPlanById(planId);
+      if (updatedPlan) {
+        setPlan(updatedPlan);
+      }
+    } catch (err) {
+      console.error('Error saving plan:', err);
+      setToast({
+        title: 'Erreur',
+        description: 'Impossible d\'enregistrer le plan.',
+        variant: 'error'
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Create new version
+  async function handleNewVersion() {
+    if (!plan) return;
+
+    setSaving(true);
+    try {
+      const nextVersion = (plan.versions?.length || 0) + 1;
+
+      const { data: newVersion, error: versionError } = await supabase
+        .from('plan_versions')
+        .insert({
+          plan_id: plan.id,
+          version: nextVersion,
+          title: `Nouvelle version V${nextVersion}`,
+          published_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (versionError || !newVersion) {
+        throw versionError || new Error('Failed to create version');
+      }
+
+      // Copy sections from current version
+      if (sections.length > 0) {
+        await supabase.from('plan_sections').insert(
+          sections.map((s, idx) => ({
+            plan_version_id: newVersion.id,
+            title: s.title,
+            body: s.body,
+            sort_order: idx
+          }))
+        );
+      }
+
+      setToast({
+        title: 'Nouvelle version créée',
+        description: `Version ${nextVersion} créée avec succès.`,
+        variant: 'success'
+      });
+
+      // Reload plan data
+      const updatedPlan = await getPlanById(planId);
+      if (updatedPlan) {
+        setPlan(updatedPlan);
+        const newIdx = (updatedPlan.versions?.length || 1) - 1;
+        handleVersionSelect(newIdx);
+      }
+    } catch (err) {
+      console.error('Error creating new version:', err);
+      setToast({
+        title: 'Erreur',
+        description: 'Impossible de créer une nouvelle version.',
+        variant: 'error'
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Plan introuvable</h1>
-        <Button variant="secondary" onClick={() => router.push('/patients')}>Retour</Button>
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
+        Chargement du plan…
       </div>
     );
   }
 
+  if (!plan || !plan.versions || plan.versions.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold">Plan introuvable</h1>
+        <p className="text-sm text-warmgray">
+          Ce plan n&apos;existe pas ou n&apos;a pas de versions.
+          Vous pouvez créer un plan depuis la fiche patient.
+        </p>
+        <Button variant="secondary" onClick={() => router.push('/patients')}>
+          Retour aux patients
+        </Button>
+      </div>
+    );
+  }
+
+  const current = plan.versions[selected];
   const isLatest = selected === plan.versions.length - 1;
-
-  function saveMock() {
-    alert('✅ Plan enregistré (mock).');
-  }
-
-  function newVersion() {
-    alert('🧾 Nouvelle version créée (mock).');
-  }
+  const patient = plan.patient;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Plan d’accompagnement</h1>
+          <h1 className="text-2xl font-semibold text-charcoal">Plan d&apos;accompagnement</h1>
           <div className="mt-1 text-sm text-warmgray">
-            <Link className="text-teal hover:underline" href={`/patients/${patient.id}`}>{patient.name}</Link>
+            {patient ? (
+              <Link className="text-teal hover:underline" href={`/patients/${patient.id}`}>
+                {patient.name}
+              </Link>
+            ) : (
+              <span>Patient inconnu</span>
+            )}
             <span className="mx-2">•</span>
-            <span>Plan #{plan.id}</span>
-            <span className="mx-2">•</span>
-            <Badge variant={patient.isPremium ? 'premium' : 'info'}>{patient.isPremium ? 'Premium' : 'Standard'}</Badge>
+            <span>Plan #{plan.id.slice(0, 8)}</span>
+            {patient && (
+              <>
+                <span className="mx-2">•</span>
+                <Badge variant={patient.is_premium ? 'premium' : 'info'}>
+                  {patient.is_premium ? 'Premium' : 'Standard'}
+                </Badge>
+              </>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="primary" onClick={saveMock}>Enregistrer</Button>
-          <Button variant="secondary" onClick={newVersion}>Créer une nouvelle version</Button>
-          <Button variant="ghost" onClick={() => alert('📤 Publication patient (à brancher)')}>Publier au patient</Button>
+          <Button variant="primary" onClick={handleSave} loading={saving}>
+            Enregistrer
+          </Button>
+          <Button variant="secondary" onClick={handleNewVersion} disabled={saving}>
+            Créer une nouvelle version
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() =>
+              setToast({
+                title: 'Publication',
+                description: 'Utilisez l\'onglet Plan dans la fiche patient pour partager le plan.',
+                variant: 'info'
+              })
+            }
+          >
+            Publier au patient
+          </Button>
         </div>
       </div>
 
@@ -68,12 +292,8 @@ export default function PlanPage() {
             <div className="flex flex-wrap items-center gap-2">
               {plan.versions.map((v, idx) => (
                 <button
-                  key={v.version}
-                  onClick={() => {
-                    setSelected(idx);
-                    setTitle(plan.versions[idx].title);
-                    setSections([...plan.versions[idx].sections]);
-                  }}
+                  key={v.id}
+                  onClick={() => handleVersionSelect(idx)}
                   className={`rounded-xl px-3 py-1 text-xs font-medium ring-1 transition ${
                     idx === selected
                       ? 'bg-teal text-white ring-teal/40'
@@ -84,7 +304,8 @@ export default function PlanPage() {
                 </button>
               ))}
               <span className="ml-2 text-xs text-warmgray">
-                {new Date(current.publishedAt).toLocaleDateString('fr-FR')} • {isLatest ? 'Version active' : 'Version archivée'}
+                {new Date(current.published_at).toLocaleDateString('fr-FR')} •{' '}
+                {isLatest ? 'Version active' : 'Version archivée'}
               </span>
             </div>
           </div>
@@ -105,7 +326,7 @@ export default function PlanPage() {
 
           <div className="space-y-3">
             {sections.map((s, idx) => (
-              <div key={`${s.title}-${idx}`} className="rounded-2xl bg-white ring-1 ring-black/5 p-4">
+              <div key={idx} className="rounded-2xl bg-white ring-1 ring-black/5 p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <Input
                     className="sm:max-w-sm"
@@ -149,14 +370,35 @@ export default function PlanPage() {
             >
               + Ajouter une section
             </Button>
-            <Button variant="ghost" onClick={() => alert('🧠 Pré-remplissage IA (à brancher)')}>Pré-remplir avec IA</Button>
+            <Button
+              variant="ghost"
+              onClick={() =>
+                setToast({
+                  title: 'IA',
+                  description: 'Le pré-remplissage IA sera bientôt disponible.',
+                  variant: 'info'
+                })
+              }
+            >
+              Pré-remplir avec IA
+            </Button>
           </div>
 
           <div className="rounded-2xl bg-sable p-3 text-xs text-warmgray ring-1 ring-black/5">
-            Rappel : ce plan ne remplace pas un suivi médical. En cas de signaux préoccupants, recommander une consultation médicale.
+            Rappel : ce plan ne remplace pas un suivi médical. En cas de signaux préoccupants,
+            recommander une consultation médicale.
           </div>
         </CardContent>
       </Card>
+
+      {toast ? (
+        <Toast
+          title={toast.title}
+          description={toast.description}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      ) : null}
     </div>
   );
 }
