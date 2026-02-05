@@ -197,7 +197,7 @@ export const api = {
     console.log('✅ Logout successful');
   },
 
-  // Patient Profile – uses Next.js API with auto-fix logic instead of direct Supabase
+  // Patient Profile – uses Next.js API instead of direct Supabase (RLS bypass)
   async getProfile() {
     console.log('═══════════════════════════════════════');
     console.log('[APP] Loading profile via API...');
@@ -205,12 +205,12 @@ export const api = {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session?.access_token) {
-      console.log('[APP] No session token');
+      console.log('[APP] ❌ No session token');
       console.log('═══════════════════════════════════════');
       throw createAuthError('AUTH_REQUIRED', 'Session utilisateur absente');
     }
 
-    console.log('[APP] Session user:', session.user?.id, session.user?.email);
+    console.log('[APP] 📤 Calling API with token');
 
     try {
       const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
@@ -226,11 +226,11 @@ export const api = {
         },
       });
 
-      console.log('[APP] Status:', response.status);
+      console.log('[APP] 📥 Status:', response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.log('[APP] API error:', errorText);
+        console.log('[APP] ❌ Error:', errorText);
 
         if (response.status === 401) {
           throw createAuthError('AUTH_REQUIRED', 'Session invalide');
@@ -238,14 +238,11 @@ export const api = {
         if (response.status === 404) {
           throw createAuthError('PATIENT_NOT_READY', 'Patient non trouvé');
         }
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        throw new Error(`HTTP ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('[APP] Profile loaded:', data.email);
-      console.log('[APP] Name:', data.firstName, data.lastName);
-      console.log('[APP] Premium:', data.isPremium);
-      console.log('[APP] Naturopathe:', data.naturopathe?.fullName || 'none');
+      console.log('[APP] ✅ Profile:', data.email);
       console.log('═══════════════════════════════════════');
 
       return {
@@ -260,7 +257,7 @@ export const api = {
       };
 
     } catch (error) {
-      console.error('[APP] Exception:', error);
+      console.error('[APP] ❌ Exception:', error);
       console.log('═══════════════════════════════════════');
       throw error;
     }
