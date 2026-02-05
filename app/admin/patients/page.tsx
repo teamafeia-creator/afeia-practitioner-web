@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { AdminDataTable } from '@/components/admin/AdminDataTable';
 import { showToast } from '@/components/ui/Toaster';
+import { AdminBackBar } from '@/components/admin/AdminBackBar';
 
 const PAGE_SIZE = 10;
 
@@ -154,14 +155,12 @@ export default function AdminPatientsPage() {
 
   return (
     <div className="space-y-6">
+      <AdminBackBar />
       <PageHeader
         title="Patients"
         subtitle="Identites patients et statuts."
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button variant="ghost" onClick={() => router.push('/admin')}>
-              ← Retour au dashboard admin
-            </Button>
             <Button variant="outline" onClick={exportCsv}>
               Exporter CSV
             </Button>

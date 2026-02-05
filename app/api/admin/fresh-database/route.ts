@@ -77,36 +77,81 @@ export async function POST(request: NextRequest) {
       // Note : On ne supprime PAS practitioners (lies a auth.users)
     ];
 
-    const results: { table: string; deleted: number; error?: string }[] = [];
+    const results: { table: string; deleted: number; remaining: number | null; error?: string }[] =
+      [];
+    const deletedByTable: Record<string, number> = {};
+    const remainingByTable: Record<string, number | null> = {};
+    let ok = true;
 
     // Supprimer les donnees de chaque table
     for (const table of tablesToClear) {
       try {
         // Compter d'abord les lignes a supprimer
-        const { count: countBefore } = await supabase
+        const { count: countBefore, error: countBeforeError } = await supabase
           .from(table)
           .select('id', { count: 'exact', head: true });
 
+        if (countBeforeError) {
+          if (countBeforeError.code === '42P01') {
+            continue;
+          }
+          console.error(`Erreur comptage ${table}:`, countBeforeError);
+          results.push({
+            table,
+            deleted: 0,
+            remaining: null,
+            error: countBeforeError.message
+          });
+          ok = false;
+          continue;
+        }
+
         // Supprimer toutes les lignes
-        const { error } = await supabase
+        const { error: deleteError } = await supabase
           .from(table)
           .delete()
           .neq('id', '00000000-0000-0000-0000-000000000000');
 
-        if (error) {
-          // Ignorer les erreurs si la table n'existe pas
-          if (error.code !== '42P01') {
-            console.error(`Erreur suppression ${table}:`, error);
-            results.push({ table, deleted: 0, error: error.message });
+        if (deleteError) {
+          if (deleteError.code === '42P01') {
+            continue;
           }
-        } else {
-          const deletedCount = countBefore ?? 0;
-          console.log(`${table}: ${deletedCount} lignes supprimees`);
-          results.push({ table, deleted: deletedCount });
+          console.error(`Erreur suppression ${table}:`, deleteError);
+          results.push({ table, deleted: 0, remaining: null, error: deleteError.message });
+          ok = false;
+          continue;
+        }
+
+        const { count: countAfter, error: countAfterError } = await supabase
+          .from(table)
+          .select('id', { count: 'exact', head: true });
+
+        if (countAfterError && countAfterError.code !== '42P01') {
+          console.error(`Erreur verification ${table}:`, countAfterError);
+          results.push({
+            table,
+            deleted: countBefore ?? 0,
+            remaining: null,
+            error: countAfterError.message
+          });
+          ok = false;
+          continue;
+        }
+
+        const deletedCount = countBefore ?? 0;
+        const remaining = countAfter ?? 0;
+        deletedByTable[table] = deletedCount;
+        remainingByTable[table] = remaining;
+        console.log(`${table}: ${deletedCount} lignes supprimees`);
+        results.push({ table, deleted: deletedCount, remaining });
+
+        if (remaining > 0) {
+          ok = false;
         }
       } catch (err) {
         console.error(`Exception suppression ${table}:`, err);
-        results.push({ table, deleted: 0, error: String(err) });
+        results.push({ table, deleted: 0, remaining: null, error: String(err) });
+        ok = false;
       }
     }
 
@@ -139,7 +184,12 @@ export async function POST(request: NextRequest) {
           }
         }
         console.log(`${deletedUsers} utilisateurs non-praticiens supprimes`);
-        results.push({ table: 'auth.users (non-practitioners)', deleted: deletedUsers });
+        results.push({
+          table: 'auth.users (non-practitioners)',
+          deleted: deletedUsers,
+          remaining: null
+        });
+        deletedByTable['auth.users (non-practitioners)'] = deletedUsers;
       }
     } catch (err) {
       console.error('Erreur suppression auth users:', err);
@@ -151,13 +201,28 @@ export async function POST(request: NextRequest) {
     console.log(`   Effectuee par : ${guard.user.email}`);
     console.log(`   Date : ${new Date().toISOString()}`);
 
+    if (!ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'La verification post-suppression a detecte des donnees restantes.',
+          deleted: deletedByTable,
+          remaining: remainingByTable,
+          results
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
-      success: true,
+      ok: true,
       message: 'Base de donnees reinitialisee avec succes.',
       totalDeleted,
+      deleted: deletedByTable,
+      remaining: remainingByTable,
       results,
       performedBy: guard.user.email,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     });
 
   } catch (err) {

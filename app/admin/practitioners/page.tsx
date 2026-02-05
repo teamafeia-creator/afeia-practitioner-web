@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { AdminDataTable } from '@/components/admin/AdminDataTable';
+import { AdminBackBar } from '@/components/admin/AdminBackBar';
 import { Modal, ModalFooter } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toaster';
 import { useDeletePractitioner } from '@/hooks/useAdmin';
@@ -48,6 +49,7 @@ export default function AdminPractitionersPage() {
     full_name: '',
     calendly_url: ''
   });
+  const [refreshKey, setRefreshKey] = useState(0);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [practitionerToDelete, setPractitionerToDelete] = useState<PractitionerRow | null>(null);
   const totalPages = useMemo(() => Math.ceil(total / PAGE_SIZE), [total]);
@@ -59,10 +61,11 @@ export default function AdminPractitionersPage() {
 
     try {
       await deletePractitionerMutation.mutateAsync(practitionerToDelete.id);
-      showToast.success('Praticien supprime avec succes.');
+      showToast.success('Le praticien a bien ete supprime.');
       setDeleteModalOpen(false);
       setPractitionerToDelete(null);
       setPage(1);
+      setRefreshKey((value) => value + 1);
     } catch (error) {
       showToast.error(error instanceof Error ? error.message : 'Erreur lors de la suppression.');
     }
@@ -118,7 +121,7 @@ export default function AdminPractitionersPage() {
     return () => {
       isMounted = false;
     };
-  }, [page, search, sortField, sortDirection, statusFilter]);
+  }, [page, refreshKey, search, sortField, sortDirection, statusFilter]);
 
   async function handleInvite() {
     if (!inviteForm.email.trim()) return;
@@ -169,14 +172,12 @@ export default function AdminPractitionersPage() {
 
   return (
     <div className="space-y-6">
+      <AdminBackBar />
       <PageHeader
         title="Praticiens"
         subtitle="Liste des praticiens et statut de la plateforme."
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button variant="ghost" onClick={() => router.push('/admin')}>
-              ← Retour au dashboard admin
-            </Button>
             <Button variant="outline" onClick={exportCsv}>
               Exporter CSV
             </Button>

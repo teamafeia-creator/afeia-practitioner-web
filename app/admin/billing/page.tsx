@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { AdminDataTable } from '@/components/admin/AdminDataTable';
 import { Button } from '@/components/ui/Button';
 import { showToast } from '@/components/ui/Toaster';
+import { AdminBackBar } from '@/components/admin/AdminBackBar';
 
 const PAGE_SIZE = 10;
 
@@ -96,6 +97,7 @@ export default function AdminBillingPage() {
 
   return (
     <div className="space-y-6">
+      <AdminBackBar />
       <PageHeader title="Billing" subtitle="Vue Stripe par praticien et alertes de paiement." />
 
       <PageShell className="space-y-4">

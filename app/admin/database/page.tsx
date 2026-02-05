@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { Card } from '@/components/ui/Card';
 import { FreshDatabaseButton } from '@/components/admin/FreshDatabaseButton';
+import { AdminBackBar } from '@/components/admin/AdminBackBar';
 
 type Stats = {
   practitioners: number | null;
@@ -21,6 +22,7 @@ export default function AdminDatabasePage() {
     plans: null
   });
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     async function loadStats() {
@@ -39,10 +41,15 @@ export default function AdminDatabasePage() {
     }
 
     loadStats();
-  }, []);
+  }, [refreshKey]);
+
+  const handleRefresh = () => {
+    setRefreshKey((value) => value + 1);
+  };
 
   return (
     <div className="space-y-8">
+      <AdminBackBar />
       <PageHeader
         title="Gestion de la Base de Donnees"
         subtitle="Outils avances pour gerer la base de donnees."
@@ -92,7 +99,7 @@ export default function AdminDatabasePage() {
           </p>
         </div>
 
-        <FreshDatabaseButton />
+        <FreshDatabaseButton onSuccess={handleRefresh} />
       </PageShell>
     </div>
   );

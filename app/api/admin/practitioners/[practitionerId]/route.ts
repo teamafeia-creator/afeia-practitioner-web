@@ -19,8 +19,9 @@ export async function GET(
     const { practitionerId } = await params;
     const supabase = createAdminClient();
 
+    // Utiliser la table source pour eviter les donnees stale des vues publiques
     const { data: practitioner, error } = await supabase
-      .from('practitioners_public')
+      .from('practitioners')
       .select('*')
       .eq('id', practitionerId)
       .single();
@@ -64,7 +65,7 @@ export async function PATCH(
 
     const supabase = createAdminClient();
     const { data, error } = await supabase
-      .from('practitioners_public')
+      .from('practitioners')
       .update(updates)
       .eq('id', practitionerId)
       .select('*')
@@ -101,7 +102,7 @@ export async function DELETE(
 
     // 1. Vérifier que le praticien existe
     const { data: practitioner, error: practError } = await supabase
-      .from('practitioners_public')
+      .from('practitioners')
       .select('id, email, full_name')
       .eq('id', practitionerId)
       .single();
@@ -117,6 +118,26 @@ export async function DELETE(
     if (authDeleteError) {
       console.error('Erreur suppression auth user:', authDeleteError);
       return NextResponse.json({ error: 'Erreur lors de la suppression du compte.' }, { status: 500 });
+    }
+
+    const { count: remainingCount, error: remainingError } = await supabase
+      .from('practitioners')
+      .select('id', { count: 'exact', head: true })
+      .eq('id', practitionerId);
+
+    if (remainingError) {
+      console.error('Erreur verification suppression praticien:', remainingError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la verification de suppression.' },
+        { status: 500 }
+      );
+    }
+
+    if ((remainingCount ?? 0) > 0) {
+      return NextResponse.json(
+        { error: 'Le praticien est toujours present apres suppression.' },
+        { status: 500 }
+      );
     }
 
     console.log(
