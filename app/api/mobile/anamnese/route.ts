@@ -4,32 +4,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
-import { getBearerToken } from '@/lib/auth';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-
-async function getPatientFromToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const token = getBearerToken(authHeader);
-
-  if (!token) {
-    return null;
-  }
-
-  try {
-    const { payload } = await jwtVerify(
-      token,
-      new TextEncoder().encode(process.env.JWT_SECRET)
-    );
-    return payload.patientId as string;
-  } catch {
-    return null;
-  }
-}
+import { resolvePatientId } from '@/lib/mobile-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const patientId = await getPatientFromToken(request);
+    const patientId = await resolvePatientId(request);
 
     if (!patientId) {
       return NextResponse.json(
@@ -67,7 +47,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const patientId = await getPatientFromToken(request);
+    const patientId = await resolvePatientId(request);
 
     if (!patientId) {
       return NextResponse.json(
