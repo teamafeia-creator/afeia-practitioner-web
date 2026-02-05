@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 const DASHBOARD_PREVIEW_LIMIT = 8;
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
 
     const [
       practitionersCountResult,
@@ -21,25 +21,25 @@ export async function GET(request: NextRequest) {
       practitionersResult,
       patientsResult
     ] = await Promise.all([
-      supabase.from('practitioners').select('id', { count: 'exact', head: true }),
-      supabase.from('patients').select('id', { count: 'exact', head: true }),
+      supabase.from('practitioners_public').select('id', { count: 'exact', head: true }),
+      supabase.from('patients_identity').select('id', { count: 'exact', head: true }),
       supabase
-        .from('patients')
+        .from('patients_identity')
         .select('id', { count: 'exact', head: true })
         .or('is_premium.eq.true,status.eq.premium'),
       supabase
-        .from('practitioners')
+        .from('practitioners_public')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'suspended'),
       supabase
-        .from('practitioners')
+        .from('practitioners_public')
         .select('id, full_name, email, status, subscription_status, created_at')
         .order('created_at', { ascending: false })
         .limit(DASHBOARD_PREVIEW_LIMIT),
       supabase
-        .from('patients')
+        .from('patients_identity')
         .select(
-          'id, practitioner_id, full_name, name, email, status, is_premium, created_at, practitioners(full_name)'
+          'id, practitioner_id, full_name, email, status, is_premium, created_at, practitioners_public(full_name)'
         )
         .order('created_at', { ascending: false })
         .limit(DASHBOARD_PREVIEW_LIMIT)
@@ -69,8 +69,7 @@ export async function GET(request: NextRequest) {
     const patients =
       patientsResult.data?.map((patient) => ({
         ...patient,
-        full_name: patient.full_name ?? patient.name ?? null,
-        practitioner_name: patient.practitioners?.[0]?.full_name ?? null
+        practitioner_name: patient.practitioners_public?.[0]?.full_name ?? null
       })) ?? [];
 
     return NextResponse.json({

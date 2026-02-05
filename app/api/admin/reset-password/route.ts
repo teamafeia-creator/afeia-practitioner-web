@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 export async function POST(request: NextRequest) {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const redirectTo =
     process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  const supabaseAdmin = createSupabaseAdminClient();
+  const supabaseAdmin = createAdminClient();
   const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
     redirectTo: redirectTo ?? undefined
   });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 /**
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`FRESH DATABASE initiee par ${guard.user.email}`);
 
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
 
     // Liste des tables a vider (ordre important pour les foreign keys)
     const tablesToClear = [

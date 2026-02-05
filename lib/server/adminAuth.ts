@@ -1,6 +1,6 @@
 import { cookies as nextCookies } from 'next/headers';
 import type { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 const ADMIN_EMAIL_COOKIE = 'afeia_admin_email';
 
@@ -22,7 +22,7 @@ export async function isAdminEmail(email: string): Promise<boolean> {
   }
 
   try {
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('admin_allowlist')
       .select('email')

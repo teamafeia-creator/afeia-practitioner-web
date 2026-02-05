@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 export async function POST(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'patient_id requis' }, { status: 400 });
   }
 
-  const supabaseAdmin = createSupabaseAdminClient();
+  const supabaseAdmin = createAdminClient();
   const { error: rpcError } = await supabaseAdmin.rpc('admin_trigger_circular_sync', {
     patient_id: patientId
   });

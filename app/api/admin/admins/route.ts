@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 export async function GET(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('admin_allowlist')
       .select('email, created_at')
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email manquant.' }, { status: 400 });
     }
 
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
     const { error } = await supabase.from('admin_allowlist').insert({ email });
 
     if (error) {
@@ -68,7 +68,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Email manquant.' }, { status: 400 });
     }
 
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
     const { error } = await supabase.from('admin_allowlist').delete().eq('email', email);
 
     if (error) {

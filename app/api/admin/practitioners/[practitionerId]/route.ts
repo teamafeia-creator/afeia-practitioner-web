@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 /**
@@ -17,10 +17,10 @@ export async function GET(
 
   try {
     const { practitionerId } = await params;
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
 
     const { data: practitioner, error } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .select('*')
       .eq('id', practitionerId)
       .single();
@@ -62,9 +62,9 @@ export async function PATCH(
       updated_at: new Date().toISOString()
     };
 
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .update(updates)
       .eq('id', practitionerId)
       .select('*')
@@ -97,11 +97,11 @@ export async function DELETE(
 
   try {
     const { practitionerId } = await params;
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
 
     // 1. Vérifier que le praticien existe
     const { data: practitioner, error: practError } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .select('id, email, full_name')
       .eq('id', practitionerId)
       .single();

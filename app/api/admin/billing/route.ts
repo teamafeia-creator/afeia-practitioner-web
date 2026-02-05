@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -27,11 +27,11 @@ export async function GET(request: NextRequest) {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
     let query = supabase
       .from('stripe_subscriptions')
       .select(
-        'id, practitioner_id, status, price_id, current_period_end, payment_failed, latest_invoice_id, practitioners(full_name, email)',
+        'id, practitioner_id, status, price_id, current_period_end, payment_failed, latest_invoice_id, practitioners_public(full_name, email)',
         { count: 'exact' }
       );
 
