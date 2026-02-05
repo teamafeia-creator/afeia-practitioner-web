@@ -199,8 +199,12 @@ export const api = {
 
   // Patient Profile
   async getProfile() {
-    console.log('📊 Loading profile...');
-    const { patientId } = await requirePatientContext();
+    const startTime = Date.now();
+    console.log('📊 [APP] Loading profile...');
+
+    const { patientId, userId } = await requirePatientContext();
+    console.log('   Patient ID:', patientId);
+    console.log('   User ID:', userId);
 
     const { data, error } = await supabase
       .from('patients')
@@ -208,13 +212,35 @@ export const api = {
       .eq('id', patientId)
       .maybeSingle();
 
+    const queryDuration = Date.now() - startTime;
+    console.log(`   Query duration: ${queryDuration}ms`);
+
     if (error) {
       console.error('❌ Profile load error:', error);
+      console.error('   Error code:', (error as any).code);
+      console.error('   Error details:', (error as any).details);
+      console.error('   Error hint:', (error as any).hint);
       throw error;
     }
 
     if (!data) {
       console.log('❌ Profile not found for patient:', patientId);
+      console.log('   Checking membership integrity...');
+
+      // Extra diagnostic: check if the membership row points to a valid patient
+      const { data: membership } = await supabase
+        .from('patient_memberships')
+        .select('patient_id, patient_user_id')
+        .eq('patient_user_id', userId)
+        .maybeSingle();
+
+      if (membership) {
+        console.log('   Membership exists:', JSON.stringify(membership));
+        console.log('   But patient row is missing for patient_id:', membership.patient_id);
+      } else {
+        console.log('   No membership found for user_id:', userId);
+      }
+
       throw new Error('Patient profile not found');
     }
 
@@ -227,7 +253,8 @@ export const api = {
       lastName = nameParts.slice(1).join(' ') || '';
     }
 
-    console.log('✅ Profile loaded:', data?.email);
+    const duration = Date.now() - startTime;
+    console.log(`✅ Profile loaded in ${duration}ms:`, data?.email);
     return {
       id: data.id,
       email: data.email,

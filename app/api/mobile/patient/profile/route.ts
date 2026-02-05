@@ -10,33 +10,46 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 async function getPatientFromToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
+  console.log('[MOBILE API] Auth header present:', !!authHeader);
+
   const token = getBearerToken(authHeader);
 
   if (!token) {
+    console.log('[MOBILE API] No bearer token found');
     return null;
   }
+
+  console.log('[MOBILE API] Token length:', token.length);
 
   try {
     const { payload } = await jwtVerify(
       token,
       new TextEncoder().encode(process.env.JWT_SECRET)
     );
+    console.log('[MOBILE API] JWT verified, patientId:', payload.patientId);
     return payload.patientId as string;
-  } catch {
+  } catch (err) {
+    console.log('[MOBILE API] JWT verification failed:', err);
     return null;
   }
 }
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  console.log('\n[MOBILE API] GET /api/mobile/patient/profile');
+
   try {
     const patientId = await getPatientFromToken(request);
 
     if (!patientId) {
+      console.log('[MOBILE API] Unauthorized – no patientId from token');
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
       );
     }
+
+    console.log('[MOBILE API] Looking up patient:', patientId);
 
     // Get patient with practitioner info
     const { data: patient, error } = await getSupabaseAdmin()
@@ -52,11 +65,29 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (error || !patient) {
+      console.log('[MOBILE API] Patient not found for id:', patientId);
+      if (error) console.log('[MOBILE API] DB error:', error);
+
+      // Check if membership exists but patient record is missing
+      const { data: membership } = await getSupabaseAdmin()
+        .from('patient_memberships')
+        .select('patient_id, patient_user_id')
+        .eq('patient_id', patientId)
+        .maybeSingle();
+
+      if (membership) {
+        console.log('[MOBILE API] Membership exists but patient row missing:', membership);
+      } else {
+        console.log('[MOBILE API] No membership found for patientId:', patientId);
+      }
+
       return NextResponse.json(
         { message: 'Patient non trouvé' },
         { status: 404 }
       );
     }
+
+    console.log('[MOBILE API] Patient found:', patient.name, patient.email);
 
     // Get subscription info if premium
     let subscription = null;
@@ -69,6 +100,9 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
       subscription = sub;
     }
+
+    const duration = Date.now() - startTime;
+    console.log(`[MOBILE API] Profile loaded in ${duration}ms`);
 
     const nameParts = patient.name?.split(' ') || ['', ''];
     const practitioner = patient.practitioners as any;
@@ -96,7 +130,8 @@ export async function GET(request: NextRequest) {
       } : null,
     });
   } catch (error) {
-    console.error('Error getting patient profile:', error);
+    const duration = Date.now() - startTime;
+    console.error(`[MOBILE API] GET profile exception after ${duration}ms:`, error);
     return NextResponse.json(
       { message: 'Erreur lors de la récupération du profil' },
       { status: 500 }
@@ -105,15 +140,21 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const startTime = Date.now();
+  console.log('\n[MOBILE API] PUT /api/mobile/patient/profile');
+
   try {
     const patientId = await getPatientFromToken(request);
 
     if (!patientId) {
+      console.log('[MOBILE API] PUT unauthorized – no patientId from token');
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
       );
     }
+
+    console.log('[MOBILE API] PUT patient:', patientId);
 
     const body = await request.json();
     const { firstName, lastName, phone } = body;
@@ -159,7 +200,8 @@ export async function PUT(request: NextRequest) {
       isPremium: patient.is_premium || false,
     });
   } catch (error) {
-    console.error('Error updating patient profile:', error);
+    const duration = Date.now() - startTime;
+    console.error(`[MOBILE API] PUT profile exception after ${duration}ms:`, error);
     return NextResponse.json(
       { message: 'Erreur lors de la mise à jour du profil' },
       { status: 500 }
