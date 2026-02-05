@@ -37,6 +37,7 @@ export default function AdminPractitionersPage() {
   const router = useRouter();
   const [rows, setRows] = useState<PractitionerRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
@@ -106,6 +107,7 @@ export default function AdminPractitionersPage() {
         showToast.error('Erreur lors du chargement des praticiens.');
         setRows([]);
         setTotal(0);
+        setLoadError('Erreur de chargement.');
         setLoading(false);
         return;
       }
@@ -113,6 +115,7 @@ export default function AdminPractitionersPage() {
       const data = await response.json();
       setRows(data.practitioners ?? []);
       setTotal(data.total ?? 0);
+      setLoadError(null);
       setLoading(false);
     }
 
@@ -238,7 +241,7 @@ export default function AdminPractitionersPage() {
       <AdminDataTable
         rows={rows}
         isLoading={loading}
-        emptyMessage="Aucun praticien trouve."
+        emptyMessage={loadError ? 'Erreur de chargement.' : 'Aucun praticien trouve.'}
         columns={[
           {
             key: 'full_name',

@@ -4,6 +4,9 @@ import { requireAdmin } from '@/lib/server/adminGuard';
 
 const DASHBOARD_PREVIEW_LIMIT = 8;
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   const guard = await requireAdmin(request);
   if ('response' in guard) {
@@ -45,24 +48,20 @@ export async function GET(request: NextRequest) {
         .limit(DASHBOARD_PREVIEW_LIMIT)
     ]);
 
-    if (practitionersCountResult.error) {
-      console.error('[admin] practitioners count error:', practitionersCountResult.error);
-    }
-    if (patientsCountResult.error) {
-      console.error('[admin] patients count error:', patientsCountResult.error);
-    }
-    if (premiumPatientsCountResult.error) {
-      console.error('[admin] premium count error:', premiumPatientsCountResult.error);
-    }
-    if (suspendedPractitionersCountResult.error) {
-      console.error('[admin] suspended count error:', suspendedPractitionersCountResult.error);
-    }
+    const errors = [
+      practitionersCountResult.error,
+      patientsCountResult.error,
+      premiumPatientsCountResult.error,
+      suspendedPractitionersCountResult.error,
+      practitionersResult.error,
+      patientsResult.error
+    ].filter(Boolean);
 
-    if (practitionersResult.error) {
-      console.error('[admin] practitioners preview error:', practitionersResult.error);
-    }
-    if (patientsResult.error) {
-      console.error('[admin] patients preview error:', patientsResult.error);
+    if (errors.length > 0) {
+      errors.forEach((error) => {
+        console.error('[admin] dashboard query error:', error);
+      });
+      return NextResponse.json({ error: 'Erreur lors du chargement des données.' }, { status: 500 });
     }
 
     const practitioners = practitionersResult.data ?? [];
