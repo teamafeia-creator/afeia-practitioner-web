@@ -31,9 +31,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Code de confirmation invalide.' }, { status: 400 });
     }
 
-    console.log(`RESET DATABASE initiee par ${guard.user.email}`);
+    const adminEmail = guard.user.email ?? 'unknown';
+    console.log(`RESET DATABASE initiee par ${adminEmail}`);
 
-    const result = await runAdminDatabaseReset(guard.user.email);
+    const result = await runAdminDatabaseReset(adminEmail);
 
     if (!result.ok) {
       return NextResponse.json(
