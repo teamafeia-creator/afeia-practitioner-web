@@ -276,7 +276,7 @@ export default async function AdminDashboardPage() {
               ) : (
                 practitioners.slice(0, DASHBOARD_PREVIEW_LIMIT).map((row) => (
                   <tr key={row.id} className="text-charcoal">
-                    <td className="px-4 py-3">{row.full_name ?? '—'}</td>
+                    <td className="px-4 py-3">{row.name ?? '—'}</td>
                     <td className="px-4 py-3">{row.email ?? '—'}</td>
                     <td className="px-4 py-3">{row.status ?? '—'}</td>
                     <td className="px-4 py-3">{row.subscription_status ?? '—'}</td>
@@ -336,7 +336,7 @@ export default async function AdminDashboardPage() {
               ) : (
                 patients.slice(0, DASHBOARD_PREVIEW_LIMIT).map((row) => (
                   <tr key={row.id} className="text-charcoal">
-                    <td className="px-4 py-3">{row.full_name ?? '—'}</td>
+                    <td className="px-4 py-3">{row.name ?? '—'}</td>
                     <td className="px-4 py-3">{row.email ?? '—'}</td>
                     <td className="px-4 py-3">{row.practitioner_name ?? '—'}</td>
                     <td className="px-4 py-3">
