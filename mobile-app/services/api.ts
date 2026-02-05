@@ -392,113 +392,98 @@ export const api = {
 
   // Complements
   async getComplements(): Promise<{ complements: Complement[] }> {
-    console.log('📊 Loading complements...');
-    const { patientId } = await requirePatientContext();
+    console.log('📊 Loading complements via API...');
 
-    const today = new Date().toISOString().split('T')[0];
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw createAuthError('AUTH_REQUIRED', 'Session manquante');
 
-    // Get prescriptions for this patient
-    const { data: prescriptions, error } = await supabase
-      .from('prescriptions')
-      .select('*, prescription_items(*)')
-      .eq('patient_id', patientId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('❌ Complements load error:', error);
-      throw error;
-    }
-
-    // Get today's tracking
-    const { data: tracking } = await supabase
-      .from('complement_tracking')
-      .select('*')
-      .eq('patient_id', patientId)
-      .eq('date', today);
-
-    const takenIds = new Set(tracking?.filter((t) => t.taken).map((t) => t.complement_id) || []);
-
-    // Transform prescriptions to complements
-    const complements: Complement[] = [];
-    prescriptions?.forEach((prescription) => {
-      prescription.prescription_items?.forEach((item: { id: string; name: string; dosage?: string; frequency?: string; duration?: number; instructions?: string }) => {
-        complements.push({
-          id: item.id,
-          name: item.name,
-          dosage: item.dosage || '',
-          frequency: item.frequency || '1x/jour',
-          duration: item.duration || 30,
-          instructions: item.instructions,
-          takenToday: takenIds.has(item.id),
-        });
+    try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/mobile/complements`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
       });
-    });
 
-    console.log('✅ Complements loaded:', complements.length);
-    return { complements };
+      if (!response.ok) {
+        if (response.status === 401) throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Complements loaded:', data.complements?.length || 0);
+
+      return { complements: data.complements || [] };
+    } catch (error) {
+      if (isApiAuthError(error)) throw error;
+      console.error('❌ Complements error:', error);
+      return { complements: [] };
+    }
   },
 
   async trackComplement(complementId: string, taken: boolean) {
-    console.log('📊 Tracking complement:', complementId, taken);
-    const { patientId } = await requirePatientContext();
+    console.log('📊 Tracking complement via API:', complementId, taken);
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw createAuthError('AUTH_REQUIRED', 'Session manquante');
+
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
     const today = new Date().toISOString().split('T')[0];
 
-    const { data, error } = await supabase
-      .from('complement_tracking')
-      .upsert({
-        patient_id: patientId,
-        complement_id: complementId,
-        date: today,
-        taken,
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    const response = await fetch(`${apiUrl}/api/mobile/complements/track`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ complementId, date: today, taken }),
+    });
 
-    if (error) {
-      console.error('❌ Complement tracking error:', error);
-      throw error;
+    if (!response.ok) {
+      if (response.status === 401) throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+      throw new Error(`HTTP ${response.status}`);
     }
 
+    const data = await response.json();
     console.log('✅ Complement tracked');
     return data;
   },
 
   // Conseils
   async getConseils(category?: string): Promise<{ conseils: Conseil[] }> {
-    console.log('📊 Loading conseils...', category ? `category: ${category}` : '');
-    const { patientId } = await requirePatientContext();
+    console.log('📊 Loading conseils via API...');
 
-    let query = supabase
-      .from('conseils')
-      .select('*')
-      .eq('patient_id', patientId)
-      .order('created_at', { ascending: false });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw createAuthError('AUTH_REQUIRED', 'Session manquante');
 
-    if (category) {
-      query = query.eq('category', category);
+    try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const url = category
+        ? `${apiUrl}/api/mobile/conseils?category=${encodeURIComponent(category)}`
+        : `${apiUrl}/api/mobile/conseils`;
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Conseils loaded:', data.conseils?.length || 0);
+
+      return { conseils: data.conseils || [] };
+    } catch (error) {
+      if (isApiAuthError(error)) throw error;
+      console.error('❌ Conseils error:', error);
+      return { conseils: [] };
     }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('❌ Conseils load error:', error);
-      throw error;
-    }
-
-    const conseils: Conseil[] =
-      data?.map((c) => ({
-        id: c.id,
-        category: c.category,
-        title: c.title,
-        content: c.content,
-        date: c.created_at,
-        read: c.read || false,
-      })) || [];
-
-    console.log('✅ Conseils loaded:', conseils.length);
-    return { conseils };
   },
 
   async markConseilRead(conseilId: string) {
@@ -520,33 +505,38 @@ export const api = {
 
   // Journal
   async submitJournal(entry: Partial<JournalEntry>) {
-    console.log('📊 Submitting journal entry...');
-    const { patientId } = await requirePatientContext();
+    console.log('📊 Submitting journal entry via API...');
 
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw createAuthError('AUTH_REQUIRED', 'Session manquante');
+
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
     const today = new Date().toISOString().split('T')[0];
 
-    const { data, error } = await supabase
-      .from('journal_entries')
-      .upsert({
-        patient_id: patientId,
+    const response = await fetch(`${apiUrl}/api/mobile/journal`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         date: today,
         mood: entry.mood,
-        alimentation: entry.alimentation,
-        sleep: entry.sleep,
-        energy: entry.energy,
-        complements_taken: entry.complementsTaken,
-        problems: entry.problems,
-        note_for_naturo: entry.noteForNaturo,
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+        alimentationQuality: entry.alimentation,
+        sleepQuality: entry.sleep,
+        energyLevel: entry.energy,
+        complementsTaken: entry.complementsTaken,
+        problemesParticuliers: entry.problems,
+        noteNaturopathe: entry.noteForNaturo,
+      }),
+    });
 
-    if (error) {
-      console.error('❌ Journal submit error:', error);
-      throw error;
+    if (!response.ok) {
+      if (response.status === 401) throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+      throw new Error(`HTTP ${response.status}`);
     }
 
+    const data = await response.json();
     console.log('✅ Journal entry submitted');
     return data;
   },
@@ -555,140 +545,143 @@ export const api = {
     startDate?: string,
     endDate?: string
   ): Promise<{ entries: JournalEntry[] }> {
-    console.log('📊 Loading journal history...');
-    const { patientId } = await requirePatientContext();
+    console.log('📊 Loading journal history via API...');
 
-    let query = supabase
-      .from('journal_entries')
-      .select('*')
-      .eq('patient_id', patientId)
-      .order('date', { ascending: false });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw createAuthError('AUTH_REQUIRED', 'Session manquante');
 
-    if (startDate) {
-      query = query.gte('date', startDate);
-    }
-    if (endDate) {
-      query = query.lte('date', endDate);
-    }
+    try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const params = new URLSearchParams();
+      if (startDate) params.set('startDate', startDate);
+      if (endDate) params.set('endDate', endDate);
+      const qs = params.toString();
+      const url = `${apiUrl}/api/mobile/journal/history${qs ? `?${qs}` : ''}`;
 
-    const { data, error } = await query;
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (error) {
+      if (!response.ok) {
+        if (response.status === 401) throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Journal history loaded:', data.entries?.length || 0);
+
+      return { entries: data.entries || [] };
+    } catch (error) {
+      if (isApiAuthError(error)) throw error;
       console.error('❌ Journal history error:', error);
-      throw error;
+      return { entries: [] };
     }
-
-    const entries: JournalEntry[] =
-      data?.map((e) => ({
-        id: e.id,
-        date: e.date,
-        mood: e.mood,
-        alimentation: e.alimentation,
-        sleep: e.sleep,
-        energy: e.energy,
-        complementsTaken: e.complements_taken || [],
-        problems: e.problems,
-        noteForNaturo: e.note_for_naturo,
-      })) || [];
-
-    console.log('✅ Journal history loaded:', entries.length);
-    return { entries };
   },
 
   async getTodayJournal(): Promise<JournalEntry | null> {
-    console.log('📊 Loading today journal...');
-    const { patientId } = await requirePatientContext();
+    console.log('📊 Loading today journal via API...');
 
-    const today = new Date().toISOString().split('T')[0];
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw createAuthError('AUTH_REQUIRED', 'Session manquante');
 
-    const { data, error } = await supabase
-      .from('journal_entries')
-      .select('*')
-      .eq('patient_id', patientId)
-      .eq('date', today)
-      .single();
+    try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/mobile/journal/today`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (error && error.code !== 'PGRST116') {
+      if (!response.ok) {
+        if (response.status === 401) throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.entry) {
+        console.log('📊 No journal entry for today');
+        return null;
+      }
+
+      console.log('✅ Today journal loaded');
+      return data.entry;
+    } catch (error) {
+      if (isApiAuthError(error)) throw error;
       console.error('❌ Today journal error:', error);
-      throw error;
-    }
-
-    if (!data) {
-      console.log('📊 No journal entry for today');
       return null;
     }
-
-    console.log('✅ Today journal loaded');
-    return {
-      id: data.id,
-      date: data.date,
-      mood: data.mood,
-      alimentation: data.alimentation,
-      sleep: data.sleep,
-      energy: data.energy,
-      complementsTaken: data.complements_taken || [],
-      problems: data.problems,
-      noteForNaturo: data.note_for_naturo,
-    };
   },
 
   // Messages
   async getMessages(): Promise<{ messages: Message[] }> {
-    console.log('📊 Loading messages...');
-    const { patientId } = await requirePatientContext();
+    console.log('📊 Loading messages via API...');
 
-    // Messages are linked to patient via patient_id, not sender_id/receiver_id
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('patient_id', patientId)
-      .order('created_at', { ascending: false });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw createAuthError('AUTH_REQUIRED', 'Session manquante');
 
-    if (error) {
-      console.error('❌ Messages load error:', error);
-      throw error;
-    }
+    try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/mobile/messages`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    const messages: Message[] =
-      data?.map((m) => ({
+      if (!response.ok) {
+        if (response.status === 401) throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      // API returns { data: [...], total, page, limit, hasMore }
+      const messages: Message[] = (data.data || []).map((m: any) => ({
         id: m.id,
-        // sender_role indicates if it's from patient or practitioner
-        senderId: m.sender_role === 'patient' ? patientId : 'practitioner',
-        // Support both old (body/text) and new (content) column names
-        content: m.content ?? m.body ?? m.text ?? '',
-        timestamp: m.created_at ?? m.sent_at,
-        read: m.read ?? m.read_by_practitioner ?? false,
-        senderRole: m.sender_role ?? m.sender,
-      })) || [];
+        senderId: m.senderId,
+        content: m.content || '',
+        timestamp: m.createdAt,
+        read: m.read || false,
+        senderRole: m.senderType,
+      }));
 
-    console.log('✅ Messages loaded:', messages.length);
-    return { messages };
+      console.log('✅ Messages loaded:', messages.length);
+      return { messages };
+    } catch (error) {
+      if (isApiAuthError(error)) throw error;
+      console.error('❌ Messages error:', error);
+      return { messages: [] };
+    }
   },
 
   async sendMessage(messageContent: string) {
-    console.log('📊 Sending message...');
-    const { patientId } = await requirePatientContext();
+    console.log('📊 Sending message via API...');
 
-    // Insert message with patient_id and sender_role (patient sending)
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        patient_id: patientId,
-        sender_role: 'patient',
-        body: messageContent, // Use 'body' column (will be synced to 'content' by trigger)
-        content: messageContent,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw createAuthError('AUTH_REQUIRED', 'Session manquante');
 
-    if (error) {
-      console.error('❌ Send message error:', error);
-      throw error;
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+    const response = await fetch(`${apiUrl}/api/mobile/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content: messageContent }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+      throw new Error(`HTTP ${response.status}`);
     }
 
+    const data = await response.json();
     console.log('✅ Message sent');
-    return data;
+    return data.message;
   },
 
   async markMessageRead(messageId: string) {
@@ -839,170 +832,74 @@ export const api = {
 
   // Plans de soin
   async getPlans(): Promise<{ plans: Plan[] }> {
-    console.log('📊 Loading plans...');
-    const { patientId } = await requirePatientContext();
+    console.log('📊 Loading plans via API...');
 
-    // Get plans from patient_plans table (shared plans by practitioner)
-    const { data, error } = await supabase
-      .from('patient_plans')
-      .select(`
-        id,
-        version,
-        status,
-        content,
-        shared_at,
-        created_at,
-        updated_at,
-        practitioner_id,
-        practitioners:practitioner_id (
-          id,
-          full_name,
-          email
-        )
-      `)
-      .eq('patient_id', patientId)
-      .eq('status', 'shared')
-      .order('created_at', { ascending: false });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw createAuthError('AUTH_REQUIRED', 'Session manquante');
 
-    if (error) {
-      console.error('❌ Plans load error:', error);
-      // Try alternative table structure (care_plans)
-      const { data: carePlans, error: carePlansError } = await supabase
-        .from('care_plans')
-        .select('*')
-        .eq('patient_id', patientId)
-        .in('status', ['sent', 'viewed'])
-        .order('created_at', { ascending: false });
+    try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/mobile/plans`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (carePlansError) {
-        console.error('❌ Care plans load error:', carePlansError);
-        throw carePlansError;
+      if (!response.ok) {
+        if (response.status === 401) throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+        throw new Error(`HTTP ${response.status}`);
       }
 
-      const plans: Plan[] = carePlans?.map((p) => ({
-        id: p.id,
-        title: p.title || 'Plan de soin',
-        description: p.description,
-        content: p.content,
-        status: p.status === 'sent' ? 'shared' : p.status,
-        sharedAt: p.sent_at,
-        createdAt: p.created_at,
-      })) || [];
+      const data = await response.json();
+      console.log('✅ Plans loaded:', data.plans?.length || 0);
 
-      console.log('✅ Care plans loaded:', plans.length);
-      return { plans };
+      return { plans: data.plans || [] };
+    } catch (error) {
+      if (isApiAuthError(error)) throw error;
+      console.error('❌ Plans error:', error);
+      return { plans: [] };
     }
-
-    const plans: Plan[] = data?.map((p) => {
-      const practitioner = p.practitioners as any;
-      return {
-        id: p.id,
-        title: p.content?.title || 'Plan de soin',
-        description: p.content?.description,
-        content: p.content,
-        status: p.status,
-        sharedAt: p.shared_at,
-        createdAt: p.created_at,
-        practitioner: practitioner ? {
-          id: practitioner.id,
-          name: practitioner.full_name,
-          email: practitioner.email,
-        } : undefined,
-      };
-    }) || [];
-
-    console.log('✅ Plans loaded:', plans.length);
-    return { plans };
   },
 
   async getPlan(planId: string): Promise<Plan | null> {
     console.log('📊 Loading plan:', planId);
-    const { patientId } = await requirePatientContext();
 
-    // Try patient_plans first
-    const { data, error } = await supabase
-      .from('patient_plans')
-      .select(`
-        *,
-        practitioners:practitioner_id (
-          id,
-          full_name,
-          email
-        )
-      `)
-      .eq('id', planId)
-      .eq('patient_id', patientId)
-      .single();
+    // Plans are returned in full from getPlans() API response,
+    // so re-fetch from the plans endpoint for now
+    const { plans } = await this.getPlans();
+    const plan = plans.find((p) => p.id === planId) || null;
 
-    if (error) {
-      // Try care_plans
-      const { data: carePlan, error: carePlanError } = await supabase
-        .from('care_plans')
-        .select('*')
-        .eq('id', planId)
-        .eq('patient_id', patientId)
-        .single();
-
-      if (carePlanError) {
-        console.error('❌ Plan load error:', carePlanError);
-        return null;
-      }
-
-      // Mark as viewed
-      await supabase
-        .from('care_plans')
-        .update({ status: 'viewed', viewed_at: new Date().toISOString() })
-        .eq('id', planId);
-
-      return {
-        id: carePlan.id,
-        title: carePlan.title || 'Plan de soin',
-        description: carePlan.description,
-        content: carePlan.content,
-        status: 'viewed',
-        sharedAt: carePlan.sent_at,
-        createdAt: carePlan.created_at,
-      };
+    if (plan) {
+      // Mark as viewed via API
+      await this.markPlanViewed(planId);
     }
 
-    const practitioner = data.practitioners as any;
-    console.log('✅ Plan loaded:', data.id);
-    return {
-      id: data.id,
-      title: data.content?.title || 'Plan de soin',
-      description: data.content?.description,
-      content: data.content,
-      status: data.status,
-      sharedAt: data.shared_at,
-      createdAt: data.created_at,
-      practitioner: practitioner ? {
-        id: practitioner.id,
-        name: practitioner.full_name,
-        email: practitioner.email,
-      } : undefined,
-    };
+    return plan;
   },
 
   async markPlanViewed(planId: string) {
     console.log('📊 Marking plan as viewed:', planId);
-    const { patientId } = await requirePatientContext();
 
-    // Update patient_plans
-    const { error } = await supabase
-      .from('patient_plans')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', planId)
-      .eq('patient_id', patientId);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
-    if (error) {
-      // Try care_plans
-      await supabase
-        .from('care_plans')
-        .update({ status: 'viewed', viewed_at: new Date().toISOString() })
-        .eq('id', planId)
-        .eq('patient_id', patientId);
+    try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/mobile/plans`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ planId }),
+      });
+
+      if (response.ok) {
+        console.log('✅ Plan marked as viewed');
+      }
+    } catch (error) {
+      console.error('❌ Mark plan viewed error:', error);
     }
-
-    console.log('✅ Plan marked as viewed');
   },
 };
