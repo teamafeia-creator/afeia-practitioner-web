@@ -28,6 +28,7 @@ type PatientPreview = {
   status: string | null;
   is_premium: boolean | null;
   practitioner_name?: string | null;
+  practitioners?: { full_name: string | null }[] | { full_name: string | null } | null;
 };
 
 type DashboardStats = {
@@ -148,7 +149,7 @@ export default async function AdminDashboardPage() {
   const practitioners = hasError ? [] : practitionersResult.data ?? [];
   const patients: PatientPreview[] = hasError
     ? []
-    : (patientsResult.data?.map((patient) => ({
+    : ((patientsResult.data as PatientPreview[] | null)?.map((patient) => ({
         ...patient,
         practitioner_name: Array.isArray(patient.practitioners)
           ? patient.practitioners[0]?.full_name ?? null
