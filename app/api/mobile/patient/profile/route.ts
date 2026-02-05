@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
       .select(`
         id, name, email, phone, status, is_premium, activated, practitioner_id,
         practitioners:practitioner_id (
-          id, full_name, email, phone, avatar_url
+          id, full_name, email, phone
         )
       `)
       .eq('id', patientId)
@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
           .select(`
             id, name, email, phone, status, is_premium, activated, practitioner_id,
             practitioners:practitioner_id (
-              id, full_name, email, phone, avatar_url
+              id, full_name, email, phone
             )
           `)
           .single();
@@ -272,7 +272,7 @@ export async function GET(request: NextRequest) {
         .select(`
           id, name, email, phone, status, is_premium, activated, practitioner_id,
           practitioners:practitioner_id (
-            id, full_name, email, phone, avatar_url
+            id, full_name, email, phone
           )
         `)
         .single();
@@ -300,7 +300,7 @@ export async function GET(request: NextRequest) {
         .select(`
           id, name, email, phone, status, is_premium, activated, practitioner_id,
           practitioners:practitioner_id (
-            id, full_name, email, phone, avatar_url
+            id, full_name, email, phone
           )
         `)
         .single();
@@ -328,7 +328,7 @@ export async function GET(request: NextRequest) {
           .select(`
             id, name, email, phone, status, is_premium, activated, practitioner_id,
             practitioners:practitioner_id (
-              id, full_name, email, phone, avatar_url
+              id, full_name, email, phone
             )
           `)
           .single();
@@ -382,7 +382,6 @@ export async function GET(request: NextRequest) {
             fullName: practitioner.full_name,
             email: practitioner.email,
             phone: practitioner.phone,
-            avatarUrl: practitioner.avatar_url,
           }
         : null,
     });
