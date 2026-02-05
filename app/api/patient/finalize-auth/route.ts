@@ -226,10 +226,13 @@ export async function POST(request: NextRequest) {
 
     // Ensure the patient row exists in the patients table.
     // A membership may reference a patient_id that was never inserted (or was deleted).
+    // Patient creation is MANDATORY – we must never leave an orphan membership.
     if (patientId) {
+      console.log('🔍 finalize-auth: checking patient row...');
+
       const { data: existingPatient } = await supabaseAdmin
         .from('patients')
-        .select('id')
+        .select('id, activated, practitioner_id')
         .eq('id', patientId)
         .maybeSingle();
 
@@ -241,28 +244,80 @@ export async function POST(request: NextRequest) {
           [invitation?.first_name, invitation?.last_name].filter(Boolean).join(' ') ||
           email.split('@')[0];
 
-        const practitionerId =
+        // Resolve practitioner_id with fallback to first practitioner in DB
+        let practitionerId: string | null =
           invitation?.practitioner_id || otpRecord.practitioner_id || null;
 
-        if (practitionerId) {
-          const { error: createPatientError } = await supabaseAdmin
-            .from('patients')
-            .insert({
-              id: patientId,
-              email,
-              name: patientName,
-              practitioner_id: practitionerId,
-              status: 'standard',
-              is_premium: false,
-            });
+        if (!practitionerId) {
+          console.warn('⚠️ finalize-auth: no practitioner_id in invitation/OTP, looking up first practitioner...');
+          const { data: practitioners } = await supabaseAdmin
+            .from('practitioners')
+            .select('id')
+            .order('created_at', { ascending: true })
+            .limit(1);
 
-          if (createPatientError) {
-            console.error('❌ finalize-auth: failed to create patient row', createPatientError);
-          } else {
-            console.log('✅ finalize-auth: patient row created for', patientId);
+          practitionerId = practitioners?.[0]?.id || null;
+
+          if (!practitionerId) {
+            console.error('❌ finalize-auth: no practitioner exists in database');
+            return NextResponse.json(
+              { ok: false, message: 'Configuration invalide : aucun praticien disponible' },
+              { status: 500 }
+            );
           }
-        } else {
-          console.error('❌ finalize-auth: cannot create patient row – no practitioner_id available');
+
+          console.log('✅ finalize-auth: default practitioner assigned:', practitionerId);
+        }
+
+        const { data: newPatient, error: createPatientError } = await supabaseAdmin
+          .from('patients')
+          .insert({
+            id: patientId,
+            email,
+            name: patientName,
+            practitioner_id: practitionerId,
+            status: 'standard',
+            is_premium: false,
+            activated: true,
+            activated_at: now,
+          })
+          .select()
+          .single();
+
+        if (createPatientError) {
+          console.error('❌ finalize-auth: failed to create patient row', createPatientError);
+          return NextResponse.json(
+            { ok: false, message: 'Erreur lors de la création du profil patient' },
+            { status: 500 }
+          );
+        }
+
+        console.log('✅ finalize-auth: patient created and activated:', newPatient.name, newPatient.email);
+      } else {
+        console.log('✅ finalize-auth: patient already exists:', existingPatient.id);
+
+        // Auto-fix: activate patient if not activated
+        if (!existingPatient.activated) {
+          console.log('⚠️ finalize-auth: patient not activated, activating...');
+          await supabaseAdmin
+            .from('patients')
+            .update({ activated: true, activated_at: now })
+            .eq('id', patientId);
+          console.log('✅ finalize-auth: patient activated');
+        }
+
+        // Auto-fix: assign practitioner if missing
+        if (!existingPatient.practitioner_id) {
+          console.log('⚠️ finalize-auth: no practitioner assigned, assigning...');
+          const fallbackPractitionerId = invitation?.practitioner_id || otpRecord.practitioner_id;
+
+          if (fallbackPractitionerId) {
+            await supabaseAdmin
+              .from('patients')
+              .update({ practitioner_id: fallbackPractitionerId })
+              .eq('id', patientId);
+            console.log('✅ finalize-auth: practitioner assigned:', fallbackPractitionerId);
+          }
         }
       }
     }

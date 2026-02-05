@@ -197,98 +197,73 @@ export const api = {
     console.log('✅ Logout successful');
   },
 
-  // Patient Profile
+  // Patient Profile – uses Next.js API with auto-fix logic instead of direct Supabase
   async getProfile() {
-    const startTime = Date.now();
     console.log('═══════════════════════════════════════');
-    console.log('[APP] Loading profile...');
+    console.log('[APP] Loading profile via API...');
 
     const { data: { session } } = await supabase.auth.getSession();
-    console.log('[APP] Session present:', !!session);
-    console.log('[APP] Session user:', session?.user?.id, session?.user?.email);
 
-    const { patientId, userId } = await requirePatientContext();
-    console.log('[APP] Patient ID:', patientId);
-    console.log('[APP] User ID:', userId);
-
-    const { data, error } = await supabase
-      .from('patients')
-      .select('*, practitioners(full_name, email, phone)')
-      .eq('id', patientId)
-      .maybeSingle();
-
-    const queryDuration = Date.now() - startTime;
-    console.log(`[APP] Patient query duration: ${queryDuration}ms`);
-    console.log('[APP] Patient data present:', !!data);
-    console.log('[APP] Patient query error:', error ? error.message : 'none');
-
-    if (error) {
-      console.error('[APP] Profile load error:', error);
-      console.error('[APP] Error code:', (error as any).code);
-      console.error('[APP] Error details:', (error as any).details);
-      console.error('[APP] Error hint:', (error as any).hint);
-      throw error;
+    if (!session?.access_token) {
+      console.log('[APP] No session token');
+      console.log('═══════════════════════════════════════');
+      throw createAuthError('AUTH_REQUIRED', 'Session utilisateur absente');
     }
 
-    if (!data) {
-      console.log('[APP] Profile not found for patient:', patientId);
-      console.log('[APP] Checking membership integrity...');
+    console.log('[APP] Session user:', session.user?.id, session.user?.email);
 
-      // Extra diagnostic: check if the membership row points to a valid patient
-      const { data: membership } = await supabase
-        .from('patient_memberships')
-        .select('patient_id, patient_user_id')
-        .eq('patient_user_id', userId)
-        .maybeSingle();
+    try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+      const url = `${apiUrl}/api/mobile/patient/profile`;
 
-      if (membership) {
-        console.log('[APP] Membership exists:', JSON.stringify(membership));
-        console.log('[APP] But patient row is missing for patient_id:', membership.patient_id);
-      } else {
-        console.log('[APP] No membership found for user_id:', userId);
+      console.log('[APP] GET', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('[APP] Status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('[APP] API error:', errorText);
+
+        if (response.status === 401) {
+          throw createAuthError('AUTH_REQUIRED', 'Session invalide');
+        }
+        if (response.status === 404) {
+          throw createAuthError('PATIENT_NOT_READY', 'Patient non trouvé');
+        }
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      // Check if patient exists at all in the DB
-      const { data: patientExists } = await supabase
-        .from('patients')
-        .select('id, email, activated, practitioner_id')
-        .eq('id', patientId)
-        .maybeSingle();
-
-      console.log('[APP] Direct patient lookup:', patientExists ? JSON.stringify(patientExists) : 'not found');
+      const data = await response.json();
+      console.log('[APP] Profile loaded:', data.email);
+      console.log('[APP] Name:', data.firstName, data.lastName);
+      console.log('[APP] Premium:', data.isPremium);
+      console.log('[APP] Naturopathe:', data.naturopathe?.fullName || 'none');
       console.log('═══════════════════════════════════════');
 
-      throw new Error('Patient profile not found');
+      return {
+        id: data.id,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone || null,
+        isPremium: data.isPremium || false,
+        subscription: data.subscription || null,
+        naturopathe: data.naturopathe || null,
+      };
+
+    } catch (error) {
+      console.error('[APP] Exception:', error);
+      console.log('═══════════════════════════════════════');
+      throw error;
     }
-
-    // Handle both old schema (name) and new schema (first_name, last_name)
-    let firstName = data.first_name;
-    let lastName = data.last_name;
-    if (!firstName && data.name) {
-      const nameParts = data.name.split(' ');
-      firstName = nameParts[0] || '';
-      lastName = nameParts.slice(1).join(' ') || '';
-    }
-
-    const duration = Date.now() - startTime;
-    console.log(`[APP] Profile loaded in ${duration}ms: ${data?.email}`);
-    console.log('[APP] Patient name:', firstName, lastName);
-    console.log('[APP] Practitioner:', data.practitioners ? (data.practitioners as any).full_name : 'none');
-    console.log('[APP] Activated:', data.activated, '| Premium:', data.is_premium);
-    console.log('═══════════════════════════════════════');
-
-    return {
-      id: data.id,
-      email: data.email,
-      firstName,
-      lastName,
-      phone: data.phone,
-      practitioner: data.practitioners ? {
-        fullName: (data.practitioners as any).full_name,
-        email: (data.practitioners as any).email,
-        phone: (data.practitioners as any).phone,
-      } : null,
-    };
   },
 
   async updateProfile(profileData: { firstName?: string; lastName?: string; phone?: string }) {
