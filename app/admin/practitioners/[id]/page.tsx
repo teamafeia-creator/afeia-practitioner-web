@@ -161,6 +161,9 @@ export default function AdminPractitionerDetailPage() {
         subtitle="Gestion de l'identite et des actions admin."
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button variant="ghost" onClick={() => router.push('/admin')}>
+              ← Retour au dashboard admin
+            </Button>
             <Button variant="outline" onClick={resendInvite}>
               Reinviter
             </Button>

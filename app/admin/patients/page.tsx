@@ -158,9 +158,14 @@ export default function AdminPatientsPage() {
         title="Patients"
         subtitle="Identites patients et statuts."
         actions={
-          <Button variant="outline" onClick={exportCsv}>
-            Exporter CSV
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="ghost" onClick={() => router.push('/admin')}>
+              ← Retour au dashboard admin
+            </Button>
+            <Button variant="outline" onClick={exportCsv}>
+              Exporter CSV
+            </Button>
+          </div>
         }
       />
 

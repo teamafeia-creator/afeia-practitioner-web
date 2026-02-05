@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -23,11 +23,11 @@ export async function GET(request: NextRequest) {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
     const { data, count, error } = await supabase
-      .from('patients')
+      .from('patients_identity')
       .select(
-        'id, full_name, name, email, practitioner_id, circular_enabled, last_circular_sync_at, last_circular_sync_status, practitioners(full_name)',
+        'id, full_name, email, practitioner_id, circular_enabled, last_circular_sync_at, last_circular_sync_status, practitioners_public(full_name)',
         { count: 'exact' }
       )
       .eq('circular_enabled', true)
@@ -39,12 +39,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors du chargement Circular.' }, { status: 500 });
     }
 
-    const rows = (data ?? []).map((patient) => ({
-      ...patient,
-      full_name: patient.full_name ?? patient.name ?? ''
-    }));
-
-    return NextResponse.json({ patients: rows, total: count ?? 0 });
+    return NextResponse.json({ patients: data ?? [], total: count ?? 0 });
   } catch (error) {
     console.error('[admin] circular fetch exception:', error);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -33,12 +33,12 @@ export async function GET(request: NextRequest) {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
 
     let query = supabase
-      .from('patients')
+      .from('patients_identity')
       .select(
-        'id, practitioner_id, full_name, name, email, phone, city, status, is_premium, created_at, practitioners(full_name)',
+        'id, practitioner_id, full_name, email, phone, city, status, is_premium, created_at, practitioners_public(full_name)',
         { count: 'exact' }
       );
 
@@ -66,8 +66,7 @@ export async function GET(request: NextRequest) {
 
     const patients = (data ?? []).map((patient) => ({
       ...patient,
-      full_name: patient.full_name ?? patient.name ?? '',
-      practitioner_name: patient.practitioners?.[0]?.full_name ?? null
+      practitioner_name: patient.practitioners_public?.[0]?.full_name ?? null
     }));
 
     return NextResponse.json({ patients, total: count ?? 0 });

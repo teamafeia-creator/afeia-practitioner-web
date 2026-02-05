@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 export async function GET(
@@ -13,12 +13,12 @@ export async function GET(
 
   try {
     const { patientId } = await params;
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
-      .from('patients')
+      .from('patients_identity')
       .select(
-        'id, practitioner_id, full_name, name, email, phone, age, city, status, is_premium, circular_enabled, last_circular_sync_at, last_circular_sync_status'
+        'id, practitioner_id, full_name, email, phone, age, city, status, is_premium, circular_enabled, last_circular_sync_at, last_circular_sync_status'
       )
       .eq('id', patientId)
       .single();
@@ -28,10 +28,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      patient: {
-        ...data,
-        full_name: data.full_name ?? data.name ?? ''
-      }
+      patient: data
     });
   } catch (error) {
     console.error('[admin] patient detail error:', error);
@@ -64,13 +61,13 @@ export async function PATCH(
       updated_at: new Date().toISOString()
     };
 
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
-      .from('patients')
+      .from('patients_identity')
       .update(updates)
       .eq('id', patientId)
       .select(
-        'id, practitioner_id, full_name, name, email, phone, age, city, status, is_premium, circular_enabled, last_circular_sync_at, last_circular_sync_status'
+        'id, practitioner_id, full_name, email, phone, age, city, status, is_premium, circular_enabled, last_circular_sync_at, last_circular_sync_status'
       )
       .single();
 
@@ -80,10 +77,7 @@ export async function PATCH(
     }
 
     return NextResponse.json({
-      patient: {
-        ...data,
-        full_name: data.full_name ?? data.name ?? ''
-      }
+      patient: data
     });
   } catch (error) {
     console.error('[admin] patient update exception:', error);

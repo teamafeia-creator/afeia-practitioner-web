@@ -174,6 +174,9 @@ export default function AdminPractitionersPage() {
         subtitle="Liste des praticiens et statut de la plateforme."
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button variant="ghost" onClick={() => router.push('/admin')}>
+              ← Retour au dashboard admin
+            </Button>
             <Button variant="outline" onClick={exportCsv}>
               Exporter CSV
             </Button>

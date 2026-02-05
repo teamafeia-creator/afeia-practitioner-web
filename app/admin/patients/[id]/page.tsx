@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -33,6 +33,7 @@ type PatientIdentity = {
 
 export default function AdminPatientDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const patientId = params?.id as string;
   const [patient, setPatient] = useState<PatientIdentity | null>(null);
   const [loading, setLoading] = useState(true);
@@ -141,9 +142,14 @@ export default function AdminPatientDetailPage() {
         title={patient.full_name}
         subtitle="Identite uniquement (sans donnees de sante)."
         actions={
-          <Button onClick={saveChanges} disabled={saving}>
-            {saving ? 'Enregistrement...' : 'Enregistrer'}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="ghost" onClick={() => router.push('/admin')}>
+              ← Retour au dashboard admin
+            </Button>
+            <Button onClick={saveChanges} disabled={saving}>
+              {saving ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </div>
         }
       />
 

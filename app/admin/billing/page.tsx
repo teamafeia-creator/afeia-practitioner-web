@@ -19,7 +19,7 @@ type BillingRow = {
   current_period_end: string | null;
   payment_failed: boolean | null;
   latest_invoice_id: string | null;
-  practitioners?: {
+  practitioners_public?: {
     full_name: string | null;
     email: string | null;
   }[] | null;
@@ -141,7 +141,7 @@ export default function AdminBillingPage() {
             key: 'practitioner',
             header: 'Praticien',
             render: (row) => {
-              const practitioner = row.practitioners?.[0];
+              const practitioner = row.practitioners_public?.[0];
               return (
                 <div className="flex flex-col">
                   <span className="font-medium text-charcoal">

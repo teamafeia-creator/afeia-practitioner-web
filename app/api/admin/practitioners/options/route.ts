@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
 
 export async function GET(request: NextRequest) {
@@ -9,9 +9,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseAdminClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .select('id, full_name')
       .order('full_name', { ascending: true });
 
