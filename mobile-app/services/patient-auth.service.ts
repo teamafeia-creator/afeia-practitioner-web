@@ -239,10 +239,15 @@ export const patientAuthService = {
         .from('patients')
         .select('id, email, practitioner_id')
         .eq('email', email.toLowerCase().trim())
-        .single();
+        .maybeSingle();
 
-      if (patientError || !patient) {
-        console.error('❌ Patient non trouvé');
+      if (patientError) {
+        console.error('❌ Erreur recherche patient:', patientError);
+        return { success: false, error: 'Erreur lors de la recherche du compte' };
+      }
+
+      if (!patient) {
+        console.log('ℹ️ Patient non trouvé pour email:', email);
         return {
           success: false,
           error: 'Aucun compte trouvé avec cet email',
