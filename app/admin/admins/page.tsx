@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AdminDataTable } from '@/components/admin/AdminDataTable';
 import { showToast } from '@/components/ui/Toaster';
+import { AdminBackBar } from '@/components/admin/AdminBackBar';
 
 type AdminRow = {
   email: string;
@@ -82,6 +83,7 @@ export default function AdminAllowlistPage() {
 
   return (
     <div className="space-y-6">
+      <AdminBackBar />
       <PageHeader
         title="Admins"
         subtitle="Gerer la liste des emails autorises a acceder a l'espace admin."

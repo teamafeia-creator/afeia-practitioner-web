@@ -50,7 +50,11 @@ export function useDeletePractitioner() {
         throw new Error(error.error || 'Erreur lors de la suppression');
       }
 
-      return response.json();
+      const payload = await response.json();
+      if (payload.success === false) {
+        throw new Error(payload.error || 'Erreur lors de la suppression');
+      }
+      return payload;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'practitioners'] });
@@ -72,13 +76,13 @@ export function useFreshDatabase() {
         },
         body: JSON.stringify({ confirmationCode })
       });
+      const payload = await response.json();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erreur lors de la réinitialisation');
+      if (!response.ok || payload.ok === false) {
+        throw new Error(payload.error || 'Erreur lors de la réinitialisation');
       }
 
-      return response.json();
+      return payload;
     }
   });
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useFreshDatabase } from '@/hooks/useAdmin';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -9,11 +10,16 @@ import { showToast } from '@/components/ui/Toaster';
 const EXPECTED_CONFIRMATION = 'SUPPRIMER TOUTES LES DONNEES';
 const EXPECTED_CODE = 'FRESH_DATABASE_2026';
 
-export function FreshDatabaseButton() {
+type FreshDatabaseButtonProps = {
+  onSuccess?: () => void;
+};
+
+export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
   const [step, setStep] = useState(0); // 0: initial, 1: warning, 2: confirm, 3: code
   const [confirmationText, setConfirmationText] = useState('');
   const [code, setCode] = useState('');
   const freshDatabaseMutation = useFreshDatabase();
+  const router = useRouter();
 
   const handleReset = () => {
     setStep(0);
@@ -24,13 +30,12 @@ export function FreshDatabaseButton() {
   const handleFreshDatabase = async () => {
     try {
       const result = await freshDatabaseMutation.mutateAsync(code);
-      showToast.success(`Base de donnees reinitialisee ! ${result.totalDeleted} lignes supprimees.`);
+      showToast.success(
+        `Reinitialisation terminee. ${result.totalDeleted} lignes supprimees.`
+      );
       handleReset();
-
-      // Recharger la page apres 2 secondes
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      onSuccess?.();
+      router.refresh();
     } catch (error) {
       showToast.error(error instanceof Error ? error.message : 'Erreur lors de la reinitialisation');
     }
