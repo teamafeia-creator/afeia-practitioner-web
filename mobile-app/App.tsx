@@ -2,7 +2,27 @@ import './polyfill';
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Constants from 'expo-constants';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
+
+// ===========================================
+// Configuration Check at Startup
+// ===========================================
+const logAppConfiguration = () => {
+  console.log('=== Configuration App Mobile AFEIA ===');
+  console.log('Supabase URL:', Constants.expoConfig?.extra?.supabaseUrl || '(non configure)');
+  console.log('API Base URL:', Constants.expoConfig?.extra?.apiBaseUrl || '(non configure)');
+  console.log('======================================');
+
+  if (!Constants.expoConfig?.extra?.apiBaseUrl) {
+    console.warn('⚠️  ATTENTION : API Base URL non configuree !');
+    console.warn('   Creez le fichier mobile-app/.env avec EXPO_PUBLIC_API_URL');
+    console.warn('   Puis relancez avec : npx expo start --clear');
+  }
+};
+
+// Log configuration on module load
+logAppConfiguration();
 // New Patient Auth Screens
 import PatientWelcomeScreen from './screens/PatientWelcomeScreen';
 import PatientActivateScreen from './screens/PatientActivateScreen';
