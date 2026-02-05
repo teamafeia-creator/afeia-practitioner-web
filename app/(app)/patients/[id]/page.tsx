@@ -7,9 +7,12 @@ import { ActivationCard } from '@/components/patients/ActivationCard';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Toast } from '@/components/ui/Toast';
+import { Modal, ModalFooter } from '@/components/ui/Modal';
 import { getPatientById } from '@/lib/queries';
 import { supabase } from '@/lib/supabase';
+import { useDeletePatient } from '@/hooks/usePatients';
 import type { PatientWithDetails } from '@/lib/types';
+import { Trash2 } from 'lucide-react';
 
 export default function PatientDetailPage() {
   const params = useParams<{ id: string }>();
@@ -27,6 +30,33 @@ export default function PatientDetailPage() {
     description?: string;
     variant?: 'success' | 'error' | 'info';
   } | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const deletePatientMutation = useDeletePatient();
+
+  // Handler pour supprimer le patient
+  const handleDeletePatient = async () => {
+    try {
+      await deletePatientMutation.mutateAsync(patientId);
+      setShowDeleteModal(false);
+      setToast({
+        title: 'Patient supprime',
+        description: 'Le dossier patient a ete supprime avec succes.',
+        variant: 'success'
+      });
+      // Rediriger vers la liste des patients
+      setTimeout(() => {
+        router.push('/patients?deleted=1');
+      }, 1500);
+    } catch (err) {
+      console.error('Erreur suppression patient:', err);
+      setToast({
+        title: 'Erreur',
+        description: err instanceof Error ? err.message : 'Impossible de supprimer le patient.',
+        variant: 'error'
+      });
+    }
+  };
 
   // Fetch activation code from database
   const fetchActivationCode = useCallback(async () => {
@@ -390,12 +420,52 @@ export default function PatientDetailPage() {
               </div>
             )}
           </div>
-          <div className="mt-6 pt-4 border-t border-sable">
+          <div className="mt-6 pt-4 border-t border-sable flex justify-between items-center">
             <Button variant="secondary" onClick={() => router.push('/patients')}>
               Retour a la liste
             </Button>
+            <Button
+              variant="ghost"
+              className="text-red-600 hover:bg-red-50"
+              onClick={() => setShowDeleteModal(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Supprimer le patient
+            </Button>
           </div>
         </Card>
+
+        {/* Modal de confirmation de suppression */}
+        <Modal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          title="Supprimer le patient"
+          description="Cette action est irreversible. Le dossier du patient sera marque comme supprime."
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-warmgray">
+              Etes-vous sur de vouloir supprimer le dossier de <strong>{patientDisplayName}</strong> ?
+            </p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-800">
+                Cette action supprimera definitivement l&apos;acces a ce dossier patient.
+              </p>
+            </div>
+          </div>
+          <ModalFooter>
+            <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
+              Annuler
+            </Button>
+            <Button
+              variant="primary"
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDeletePatient}
+              loading={deletePatientMutation.isPending}
+            >
+              {deletePatientMutation.isPending ? 'Suppression...' : 'Supprimer'}
+            </Button>
+          </ModalFooter>
+        </Modal>
 
         {toast ? (
           <Toast

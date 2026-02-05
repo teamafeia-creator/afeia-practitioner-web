@@ -47,6 +47,11 @@ const shortcuts = [
     title: 'Circular',
     description: 'Synchroniser les patients et statuts Circular.',
     href: '/admin/circular'
+  },
+  {
+    title: 'Base de donnees',
+    description: 'Outils de maintenance et reinitialisation.',
+    href: '/admin/database'
   }
 ];
 

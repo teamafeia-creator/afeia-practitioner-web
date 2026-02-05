@@ -1,0 +1,87 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { requireAdmin } from '@/lib/server/adminGuard';
+
+/**
+ * GET /api/admin/practitioners/[practitionerId]
+ * Récupérer les détails d'un praticien
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ practitionerId: string }> }
+) {
+  const guard = await requireAdmin(request);
+  if ('response' in guard) {
+    return guard.response;
+  }
+
+  try {
+    const { practitionerId } = await params;
+    const supabase = createSupabaseAdminClient();
+
+    const { data: practitioner, error } = await supabase
+      .from('practitioners')
+      .select('*')
+      .eq('id', practitionerId)
+      .single();
+
+    if (error || !practitioner) {
+      return NextResponse.json({ error: 'Praticien non trouvé.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ practitioner });
+  } catch (err) {
+    console.error('Exception GET practitioner:', err);
+    return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/admin/practitioners/[practitionerId]
+ * Supprimer un praticien (admin seulement)
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ practitionerId: string }> }
+) {
+  const guard = await requireAdmin(request);
+  if ('response' in guard) {
+    return guard.response;
+  }
+
+  try {
+    const { practitionerId } = await params;
+    const supabase = createSupabaseAdminClient();
+
+    // 1. Vérifier que le praticien existe
+    const { data: practitioner, error: practError } = await supabase
+      .from('practitioners')
+      .select('id, email, full_name')
+      .eq('id', practitionerId)
+      .single();
+
+    if (practError || !practitioner) {
+      return NextResponse.json({ error: 'Praticien non trouvé.' }, { status: 404 });
+    }
+
+    // 2. Supprimer le praticien dans Supabase Auth
+    // Ceci déclenchera CASCADE pour supprimer dans la table practitioners
+    const { error: authDeleteError } = await supabase.auth.admin.deleteUser(practitionerId);
+
+    if (authDeleteError) {
+      console.error('Erreur suppression auth user:', authDeleteError);
+      return NextResponse.json({ error: 'Erreur lors de la suppression du compte.' }, { status: 500 });
+    }
+
+    console.log(`✅ Praticien ${practitioner.full_name} (${practitionerId}) supprimé par admin ${guard.user.email}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Praticien supprimé avec succès.',
+      practitionerId
+    });
+  } catch (err) {
+    console.error('Exception DELETE practitioner:', err);
+    return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
+  }
+}

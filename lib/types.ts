@@ -5,6 +5,7 @@ export type Practitioner = {
   id: string;
   email: string;
   full_name: string;
+  phone?: string | null;
   default_consultation_reason?: string | null;
   calendly_url?: string | null;
   created_at: string;
