@@ -44,16 +44,24 @@ export default function ProfileScreen({ onBack, onLogout, onEditAnamnese, hasAna
 
   const handleLogout = () => {
     Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      'Deconnexion',
+      'Etes-vous sur de vouloir vous deconnecter ?',
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Déconnexion',
+          text: 'Deconnexion',
           style: 'destructive',
           onPress: async () => {
-            await api.logout();
-            await storage.clearAll();
+            try {
+              await api.logout();
+            } catch (err) {
+              console.error('Logout API error (ignored):', err);
+            }
+            try {
+              await storage.clearAll();
+            } catch (err) {
+              console.error('Storage clear error (ignored):', err);
+            }
             onLogout();
           },
         },

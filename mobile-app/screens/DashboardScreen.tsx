@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   Text,
   View,
@@ -16,12 +17,15 @@ import PlansCard from '../components/dashboard/PlansCard';
 import WearableCard from '../components/dashboard/WearableCard';
 import ArticlesCard from '../components/dashboard/ArticlesCard';
 import { api, isApiAuthError } from '../services/api';
+import { useAuthContext } from '../contexts/AuthContext';
+import { storage } from '../utils/storage';
 
 interface DashboardScreenProps {
   onNavigate?: (screen: string) => void;
 }
 
 export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
+  const { signOut } = useAuthContext();
   const [profile, setProfile] = useState<any>(null);
   const [naturopathe, setNaturopathe] = useState<any>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'pending' | 'error'>('loading');
@@ -30,6 +34,33 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Deconnexion',
+      'Etes-vous sur de vouloir vous deconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Deconnexion',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.logout();
+            } catch (err) {
+              console.error('Logout API error (ignored):', err);
+            }
+            try {
+              await storage.clearAll();
+            } catch (err) {
+              console.error('Storage clear error (ignored):', err);
+            }
+            await signOut();
+          },
+        },
+      ]
+    );
+  };
 
   const loadData = async () => {
     try {
@@ -74,9 +105,14 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
             <Text style={styles.errorText}>{errorMessage}</Text>
           )}
           {status !== 'loading' && (
-            <TouchableOpacity style={styles.retryButton} onPress={loadData}>
-              <Text style={styles.retryButtonText}>Réessayer</Text>
-            </TouchableOpacity>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+                <Text style={styles.retryButtonText}>Reessayer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <Text style={styles.logoutButtonText}>Se deconnecter</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </View>
@@ -151,8 +187,12 @@ const styles = StyleSheet.create({
     color: Colors.grisChaud,
     textAlign: 'center',
   },
-  retryButton: {
+  actionButtons: {
     marginTop: 20,
+    alignItems: 'center',
+    gap: 12,
+  },
+  retryButton: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -161,6 +201,14 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: Colors.blanc,
     fontWeight: '600',
+  },
+  logoutButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  logoutButtonText: {
+    color: '#D32F2F',
+    fontSize: 14,
   },
   header: {
     marginBottom: 20,
