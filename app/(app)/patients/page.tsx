@@ -63,6 +63,7 @@ type PatientMeta = {
 };
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const alphabetWithHash = [...alphabet, '#'];
 const PROGRESS_WINDOW_DAYS = 30;
 
 function getDisplayName(item: PatientRow | InvitationRow): string {
@@ -362,6 +363,10 @@ export default function PatientsPage() {
     }
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -447,17 +452,25 @@ export default function PatientsPage() {
         </div>
       </div>
 
-      {/* Mobile Alphabet Index (horizontal) */}
-      <div className="md:hidden sticky top-[88px] z-10 mb-4">
-        <div className="glass-panel rounded-lg p-2 overflow-x-auto">
-          <div className="flex gap-1">
-            {alphabet.map((letter) => (
+      {/* Mobile Alphabet Index (floating left) */}
+      <div className="md:hidden fixed left-2 top-1/2 -translate-y-1/2 z-30">
+        <div className="glass-panel rounded-full bg-white/80 p-1.5 shadow-lg backdrop-blur max-h-[70vh] overflow-y-auto">
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={scrollToTop}
+              aria-label="Revenir en haut de la liste"
+              className="alphabet-letter h-9 w-9 text-[10px] uppercase tracking-wide"
+            >
+              Tous
+            </button>
+            {alphabetWithHash.map((letter) => (
               <button
                 key={letter}
                 onClick={() => scrollToSection(letter)}
                 disabled={!availableLetters.has(letter)}
+                aria-label={`Aller a la section ${letter}`}
                 className={cn(
-                  'alphabet-letter flex-shrink-0',
+                  'alphabet-letter h-9 w-9 text-sm',
                   activeSection === letter && availableLetters.has(letter) && 'active',
                   !availableLetters.has(letter) && 'disabled'
                 )}
@@ -469,28 +482,39 @@ export default function PatientsPage() {
         </div>
       </div>
 
-      {/* Desktop Alphabet Index (fixed right) */}
-      <div className="hidden md:block fixed right-6 top-1/2 -translate-y-1/2 z-30">
-        <div className="glass-panel alphabet-index">
-          {alphabet.map((letter) => (
-            <button
-              key={letter}
-              onClick={() => scrollToSection(letter)}
-              disabled={!availableLetters.has(letter)}
-              className={cn(
-                'alphabet-letter',
-                activeSection === letter && availableLetters.has(letter) && 'active',
-                !availableLetters.has(letter) && 'disabled'
-              )}
-            >
-              {letter}
-            </button>
-          ))}
+      {/* Main Content */}
+      <div className="md:flex md:items-start md:gap-6">
+        {/* Desktop/Tablet Alphabet Index (left sticky) */}
+        <div className="hidden md:block md:w-12 shrink-0">
+          <div className="sticky top-28">
+            <div className="glass-panel alphabet-index max-h-[calc(100vh-180px)] overflow-y-auto">
+              <button
+                onClick={scrollToTop}
+                aria-label="Revenir en haut de la liste"
+                className="alphabet-letter h-8 w-8 text-[10px] uppercase tracking-wide"
+              >
+                Tous
+              </button>
+              {alphabetWithHash.map((letter) => (
+                <button
+                  key={letter}
+                  onClick={() => scrollToSection(letter)}
+                  disabled={!availableLetters.has(letter)}
+                  aria-label={`Aller a la section ${letter}`}
+                  className={cn(
+                    'alphabet-letter h-8 w-8 text-xs',
+                    activeSection === letter && availableLetters.has(letter) && 'active',
+                    !availableLetters.has(letter) && 'disabled'
+                  )}
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content - with right margin for alphabet index on desktop */}
-      <div className="md:mr-16">
+        <div className="md:flex-1">
         {/* Empty State */}
         {filteredPatients.length === 0 && (
           <div className="glass-card p-8 text-center">
@@ -745,6 +769,7 @@ export default function PatientsPage() {
             </div>
           </section>
         )}
+        </div>
       </div>
 
       {/* Toast */}
