@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Toast } from '@/components/ui/Toast';
@@ -41,6 +41,7 @@ type PatientRow = {
 
 type InvitationRow = {
   id: string;
+  patient_id?: string | null;
   full_name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -72,6 +73,7 @@ function getDisplayName(item: PatientRow | InvitationRow): string {
 }
 
 export default function PatientsPage() {
+  const router = useRouter();
   const [patients, setPatients] = useState<PatientRow[]>([]);
   const [invitations, setInvitations] = useState<InvitationRow[]>([]);
   const [patientMeta, setPatientMeta] = useState<Record<string, PatientMeta>>({});
@@ -223,9 +225,37 @@ export default function PatientsPage() {
     return () => observer.disconnect();
   }, [patients]);
 
+  const uniquePatients = useMemo(() => {
+    const map = new Map<string, PatientRow>();
+    patients.forEach((patient) => {
+      if (!map.has(patient.id)) {
+        map.set(patient.id, patient);
+      }
+    });
+    return [...map.values()];
+  }, [patients]);
+
+  const uniqueInvitations = useMemo(() => {
+    const map = new Map<string, InvitationRow>();
+    invitations.forEach((invitation) => {
+      if (!map.has(invitation.id)) {
+        map.set(invitation.id, invitation);
+      }
+    });
+    return [...map.values()];
+  }, [invitations]);
+
+  const invitationPatientIds = useMemo(() => {
+    return new Set(uniqueInvitations.map((invitation) => invitation.patient_id).filter(Boolean) as string[]);
+  }, [uniqueInvitations]);
+
+  const visiblePatients = useMemo(() => {
+    return uniquePatients.filter((patient) => !invitationPatientIds.has(patient.id));
+  }, [uniquePatients, invitationPatientIds]);
+
   const filteredPatients = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return patients.filter((patient) => {
+    return visiblePatients.filter((patient) => {
       const displayName = getDisplayName(patient);
       const matchSearch = !term || [displayName, patient.city, patient.email].some((value) =>
         value?.toLowerCase().includes(term)
@@ -243,7 +273,7 @@ export default function PatientsPage() {
 
       return matchSearch && matchesStatus && matchesTier;
     });
-  }, [patients, search, statusFilter, tierFilter]);
+  }, [visiblePatients, search, statusFilter, tierFilter]);
 
   const groupedPatients = useMemo(() => {
     const grouped: Record<string, PatientRow[]> = {};
@@ -260,13 +290,13 @@ export default function PatientsPage() {
 
   const filteredInvitations = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return invitations;
-    return invitations.filter((inv) =>
+    if (!term) return uniqueInvitations;
+    return uniqueInvitations.filter((inv) =>
       [getDisplayName(inv), inv.city, inv.email].some((value) =>
         value?.toLowerCase().includes(term)
       )
     );
-  }, [invitations, search]);
+  }, [uniqueInvitations, search]);
 
   const handleResendCode = async (email: string) => {
     setResendingCode(email);
@@ -606,9 +636,37 @@ export default function PatientsPage() {
                 const isExpired = invitation.code_expires_at
                   ? new Date(invitation.code_expires_at) < new Date()
                   : false;
+                const canOpen = Boolean(invitation.patient_id);
+                const handleOpenInvitation = () => {
+                  if (!invitation.patient_id) {
+                    setToast({
+                      title: 'Fiche indisponible',
+                      description: 'La fiche sera disponible apres l\'activation du compte.',
+                      variant: 'info'
+                    });
+                    return;
+                  }
+                  router.push(`/patients/${invitation.patient_id}`);
+                };
 
                 return (
-                  <div key={invitation.id} className="glass-card p-5">
+                  <div
+                    key={invitation.id}
+                    className={cn(
+                      'glass-card p-5 transition',
+                      canOpen && 'cursor-pointer hover:shadow-md'
+                    )}
+                    onClick={handleOpenInvitation}
+                    onKeyDown={(event) => {
+                      if (!canOpen) return;
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleOpenInvitation();
+                      }
+                    }}
+                    role={canOpen ? 'button' : undefined}
+                    tabIndex={canOpen ? 0 : undefined}
+                  >
                     {/* Header */}
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div>
@@ -657,19 +715,30 @@ export default function PatientsPage() {
                         variant="ghost"
                         size="sm"
                         className="text-red-600 hover:bg-red-50"
-                        onClick={() => handleCancelInvitation(invitation.id, invitation.email)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleCancelInvitation(invitation.id, invitation.email);
+                        }}
                       >
                         Annuler
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleResendCode(invitation.email)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleResendCode(invitation.email);
+                        }}
                         disabled={resendingCode === invitation.email}
                       >
                         {resendingCode === invitation.email ? 'Envoi...' : 'Renvoyer le code'}
                       </Button>
                     </div>
+                    {!canOpen && (
+                      <div className="mt-3 text-xs text-warmgray">
+                        Fiche indisponible tant que le patient n&apos;a pas active son compte.
+                      </div>
+                    )}
                   </div>
                 );
               })}
