@@ -12,6 +12,9 @@ type InvitationRecord = {
   patient_id?: string | null;
   practitioner_id?: string | null;
   email?: string | null;
+  full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
 };
 
 const normalizeEmail = (value?: string | null) => value?.trim().toLowerCase() || null;
@@ -220,6 +223,49 @@ export async function POST(request: NextRequest) {
     console.log('   OTP ID:', otpRecord.id);
     console.log('   Patient ID:', patientId);
     console.log('   Invitation ID:', invitation?.id ?? null);
+
+    // Ensure the patient row exists in the patients table.
+    // A membership may reference a patient_id that was never inserted (or was deleted).
+    if (patientId) {
+      const { data: existingPatient } = await supabaseAdmin
+        .from('patients')
+        .select('id')
+        .eq('id', patientId)
+        .maybeSingle();
+
+      if (!existingPatient) {
+        console.warn('⚠️ finalize-auth: patient row missing for', patientId, '– creating it');
+
+        const patientName =
+          invitation?.full_name ||
+          [invitation?.first_name, invitation?.last_name].filter(Boolean).join(' ') ||
+          email.split('@')[0];
+
+        const practitionerId =
+          invitation?.practitioner_id || otpRecord.practitioner_id || null;
+
+        if (practitionerId) {
+          const { error: createPatientError } = await supabaseAdmin
+            .from('patients')
+            .insert({
+              id: patientId,
+              email,
+              name: patientName,
+              practitioner_id: practitionerId,
+              status: 'standard',
+              is_premium: false,
+            });
+
+          if (createPatientError) {
+            console.error('❌ finalize-auth: failed to create patient row', createPatientError);
+          } else {
+            console.log('✅ finalize-auth: patient row created for', patientId);
+          }
+        } else {
+          console.error('❌ finalize-auth: cannot create patient row – no practitioner_id available');
+        }
+      }
+    }
 
     const { user: userLookup, error: userLookupError } =
       await findUserByEmail(email);
