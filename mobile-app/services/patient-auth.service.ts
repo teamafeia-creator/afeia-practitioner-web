@@ -15,6 +15,10 @@ const getApiBaseUrl = () => {
     Constants.expoConfig?.extra?.apiBaseUrl ||
     process.env.EXPO_PUBLIC_API_URL ||
     '';
+
+  // Log configuration status for debugging
+  console.log('[API Config] apiBaseUrl:', apiBaseUrl || '(non configure)');
+
   return apiBaseUrl.replace(/\/$/, '');
 };
 
@@ -30,9 +34,15 @@ const finalizeAuth = async ({
   const apiBaseUrl = getApiBaseUrl();
 
   if (!apiBaseUrl) {
+    console.error('[API Config] ERREUR: URL API non configuree !');
+    console.error('[API Config] Verifiez que mobile-app/.env existe avec EXPO_PUBLIC_API_URL');
     return {
       ok: false,
-      message: 'API non configurée. Contactez votre support.',
+      message:
+        'Configuration manquante : URL API non definie.\n\n' +
+        'Verifiez que le fichier mobile-app/.env contient :\n' +
+        'EXPO_PUBLIC_API_URL=http://VOTRE_IP:PORT\n\n' +
+        'Puis relancez avec : npx expo start --clear',
     };
   }
 
