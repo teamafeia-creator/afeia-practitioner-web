@@ -190,13 +190,13 @@ const styles = StyleSheet.create({
   actionButtons: {
     marginTop: 20,
     alignItems: 'center',
-    gap: 12,
   },
   retryButton: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
     backgroundColor: Colors.teal,
+    marginBottom: 12,
   },
   retryButtonText: {
     color: Colors.blanc,
