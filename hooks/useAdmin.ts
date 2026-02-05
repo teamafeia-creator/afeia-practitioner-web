@@ -68,7 +68,7 @@ export function useDeletePractitioner() {
 export function useFreshDatabase() {
   return useMutation({
     mutationFn: async (confirmationCode: string) => {
-      const response = await fetch('/api/admin/fresh-database', {
+      const response = await fetch('/api/admin/reset-database', {
         method: 'POST',
         credentials: 'include',
         headers: {
