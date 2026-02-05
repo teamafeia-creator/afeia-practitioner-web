@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://afeia.fr';
 
@@ -29,7 +30,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body>
+        <QueryProvider>{children}</QueryProvider>
+      </body>
     </html>
   );
 }
