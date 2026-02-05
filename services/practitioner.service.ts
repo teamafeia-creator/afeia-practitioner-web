@@ -368,6 +368,7 @@ export async function getMyPatientsAndInvitations(): Promise<{
   }>;
   invitations?: Array<{
     id: string;
+    patient_id?: string | null;
     practitioner_id: string;
     email: string;
     full_name?: string | null;
@@ -398,6 +399,7 @@ export async function getMyPatientsAndInvitations(): Promise<{
       .from('patients')
       .select('*')
       .eq('practitioner_id', user.id)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (patientsError) {
