@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { Button } from '@/components/ui/Button';
@@ -21,16 +20,17 @@ export default function AdminAllowlistPage() {
 
   async function loadAdmins() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('admin_allowlist')
-      .select('email, created_at')
-      .order('created_at', { ascending: false });
+    const response = await fetch('/api/admin/admins', { credentials: 'include' });
 
-    if (error) {
+    if (!response.ok) {
       showToast.error('Impossible de charger la liste des admins.');
+      setAdmins([]);
+      setLoading(false);
+      return;
     }
 
-    setAdmins(data ?? []);
+    const data = await response.json();
+    setAdmins(data.admins ?? []);
     setLoading(false);
   }
 
@@ -42,9 +42,16 @@ export default function AdminAllowlistPage() {
     const normalized = email.trim().toLowerCase();
     if (!normalized) return;
 
-    const { error } = await supabase.from('admin_allowlist').insert({ email: normalized });
+    const response = await fetch('/api/admin/admins', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email: normalized })
+    });
 
-    if (error) {
+    if (!response.ok) {
       showToast.error("Erreur lors de l'ajout de l'admin.");
       return;
     }
@@ -55,9 +62,16 @@ export default function AdminAllowlistPage() {
   }
 
   async function handleRemoveAdmin(targetEmail: string) {
-    const { error } = await supabase.from('admin_allowlist').delete().eq('email', targetEmail);
+    const response = await fetch('/api/admin/admins', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email: targetEmail })
+    });
 
-    if (error) {
+    if (!response.ok) {
       showToast.error("Erreur lors de la suppression de l'admin.");
       return;
     }
@@ -100,7 +114,8 @@ export default function AdminAllowlistPage() {
           {
             key: 'created_at',
             header: 'Ajoute le',
-            render: (row) => (row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : '—')
+            render: (row) =>
+              row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : '—'
           },
           {
             key: 'actions',

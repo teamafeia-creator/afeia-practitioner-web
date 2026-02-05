@@ -104,16 +104,16 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
           {status === 'error' && errorMessage && (
             <Text style={styles.errorText}>{errorMessage}</Text>
           )}
-          {status !== 'loading' && (
-            <View style={styles.actionButtons}>
+          <View style={styles.actionButtons}>
+            {status !== 'loading' && (
               <TouchableOpacity style={styles.retryButton} onPress={loadData}>
                 <Text style={styles.retryButtonText}>Reessayer</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                <Text style={styles.logoutButtonText}>Se deconnecter</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            )}
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutButtonText}>Se deconnecter</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );

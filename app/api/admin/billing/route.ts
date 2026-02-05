@@ -10,12 +10,6 @@ function getNumber(value: string | null, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const SORT_FIELDS = new Set(['created_at', 'full_name', 'status']);
-
-/**
- * GET /api/admin/practitioners
- * Liste tous les praticiens (admin seulement)
- */
 export async function GET(request: NextRequest) {
   const guard = await requireAdmin(request);
   if ('response' in guard) {
@@ -26,43 +20,45 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = getNumber(searchParams.get('page'), 1);
     const pageSize = getNumber(searchParams.get('pageSize'), DEFAULT_PAGE_SIZE);
-    const search = searchParams.get('search')?.trim() ?? '';
     const status = searchParams.get('status')?.trim() ?? '';
-    const sortField = SORT_FIELDS.has(searchParams.get('sortField') ?? '')
-      ? (searchParams.get('sortField') as string)
-      : 'created_at';
-    const sortDirection = searchParams.get('sortDirection') === 'asc' ? 'asc' : 'desc';
+    const paymentFailed = searchParams.get('paymentFailed')?.trim() ?? '';
+    const practitionerId = searchParams.get('practitioner')?.trim() ?? '';
 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
     const supabase = createSupabaseAdminClient();
-
     let query = supabase
-      .from('practitioners')
-      .select('id, email, full_name, status, subscription_status, created_at', { count: 'exact' });
+      .from('stripe_subscriptions')
+      .select(
+        'id, practitioner_id, status, price_id, current_period_end, payment_failed, latest_invoice_id, practitioners(full_name, email)',
+        { count: 'exact' }
+      );
 
     if (status) {
       query = query.eq('status', status);
     }
 
-    if (search) {
-      const term = `%${search}%`;
-      query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
+    if (paymentFailed) {
+      query = query.eq('payment_failed', paymentFailed === 'failed');
     }
 
-    query = query.order(sortField, { ascending: sortDirection === 'asc' }).range(from, to);
+    if (practitionerId) {
+      query = query.eq('practitioner_id', practitionerId);
+    }
+
+    query = query.order('current_period_end', { ascending: true }).range(from, to);
 
     const { data, count, error } = await query;
 
     if (error) {
-      console.error('Erreur liste praticiens:', error);
-      return NextResponse.json({ error: 'Erreur lors de la récupération des praticiens.' }, { status: 500 });
+      console.error('[admin] billing fetch error:', error);
+      return NextResponse.json({ error: 'Erreur lors du chargement du billing.' }, { status: 500 });
     }
 
-    return NextResponse.json({ practitioners: data || [], total: count ?? 0 });
-  } catch (err) {
-    console.error('Exception GET practitioners:', err);
+    return NextResponse.json({ billing: data ?? [], total: count ?? 0 });
+  } catch (error) {
+    console.error('[admin] billing fetch exception:', error);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }

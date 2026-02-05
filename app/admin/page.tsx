@@ -1,12 +1,11 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/lib/cn';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
-
-export const revalidate = 0;
-// Keep this page server-rendered without AdminDataTable to avoid client render props.
 
 const DASHBOARD_PREVIEW_LIMIT = 8;
 
@@ -25,6 +24,14 @@ type PatientPreview = {
   email: string | null;
   status: string | null;
   is_premium: boolean | null;
+  practitioner_name?: string | null;
+};
+
+type DashboardStats = {
+  practitioners: number | null;
+  patients: number | null;
+  premiumPatients: number | null;
+  suspendedPractitioners: number | null;
 };
 
 const shortcuts = [
@@ -68,78 +75,77 @@ const buttonSizes = {
   md: 'px-4 py-2.5 text-[13px]'
 };
 
-export default async function AdminDashboardPage() {
-  const supabase = createSupabaseAdminClient();
+export default function AdminDashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats>({
+    practitioners: null,
+    patients: null,
+    premiumPatients: null,
+    suspendedPractitioners: null
+  });
+  const [practitioners, setPractitioners] = useState<PractitionerPreview[]>([]);
+  const [patients, setPatients] = useState<PatientPreview[]>([]);
 
-  const [
-    practitionersCountResult,
-    patientsCountResult,
-    premiumPatientsCountResult,
-    suspendedPractitionersCountResult,
-    practitionersResult,
-    patientsResult
-  ] = await Promise.all([
-    supabase.from('practitioners_public').select('id', { count: 'exact', head: true }),
-    supabase.from('patients_identity').select('id', { count: 'exact', head: true }),
-    supabase
-      .from('patients_identity')
-      .select('id', { count: 'exact', head: true })
-      .or('is_premium.eq.true,status.eq.premium'),
-    supabase
-      .from('practitioners_public')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'suspended'),
-    supabase
-      .from('practitioners_public')
-      .select('id, full_name, email, status, subscription_status, created_at')
-      .order('created_at', { ascending: false })
-      .limit(DASHBOARD_PREVIEW_LIMIT),
-    supabase
-      .from('patients_identity')
-      .select('id, practitioner_id, full_name, email, status, is_premium, created_at')
-      .order('created_at', { ascending: false })
-      .limit(DASHBOARD_PREVIEW_LIMIT)
-  ]);
+  useEffect(() => {
+    let isMounted = true;
 
-  const practitioners = (practitionersResult.data ?? []) as PractitionerPreview[];
-  const patients = (patientsResult.data ?? []) as PatientPreview[];
+    async function loadDashboard() {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/admin/dashboard', { credentials: 'include' });
+        if (!response.ok) {
+          throw new Error('Erreur lors du chargement des statistiques.');
+        }
 
-  const practitionerIds = Array.from(
-    new Set(patients.map((patient) => patient.practitioner_id).filter(Boolean))
-  ) as string[];
+        const data = await response.json();
+        if (!isMounted) return;
 
-  const practitionerNamesResult = practitionerIds.length
-    ? await supabase.from('practitioners_public').select('id, full_name').in('id', practitionerIds)
-    : { data: [] };
-
-  const practitionerNameMap = new Map(
-    (practitionerNamesResult.data ?? []).map((row) => [row.id, row.full_name])
-  );
-
-  const stats = [
-    {
-      label: 'Naturopathes total',
-      value: practitionersCountResult.count ?? 0
-    },
-    {
-      label: 'Patients total',
-      value: patientsCountResult.count ?? 0
-    },
-    {
-      label: 'Patients premium',
-      value: premiumPatientsCountResult.count ?? 0
-    },
-    {
-      label: 'Naturopathes suspendus',
-      value: suspendedPractitionersCountResult.count ?? 0
+        setStats(data.stats);
+        setPractitioners(data.practitioners ?? []);
+        setPatients(data.patients ?? []);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
-  ];
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const statsRows = useMemo(
+    () => [
+      {
+        label: 'Naturopathes total',
+        value: stats.practitioners
+      },
+      {
+        label: 'Patients total',
+        value: stats.patients
+      },
+      {
+        label: 'Patients premium',
+        value: stats.premiumPatients
+      },
+      {
+        label: 'Naturopathes suspendus',
+        value: stats.suspendedPractitioners
+      }
+    ],
+    [stats]
+  );
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Dashboard Admin"
-        subtitle="Vue d'ensemble de la plateforme AFEIA."
+        subtitle="Vue d&apos;ensemble de la plateforme AFEIA."
         actions={
           <Link
             href="/admin/admins"
@@ -158,10 +164,12 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
+          {statsRows.map((stat) => (
             <Card key={stat.label} className="glass-card p-5">
               <p className="text-xs uppercase tracking-[0.3em] text-warmgray">{stat.label}</p>
-              <p className="mt-3 text-3xl font-semibold text-charcoal">{stat.value}</p>
+              <p className="mt-3 text-3xl font-semibold text-charcoal">
+                {loading ? '—' : stat.value ?? '—'}
+              </p>
             </Card>
           ))}
         </div>
@@ -214,11 +222,11 @@ export default async function AdminDashboardPage() {
               {practitioners.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-warmgray">
-                    Aucun praticien récent.
+                    {loading ? 'Chargement...' : 'Aucun praticien récent.'}
                   </td>
                 </tr>
               ) : (
-                practitioners.map((row) => (
+                practitioners.slice(0, DASHBOARD_PREVIEW_LIMIT).map((row) => (
                   <tr key={row.id} className="text-charcoal">
                     <td className="px-4 py-3">{row.full_name ?? '—'}</td>
                     <td className="px-4 py-3">{row.email ?? '—'}</td>
@@ -270,17 +278,15 @@ export default async function AdminDashboardPage() {
               {patients.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-warmgray">
-                    Aucun patient récent.
+                    {loading ? 'Chargement...' : 'Aucun patient récent.'}
                   </td>
                 </tr>
               ) : (
-                patients.map((row) => (
+                patients.slice(0, DASHBOARD_PREVIEW_LIMIT).map((row) => (
                   <tr key={row.id} className="text-charcoal">
                     <td className="px-4 py-3">{row.full_name ?? '—'}</td>
                     <td className="px-4 py-3">{row.email ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      {practitionerNameMap.get(row.practitioner_id ?? '') ?? '—'}
-                    </td>
+                    <td className="px-4 py-3">{row.practitioner_name ?? '—'}</td>
                     <td className="px-4 py-3">
                       {row.is_premium || row.status === 'premium' ? 'premium' : 'standard'}
                     </td>

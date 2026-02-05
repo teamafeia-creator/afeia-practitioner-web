@@ -5,45 +5,32 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { Card } from '@/components/ui/Card';
 import { FreshDatabaseButton } from '@/components/admin/FreshDatabaseButton';
-import { supabase } from '@/lib/supabase';
 
 type Stats = {
-  practitioners: number;
-  patients: number;
-  messages: number;
-  plans: number;
+  practitioners: number | null;
+  patients: number | null;
+  messages: number | null;
+  plans: number | null;
 };
 
 export default function AdminDatabasePage() {
   const [stats, setStats] = useState<Stats>({
-    practitioners: 0,
-    patients: 0,
-    messages: 0,
-    plans: 0,
+    practitioners: null,
+    patients: null,
+    messages: null,
+    plans: null
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [
-          practitionersResult,
-          patientsResult,
-          messagesResult,
-          plansResult,
-        ] = await Promise.all([
-          supabase.from('practitioners').select('id', { count: 'exact', head: true }),
-          supabase.from('patients').select('id', { count: 'exact', head: true }).is('deleted_at', null),
-          supabase.from('messages').select('id', { count: 'exact', head: true }),
-          supabase.from('patient_plans').select('id', { count: 'exact', head: true }),
-        ]);
-
-        setStats({
-          practitioners: practitionersResult.count ?? 0,
-          patients: patientsResult.count ?? 0,
-          messages: messagesResult.count ?? 0,
-          plans: plansResult.count ?? 0,
-        });
+        const response = await fetch('/api/admin/database', { credentials: 'include' });
+        if (!response.ok) {
+          throw new Error('Erreur chargement stats');
+        }
+        const data = await response.json();
+        setStats(data.stats ?? {});
       } catch (err) {
         console.error('Erreur chargement stats:', err);
       } finally {
@@ -73,25 +60,25 @@ export default function AdminDatabasePage() {
           <Card className="glass-card p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Praticiens</p>
             <p className="mt-3 text-3xl font-semibold text-charcoal">
-              {loading ? '...' : stats.practitioners}
+              {loading ? '...' : stats.practitioners ?? '—'}
             </p>
           </Card>
           <Card className="glass-card p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Patients</p>
             <p className="mt-3 text-3xl font-semibold text-charcoal">
-              {loading ? '...' : stats.patients}
+              {loading ? '...' : stats.patients ?? '—'}
             </p>
           </Card>
           <Card className="glass-card p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Messages</p>
             <p className="mt-3 text-3xl font-semibold text-charcoal">
-              {loading ? '...' : stats.messages}
+              {loading ? '...' : stats.messages ?? '—'}
             </p>
           </Card>
           <Card className="glass-card p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Plans</p>
             <p className="mt-3 text-3xl font-semibold text-charcoal">
-              {loading ? '...' : stats.plans}
+              {loading ? '...' : stats.plans ?? '—'}
             </p>
           </Card>
         </div>

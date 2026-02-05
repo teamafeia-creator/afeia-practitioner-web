@@ -1,0 +1,84 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { requireAdmin } from '@/lib/server/adminGuard';
+
+export async function GET(request: NextRequest) {
+  const guard = await requireAdmin(request);
+  if ('response' in guard) {
+    return guard.response;
+  }
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from('admin_allowlist')
+      .select('email, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[admin] allowlist fetch error:', error);
+      return NextResponse.json({ error: 'Impossible de charger la liste des admins.' }, { status: 500 });
+    }
+
+    return NextResponse.json({ admins: data ?? [] });
+  } catch (error) {
+    console.error('[admin] allowlist fetch exception:', error);
+    return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const guard = await requireAdmin(request);
+  if ('response' in guard) {
+    return guard.response;
+  }
+
+  try {
+    const payload = (await request.json()) as { email?: string };
+    const email = payload.email?.trim().toLowerCase();
+    if (!email) {
+      return NextResponse.json({ error: 'Email manquant.' }, { status: 400 });
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase.from('admin_allowlist').insert({ email });
+
+    if (error) {
+      console.error('[admin] allowlist insert error:', error);
+      return NextResponse.json({ error: "Erreur lors de l'ajout de l'admin." }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[admin] allowlist insert exception:', error);
+    return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const guard = await requireAdmin(request);
+  if ('response' in guard) {
+    return guard.response;
+  }
+
+  try {
+    const payload = (await request.json()) as { email?: string };
+    const email = payload.email?.trim().toLowerCase();
+    if (!email) {
+      return NextResponse.json({ error: 'Email manquant.' }, { status: 400 });
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase.from('admin_allowlist').delete().eq('email', email);
+
+    if (error) {
+      console.error('[admin] allowlist delete error:', error);
+      return NextResponse.json({ error: "Erreur lors de la suppression de l'admin." }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[admin] allowlist delete exception:', error);
+    return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
+  }
+}

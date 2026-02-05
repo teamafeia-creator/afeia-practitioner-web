@@ -16,21 +16,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoginRoute = useMemo(() => pathname === ADMIN_LOGIN_PATH, [pathname]);
 
   useEffect(() => {
-    const storedAdmin = localStorage.getItem('isAdmin') === 'true';
+    let isMounted = true;
 
-    if (!storedAdmin && !isLoginRoute) {
-      router.replace(ADMIN_LOGIN_PATH);
-      setIsAdmin(false);
-    } else {
-      setIsAdmin(storedAdmin);
+    async function checkSession() {
+      if (isLoginRoute) {
+        setChecking(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/admin/session', { credentials: 'include' });
+        if (!isMounted) return;
+
+        if (response.ok) {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+          router.replace(ADMIN_LOGIN_PATH);
+        }
+      } catch (error) {
+        console.error(error);
+        if (isMounted) {
+          setIsAdmin(false);
+          router.replace(ADMIN_LOGIN_PATH);
+        }
+      } finally {
+        if (isMounted) {
+          setChecking(false);
+        }
+      }
     }
 
-    setChecking(false);
+    checkSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, [isLoginRoute, router]);
 
-  function handleLogout() {
-    localStorage.removeItem('isAdmin');
-    router.push(ADMIN_LOGIN_PATH);
+  async function handleLogout() {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      router.push(ADMIN_LOGIN_PATH);
+    }
   }
 
   if (checking) {
