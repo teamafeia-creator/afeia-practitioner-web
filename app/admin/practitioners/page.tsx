@@ -82,41 +82,51 @@ export default function AdminPractitionersPage() {
 
     async function loadPractitioners() {
       setLoading(true);
-      const params = new URLSearchParams({
-        page: String(page),
-        pageSize: String(PAGE_SIZE),
-        sortField,
-        sortDirection
-      });
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          pageSize: String(PAGE_SIZE),
+          sortField,
+          sortDirection
+        });
 
-      if (statusFilter) {
-        params.set('status', statusFilter);
-      }
+        if (statusFilter) {
+          params.set('status', statusFilter);
+        }
 
-      if (search.trim()) {
-        params.set('search', search.trim());
-      }
+        if (search.trim()) {
+          params.set('search', search.trim());
+        }
 
-      const response = await fetch(`/api/admin/practitioners?${params.toString()}`, {
-        credentials: 'include'
-      });
+        const response = await fetch(`/api/admin/practitioners?${params.toString()}`, {
+          credentials: 'include'
+        });
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      if (!response.ok) {
-        showToast.error('Erreur lors du chargement des praticiens.');
+        if (!response.ok) {
+          showToast.error('Erreur lors du chargement des praticiens.');
+          setRows([]);
+          setTotal(0);
+          setLoadError('Erreur de chargement.');
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+        setRows(data.practitioners ?? []);
+        setTotal(data.total ?? 0);
+        setLoadError(null);
+      } catch (err) {
+        console.error('[admin] loadPractitioners error:', err);
+        if (!isMounted) return;
+        showToast.error('Erreur réseau lors du chargement des praticiens.');
         setRows([]);
         setTotal(0);
         setLoadError('Erreur de chargement.');
-        setLoading(false);
-        return;
+      } finally {
+        if (isMounted) setLoading(false);
       }
-
-      const data = await response.json();
-      setRows(data.practitioners ?? []);
-      setTotal(data.total ?? 0);
-      setLoadError(null);
-      setLoading(false);
     }
 
     loadPractitioners();

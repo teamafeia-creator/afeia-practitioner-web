@@ -48,35 +48,47 @@ export async function GET(request: NextRequest) {
         .limit(DASHBOARD_PREVIEW_LIMIT)
     ]);
 
-    const errors = [
-      practitionersCountResult.error,
-      patientsCountResult.error,
-      premiumPatientsCountResult.error,
-      suspendedPractitionersCountResult.error,
-      practitionersResult.error,
-      patientsResult.error
-    ].filter(Boolean);
-
-    if (errors.length > 0) {
-      errors.forEach((error) => {
-        console.error('[admin] dashboard query error:', error);
-      });
-      return NextResponse.json({ error: 'Erreur lors du chargement des données.' }, { status: 500 });
+    // Log individual errors but don't fail the entire response
+    if (practitionersCountResult.error) {
+      console.error('[admin] dashboard practitioners count error:', practitionersCountResult.error);
+    }
+    if (patientsCountResult.error) {
+      console.error('[admin] dashboard patients count error:', patientsCountResult.error);
+    }
+    if (premiumPatientsCountResult.error) {
+      console.error('[admin] dashboard premium patients count error:', premiumPatientsCountResult.error);
+    }
+    if (suspendedPractitionersCountResult.error) {
+      console.error('[admin] dashboard suspended practitioners count error:', suspendedPractitionersCountResult.error);
+    }
+    if (practitionersResult.error) {
+      console.error('[admin] dashboard practitioners list error:', practitionersResult.error);
+    }
+    if (patientsResult.error) {
+      console.error('[admin] dashboard patients list error:', patientsResult.error);
     }
 
     const practitioners = practitionersResult.data ?? [];
     const patients =
-      patientsResult.data?.map((patient) => ({
-        ...patient,
-        practitioner_name: patient.practitioners_public?.[0]?.full_name ?? null
-      })) ?? [];
+      patientsResult.data?.map((patient: Record<string, unknown>) => {
+        const practitionersPublic = patient.practitioners_public as
+          | { full_name: string | null }[]
+          | { full_name: string | null }
+          | null;
+        return {
+          ...patient,
+          practitioner_name: Array.isArray(practitionersPublic)
+            ? practitionersPublic[0]?.full_name ?? null
+            : practitionersPublic?.full_name ?? null
+        };
+      }) ?? [];
 
     return NextResponse.json({
       stats: {
-        practitioners: practitionersCountResult.count ?? null,
-        patients: patientsCountResult.count ?? null,
-        premiumPatients: premiumPatientsCountResult.count ?? null,
-        suspendedPractitioners: suspendedPractitionersCountResult.count ?? null
+        practitioners: practitionersCountResult.error ? null : practitionersCountResult.count ?? null,
+        patients: patientsCountResult.error ? null : patientsCountResult.count ?? null,
+        premiumPatients: premiumPatientsCountResult.error ? null : premiumPatientsCountResult.count ?? null,
+        suspendedPractitioners: suspendedPractitionersCountResult.error ? null : suspendedPractitionersCountResult.count ?? null
       },
       practitioners,
       patients

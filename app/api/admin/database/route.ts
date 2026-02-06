@@ -32,10 +32,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       stats: {
-        practitioners: practitionersResult.count ?? null,
-        patients: patientsResult.count ?? null,
-        messages: messagesResult.count ?? null,
-        plans: plansResult.count ?? null
+        practitioners: practitionersResult.error ? null : practitionersResult.count ?? null,
+        patients: patientsResult.error ? null : patientsResult.count ?? null,
+        messages: messagesResult.error ? null : messagesResult.count ?? null,
+        plans: plansResult.error ? null : plansResult.count ?? null
       }
     });
   } catch (error) {

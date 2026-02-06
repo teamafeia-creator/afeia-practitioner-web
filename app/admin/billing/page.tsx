@@ -12,6 +12,11 @@ import { AdminBackBar } from '@/components/admin/AdminBackBar';
 
 const PAGE_SIZE = 10;
 
+type PractitionerPublic = {
+  full_name: string | null;
+  email: string | null;
+};
+
 type BillingRow = {
   id: string;
   practitioner_id: string;
@@ -20,10 +25,7 @@ type BillingRow = {
   current_period_end: string | null;
   payment_failed: boolean | null;
   latest_invoice_id: string | null;
-  practitioners_public?: {
-    full_name: string | null;
-    email: string | null;
-  }[] | null;
+  practitioners_public?: PractitionerPublic[] | PractitionerPublic | null;
 };
 
 export default function AdminBillingPage() {
@@ -51,41 +53,49 @@ export default function AdminBillingPage() {
 
     async function loadBilling() {
       setLoading(true);
-      const params = new URLSearchParams({
-        page: String(page),
-        pageSize: String(PAGE_SIZE)
-      });
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          pageSize: String(PAGE_SIZE)
+        });
 
-      if (statusFilter) {
-        params.set('status', statusFilter);
-      }
+        if (statusFilter) {
+          params.set('status', statusFilter);
+        }
 
-      if (paymentFilter) {
-        params.set('paymentFailed', paymentFilter);
-      }
+        if (paymentFilter) {
+          params.set('paymentFailed', paymentFilter);
+        }
 
-      if (practitionerFilter) {
-        params.set('practitioner', practitionerFilter);
-      }
+        if (practitionerFilter) {
+          params.set('practitioner', practitionerFilter);
+        }
 
-      const response = await fetch(`/api/admin/billing?${params.toString()}`, {
-        credentials: 'include'
-      });
+        const response = await fetch(`/api/admin/billing?${params.toString()}`, {
+          credentials: 'include'
+        });
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      if (!response.ok) {
-        showToast.error('Erreur lors du chargement du billing.');
+        if (!response.ok) {
+          showToast.error('Erreur lors du chargement du billing.');
+          setRows([]);
+          setTotal(0);
+          return;
+        }
+
+        const data = await response.json();
+        setRows(data.billing ?? []);
+        setTotal(data.total ?? 0);
+      } catch (err) {
+        console.error('[admin] loadBilling error:', err);
+        if (!isMounted) return;
+        showToast.error('Erreur réseau lors du chargement du billing.');
         setRows([]);
         setTotal(0);
-        setLoading(false);
-        return;
+      } finally {
+        if (isMounted) setLoading(false);
       }
-
-      const data = await response.json();
-      setRows(data.billing ?? []);
-      setTotal(data.total ?? 0);
-      setLoading(false);
     }
 
     loadBilling();
@@ -143,7 +153,9 @@ export default function AdminBillingPage() {
             key: 'practitioner',
             header: 'Praticien',
             render: (row) => {
-              const practitioner = row.practitioners_public?.[0];
+              const practitioner = Array.isArray(row.practitioners_public)
+                ? row.practitioners_public[0]
+                : row.practitioners_public;
               return (
                 <div className="flex flex-col">
                   <span className="font-medium text-charcoal">
