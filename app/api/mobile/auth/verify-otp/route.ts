@@ -1,6 +1,10 @@
 /**
  * POST /api/mobile/auth/verify-otp
  * Verify OTP code for patient onboarding
+ *
+ * Checks two tables:
+ * 1. patient_questionnaire_codes (hashed) — from questionnaire send-code flow
+ * 2. otp_codes (plaintext) — from dashboard send-activation-code flow
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -30,83 +34,86 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash the code and look it up (use same hash function as send-code)
-    const codeHash = hashQuestionnaireCode(otp);
+    const supabase = getSupabaseAdmin();
 
-    const { data: otpRecord, error } = await getSupabaseAdmin()
+    // --- Strategy 1: Check patient_questionnaire_codes (hashed) ---
+    const codeHash = hashQuestionnaireCode(otp);
+    const { data: questionnaireRecord } = await supabase
       .from('patient_questionnaire_codes')
       .select('id, patient_id, expires_at, used_at, revoked_at')
       .eq('code_hash', codeHash)
       .maybeSingle();
 
-    if (error || !otpRecord) {
+    if (questionnaireRecord) {
+      // Found in questionnaire codes — validate it
+      if (questionnaireRecord.used_at || questionnaireRecord.revoked_at) {
+        return NextResponse.json(
+          { valid: false, message: 'Ce code a déjà été utilisé' },
+          { status: 200 }
+        );
+      }
+
+      if (new Date(questionnaireRecord.expires_at) < new Date()) {
+        return NextResponse.json(
+          { valid: false, message: 'Ce code a expiré' },
+          { status: 200 }
+        );
+      }
+
+      return await buildSuccessResponse(supabase, questionnaireRecord.patient_id, questionnaireRecord.id);
+    }
+
+    // --- Strategy 2: Fallback to otp_codes (plaintext, from dashboard activation) ---
+    const { data: otpCodesRecord } = await supabase
+      .from('otp_codes')
+      .select('id, patient_id, email, expires_at, used')
+      .eq('code', otp)
+      .eq('type', 'activation')
+      .eq('used', false)
+      .maybeSingle();
+
+    if (!otpCodesRecord) {
       return NextResponse.json(
         { valid: false, message: 'Code invalide' },
         { status: 200 }
       );
     }
 
-    // Check if code has been used or revoked
-    if (otpRecord.used_at || otpRecord.revoked_at) {
+    if (otpCodesRecord.used) {
       return NextResponse.json(
         { valid: false, message: 'Ce code a déjà été utilisé' },
         { status: 200 }
       );
     }
 
-    // Check if code has expired
-    if (new Date(otpRecord.expires_at) < new Date()) {
+    if (new Date(otpCodesRecord.expires_at) < new Date()) {
       return NextResponse.json(
         { valid: false, message: 'Ce code a expiré' },
         { status: 200 }
       );
     }
 
-    // Get patient info
-    const { data: patient } = await getSupabaseAdmin()
-      .from('patients')
-      .select('id, name, email')
-      .eq('id', otpRecord.patient_id)
-      .single();
+    // Resolve patient_id — may be null in otp_codes, try email fallback
+    let patientId = otpCodesRecord.patient_id;
+    if (!patientId && otpCodesRecord.email) {
+      const { data: patientByEmail } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('email', otpCodesRecord.email)
+        .maybeSingle();
+      if (patientByEmail) {
+        patientId = patientByEmail.id;
+      }
+    }
 
-    if (!patient) {
+    if (!patientId) {
       return NextResponse.json(
-        { valid: false, message: 'Patient non trouvé' },
+        { valid: false, message: 'Patient non trouvé pour ce code' },
         { status: 200 }
       );
     }
 
-    // Check if patient already has a user account
-    const { data: membership } = await getSupabaseAdmin()
-      .from('patient_memberships')
-      .select('patient_user_id')
-      .eq('patient_id', patient.id)
-      .maybeSingle();
-
-    if (membership) {
-      return NextResponse.json(
-        { valid: false, message: 'Ce patient a déjà un compte. Veuillez vous connecter.' },
-        { status: 200 }
-      );
-    }
-
-    // Generate a temporary token for registration
-    const tempToken = await new SignJWT({
-      patientId: patient.id,
-      otpId: otpRecord.id,
-      purpose: 'registration',
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setExpirationTime('30m')
-      .sign(getJwtSecret());
-
-    return NextResponse.json({
-      valid: true,
-      patientId: patient.id,
-      patientEmail: patient.email,
-      patientName: patient.name,
-      tempToken,
-    });
+    return await buildSuccessResponse(supabase, patientId, otpCodesRecord.id);
   } catch (error) {
     console.error('Error verifying OTP:', error);
     return NextResponse.json(
@@ -114,4 +121,56 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+async function buildSuccessResponse(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  patientId: string,
+  otpRecordId: string,
+) {
+  // Get patient info
+  const { data: patient } = await supabase
+    .from('patients')
+    .select('id, name, email')
+    .eq('id', patientId)
+    .single();
+
+  if (!patient) {
+    return NextResponse.json(
+      { valid: false, message: 'Patient non trouvé' },
+      { status: 200 }
+    );
+  }
+
+  // Check if patient already has a user account
+  const { data: membership } = await supabase
+    .from('patient_memberships')
+    .select('patient_user_id')
+    .eq('patient_id', patient.id)
+    .maybeSingle();
+
+  if (membership) {
+    return NextResponse.json(
+      { valid: false, message: 'Ce patient a déjà un compte. Veuillez vous connecter.' },
+      { status: 200 }
+    );
+  }
+
+  // Generate a temporary token for registration
+  const tempToken = await new SignJWT({
+    patientId: patient.id,
+    otpId: otpRecordId,
+    purpose: 'registration',
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('30m')
+    .sign(getJwtSecret());
+
+  return NextResponse.json({
+    valid: true,
+    patientId: patient.id,
+    patientEmail: patient.email,
+    patientName: patient.name,
+    tempToken,
+  });
 }
