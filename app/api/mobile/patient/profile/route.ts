@@ -135,15 +135,10 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // Get patient with practitioner info
+    // Get patient (without JOIN - practitioner fetched separately)
     let { data: patient, error } = await supabase
       .from('patients')
-      .select(`
-        id, name, email, phone, status, is_premium, activated, practitioner_id,
-        practitioners:practitioner_id (
-          id, full_name, email, phone
-        )
-      `)
+      .select('id, name, email, phone, status, is_premium, activated, practitioner_id')
       .eq('id', patientId)
       .maybeSingle();
 
@@ -204,12 +199,7 @@ export async function GET(request: NextRequest) {
             activated: true,
             activated_at: new Date().toISOString(),
           })
-          .select(`
-            id, name, email, phone, status, is_premium, activated, practitioner_id,
-            practitioners:practitioner_id (
-              id, full_name, email, phone
-            )
-          `)
+          .select('id, name, email, phone, status, is_premium, activated, practitioner_id')
           .single();
 
         if (!createError && newPatient) {
@@ -269,12 +259,7 @@ export async function GET(request: NextRequest) {
           activated: true,
           activated_at: new Date().toISOString(),
         })
-        .select(`
-          id, name, email, phone, status, is_premium, activated, practitioner_id,
-          practitioners:practitioner_id (
-            id, full_name, email, phone
-          )
-        `)
+        .select('id, name, email, phone, status, is_premium, activated, practitioner_id')
         .single();
 
       if (forceError) {
@@ -297,12 +282,7 @@ export async function GET(request: NextRequest) {
         .from('patients')
         .update({ activated: true, activated_at: new Date().toISOString() })
         .eq('id', patientId)
-        .select(`
-          id, name, email, phone, status, is_premium, activated, practitioner_id,
-          practitioners:practitioner_id (
-            id, full_name, email, phone
-          )
-        `)
+        .select('id, name, email, phone, status, is_premium, activated, practitioner_id')
         .single();
 
       if (activated) {
@@ -325,12 +305,7 @@ export async function GET(request: NextRequest) {
           .from('patients')
           .update({ practitioner_id: practitioners[0].id })
           .eq('id', patientId)
-          .select(`
-            id, name, email, phone, status, is_premium, activated, practitioner_id,
-            practitioners:practitioner_id (
-              id, full_name, email, phone
-            )
-          `)
+          .select('id, name, email, phone, status, is_premium, activated, practitioner_id')
           .single();
 
         if (updated) {
@@ -358,7 +333,25 @@ export async function GET(request: NextRequest) {
     console.log(`[MOBILE API] Profile loaded in ${duration}ms`);
 
     const nameParts = patient.name?.split(' ') || ['', ''];
-    const practitioner = patient.practitioners as any;
+
+    // Fetch practitioner separately to avoid silent JOIN failures
+    let practitioner = null;
+    if (patient.practitioner_id) {
+      const { data: prac, error: pracError } = await supabase
+        .from('practitioners')
+        .select('id, full_name, email, phone')
+        .eq('id', patient.practitioner_id)
+        .single();
+
+      if (!pracError && prac) {
+        practitioner = prac;
+        console.log('[MOBILE API] Practitioner found:', prac.full_name);
+      } else {
+        console.log('[MOBILE API] Practitioner fetch error:', pracError?.message);
+      }
+    } else {
+      console.log('[MOBILE API] No practitioner_id on patient');
+    }
 
     return NextResponse.json({
       id: patient.id,
