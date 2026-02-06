@@ -1,101 +1,122 @@
-export interface User {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
+// === Auth ===
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
 }
 
+export interface PatientProfile {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  city?: string;
+  isPremium: boolean;
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  patient: PatientProfile | null;
+  tokens: AuthTokens | null;
+}
+
+// === Naturopathe ===
 export interface Naturopathe {
   id: string;
   fullName: string;
   email: string;
   phone?: string;
   avatarUrl?: string;
+  specializations?: string[];
 }
 
-export interface Complement {
-  id: string;
-  name: string;
-  dosage: string;
-  frequency: string;
-  duration: number;
-  instructions?: string;
-  takenToday: boolean;
-}
-
-export interface Conseil {
-  id: string;
-  category: string;
-  title: string;
-  content: string;
-  date: string;
-  read: boolean;
-}
-
+// === Messages ===
 export interface Message {
   id: string;
   senderId: string;
+  senderType: 'patient' | 'praticien';
   content: string;
-  timestamp: string;
   read: boolean;
+  readAt?: string;
+  createdAt: string;
 }
 
-export interface JournalEntry {
-  id: string;
-  date: string;
-  mood: number;
-  alimentation: number;
-  sleep: number;
-  energy: number;
-  complementsTaken: string[];
-  problems?: string;
-  noteForNaturo?: string;
-}
-
-export interface AnamneseData {
-  section1: any;
-  section2: any;
-  section3: any;
-  section4: any;
-  section5: any;
-  section6: any;
-  section7: any;
-  section8: any;
-  section9: any;
-  section10: any;
-  section11: any;
-  section12: any;
-}
-
-export interface Article {
-  id: string;
-  title: string;
-  category: string;
-  summary: string;
-  content: string;
-  imageUrl?: string;
-  date: string;
-}
-
-export interface WearableData {
-  steps: number;
-  heartRate: number;
-  sleep: number;
-  calories: number;
-  lastSync?: string;
-}
-
+// === Plans ===
 export interface Plan {
   id: string;
-  title: string;
-  description?: string;
-  content: any;
-  status: 'draft' | 'shared' | 'viewed' | 'completed';
+  version: number;
+  status: 'draft' | 'shared';
+  content: Record<string, unknown>;
   sharedAt?: string;
   createdAt: string;
+  updatedAt?: string;
   practitioner?: {
     id: string;
     name: string;
     email: string;
   };
+}
+
+// === Compléments ===
+export interface Complement {
+  id: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  durationDays?: number;
+  startDate?: string;
+  endDate?: string;
+  instructions?: string;
+  active: boolean;
+  takenToday: boolean;
+}
+
+// === Journal ===
+export interface JournalEntry {
+  id: string;
+  date: string;
+  mood: string;
+  alimentationQuality: string;
+  sleepQuality: string;
+  energyLevel: string;
+  complementsTaken?: Record<string, unknown>[];
+  problemesParticuliers?: string;
+  noteNaturopathe?: string;
+}
+
+// === Anamnèse ===
+export interface AnamneseData {
+  id?: string;
+  data: Record<string, unknown>;
+  completed: boolean;
+  completedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// === Articles / Conseils ===
+export interface Article {
+  id: string;
+  title: string;
+  category: string;
+  content: string;
+  excerpt?: string;
+  publishedAt?: string;
+}
+
+// === Appointments ===
+export interface Appointment {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  status: 'scheduled' | 'cancelled' | 'completed';
+  notes?: string;
+}
+
+// === API Response wrapper ===
+export interface ApiResponse<T> {
+  data?: T;
+  error?: string;
+  message?: string;
 }
