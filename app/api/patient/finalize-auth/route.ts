@@ -309,7 +309,19 @@ export async function POST(request: NextRequest) {
         // Auto-fix: assign practitioner if missing
         if (!existingPatient.practitioner_id) {
           console.log('⚠️ finalize-auth: no practitioner assigned, assigning...');
-          const fallbackPractitionerId = invitation?.practitioner_id || otpRecord.practitioner_id;
+          let fallbackPractitionerId = invitation?.practitioner_id || otpRecord.practitioner_id || null;
+
+          // FALLBACK: first practitioner in DB
+          if (!fallbackPractitionerId) {
+            console.warn('⚠️ finalize-auth: no practitioner in invitation/OTP for existing patient, using fallback...');
+            const { data: fallbackPractitioners } = await supabaseAdmin
+              .from('practitioners')
+              .select('id')
+              .order('created_at', { ascending: true })
+              .limit(1);
+
+            fallbackPractitionerId = fallbackPractitioners?.[0]?.id || null;
+          }
 
           if (fallbackPractitionerId) {
             await supabaseAdmin
@@ -317,6 +329,8 @@ export async function POST(request: NextRequest) {
               .update({ practitioner_id: fallbackPractitionerId })
               .eq('id', patientId);
             console.log('✅ finalize-auth: practitioner assigned:', fallbackPractitionerId);
+          } else {
+            console.error('❌ finalize-auth: CRITICAL - No practitioner available for existing patient');
           }
         }
       }
