@@ -10,19 +10,19 @@ function getNumber(value: string | null, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const SORT_FIELDS = new Set(['created_at', 'name', 'status']);
+const SORT_FIELDS = new Set(['created_at', 'full_name', 'status']);
 
 type PatientRecord = {
   id: string;
   practitioner_id: string | null;
-  name: string | null;
+  full_name: string | null;
   email: string | null;
   phone: string | null;
   city: string | null;
   status: string | null;
   is_premium: boolean | null;
   created_at: string | null;
-  practitioners?: { full_name: string | null }[] | { full_name: string | null } | null;
+  practitioners_public?: { full_name: string | null }[] | { full_name: string | null } | null;
 };
 
 export async function GET(request: NextRequest) {
@@ -49,12 +49,12 @@ export async function GET(request: NextRequest) {
     const supabase = createAdminClient();
 
     let query = supabase
-      .from('patients')
+      .from('patients_identity')
       .select(
-        'id, practitioner_id, name, email, phone, city, status, is_premium, created_at, practitioners(full_name)',
+        'id, practitioner_id, full_name, email, phone, city, status, is_premium, created_at, practitioners_public(full_name)',
         { count: 'exact' }
       )
-      .is('deleted_at', null);
+      .order(sortField, { ascending: sortDirection === 'asc' });
 
     if (status === 'premium') {
       query = query.or('status.eq.premium,is_premium.eq.true');
@@ -68,10 +68,10 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       const term = `%${search}%`;
-      query = query.or(`name.ilike.${term},email.ilike.${term}`);
+      query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
     }
 
-    query = query.order(sortField, { ascending: sortDirection === 'asc' }).range(from, to);
+    query = query.range(from, to);
 
     const { data, count, error } = await query;
 
@@ -82,9 +82,9 @@ export async function GET(request: NextRequest) {
 
     const patients = ((data ?? []) as PatientRecord[]).map((patient) => ({
       ...patient,
-      practitioner_name: Array.isArray(patient.practitioners)
-        ? patient.practitioners[0]?.full_name ?? null
-        : patient.practitioners?.full_name ?? null
+      practitioner_name: Array.isArray(patient.practitioners_public)
+        ? patient.practitioners_public[0]?.full_name ?? null
+        : patient.practitioners_public?.full_name ?? null
     }));
 
     return NextResponse.json({ patients, total: count ?? 0 });
