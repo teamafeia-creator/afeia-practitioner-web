@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
+import { queryWithFallback } from '@/lib/server/supabaseFallback';
 
 export async function GET(request: NextRequest) {
   const guard = await requireAdmin(request);
@@ -11,8 +12,14 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createAdminClient();
     const [practitionersResult, patientsResult, messagesResult, plansResult] = await Promise.all([
-      supabase.from('practitioners').select('id', { count: 'exact', head: true }),
-      supabase.from('patients').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+      queryWithFallback(
+        () => supabase.from('practitioners_public').select('id', { count: 'exact', head: true }),
+        () => supabase.from('practitioners').select('id', { count: 'exact', head: true })
+      ),
+      queryWithFallback(
+        () => supabase.from('patients_identity').select('id', { count: 'exact', head: true }),
+        () => supabase.from('patients').select('id', { count: 'exact', head: true }).is('deleted_at', null)
+      ),
       supabase.from('messages').select('id', { count: 'exact', head: true }),
       supabase.from('patient_plans').select('id', { count: 'exact', head: true })
     ]);

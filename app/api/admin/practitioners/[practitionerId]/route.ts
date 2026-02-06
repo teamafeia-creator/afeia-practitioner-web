@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
+import { queryWithFallback } from '@/lib/server/supabaseFallback';
 
 /**
  * GET /api/admin/practitioners/[practitionerId]
@@ -19,12 +20,10 @@ export async function GET(
     const { practitionerId } = await params;
     const supabase = createAdminClient();
 
-    // Utiliser la table source pour eviter les donnees stale des vues publiques
-    const { data: practitioner, error } = await supabase
-      .from('practitioners')
-      .select('*')
-      .eq('id', practitionerId)
-      .single();
+    const { data: practitioner, error } = await queryWithFallback(
+      () => supabase.from('practitioners_public').select('*').eq('id', practitionerId).single(),
+      () => supabase.from('practitioners').select('*').eq('id', practitionerId).single()
+    );
 
     if (error || !practitioner) {
       return NextResponse.json({ error: 'Praticien non trouvé.' }, { status: 404 });
@@ -64,12 +63,22 @@ export async function PATCH(
     };
 
     const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from('practitioners')
-      .update(updates)
-      .eq('id', practitionerId)
-      .select('*')
-      .single();
+    const { data, error } = await queryWithFallback(
+      () =>
+        supabase
+          .from('practitioners_public')
+          .update(updates)
+          .eq('id', practitionerId)
+          .select('*')
+          .single(),
+      () =>
+        supabase
+          .from('practitioners')
+          .update(updates)
+          .eq('id', practitionerId)
+          .select('*')
+          .single()
+    );
 
     if (error) {
       console.error('Erreur update practitioner:', error);
@@ -101,11 +110,20 @@ export async function DELETE(
     const supabase = createAdminClient();
 
     // 1. Vérifier que le praticien existe
-    const { data: practitioner, error: practError } = await supabase
-      .from('practitioners')
-      .select('id, email, full_name')
-      .eq('id', practitionerId)
-      .single();
+    const { data: practitioner, error: practError } = await queryWithFallback(
+      () =>
+        supabase
+          .from('practitioners_public')
+          .select('id, email, full_name')
+          .eq('id', practitionerId)
+          .single(),
+      () =>
+        supabase
+          .from('practitioners')
+          .select('id, email, full_name')
+          .eq('id', practitionerId)
+          .single()
+    );
 
     if (practError || !practitioner) {
       return NextResponse.json({ error: 'Praticien non trouvé.' }, { status: 404 });
@@ -120,10 +138,18 @@ export async function DELETE(
       return NextResponse.json({ error: 'Erreur lors de la suppression du compte.' }, { status: 500 });
     }
 
-    const { count: remainingCount, error: remainingError } = await supabase
-      .from('practitioners')
-      .select('id', { count: 'exact', head: true })
-      .eq('id', practitionerId);
+    const { count: remainingCount, error: remainingError } = await queryWithFallback(
+      () =>
+        supabase
+          .from('practitioners_public')
+          .select('id', { count: 'exact', head: true })
+          .eq('id', practitionerId),
+      () =>
+        supabase
+          .from('practitioners')
+          .select('id', { count: 'exact', head: true })
+          .eq('id', practitionerId)
+    );
 
     if (remainingError) {
       console.error('Erreur verification suppression praticien:', remainingError);

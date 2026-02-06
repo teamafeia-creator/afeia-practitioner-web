@@ -16,7 +16,7 @@ const PAGE_SIZE = 10;
 type PatientRow = {
   id: string;
   practitioner_id: string;
-  name: string | null;
+  full_name: string | null;
   email: string | null;
   phone: string | null;
   city: string | null;
@@ -41,7 +41,7 @@ export default function AdminPatientsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [practitionerFilter, setPractitionerFilter] = useState('');
-  const [sortField, setSortField] = useState<'created_at' | 'name' | 'status'>('created_at');
+  const [sortField, setSortField] = useState<'created_at' | 'full_name' | 'status'>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [practitioners, setPractitioners] = useState<PractitionerOption[]>([]);
   const searchParams = useSearchParams();
@@ -132,10 +132,10 @@ export default function AdminPatientsPage() {
   }, [page, search, sortField, sortDirection, statusFilter, practitionerFilter]);
 
   function exportCsv() {
-    const headers = ['name', 'email', 'phone', 'city', 'status', 'is_premium', 'created_at'];
+    const headers = ['full_name', 'email', 'phone', 'city', 'status', 'is_premium', 'created_at'];
     const lines = rows.map((row) =>
       [
-        row.name,
+        row.full_name,
         row.email ?? '',
         row.phone ?? '',
         row.city ?? '',
@@ -228,9 +228,14 @@ export default function AdminPatientsPage() {
         <div className="flex flex-wrap gap-2">
           <div>
             <label className="text-xs font-medium text-warmgray">Tri</label>
-            <Select value={sortField} onChange={(event) => setSortField(event.target.value as 'created_at' | 'name' | 'status')}>
+            <Select
+              value={sortField}
+              onChange={(event) =>
+                setSortField(event.target.value as 'created_at' | 'full_name' | 'status')
+              }
+            >
               <option value="created_at">Date</option>
-              <option value="name">Nom</option>
+              <option value="full_name">Nom</option>
               <option value="status">Statut</option>
             </Select>
           </div>
@@ -250,12 +255,12 @@ export default function AdminPatientsPage() {
         emptyMessage={errorMessage ?? 'Aucun patient trouve.'}
         columns={[
           {
-            key: 'name',
+            key: 'full_name',
             header: 'Patient',
             render: (row) => (
               <div className="flex flex-col">
-                <span className="font-medium text-charcoal">{row.name ?? '—'}</span>
-                <span className="text-xs text-warmgray">{row.email}</span>
+                <span className="font-medium text-charcoal">{row.full_name ?? '—'}</span>
+                <span className="text-xs text-warmgray">{row.email ?? '—'}</span>
               </div>
             )
           },

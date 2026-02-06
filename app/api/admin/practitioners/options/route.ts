@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/server/adminGuard';
+import { queryWithFallback } from '@/lib/server/supabaseFallback';
 
 export async function GET(request: NextRequest) {
   const guard = await requireAdmin(request);
@@ -10,10 +11,18 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from('practitioners')
-      .select('id, full_name')
-      .order('full_name', { ascending: true });
+    const { data, error } = await queryWithFallback(
+      () =>
+        supabase
+          .from('practitioners_public')
+          .select('id, full_name')
+          .order('full_name', { ascending: true }),
+      () =>
+        supabase
+          .from('practitioners')
+          .select('id, full_name')
+          .order('full_name', { ascending: true })
+    );
 
     if (error) {
       console.error('[admin] practitioners options error:', error);
