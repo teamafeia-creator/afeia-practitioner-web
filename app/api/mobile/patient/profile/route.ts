@@ -148,11 +148,14 @@ export async function GET(request: NextRequest) {
 
     // --- Auto-fix: create patient row if missing ---
     if (!patient && userEmail) {
-      console.log('[MOBILE API] Patient row missing, attempting auto-creation...');
+      console.log('[MOBILE API] Patient row missing for patientId:', patientId);
+      console.log('[MOBILE API] Attempting auto-creation...');
 
-      // Find practitioner from invitation or OTP context
+      // Chercher practitioner_id (invitation > OTP > fallback)
       let practitionerId: string | null = null;
+      let patientName: string = userEmail.split('@')[0];
 
+      // Essai 1 : Invitation
       const { data: invitation } = await supabase
         .from('patient_invitations')
         .select('practitioner_id, full_name')
@@ -161,8 +164,13 @@ export async function GET(request: NextRequest) {
         .limit(1)
         .maybeSingle();
 
-      practitionerId = invitation?.practitioner_id ?? null;
+      if (invitation) {
+        practitionerId = invitation.practitioner_id ?? null;
+        patientName = invitation.full_name || patientName;
+        console.log('[MOBILE API] Found invitation with practitioner:', practitionerId);
+      }
 
+      // Essai 2 : OTP
       if (!practitionerId) {
         const { data: otp } = await supabase
           .from('otp_codes')
@@ -172,44 +180,71 @@ export async function GET(request: NextRequest) {
           .limit(1)
           .maybeSingle();
 
-        practitionerId = otp?.practitioner_id ?? null;
+        if (otp) {
+          practitionerId = otp.practitioner_id ?? null;
+          console.log('[MOBILE API] Found OTP with practitioner:', practitionerId);
+        }
       }
 
+      // FALLBACK : Premier praticien de la base
       if (!practitionerId) {
+        console.warn('[MOBILE API] No practitioner in invitation/OTP, using fallback...');
+
         const { data: practitioners } = await supabase
           .from('practitioners')
           .select('id')
+          .order('created_at', { ascending: true })
           .limit(1);
 
         practitionerId = practitioners?.[0]?.id ?? null;
+
+        if (practitionerId) {
+          console.log('[MOBILE API] Using fallback practitioner:', practitionerId);
+        }
       }
 
-      if (practitionerId) {
-        const name = invitation?.full_name || userEmail.split('@')[0];
+      // BLOQUER si toujours null (erreur critique)
+      if (!practitionerId) {
+        console.error('[MOBILE API] CRITICAL: No practitioner available in database');
+        return NextResponse.json(
+          { message: 'Configuration système invalide: aucun praticien disponible' },
+          { status: 500 }
+        );
+      }
 
-        const { data: newPatient, error: createError } = await supabase
-          .from('patients')
-          .insert({
-            id: patientId,
-            email: userEmail,
-            name,
-            practitioner_id: practitionerId,
-            status: 'standard',
-            is_premium: false,
-            activated: true,
-            activated_at: new Date().toISOString(),
-          })
-          .select('id, name, email, phone, status, is_premium, activated, practitioner_id')
-          .single();
+      // Créer patient (on est sûr d'avoir un practitioner_id maintenant)
+      const { data: newPatient, error: createError } = await supabase
+        .from('patients')
+        .insert({
+          id: patientId,
+          email: userEmail,
+          name: patientName,
+          practitioner_id: practitionerId,
+          status: 'standard',
+          is_premium: false,
+          activated: true,
+          activated_at: new Date().toISOString(),
+        })
+        .select('id, name, email, phone, status, is_premium, activated, practitioner_id')
+        .single();
 
-        if (!createError && newPatient) {
-          console.log('[MOBILE API] Patient auto-created:', newPatient.name);
-          patient = newPatient;
-        } else {
-          console.log('[MOBILE API] Error auto-creating patient:', createError?.message);
-        }
+      if (createError) {
+        console.error('[MOBILE API] Error auto-creating patient:', createError.message);
+        return NextResponse.json(
+          { message: 'Impossible de créer le patient: ' + createError.message },
+          { status: 500 }
+        );
+      }
+
+      if (newPatient) {
+        console.log('[MOBILE API] Patient auto-created:', newPatient.name);
+        patient = newPatient;
       } else {
-        console.log('[MOBILE API] No practitioner available for patient creation');
+        console.error('[MOBILE API] Patient creation returned null');
+        return NextResponse.json(
+          { message: 'Erreur inconnue lors de la création du patient' },
+          { status: 500 }
+        );
       }
     }
 
@@ -298,6 +333,7 @@ export async function GET(request: NextRequest) {
       const { data: practitioners } = await supabase
         .from('practitioners')
         .select('id')
+        .order('created_at', { ascending: true })
         .limit(1);
 
       if (practitioners?.[0]) {
