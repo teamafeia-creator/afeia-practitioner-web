@@ -126,10 +126,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mark OTP as used
+    // Mark OTP as used in both tables (only one will match)
     await getSupabaseAdmin()
       .from('patient_questionnaire_codes')
       .update({ used_at: new Date().toISOString() })
+      .eq('id', tokenPayload.otpId);
+
+    await getSupabaseAdmin()
+      .from('otp_codes')
+      .update({ used: true })
       .eq('id', tokenPayload.otpId);
 
     // Get patient info
