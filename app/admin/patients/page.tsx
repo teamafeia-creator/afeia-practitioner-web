@@ -60,15 +60,22 @@ export default function AdminPatientsPage() {
     let isMounted = true;
 
     async function loadPractitioners() {
-      const response = await fetch('/api/admin/practitioners/options', { credentials: 'include' });
-      if (!response.ok) {
-        showToast.error('Erreur lors du chargement des praticiens.');
-        return;
-      }
+      try {
+        const response = await fetch('/api/admin/practitioners/options', { credentials: 'include' });
+        if (!response.ok) {
+          showToast.error('Erreur lors du chargement des praticiens.');
+          return;
+        }
 
-      const data = await response.json();
-      if (!isMounted) return;
-      setPractitioners(data.practitioners ?? []);
+        const data = await response.json();
+        if (!isMounted) return;
+        setPractitioners(data.practitioners ?? []);
+      } catch (err) {
+        console.error('[admin] loadPractitioners options error:', err);
+        if (isMounted) {
+          showToast.error('Erreur réseau lors du chargement des praticiens.');
+        }
+      }
     }
 
     loadPractitioners();
@@ -85,43 +92,52 @@ export default function AdminPatientsPage() {
       setLoading(true);
       setErrorMessage(null);
 
-      const params = new URLSearchParams({
-        page: String(page),
-        pageSize: String(PAGE_SIZE),
-        sortField,
-        sortDirection
-      });
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          pageSize: String(PAGE_SIZE),
+          sortField,
+          sortDirection
+        });
 
-      if (statusFilter) {
-        params.set('status', statusFilter);
-      }
+        if (statusFilter) {
+          params.set('status', statusFilter);
+        }
 
-      if (practitionerFilter) {
-        params.set('practitioner', practitionerFilter);
-      }
+        if (practitionerFilter) {
+          params.set('practitioner', practitionerFilter);
+        }
 
-      if (search.trim()) {
-        params.set('search', search.trim());
-      }
+        if (search.trim()) {
+          params.set('search', search.trim());
+        }
 
-      const response = await fetch(`/api/admin/patients?${params.toString()}`, { credentials: 'include' });
+        const response = await fetch(`/api/admin/patients?${params.toString()}`, { credentials: 'include' });
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      if (!response.ok) {
-        showToast.error('Erreur lors du chargement des patients.');
-        setErrorMessage('Erreur de chargement des patients (détails en logs serveur).');
+        if (!response.ok) {
+          showToast.error('Erreur lors du chargement des patients.');
+          setErrorMessage('Erreur de chargement des patients (détails en logs serveur).');
+          setRows([]);
+          setTotal(0);
+          return;
+        }
+
+        const data = await response.json();
+        setRows(data.patients ?? []);
+        setTotal(data.total ?? 0);
+        setErrorMessage(null);
+      } catch (err) {
+        console.error('[admin] loadPatients error:', err);
+        if (!isMounted) return;
+        showToast.error('Erreur réseau lors du chargement des patients.');
+        setErrorMessage('Erreur de chargement des patients.');
         setRows([]);
         setTotal(0);
-        setLoading(false);
-        return;
+      } finally {
+        if (isMounted) setLoading(false);
       }
-
-      const data = await response.json();
-      setRows(data.patients ?? []);
-      setTotal(data.total ?? 0);
-      setErrorMessage(null);
-      setLoading(false);
     }
 
     loadPatients();

@@ -21,18 +21,24 @@ export default function AdminAllowlistPage() {
 
   async function loadAdmins() {
     setLoading(true);
-    const response = await fetch('/api/admin/admins', { credentials: 'include' });
+    try {
+      const response = await fetch('/api/admin/admins', { credentials: 'include' });
 
-    if (!response.ok) {
-      showToast.error('Impossible de charger la liste des admins.');
+      if (!response.ok) {
+        showToast.error('Impossible de charger la liste des admins.');
+        setAdmins([]);
+        return;
+      }
+
+      const data = await response.json();
+      setAdmins(data.admins ?? []);
+    } catch (err) {
+      console.error('[admin] loadAdmins error:', err);
+      showToast.error('Erreur réseau lors du chargement des admins.');
       setAdmins([]);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const data = await response.json();
-    setAdmins(data.admins ?? []);
-    setLoading(false);
   }
 
   useEffect(() => {
@@ -43,42 +49,52 @@ export default function AdminAllowlistPage() {
     const normalized = email.trim().toLowerCase();
     if (!normalized) return;
 
-    const response = await fetch('/api/admin/admins', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email: normalized })
-    });
+    try {
+      const response = await fetch('/api/admin/admins', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email: normalized })
+      });
 
-    if (!response.ok) {
-      showToast.error("Erreur lors de l'ajout de l'admin.");
-      return;
+      if (!response.ok) {
+        showToast.error("Erreur lors de l'ajout de l'admin.");
+        return;
+      }
+
+      showToast.success('Admin ajoute.');
+      setEmail('');
+      loadAdmins();
+    } catch (err) {
+      console.error('[admin] handleAddAdmin error:', err);
+      showToast.error("Erreur réseau lors de l'ajout de l'admin.");
     }
-
-    showToast.success('Admin ajoute.');
-    setEmail('');
-    loadAdmins();
   }
 
   async function handleRemoveAdmin(targetEmail: string) {
-    const response = await fetch('/api/admin/admins', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email: targetEmail })
-    });
+    try {
+      const response = await fetch('/api/admin/admins', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email: targetEmail })
+      });
 
-    if (!response.ok) {
-      showToast.error("Erreur lors de la suppression de l'admin.");
-      return;
+      if (!response.ok) {
+        showToast.error("Erreur lors de la suppression de l'admin.");
+        return;
+      }
+
+      showToast.success('Admin retire.');
+      loadAdmins();
+    } catch (err) {
+      console.error('[admin] handleRemoveAdmin error:', err);
+      showToast.error("Erreur réseau lors de la suppression de l'admin.");
     }
-
-    showToast.success('Admin retire.');
-    loadAdmins();
   }
 
   return (

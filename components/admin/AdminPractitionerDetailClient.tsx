@@ -37,73 +37,88 @@ export function AdminPractitionerDetailClient({
   async function saveChanges() {
     setSaving(true);
 
-    const response = await fetch(`/api/admin/practitioners/${practitioner.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        email: practitioner.email,
-        full_name: practitioner.full_name,
-        status: practitioner.status,
-        calendly_url: practitioner.calendly_url,
-        subscription_status: practitioner.subscription_status
-      })
-    });
+    try {
+      const response = await fetch(`/api/admin/practitioners/${practitioner.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: practitioner.email,
+          full_name: practitioner.full_name,
+          status: practitioner.status,
+          calendly_url: practitioner.calendly_url,
+          subscription_status: practitioner.subscription_status
+        })
+      });
 
-    if (!response.ok) {
-      showToast.error('Erreur lors de la mise a jour.');
-    } else {
-      showToast.success('Infos mises a jour.');
-      router.refresh();
+      if (!response.ok) {
+        showToast.error('Erreur lors de la mise a jour.');
+      } else {
+        showToast.success('Infos mises a jour.');
+        router.refresh();
+      }
+    } catch (err) {
+      console.error('[admin] saveChanges error:', err);
+      showToast.error('Erreur réseau lors de la mise a jour.');
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   }
 
   async function triggerPasswordReset() {
     if (!practitioner.email) return;
 
-    const response = await fetch('/api/admin/reset-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email: practitioner.email })
-    });
+    try {
+      const response = await fetch('/api/admin/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email: practitioner.email })
+      });
 
-    if (!response.ok) {
-      showToast.error('Erreur lors de la reinitialisation.');
-      return;
+      if (!response.ok) {
+        showToast.error('Erreur lors de la reinitialisation.');
+        return;
+      }
+
+      showToast.success('Email de reinitialisation envoye.');
+    } catch (err) {
+      console.error('[admin] triggerPasswordReset error:', err);
+      showToast.error('Erreur réseau lors de la reinitialisation.');
     }
-
-    showToast.success('Email de reinitialisation envoye.');
   }
 
   async function resendInvite() {
     if (!practitioner.email) return;
 
-    const response = await fetch('/api/admin/invite-practitioner', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        email: practitioner.email,
-        full_name: practitioner.full_name ?? '',
-        calendly_url: practitioner.calendly_url ?? ''
-      })
-    });
+    try {
+      const response = await fetch('/api/admin/invite-practitioner', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: practitioner.email,
+          full_name: practitioner.full_name ?? '',
+          calendly_url: practitioner.calendly_url ?? ''
+        })
+      });
 
-    if (!response.ok) {
-      showToast.error("Erreur lors de l'invitation.");
-      return;
+      if (!response.ok) {
+        showToast.error("Erreur lors de l'invitation.");
+        return;
+      }
+
+      showToast.success('Invitation envoyee.');
+    } catch (err) {
+      console.error('[admin] resendInvite error:', err);
+      showToast.error("Erreur réseau lors de l'invitation.");
     }
-
-    showToast.success('Invitation envoyee.');
   }
 
   return (

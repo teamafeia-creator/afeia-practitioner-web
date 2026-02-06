@@ -31,13 +31,6 @@ type PatientPreview = {
   practitioners_public?: { full_name: string | null }[] | { full_name: string | null } | null;
 };
 
-type DashboardStats = {
-  practitioners: number | null;
-  patients: number | null;
-  premiumPatients: number | null;
-  suspendedPractitioners: number | null;
-};
-
 const shortcuts = [
   {
     title: 'Praticiens',
@@ -79,6 +72,22 @@ const buttonSizes = {
   md: 'px-4 py-2.5 text-[13px]'
 };
 
+async function safeQuery<T>(
+  queryFn: () => PromiseLike<{ data: T | null; error: unknown; count?: number | null }>
+): Promise<{ data: T | null; error: boolean; count?: number | null }> {
+  try {
+    const result = await queryFn();
+    if (result.error) {
+      console.error('[admin] dashboard query error:', result.error);
+      return { data: null, error: true, count: null };
+    }
+    return { data: result.data, error: false, count: result.count };
+  } catch (err) {
+    console.error('[admin] dashboard query exception:', err);
+    return { data: null, error: true, count: null };
+  }
+}
+
 export default async function AdminDashboardPage() {
   const adminEmail = getAdminEmailFromCookies();
   if (!adminEmail || !(await isAdminEmail(adminEmail))) {
@@ -86,8 +95,6 @@ export default async function AdminDashboardPage() {
   }
 
   const supabase = createAdminClient();
-
-  let hasError = false;
 
   const [
     practitionersCountResult,
@@ -97,81 +104,80 @@ export default async function AdminDashboardPage() {
     practitionersResult,
     patientsResult
   ] = await Promise.all([
-    supabase.from('practitioners_public').select('id', { count: 'exact', head: true }),
-    supabase.from('patients_identity').select('id', { count: 'exact', head: true }),
-    supabase
-      .from('patients_identity')
-      .select('id', { count: 'exact', head: true })
-      .or('is_premium.eq.true,status.eq.premium'),
-    supabase
-      .from('practitioners_public')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'suspended'),
-    supabase
-      .from('practitioners_public')
-      .select('id, full_name, email, status, subscription_status, created_at')
-      .order('created_at', { ascending: false })
-      .limit(DASHBOARD_PREVIEW_LIMIT),
-    supabase
-      .from('patients_identity')
-      .select(
-        'id, practitioner_id, full_name, email, status, is_premium, created_at, practitioners_public(full_name)'
-      )
-      .order('created_at', { ascending: false })
-      .limit(DASHBOARD_PREVIEW_LIMIT)
+    safeQuery(() =>
+      supabase.from('practitioners_public').select('id', { count: 'exact', head: true })
+    ),
+    safeQuery(() =>
+      supabase.from('patients_identity').select('id', { count: 'exact', head: true })
+    ),
+    safeQuery(() =>
+      supabase
+        .from('patients_identity')
+        .select('id', { count: 'exact', head: true })
+        .or('is_premium.eq.true,status.eq.premium')
+    ),
+    safeQuery(() =>
+      supabase
+        .from('practitioners_public')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'suspended')
+    ),
+    safeQuery(() =>
+      supabase
+        .from('practitioners_public')
+        .select('id, full_name, email, status, subscription_status, created_at')
+        .order('created_at', { ascending: false })
+        .limit(DASHBOARD_PREVIEW_LIMIT)
+    ),
+    safeQuery(() =>
+      supabase
+        .from('patients_identity')
+        .select(
+          'id, practitioner_id, full_name, email, status, is_premium, created_at, practitioners_public(full_name)'
+        )
+        .order('created_at', { ascending: false })
+        .limit(DASHBOARD_PREVIEW_LIMIT)
+    )
   ]);
 
-  const errors = [
-    practitionersCountResult.error,
-    patientsCountResult.error,
-    premiumPatientsCountResult.error,
-    suspendedPractitionersCountResult.error,
-    practitionersResult.error,
-    patientsResult.error
-  ].filter(Boolean);
+  const statsHasError =
+    practitionersCountResult.error ||
+    patientsCountResult.error ||
+    premiumPatientsCountResult.error ||
+    suspendedPractitionersCountResult.error;
 
-  if (errors.length > 0) {
-    hasError = true;
-    errors.forEach((error) => {
-      console.error('[admin] dashboard query error:', error);
-    });
-  }
-
-  const stats: DashboardStats = {
-    practitioners: hasError ? null : practitionersCountResult.count ?? null,
-    patients: hasError ? null : patientsCountResult.count ?? null,
-    premiumPatients: hasError ? null : premiumPatientsCountResult.count ?? null,
-    suspendedPractitioners: hasError ? null : suspendedPractitionersCountResult.count ?? null
-  };
-
-  const practitioners = hasError ? [] : practitionersResult.data ?? [];
-  const patients: PatientPreview[] = hasError
-    ? []
-    : ((patientsResult.data as PatientPreview[] | null)?.map((patient) => ({
-        ...patient,
-        practitioner_name: Array.isArray(patient.practitioners_public)
-          ? patient.practitioners_public[0]?.full_name ?? null
-          : patient.practitioners_public?.full_name ?? null
-      })) ?? []);
+  const practitionersHasError = practitionersResult.error;
+  const patientsHasError = patientsResult.error;
 
   const statsRows = [
     {
       label: 'Naturopathes total',
-      value: stats.practitioners
+      value: practitionersCountResult.error ? null : practitionersCountResult.count ?? null
     },
     {
       label: 'Patients total',
-      value: stats.patients
+      value: patientsCountResult.error ? null : patientsCountResult.count ?? null
     },
     {
       label: 'Patients premium',
-      value: stats.premiumPatients
+      value: premiumPatientsCountResult.error ? null : premiumPatientsCountResult.count ?? null
     },
     {
       label: 'Naturopathes suspendus',
-      value: stats.suspendedPractitioners
+      value: suspendedPractitionersCountResult.error
+        ? null
+        : suspendedPractitionersCountResult.count ?? null
     }
   ];
+
+  const practitioners = (practitionersResult.data ?? []) as PractitionerPreview[];
+  const patients: PatientPreview[] =
+    ((patientsResult.data as PatientPreview[] | null)?.map((patient) => ({
+      ...patient,
+      practitioner_name: Array.isArray(patient.practitioners_public)
+        ? patient.practitioners_public[0]?.full_name ?? null
+        : patient.practitioners_public?.full_name ?? null
+    })) ?? []);
 
   return (
     <div className="space-y-8">
@@ -188,14 +194,6 @@ export default async function AdminDashboardPage() {
         }
       />
 
-      {hasError ? (
-        <PageShell>
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            Erreur de chargement.
-          </div>
-        </PageShell>
-      ) : null}
-
       <PageShell className="space-y-6">
         <div className="space-y-2">
           <h2 className="text-lg font-semibold text-charcoal">Vue d&apos;ensemble</h2>
@@ -203,12 +201,17 @@ export default async function AdminDashboardPage() {
             Indicateurs clefs issus des données Supabase.
           </p>
         </div>
+        {statsHasError ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            Certaines statistiques n&apos;ont pas pu être chargées.
+          </div>
+        ) : null}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {statsRows.map((stat) => (
             <Card key={stat.label} className="glass-card p-5">
               <p className="text-xs uppercase tracking-[0.3em] text-warmgray">{stat.label}</p>
               <p className="mt-3 text-3xl font-semibold text-charcoal">
-                {hasError ? 'Erreur de chargement' : stat.value ?? '—'}
+                {stat.value ?? '—'}
               </p>
             </Card>
           ))}
@@ -259,10 +262,10 @@ export default async function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {hasError ? (
+              {practitionersHasError ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-red-600">
-                    Erreur de chargement.
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-amber-600">
+                    Impossible de charger les praticiens.
                   </td>
                 </tr>
               ) : practitioners.length === 0 ? (
@@ -319,10 +322,10 @@ export default async function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {hasError ? (
+              {patientsHasError ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-red-600">
-                    Erreur de chargement.
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-amber-600">
+                    Impossible de charger les patients.
                   </td>
                 </tr>
               ) : patients.length === 0 ? (

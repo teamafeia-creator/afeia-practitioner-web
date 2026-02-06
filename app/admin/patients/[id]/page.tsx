@@ -48,19 +48,26 @@ export default function AdminPatientDetailPage() {
         return;
       }
 
-      const response = await fetch(`/api/admin/patients/${patientId}`, { credentials: 'include' });
+      try {
+        const response = await fetch(`/api/admin/patients/${patientId}`, { credentials: 'include' });
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      if (!response.ok) {
-        showToast.error('Patient introuvable.');
-        setLoading(false);
-        return;
+        if (!response.ok) {
+          showToast.error('Patient introuvable.');
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+        setPatient(data.patient ?? null);
+      } catch (err) {
+        console.error('[admin] loadPatient error:', err);
+        if (!isMounted) return;
+        showToast.error('Erreur réseau lors du chargement du patient.');
+      } finally {
+        if (isMounted) setLoading(false);
       }
-
-      const data = await response.json();
-      setPatient(data.patient ?? null);
-      setLoading(false);
     }
 
     if (patientId) {
@@ -76,56 +83,66 @@ export default function AdminPatientDetailPage() {
     if (!patient) return;
     setSaving(true);
 
-    const response = await fetch(`/api/admin/patients/${patient.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        full_name: patient.full_name,
-        email: patient.email,
-        phone: patient.phone,
-        age: patient.age,
-        city: patient.city,
-        status: patient.status,
-        is_premium: patient.is_premium,
-        circular_enabled: patient.circular_enabled
-      })
-    });
+    try {
+      const response = await fetch(`/api/admin/patients/${patient.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          full_name: patient.full_name,
+          email: patient.email,
+          phone: patient.phone,
+          age: patient.age,
+          city: patient.city,
+          status: patient.status,
+          is_premium: patient.is_premium,
+          circular_enabled: patient.circular_enabled
+        })
+      });
 
-    if (!response.ok) {
-      showToast.error('Erreur lors de la mise a jour.');
-    } else {
-      showToast.success('Patient mis a jour.');
+      if (!response.ok) {
+        showToast.error('Erreur lors de la mise a jour.');
+      } else {
+        showToast.success('Patient mis a jour.');
+      }
+    } catch (err) {
+      console.error('[admin] saveChanges error:', err);
+      showToast.error('Erreur réseau lors de la mise a jour.');
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   }
 
   async function triggerCircularSync() {
     if (!patient) return;
 
-    const response = await fetch('/api/admin/circular-sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ patient_id: patient.id })
-    });
+    try {
+      const response = await fetch('/api/admin/circular-sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ patient_id: patient.id })
+      });
 
-    if (!response.ok) {
-      showToast.error('Erreur lors de la synchronisation.');
-      return;
+      if (!response.ok) {
+        showToast.error('Erreur lors de la synchronisation.');
+        return;
+      }
+
+      showToast.success('Synchronisation lancee.');
+      setPatient({
+        ...patient,
+        last_circular_sync_at: new Date().toISOString(),
+        last_circular_sync_status: 'queued'
+      });
+    } catch (err) {
+      console.error('[admin] triggerCircularSync error:', err);
+      showToast.error('Erreur réseau lors de la synchronisation.');
     }
-
-    showToast.success('Synchronisation lancee.');
-    setPatient({
-      ...patient,
-      last_circular_sync_at: new Date().toISOString(),
-      last_circular_sync_status: 'queued'
-    });
   }
 
   if (loading || !patient) {

@@ -19,7 +19,7 @@ type CircularRow = {
   last_circular_sync_status: string | null;
   practitioners_public?: {
     full_name: string | null;
-  }[] | null;
+  }[] | { full_name: string | null } | null;
 };
 
 export default function AdminCircularPage() {
@@ -30,27 +30,34 @@ export default function AdminCircularPage() {
 
   const loadCircular = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams({
-      page: String(page),
-      pageSize: String(PAGE_SIZE)
-    });
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(PAGE_SIZE)
+      });
 
-    const response = await fetch(`/api/admin/circular?${params.toString()}`, {
-      credentials: 'include'
-    });
+      const response = await fetch(`/api/admin/circular?${params.toString()}`, {
+        credentials: 'include'
+      });
 
-    if (!response.ok) {
-      showToast.error('Erreur lors du chargement Circular.');
+      if (!response.ok) {
+        showToast.error('Erreur lors du chargement Circular.');
+        setRows([]);
+        setTotal(0);
+        return;
+      }
+
+      const data = await response.json();
+      setRows(data.patients ?? []);
+      setTotal(data.total ?? 0);
+    } catch (err) {
+      console.error('[admin] loadCircular error:', err);
+      showToast.error('Erreur réseau lors du chargement Circular.');
       setRows([]);
       setTotal(0);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const data = await response.json();
-    setRows(data.patients ?? []);
-    setTotal(data.total ?? 0);
-    setLoading(false);
   }, [page]);
 
   useEffect(() => {
@@ -58,22 +65,27 @@ export default function AdminCircularPage() {
   }, [loadCircular]);
 
   async function triggerSync(patientId: string) {
-    const response = await fetch('/api/admin/circular-sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ patient_id: patientId })
-    });
+    try {
+      const response = await fetch('/api/admin/circular-sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ patient_id: patientId })
+      });
 
-    if (!response.ok) {
-      showToast.error('Erreur lors du sync.');
-      return;
+      if (!response.ok) {
+        showToast.error('Erreur lors du sync.');
+        return;
+      }
+
+      showToast.success('Sync lance.');
+      loadCircular();
+    } catch (err) {
+      console.error('[admin] triggerSync error:', err);
+      showToast.error('Erreur réseau lors du sync.');
     }
-
-    showToast.success('Sync lance.');
-    loadCircular();
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -101,7 +113,12 @@ export default function AdminCircularPage() {
           {
             key: 'practitioner',
             header: 'Praticien',
-            render: (row) => row.practitioners_public?.[0]?.full_name ?? '—'
+            render: (row) => {
+              const p = Array.isArray(row.practitioners_public)
+                ? row.practitioners_public[0]
+                : row.practitioners_public;
+              return p?.full_name ?? '—';
+            }
           },
           {
             key: 'last_sync',

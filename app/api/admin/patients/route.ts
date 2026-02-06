@@ -67,8 +67,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      const term = `%${search}%`;
-      query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
+      const sanitized = search.replace(/[%_]/g, '');
+      if (sanitized) {
+        const term = `%${sanitized}%`;
+        query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
+      }
     }
 
     query = query.range(from, to);
