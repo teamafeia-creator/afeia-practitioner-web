@@ -10,7 +10,20 @@ function getNumber(value: string | null, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const SORT_FIELDS = new Set(['created_at', 'full_name', 'status']);
+const SORT_FIELDS = new Set(['created_at', 'name', 'status']);
+
+type PatientRecord = {
+  id: string;
+  practitioner_id: string | null;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+  status: string | null;
+  is_premium: boolean | null;
+  created_at: string | null;
+  practitioners?: { full_name: string | null }[] | { full_name: string | null } | null;
+};
 
 export async function GET(request: NextRequest) {
   const guard = await requireAdmin(request);
@@ -36,14 +49,17 @@ export async function GET(request: NextRequest) {
     const supabase = createAdminClient();
 
     let query = supabase
-      .from('patients_identity')
+      .from('patients')
       .select(
-        'id, practitioner_id, full_name, email, phone, city, status, is_premium, created_at, practitioners_public(full_name)',
+        'id, practitioner_id, name, email, phone, city, status, is_premium, created_at, practitioners(full_name)',
         { count: 'exact' }
-      );
+      )
+      .is('deleted_at', null);
 
-    if (status) {
-      query = query.eq('status', status);
+    if (status === 'premium') {
+      query = query.or('status.eq.premium,is_premium.eq.true');
+    } else if (status === 'standard') {
+      query = query.or('status.eq.standard,is_premium.eq.false');
     }
 
     if (practitionerId) {
@@ -52,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       const term = `%${search}%`;
-      query = query.or(`full_name.ilike.${term},email.ilike.${term}`);
+      query = query.or(`name.ilike.${term},email.ilike.${term}`);
     }
 
     query = query.order(sortField, { ascending: sortDirection === 'asc' }).range(from, to);
@@ -64,9 +80,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors de la récupération des patients.' }, { status: 500 });
     }
 
-    const patients = (data ?? []).map((patient) => ({
+    const patients = ((data ?? []) as PatientRecord[]).map((patient) => ({
       ...patient,
-      practitioner_name: patient.practitioners_public?.[0]?.full_name ?? null
+      practitioner_name: Array.isArray(patient.practitioners)
+        ? patient.practitioners[0]?.full_name ?? null
+        : patient.practitioners?.full_name ?? null
     }));
 
     return NextResponse.json({ patients, total: count ?? 0 });

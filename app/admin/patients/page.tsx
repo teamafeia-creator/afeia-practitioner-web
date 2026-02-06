@@ -16,7 +16,7 @@ const PAGE_SIZE = 10;
 type PatientRow = {
   id: string;
   practitioner_id: string;
-  full_name: string;
+  name: string | null;
   email: string | null;
   phone: string | null;
   city: string | null;
@@ -35,12 +35,13 @@ export default function AdminPatientsPage() {
   const router = useRouter();
   const [rows, setRows] = useState<PatientRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [practitionerFilter, setPractitionerFilter] = useState('');
-  const [sortField, setSortField] = useState<'created_at' | 'full_name' | 'status'>('created_at');
+  const [sortField, setSortField] = useState<'created_at' | 'name' | 'status'>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [practitioners, setPractitioners] = useState<PractitionerOption[]>([]);
   const searchParams = useSearchParams();
@@ -82,6 +83,7 @@ export default function AdminPatientsPage() {
 
     async function loadPatients() {
       setLoading(true);
+      setErrorMessage(null);
 
       const params = new URLSearchParams({
         page: String(page),
@@ -108,6 +110,7 @@ export default function AdminPatientsPage() {
 
       if (!response.ok) {
         showToast.error('Erreur lors du chargement des patients.');
+        setErrorMessage('Erreur de chargement des patients (détails en logs serveur).');
         setRows([]);
         setTotal(0);
         setLoading(false);
@@ -117,6 +120,7 @@ export default function AdminPatientsPage() {
       const data = await response.json();
       setRows(data.patients ?? []);
       setTotal(data.total ?? 0);
+      setErrorMessage(null);
       setLoading(false);
     }
 
@@ -128,10 +132,10 @@ export default function AdminPatientsPage() {
   }, [page, search, sortField, sortDirection, statusFilter, practitionerFilter]);
 
   function exportCsv() {
-    const headers = ['full_name', 'email', 'phone', 'city', 'status', 'is_premium', 'created_at'];
+    const headers = ['name', 'email', 'phone', 'city', 'status', 'is_premium', 'created_at'];
     const lines = rows.map((row) =>
       [
-        row.full_name,
+        row.name,
         row.email ?? '',
         row.phone ?? '',
         row.city ?? '',
@@ -167,6 +171,14 @@ export default function AdminPatientsPage() {
           </div>
         }
       />
+
+      {errorMessage ? (
+        <PageShell>
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMessage}
+          </div>
+        </PageShell>
+      ) : null}
 
       <PageShell className="space-y-4">
         <div className="grid gap-4 md:grid-cols-4">
@@ -216,9 +228,9 @@ export default function AdminPatientsPage() {
         <div className="flex flex-wrap gap-2">
           <div>
             <label className="text-xs font-medium text-warmgray">Tri</label>
-            <Select value={sortField} onChange={(event) => setSortField(event.target.value as 'created_at' | 'full_name' | 'status')}>
+            <Select value={sortField} onChange={(event) => setSortField(event.target.value as 'created_at' | 'name' | 'status')}>
               <option value="created_at">Date</option>
-              <option value="full_name">Nom</option>
+              <option value="name">Nom</option>
               <option value="status">Statut</option>
             </Select>
           </div>
@@ -235,14 +247,14 @@ export default function AdminPatientsPage() {
       <AdminDataTable
         rows={rows}
         isLoading={loading}
-        emptyMessage="Aucun patient trouve."
+        emptyMessage={errorMessage ?? 'Aucun patient trouve.'}
         columns={[
           {
-            key: 'full_name',
+            key: 'name',
             header: 'Patient',
             render: (row) => (
               <div className="flex flex-col">
-                <span className="font-medium text-charcoal">{row.full_name}</span>
+                <span className="font-medium text-charcoal">{row.name ?? '—'}</span>
                 <span className="text-xs text-warmgray">{row.email}</span>
               </div>
             )

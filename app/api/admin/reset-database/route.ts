@@ -3,12 +3,11 @@ import { requireAdmin } from '@/lib/server/adminGuard';
 import { runAdminDatabaseReset } from '@/lib/server/resetDatabase';
 
 /**
- * POST /api/admin/fresh-database
+ * POST /api/admin/reset-database
  * Supprime TOUTES les donnees de la base de donnees
  * Requiert : Admin + code de confirmation
  */
 export async function POST(request: NextRequest) {
-  // Verifier que c'est autorise en developpement seulement
   if (process.env.NODE_ENV === 'production' && process.env.ENABLE_FRESH_DATABASE !== 'true') {
     return NextResponse.json(
       { error: 'Fonctionnalite desactivee en production.' },
@@ -22,7 +21,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Verifier le code de confirmation
     const body = await request.json();
     const { confirmationCode } = body;
 
@@ -34,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const adminEmail = guard.user.email ?? 'unknown';
-    console.log(`FRESH DATABASE initiee par ${adminEmail}`);
+    console.log(`RESET DATABASE initiee par ${adminEmail}`);
 
     const result = await runAdminDatabaseReset(adminEmail);
 
@@ -61,9 +59,8 @@ export async function POST(request: NextRequest) {
       performedBy: result.performedBy,
       timestamp: result.timestamp
     });
-
   } catch (err) {
-    console.error('Exception fresh-database:', err);
+    console.error('Exception reset-database:', err);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }

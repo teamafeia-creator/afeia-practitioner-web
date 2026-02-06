@@ -22,6 +22,7 @@ export default function AdminDatabasePage() {
     plans: null
   });
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -33,8 +34,10 @@ export default function AdminDatabasePage() {
         }
         const data = await response.json();
         setStats(data.stats ?? {});
+        setErrorMessage(null);
       } catch (err) {
         console.error('Erreur chargement stats:', err);
+        setErrorMessage('Erreur de chargement des statistiques.');
       } finally {
         setLoading(false);
       }
@@ -63,29 +66,35 @@ export default function AdminDatabasePage() {
           </p>
         </div>
 
+        {errorMessage ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMessage}
+          </div>
+        ) : null}
+
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="glass-card p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Praticiens</p>
             <p className="mt-3 text-3xl font-semibold text-charcoal">
-              {loading ? '...' : stats.practitioners ?? '—'}
+              {loading ? '...' : errorMessage ? 'Erreur de chargement' : stats.practitioners ?? '—'}
             </p>
           </Card>
           <Card className="glass-card p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Patients</p>
             <p className="mt-3 text-3xl font-semibold text-charcoal">
-              {loading ? '...' : stats.patients ?? '—'}
+              {loading ? '...' : errorMessage ? 'Erreur de chargement' : stats.patients ?? '—'}
             </p>
           </Card>
           <Card className="glass-card p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Messages</p>
             <p className="mt-3 text-3xl font-semibold text-charcoal">
-              {loading ? '...' : stats.messages ?? '—'}
+              {loading ? '...' : errorMessage ? 'Erreur de chargement' : stats.messages ?? '—'}
             </p>
           </Card>
           <Card className="glass-card p-5">
             <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Plans</p>
             <p className="mt-3 text-3xl font-semibold text-charcoal">
-              {loading ? '...' : stats.plans ?? '—'}
+              {loading ? '...' : errorMessage ? 'Erreur de chargement' : stats.plans ?? '—'}
             </p>
           </Card>
         </div>

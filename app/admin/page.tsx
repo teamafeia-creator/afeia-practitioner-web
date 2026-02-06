@@ -23,11 +23,12 @@ type PractitionerPreview = {
 type PatientPreview = {
   id: string;
   practitioner_id: string | null;
-  full_name: string | null;
+  name: string | null;
   email: string | null;
   status: string | null;
   is_premium: boolean | null;
   practitioner_name?: string | null;
+  practitioners?: { full_name: string | null }[] | { full_name: string | null } | null;
 };
 
 type DashboardStats = {
@@ -96,26 +97,28 @@ export default async function AdminDashboardPage() {
     practitionersResult,
     patientsResult
   ] = await Promise.all([
-    supabase.from('practitioners_public').select('id', { count: 'exact', head: true }),
-    supabase.from('patients_identity').select('id', { count: 'exact', head: true }),
+    supabase.from('practitioners').select('id', { count: 'exact', head: true }),
+    supabase.from('patients').select('id', { count: 'exact', head: true }).is('deleted_at', null),
     supabase
-      .from('patients_identity')
+      .from('patients')
       .select('id', { count: 'exact', head: true })
+      .is('deleted_at', null)
       .or('is_premium.eq.true,status.eq.premium'),
     supabase
-      .from('practitioners_public')
+      .from('practitioners')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'suspended'),
     supabase
-      .from('practitioners_public')
+      .from('practitioners')
       .select('id, full_name, email, status, subscription_status, created_at')
       .order('created_at', { ascending: false })
       .limit(DASHBOARD_PREVIEW_LIMIT),
     supabase
-      .from('patients_identity')
+      .from('patients')
       .select(
-        'id, practitioner_id, full_name, email, status, is_premium, created_at, practitioners_public(full_name)'
+        'id, practitioner_id, name, email, status, is_premium, created_at, practitioners(full_name)'
       )
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(DASHBOARD_PREVIEW_LIMIT)
   ]);
@@ -146,9 +149,11 @@ export default async function AdminDashboardPage() {
   const practitioners = hasError ? [] : practitionersResult.data ?? [];
   const patients: PatientPreview[] = hasError
     ? []
-    : (patientsResult.data?.map((patient) => ({
+    : ((patientsResult.data as PatientPreview[] | null)?.map((patient) => ({
         ...patient,
-        practitioner_name: patient.practitioners_public?.[0]?.full_name ?? null
+        practitioner_name: Array.isArray(patient.practitioners)
+          ? patient.practitioners[0]?.full_name ?? null
+          : patient.practitioners?.full_name ?? null
       })) ?? []);
 
   const statsRows = [
@@ -331,7 +336,7 @@ export default async function AdminDashboardPage() {
               ) : (
                 patients.slice(0, DASHBOARD_PREVIEW_LIMIT).map((row) => (
                   <tr key={row.id} className="text-charcoal">
-                    <td className="px-4 py-3">{row.full_name ?? '—'}</td>
+                    <td className="px-4 py-3">{row.name ?? '—'}</td>
                     <td className="px-4 py-3">{row.email ?? '—'}</td>
                     <td className="px-4 py-3">{row.practitioner_name ?? '—'}</td>
                     <td className="px-4 py-3">
