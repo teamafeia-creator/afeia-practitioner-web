@@ -1,24 +1,63 @@
-import { View, StyleSheet, ViewProps } from 'react-native';
-import { Colors } from '../../constants/Colors';
+import React from 'react';
+import { View, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { colors, borderRadius, spacing, shadows } from '../../constants/theme';
 
-export default function Card({ children, style, ...props }: ViewProps) {
-  return (
-    <View style={[styles.card, style]} {...props}>
-      {children}
-    </View>
-  );
+interface CardProps {
+  children: React.ReactNode;
+  variant?: 'elevated' | 'outlined' | 'flat';
+  padding?: 'sm' | 'md' | 'lg';
+  onPress?: () => void;
+  style?: ViewStyle;
+}
+
+export function Card({
+  children,
+  variant = 'elevated',
+  padding = 'md',
+  onPress,
+  style,
+}: CardProps) {
+  const cardStyle: ViewStyle[] = [
+    styles.base,
+    styles[`variant_${variant}`],
+    styles[`padding_${padding}`],
+    style,
+  ].filter(Boolean) as ViewStyle[];
+
+  if (onPress) {
+    return (
+      <TouchableOpacity style={cardStyle} onPress={onPress} activeOpacity={0.7}>
+        {children}
+      </TouchableOpacity>
+    );
+  }
+
+  return <View style={cardStyle}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.blanc,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  base: {
+    borderRadius: borderRadius.lg,
+  },
+  variant_elevated: {
+    backgroundColor: colors.white,
+    ...shadows.md,
+  },
+  variant_outlined: {
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+  },
+  variant_flat: {
+    backgroundColor: colors.sand[100],
+  },
+  padding_sm: {
+    padding: spacing.sm,
+  },
+  padding_md: {
+    padding: spacing.md,
+  },
+  padding_lg: {
+    padding: spacing.lg,
   },
 });

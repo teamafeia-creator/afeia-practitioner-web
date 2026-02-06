@@ -1,98 +1,36 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { AuthTokens } from '../types';
 
-const STORAGE_KEYS = {
-  USER_DATA: 'user_data',
-  ANAMNESE_DRAFT: 'anamnese_draft',
-  JOURNAL_DRAFT: 'journal_draft',
-  SETTINGS: 'settings',
-};
+const TOKENS_KEY = 'afeia_tokens';
+const PATIENT_KEY = 'afeia_patient';
 
-export const storage = {
-  async saveUserData(userData: any) {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
-    } catch (error) {
-      console.error('Error saving user data:', error);
-    }
-  },
+export async function getTokens(): Promise<AuthTokens | null> {
+  try {
+    const raw = await SecureStore.getItemAsync(TOKENS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
-  async getUserData() {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
-      return data ? JSON.parse(data) : null;
-    } catch (error) {
-      console.error('Error getting user data:', error);
-      return null;
-    }
-  },
+export async function setTokens(tokens: AuthTokens): Promise<void> {
+  await SecureStore.setItemAsync(TOKENS_KEY, JSON.stringify(tokens));
+}
 
-  async saveAnamneseDraft(draft: any) {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.ANAMNESE_DRAFT, JSON.stringify(draft));
-    } catch (error) {
-      console.error('Error saving anamnese draft:', error);
-    }
-  },
+export async function clearTokens(): Promise<void> {
+  await SecureStore.deleteItemAsync(TOKENS_KEY);
+  await SecureStore.deleteItemAsync(PATIENT_KEY);
+}
 
-  async getAnamneseDraft() {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.ANAMNESE_DRAFT);
-      return data ? JSON.parse(data) : null;
-    } catch (error) {
-      console.error('Error getting anamnese draft:', error);
-      return null;
-    }
-  },
+export async function getStoredPatient(): Promise<Record<string, unknown> | null> {
+  try {
+    const raw = await SecureStore.getItemAsync(PATIENT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
-  async clearAnamneseDraft() {
-    try {
-      await AsyncStorage.removeItem(STORAGE_KEYS.ANAMNESE_DRAFT);
-    } catch (error) {
-      console.error('Error clearing anamnese draft:', error);
-    }
-  },
-
-  async saveJournalDraft(draft: any) {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.JOURNAL_DRAFT, JSON.stringify(draft));
-    } catch (error) {
-      console.error('Error saving journal draft:', error);
-    }
-  },
-
-  async getJournalDraft() {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.JOURNAL_DRAFT);
-      return data ? JSON.parse(data) : null;
-    } catch (error) {
-      console.error('Error getting journal draft:', error);
-      return null;
-    }
-  },
-
-  async saveSettings(settings: any) {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-    } catch (error) {
-      console.error('Error saving settings:', error);
-    }
-  },
-
-  async getSettings() {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
-      return data ? JSON.parse(data) : null;
-    } catch (error) {
-      console.error('Error getting settings:', error);
-      return null;
-    }
-  },
-
-  async clearAll() {
-    try {
-      await AsyncStorage.clear();
-    } catch (error) {
-      console.error('Error clearing storage:', error);
-    }
-  },
-};
+export async function setStoredPatient(patient: Record<string, unknown>): Promise<void> {
+  await SecureStore.setItemAsync(PATIENT_KEY, JSON.stringify(patient));
+}
