@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createAdminClient();
     const [practitionersResult, patientsResult, messagesResult, plansResult] = await Promise.all([
-      supabase.from('practitioners').select('id', { count: 'exact', head: true }),
-      supabase.from('patients').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+      supabase.from('practitioners_public').select('id', { count: 'exact', head: true }),
+      supabase.from('patients_identity').select('id', { count: 'exact', head: true }),
       supabase.from('messages').select('id', { count: 'exact', head: true }),
       supabase.from('patient_plans').select('id', { count: 'exact', head: true })
     ]);

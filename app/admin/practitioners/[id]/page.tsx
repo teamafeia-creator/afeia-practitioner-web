@@ -22,7 +22,7 @@ export default async function AdminPractitionerDetailPage({ params }: PageProps)
 
   try {
     const { data: practitioner, error } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .select('id, email, full_name, status, calendly_url, subscription_status, created_at')
       .eq('id', params.id)
       .maybeSingle();
@@ -53,10 +53,9 @@ export default async function AdminPractitionerDetailPage({ params }: PageProps)
     }
 
     const { count: patientsCount } = await supabase
-      .from('patients')
+      .from('patients_identity')
       .select('id', { count: 'exact', head: true })
       .eq('practitioner_id', practitioner.id)
-      .is('deleted_at', null);
 
     return (
       <AdminPractitionerDetailClient

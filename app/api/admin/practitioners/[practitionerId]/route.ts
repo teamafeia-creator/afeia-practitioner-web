@@ -19,9 +19,8 @@ export async function GET(
     const { practitionerId } = await params;
     const supabase = createAdminClient();
 
-    // Utiliser la table source pour eviter les donnees stale des vues publiques
     const { data: practitioner, error } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .select('*')
       .eq('id', practitionerId)
       .single();
@@ -65,7 +64,7 @@ export async function PATCH(
 
     const supabase = createAdminClient();
     const { data, error } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .update(updates)
       .eq('id', practitionerId)
       .select('*')
@@ -102,7 +101,7 @@ export async function DELETE(
 
     // 1. Vérifier que le praticien existe
     const { data: practitioner, error: practError } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .select('id, email, full_name')
       .eq('id', practitionerId)
       .single();
@@ -121,7 +120,7 @@ export async function DELETE(
     }
 
     const { count: remainingCount, error: remainingError } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .select('id', { count: 'exact', head: true })
       .eq('id', practitionerId);
 

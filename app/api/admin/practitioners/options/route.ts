@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createAdminClient();
     const { data, error } = await supabase
-      .from('practitioners')
+      .from('practitioners_public')
       .select('id, full_name')
       .order('full_name', { ascending: true });
 
