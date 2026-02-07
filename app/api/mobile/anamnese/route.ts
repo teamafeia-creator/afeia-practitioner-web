@@ -5,13 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { resolvePatientId } from '@/lib/mobile-auth';
+import { resolveConsultantId } from '@/lib/mobile-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const { data: anamnese } = await getSupabaseAdmin()
       .from('anamneses')
       .select('id, data, completed, completed_at, created_at, updated_at')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
     return NextResponse.json({
@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     const { data: caseFile } = await getSupabaseAdmin()
       .from('case_files')
       .select('id')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
     const now = new Date().toISOString();
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const { data: existing } = await getSupabaseAdmin()
       .from('anamneses')
       .select('id')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
     let anamneseId;
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       const { data, error } = await getSupabaseAdmin()
         .from('anamneses')
         .insert({
-          patient_id: patientId,
+          consultant_id: consultantId,
           case_file_id: caseFile?.id,
           data: sections,
           completed: true,

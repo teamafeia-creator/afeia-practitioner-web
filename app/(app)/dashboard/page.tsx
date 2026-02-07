@@ -21,7 +21,7 @@ import { getCalendlyUrlForCurrentPractitioner } from '@/lib/calendly';
 import { supabase } from '@/lib/supabase';
 import { useRequireAuth } from '@/hooks/useAuth';
 
-type PatientRow = {
+type ConsultantRow = {
   id: string;
   full_name?: string | null;
   first_name?: string | null;
@@ -34,14 +34,14 @@ type PatientRow = {
 type ConsultationRow = {
   id: string;
   date: string;
-  patients?: {
+  consultants?: {
     name?: string | null;
     is_premium?: boolean | null;
     status?: string | null;
   } | null;
 };
 
-type AlertPatient = {
+type AlertConsultant = {
   id: string;
   name: string;
   lastContact?: string | null;
@@ -49,7 +49,7 @@ type AlertPatient = {
 
 type DraftPlan = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   updated_at?: string | null;
 };
 
@@ -73,18 +73,18 @@ const dateTimeFormatter = new Intl.DateTimeFormat('fr-FR', {
 
 const RECONTACT_DAYS = 30;
 
-function getPatientName(patient: PatientRow): string {
-  if (patient.full_name) return patient.full_name;
-  const parts = [patient.first_name, patient.last_name].filter(Boolean);
-  return parts.length > 0 ? parts.join(' ') : 'Patient';
+function getConsultantName(consultant: ConsultantRow): string {
+  if (consultant.full_name) return consultant.full_name;
+  const parts = [consultant.first_name, consultant.last_name].filter(Boolean);
+  return parts.length > 0 ? parts.join(' ') : 'Consultant';
 }
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useRequireAuth('/login');
   const [upcomingAppointments, setUpcomingAppointments] = useState<ConsultationRow[]>([]);
-  const [recontactPatients, setRecontactPatients] = useState<AlertPatient[]>([]);
-  const [pendingPlans, setPendingPlans] = useState<AlertPatient[]>([]);
+  const [recontactConsultants, setRecontactConsultants] = useState<AlertConsultant[]>([]);
+  const [pendingPlans, setPendingPlans] = useState<AlertConsultant[]>([]);
   const [loading, setLoading] = useState(true);
   const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
   const [calendlyLoading, setCalendlyLoading] = useState(true);
@@ -118,23 +118,23 @@ export default function DashboardPage() {
         setPractitionerName(practitioner.name.split(' ')[0]);
       }
 
-      const { data: patients, error: patientsError } = await supabase
-        .from('patients')
+      const { data: consultants, error: consultantsError } = await supabase
+        .from('consultants')
         .select('id, full_name, first_name, last_name, is_premium, status, activated')
         .eq('practitioner_id', userId)
         .is('deleted_at', null);
 
-      if (patientsError) {
-        showToast.error('Erreur lors du chargement des patients');
+      if (consultantsError) {
+        showToast.error('Erreur lors du chargement des consultants');
       }
 
-      const patientList = (patients ?? []) as PatientRow[];
-      const patientIds = patientList.map((patient) => patient.id);
-      const patientNameMap = new Map(patientList.map((patient) => [patient.id, getPatientName(patient)]));
+      const consultantList = (consultants ?? []) as ConsultantRow[];
+      const consultantIds = consultantList.map((consultant) => consultant.id);
+      const consultantNameMap = new Map(consultantList.map((consultant) => [consultant.id, getConsultantName(consultant)]));
 
       const { data: consultations } = await supabase
         .from('consultations')
-        .select('id, date, patients(name, is_premium, status)')
+        .select('id, date, consultants(name, is_premium, status)')
         .eq('practitioner_id', userId)
         .gte('date', new Date().toISOString())
         .order('date', { ascending: true })
@@ -142,50 +142,50 @@ export default function DashboardPage() {
 
       setUpcomingAppointments((consultations ?? []) as ConsultationRow[]);
 
-      if (patientIds.length > 0) {
+      if (consultantIds.length > 0) {
         const { data: consultationsHistory } = await supabase
           .from('consultations')
-          .select('patient_id, date')
-          .in('patient_id', patientIds);
+          .select('consultant_id, date')
+          .in('consultant_id', consultantIds);
 
         const lastContactMap = new Map<string, string>();
         (consultationsHistory ?? []).forEach((consultation) => {
-          if (!consultation.patient_id || !consultation.date) return;
-          const current = lastContactMap.get(consultation.patient_id);
+          if (!consultation.consultant_id || !consultation.date) return;
+          const current = lastContactMap.get(consultation.consultant_id);
           if (!current || new Date(consultation.date) > new Date(current)) {
-            lastContactMap.set(consultation.patient_id, consultation.date);
+            lastContactMap.set(consultation.consultant_id, consultation.date);
           }
         });
 
         const threshold = new Date();
         threshold.setDate(threshold.getDate() - RECONTACT_DAYS);
 
-        const needsContact = patientList
-          .filter((patient) => patient.activated !== false)
-          .map((patient) => {
-            const lastContact = lastContactMap.get(patient.id);
+        const needsContact = consultantList
+          .filter((consultant) => consultant.activated !== false)
+          .map((consultant) => {
+            const lastContact = lastContactMap.get(consultant.id);
             const needs = !lastContact || new Date(lastContact) < threshold;
             return needs
               ? {
-                id: patient.id,
-                name: getPatientName(patient),
+                id: consultant.id,
+                name: getConsultantName(consultant),
                 lastContact
               }
               : null;
           })
-          .filter(Boolean) as AlertPatient[];
+          .filter(Boolean) as AlertConsultant[];
 
-        setRecontactPatients(needsContact);
+        setRecontactConsultants(needsContact);
 
         const { data: draftPlans } = await supabase
-          .from('patient_plans')
-          .select('id, patient_id, updated_at')
+          .from('consultant_plans')
+          .select('id, consultant_id, updated_at')
           .eq('practitioner_id', userId)
           .eq('status', 'draft');
 
         const pending = (draftPlans ?? []).map((plan: DraftPlan) => ({
           id: plan.id,
-          name: patientNameMap.get(plan.patient_id) ?? 'Patient',
+          name: consultantNameMap.get(plan.consultant_id) ?? 'Consultant',
           lastContact: plan.updated_at ?? null
         }));
 
@@ -266,9 +266,9 @@ export default function DashboardPage() {
             <Button
               variant="primary"
               icon={<Users className="w-4 h-4" />}
-              onClick={() => router.push('/patients/new')}
+              onClick={() => router.push('/consultants/new')}
             >
-              Ajouter un patient
+              Ajouter un consultant
             </Button>
             <Button
               variant="outline"
@@ -319,7 +319,7 @@ export default function DashboardPage() {
       <section>
         <h3 className="section-title mb-4">ALERTES ET NOTIFICATIONS</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* Patients to recontact */}
+          {/* Consultants to recontact */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -331,17 +331,17 @@ export default function DashboardPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/15">
                   <Users className="h-5 w-5 text-gold" />
                 </div>
-                <span className="font-semibold text-charcoal">Patients a recontacter</span>
+                <span className="font-semibold text-charcoal">Consultants a recontacter</span>
               </div>
               <span className="badge-urgent px-2.5 py-1 rounded-md text-xs font-semibold">
-                {recontactPatients.length}
+                {recontactConsultants.length}
               </span>
             </div>
             <p className="text-sm text-warmgray mb-4">
               Dernier contact il y a plus de {RECONTACT_DAYS} jours
             </p>
             <button
-              onClick={() => router.push('/patients?filter=recontact')}
+              onClick={() => router.push('/consultants?filter=recontact')}
               className="alert-action w-full flex items-center justify-center gap-2"
             >
               Voir la liste
@@ -371,7 +371,7 @@ export default function DashboardPage() {
               Plans en brouillon a finaliser et valider
             </p>
             <button
-              onClick={() => router.push('/patients')}
+              onClick={() => router.push('/consultants')}
               className="alert-action w-full flex items-center justify-center gap-2"
             >
               Finaliser
@@ -442,7 +442,7 @@ export default function DashboardPage() {
               Creer consultation
             </h4>
             <p className="text-sm text-warmgray action-desc">
-              Planifier un rendez-vous ou un suivi patient.
+              Planifier un rendez-vous ou un suivi consultant.
             </p>
           </motion.div>
 
@@ -452,7 +452,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="action-card"
-            onClick={() => router.push('/patients')}
+            onClick={() => router.push('/consultants')}
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal/15 action-icon mb-4">
               <ClipboardList className="h-6 w-6 text-teal" />
@@ -461,7 +461,7 @@ export default function DashboardPage() {
               Ajouter note
             </h4>
             <p className="text-sm text-warmgray action-desc">
-              Mettre a jour un dossier patient existant.
+              Mettre a jour un dossier consultant existant.
             </p>
           </motion.div>
 
@@ -486,36 +486,36 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Recent Patients to Recontact */}
-      {recontactPatients.length > 0 && (
+      {/* Recent Consultants to Recontact */}
+      {recontactConsultants.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="section-title">PATIENTS A RELANCER</h3>
+            <h3 className="section-title">CONSULTANTS A RELANCER</h3>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push('/patients')}
+              onClick={() => router.push('/consultants')}
             >
               Voir tous
             </Button>
           </div>
           <div className="glass-card overflow-hidden">
             <div className="divide-y divide-white/10">
-              {recontactPatients.slice(0, 5).map((patient) => (
+              {recontactConsultants.slice(0, 5).map((consultant) => (
                 <div
-                  key={patient.id}
+                  key={consultant.id}
                   className="flex items-center justify-between p-4 hover:bg-white/30 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/patients/${patient.id}`)}
+                  onClick={() => router.push(`/consultants/${consultant.id}`)}
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar name={patient.name} size="sm" />
+                    <Avatar name={consultant.name} size="sm" />
                     <div>
-                      <div className="text-sm font-medium text-charcoal">{patient.name}</div>
+                      <div className="text-sm font-medium text-charcoal">{consultant.name}</div>
                       <div className="flex items-center gap-1 text-xs text-warmgray">
                         <Clock className="h-3 w-3" />
                         Dernier contact :{' '}
-                        {patient.lastContact
-                          ? shortDateFormatter.format(new Date(patient.lastContact))
+                        {consultant.lastContact
+                          ? shortDateFormatter.format(new Date(consultant.lastContact))
                           : 'Aucun'}
                       </div>
                     </div>
@@ -525,7 +525,7 @@ export default function DashboardPage() {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      router.push(`/patients/${patient.id}`);
+                      router.push(`/consultants/${consultant.id}`);
                     }}
                   >
                     Relancer
@@ -533,10 +533,10 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-            {recontactPatients.length > 5 && (
+            {recontactConsultants.length > 5 && (
               <div className="p-4 bg-white/20 text-center">
                 <span className="text-xs text-warmgray">
-                  +{recontactPatients.length - 5} autres patients a relancer
+                  +{recontactConsultants.length - 5} autres consultants a relancer
                 </span>
               </div>
             )}
@@ -562,10 +562,10 @@ export default function DashboardPage() {
                   onClick={() => router.push(`/consultations/${appointment.id}`)}
                 >
                   <div className="flex items-center gap-4">
-                    <Avatar name={appointment.patients?.name || 'Patient'} size="md" />
+                    <Avatar name={appointment.consultants?.name || 'Consultant'} size="md" />
                     <div>
                       <p className="font-medium text-charcoal">
-                        {appointment.patients?.name ?? 'Patient'}
+                        {appointment.consultants?.name ?? 'Consultant'}
                       </p>
                       <p className="text-sm text-warmgray">
                         {dateTimeFormatter.format(new Date(appointment.date))}
@@ -573,8 +573,8 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    {appointment.patients?.is_premium ||
-                    appointment.patients?.status === 'premium' ? (
+                    {appointment.consultants?.is_premium ||
+                    appointment.consultants?.status === 'premium' ? (
                       <span className="badge-premium px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wide">
                         Premium
                       </span>

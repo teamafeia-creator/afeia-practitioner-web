@@ -5,13 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { resolvePatientId } from '@/lib/mobile-auth';
+import { resolveConsultantId } from '@/lib/mobile-auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -41,19 +41,19 @@ export async function POST(request: NextRequest) {
     const { data: caseFile } = await getSupabaseAdmin()
       .from('case_files')
       .select('id')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
     // Check if entry exists for this date
     const { data: existing } = await getSupabaseAdmin()
       .from('daily_journals')
       .select('id')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .eq('date', date)
       .maybeSingle();
 
     const entryData = {
-      patient_id: patientId,
+      consultant_id: consultantId,
       case_file_id: caseFile?.id,
       date,
       mood,

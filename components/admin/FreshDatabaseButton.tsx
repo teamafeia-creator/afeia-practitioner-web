@@ -72,7 +72,7 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
             Cette action va <strong>SUPPRIMER DEFINITIVEMENT</strong> :
           </p>
           <ul className="text-sm text-gray-700 space-y-1 ml-4 list-disc">
-            <li>Tous les patients</li>
+            <li>Tous les consultants</li>
             <li>Tous les plans de soins</li>
             <li>Tous les messages</li>
             <li>Toutes les consultations</li>

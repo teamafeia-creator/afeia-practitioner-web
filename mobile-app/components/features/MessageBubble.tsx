@@ -5,7 +5,7 @@ import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
 
 interface MessageBubbleProps {
   content: string;
-  senderType: 'patient' | 'praticien';
+  senderType: 'consultant' | 'praticien';
   timestamp: string;
   read?: boolean;
 }
@@ -16,25 +16,25 @@ export function MessageBubble({
   timestamp,
   read,
 }: MessageBubbleProps) {
-  const isPatient = senderType === 'patient';
+  const isConsultant = senderType === 'consultant';
 
   return (
     <View
       style={[
         styles.container,
-        isPatient ? styles.containerRight : styles.containerLeft,
+        isConsultant ? styles.containerRight : styles.containerLeft,
       ]}
     >
       <View
         style={[
           styles.bubble,
-          isPatient ? styles.bubblePatient : styles.bubblePraticien,
+          isConsultant ? styles.bubbleConsultant : styles.bubblePraticien,
         ]}
       >
         <Text
           style={[
             styles.text,
-            isPatient ? styles.textPatient : styles.textPraticien,
+            isConsultant ? styles.textConsultant : styles.textPraticien,
           ]}
         >
           {content}
@@ -43,11 +43,11 @@ export function MessageBubble({
       <View
         style={[
           styles.meta,
-          isPatient ? styles.metaRight : styles.metaLeft,
+          isConsultant ? styles.metaRight : styles.metaLeft,
         ]}
       >
         <Text style={styles.time}>{formatTime(timestamp)}</Text>
-        {isPatient && read !== undefined && (
+        {isConsultant && read !== undefined && (
           <Text style={styles.readStatus}>{read ? '\u2713\u2713' : '\u2713'}</Text>
         )}
       </View>
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: borderRadius.lg,
   },
-  bubblePatient: {
+  bubbleConsultant: {
     backgroundColor: colors.primary[500],
     borderBottomRightRadius: spacing.xs,
   },
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     lineHeight: 22,
   },
-  textPatient: {
+  textConsultant: {
     color: colors.white,
   },
   textPraticien: {

@@ -1,9 +1,9 @@
 /**
  * POST /api/mobile/auth/verify-otp
- * Verify OTP code for patient onboarding
+ * Verify OTP code for consultant onboarding
  *
  * Checks two tables:
- * 1. patient_questionnaire_codes (hashed) — from questionnaire send-code flow
+ * 1. consultant_questionnaire_codes (hashed) — from questionnaire send-code flow
  * 2. otp_codes (plaintext) — from dashboard send-activation-code flow
  */
 
@@ -36,11 +36,11 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // --- Strategy 1: Check patient_questionnaire_codes (hashed) ---
+    // --- Strategy 1: Check consultant_questionnaire_codes (hashed) ---
     const codeHash = hashQuestionnaireCode(otp);
     const { data: questionnaireRecord } = await supabase
-      .from('patient_questionnaire_codes')
-      .select('id, patient_id, expires_at, used_at, revoked_at')
+      .from('consultant_questionnaire_codes')
+      .select('id, consultant_id, expires_at, used_at, revoked_at')
       .eq('code_hash', codeHash)
       .maybeSingle();
 
@@ -60,13 +60,13 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      return await buildSuccessResponse(supabase, questionnaireRecord.patient_id, questionnaireRecord.id);
+      return await buildSuccessResponse(supabase, questionnaireRecord.consultant_id, questionnaireRecord.id);
     }
 
     // --- Strategy 2: Fallback to otp_codes (plaintext, from dashboard activation) ---
     const { data: otpCodesRecord } = await supabase
       .from('otp_codes')
-      .select('id, patient_id, email, expires_at, used')
+      .select('id, consultant_id, email, expires_at, used')
       .eq('code', otp)
       .eq('type', 'activation')
       .eq('used', false)
@@ -93,27 +93,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve patient_id — may be null in otp_codes, try email fallback
-    let patientId = otpCodesRecord.patient_id;
-    if (!patientId && otpCodesRecord.email) {
-      const { data: patientByEmail } = await supabase
-        .from('patients')
+    // Resolve consultant_id — may be null in otp_codes, try email fallback
+    let consultantId = otpCodesRecord.consultant_id;
+    if (!consultantId && otpCodesRecord.email) {
+      const { data: consultantByEmail } = await supabase
+        .from('consultants')
         .select('id')
         .eq('email', otpCodesRecord.email)
         .maybeSingle();
-      if (patientByEmail) {
-        patientId = patientByEmail.id;
+      if (consultantByEmail) {
+        consultantId = consultantByEmail.id;
       }
     }
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
-        { valid: false, message: 'Patient non trouvé pour ce code' },
+        { valid: false, message: 'Consultant non trouvé pour ce code' },
         { status: 200 }
       );
     }
 
-    return await buildSuccessResponse(supabase, patientId, otpCodesRecord.id);
+    return await buildSuccessResponse(supabase, consultantId, otpCodesRecord.id);
   } catch (error) {
     console.error('Error verifying OTP:', error);
     return NextResponse.json(
@@ -125,40 +125,40 @@ export async function POST(request: NextRequest) {
 
 async function buildSuccessResponse(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  patientId: string,
+  consultantId: string,
   otpRecordId: string,
 ) {
-  // Get patient info
-  const { data: patient } = await supabase
-    .from('patients')
+  // Get consultant info
+  const { data: consultant } = await supabase
+    .from('consultants')
     .select('id, name, email')
-    .eq('id', patientId)
+    .eq('id', consultantId)
     .single();
 
-  if (!patient) {
+  if (!consultant) {
     return NextResponse.json(
-      { valid: false, message: 'Patient non trouvé' },
+      { valid: false, message: 'Consultant non trouvé' },
       { status: 200 }
     );
   }
 
-  // Check if patient already has a user account
+  // Check if consultant already has a user account
   const { data: membership } = await supabase
-    .from('patient_memberships')
-    .select('patient_user_id')
-    .eq('patient_id', patient.id)
+    .from('consultant_memberships')
+    .select('consultant_user_id')
+    .eq('consultant_id', consultant.id)
     .maybeSingle();
 
   if (membership) {
     return NextResponse.json(
-      { valid: false, message: 'Ce patient a déjà un compte. Veuillez vous connecter.' },
+      { valid: false, message: 'Ce consultant a déjà un compte. Veuillez vous connecter.' },
       { status: 200 }
     );
   }
 
   // Generate a temporary token for registration
   const tempToken = await new SignJWT({
-    patientId: patient.id,
+    consultantId: consultant.id,
     otpId: otpRecordId,
     purpose: 'registration',
   })
@@ -168,9 +168,9 @@ async function buildSuccessResponse(
 
   return NextResponse.json({
     valid: true,
-    patientId: patient.id,
-    patientEmail: patient.email,
-    patientName: patient.name,
+    consultantId: consultant.id,
+    consultantEmail: consultant.email,
+    consultantName: consultant.name,
     tempToken,
   });
 }

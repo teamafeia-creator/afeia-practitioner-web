@@ -30,9 +30,9 @@ const FAQS = [
       'Le praticien voit des synthèses et tendances, jamais des données intrusives ou médicales brutes.'
   },
   {
-    question: 'Comment relier un patient ?',
+    question: 'Comment relier un consultant ?',
     answer:
-      'Le patient active Circular et donne son consentement depuis son espace. La liaison est sécurisée.'
+      'Le consultant active Circular et donne son consentement depuis son espace. La liaison est sécurisée.'
   }
 ];
 
@@ -63,7 +63,7 @@ export default function CircularLearnMorePage() {
             <h1 className="text-3xl font-semibold text-charcoal md:text-4xl">Circular x AFEIA</h1>
             <p className="text-sm text-marine md:text-base">
               Une lecture douce des signaux du corps pour enrichir votre accompagnement, sans
-              surcharger le patient ni les consultations.
+              surcharger le consultant ni les consultations.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -101,7 +101,7 @@ export default function CircularLearnMorePage() {
         <div className="space-y-3 rounded-2xl border border-sable/60 bg-white/80 p-6">
           <h2 className="text-lg font-semibold text-charcoal">Pourquoi c’est utile en naturopathie</h2>
           <ul className="space-y-2 text-sm text-marine">
-            <li>• Objectiver les ressentis du patient avec des repères simples.</li>
+            <li>• Objectiver les ressentis du consultant avec des repères simples.</li>
             <li>• Suivre les effets des recommandations semaine après semaine.</li>
             <li>• Détecter les déséquilibres avant qu’ils ne s’installent.</li>
             <li>• Affiner l’accompagnement grâce à des tendances fiables.</li>
@@ -110,7 +110,7 @@ export default function CircularLearnMorePage() {
         <div className="space-y-3 rounded-2xl border border-sable/60 bg-white/80 p-6">
           <h2 className="text-lg font-semibold text-charcoal">Pour les professionnels</h2>
           <ul className="space-y-2 text-sm text-marine">
-            <li>• Données exploitables directement dans le suivi patient.</li>
+            <li>• Données exploitables directement dans le suivi consultant.</li>
             <li>• Vision long terme pour repérer les cycles et ajuster les plans.</li>
             <li>• Approche basée sur des tendances, jamais sur un diagnostic médical.</li>
           </ul>
@@ -120,7 +120,7 @@ export default function CircularLearnMorePage() {
       <section className="rounded-2xl border border-sable/60 bg-white/80 p-6">
         <h2 className="text-lg font-semibold text-charcoal">Confidentialité</h2>
         <p className="mt-2 text-sm text-marine">
-          Les données sont partagées uniquement avec le consentement du patient. Le praticien dispose
+          Les données sont partagées uniquement avec le consentement du consultant. Le praticien dispose
           d’une lecture seule, centrée sur les tendances utiles à l’accompagnement, dans le respect de
           la vie privée.
         </p>

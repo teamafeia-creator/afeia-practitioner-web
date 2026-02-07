@@ -5,13 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { resolvePatientId } from '@/lib/mobile-auth';
+import { resolveConsultantId } from '@/lib/mobile-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     let query = getSupabaseAdmin()
       .from('daily_journals')
       .select('*')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .order('date', { ascending: false });
 
     if (startDate) {

@@ -1,21 +1,21 @@
 /**
- * Email utility for sending OTP codes to patients
+ * Email utility for sending OTP codes to consultants
  * Uses the Resend API directly via fetch
  */
 
 type SendOTPEmailOptions = {
   email: string;
   otpCode: string;
-  patientName: string;
+  consultantName: string;
 };
 
-export async function sendOTPEmail({ email, otpCode, patientName }: SendOTPEmailOptions) {
+export async function sendOTPEmail({ email, otpCode, consultantName }: SendOTPEmailOptions) {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'AFEIA <contact@afeia.fr>';
 
   if (!apiKey) {
     console.info('[EMAIL] RESEND_API_KEY not configured. OTP email would be sent to:', email);
-    console.info(`[EMAIL] OTP Code: ${otpCode} for ${patientName}`);
+    console.info(`[EMAIL] OTP Code: ${otpCode} for ${consultantName}`);
     return { success: true, simulated: true };
   }
 
@@ -28,7 +28,7 @@ export async function sendOTPEmail({ email, otpCode, patientName }: SendOTPEmail
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; background-color: #f5f5f5;">
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <h1 style="color: #2B5651; margin-bottom: 24px;">Bienvenue ${patientName}</h1>
+        <h1 style="color: #2B5651; margin-bottom: 24px;">Bienvenue ${consultantName}</h1>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
           Votre code d'accès à l'application AFEIA :
         </p>
@@ -53,7 +53,7 @@ export async function sendOTPEmail({ email, otpCode, patientName }: SendOTPEmail
   `;
 
   const textContent = `
-Bienvenue ${patientName}
+Bienvenue ${consultantName}
 
 Votre code d'accès à l'application AFEIA : ${otpCode}
 

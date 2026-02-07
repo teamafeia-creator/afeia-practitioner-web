@@ -13,15 +13,15 @@ import { Toast } from '@/components/ui/Toast';
 import { LinkQuestionnaireModal } from '@/components/questionnaires/LinkQuestionnaireModal';
 import {
   getPreliminaryQuestionnaires,
-  createPatientFromQuestionnaire,
+  createConsultantFromQuestionnaire,
   archivePreliminaryQuestionnaire,
-  linkQuestionnaireToExistingPatient
+  linkQuestionnaireToExistingConsultant
 } from '@/services/preliminary-questionnaire';
 import type { PreliminaryQuestionnaire } from '@/lib/types';
 
 const TAB_LABELS = {
   'En attente': 'pending',
-  'Associés': 'linked_to_patient',
+  'Associés': 'linked_to_consultant',
   'Archivés': 'archived',
   'Tous': 'all'
 } as const;
@@ -90,27 +90,27 @@ export default function QuestionnairesPage() {
     );
   }, [questionnaires, search]);
 
-  // Create patient from questionnaire
-  const handleCreatePatient = async (questionnaireId: string) => {
+  // Create consultant from questionnaire
+  const handleCreateConsultant = async (questionnaireId: string) => {
     setActionLoading(questionnaireId);
     try {
-      const result = await createPatientFromQuestionnaire(questionnaireId);
+      const result = await createConsultantFromQuestionnaire(questionnaireId);
       const codeDisplay = result.code ? `\n\nCode OTP : ${result.code}` : '';
       const emailDisplay = result.email ? ` (${result.email})` : '';
       setToast({
-        title: 'Patient créé et code envoyé',
-        description: `Le patient a été créé et le questionnaire associé.${emailDisplay}${codeDisplay}`,
+        title: 'Consultant créé et code envoyé',
+        description: `Le consultant a été créé et le questionnaire associé.${emailDisplay}${codeDisplay}`,
         variant: 'success'
       });
-      // Redirect to patient page after short delay
+      // Redirect to consultant page after short delay
       setTimeout(() => {
-        window.location.href = `/patients/${result.patientId}`;
+        window.location.href = `/consultants/${result.consultantId}`;
       }, 2000);
     } catch (err) {
-      console.error('Error creating patient:', err);
+      console.error('Error creating consultant:', err);
       setToast({
         title: 'Erreur',
-        description: err instanceof Error ? err.message : 'Impossible de créer le patient.',
+        description: err instanceof Error ? err.message : 'Impossible de créer le consultant.',
         variant: 'error'
       });
     } finally {
@@ -140,14 +140,14 @@ export default function QuestionnairesPage() {
     }
   };
 
-  // Link questionnaire to existing patient
-  const handleLinkToPatient = async (patientId: string) => {
+  // Link questionnaire to existing consultant
+  const handleLinkToConsultant = async (consultantId: string) => {
     if (!linkingQuestionnaire) return;
 
-    await linkQuestionnaireToExistingPatient(linkingQuestionnaire.id, patientId);
+    await linkQuestionnaireToExistingConsultant(linkingQuestionnaire.id, consultantId);
     setToast({
       title: 'Questionnaire associé',
-      description: 'Les données du questionnaire ont été ajoutées à l\'anamnèse du patient.',
+      description: 'Les données du questionnaire ont été ajoutées à l\'anamnèse du consultant.',
       variant: 'success'
     });
     loadQuestionnaires();
@@ -158,7 +158,7 @@ export default function QuestionnairesPage() {
     switch (status) {
       case 'pending':
         return <Badge variant="pending">En attente</Badge>;
-      case 'linked_to_patient':
+      case 'linked_to_consultant':
         return <Badge variant="completed">Associe</Badge>;
       case 'archived':
         return <Badge variant="archived">Archive</Badge>;
@@ -208,8 +208,8 @@ export default function QuestionnairesPage() {
       <div className="glass-card bg-teal-light/30 p-4 text-sm text-charcoal">
         <p className="font-medium text-teal">Comment ca marche ?</p>
         <p className="mt-1 text-warmgray">
-          Partagez le lien public avec vos patients. Ils peuvent remplir le questionnaire avant leur
-          premiere consultation. Creez ensuite leur dossier patient en un clic.
+          Partagez le lien public avec vos consultants. Ils peuvent remplir le questionnaire avant leur
+          premiere consultation. Creez ensuite leur dossier consultant en un clic.
         </p>
       </div>
 
@@ -265,10 +265,10 @@ export default function QuestionnairesPage() {
                     <Button
                       variant="primary"
                       className="text-xs"
-                      onClick={() => handleCreatePatient(q.id)}
+                      onClick={() => handleCreateConsultant(q.id)}
                       loading={actionLoading === q.id}
                     >
-                      Créer patient
+                      Créer consultant
                     </Button>
                     <Button
                       variant="secondary"
@@ -276,7 +276,7 @@ export default function QuestionnairesPage() {
                       onClick={() => setLinkingQuestionnaire(q)}
                       disabled={actionLoading === q.id}
                     >
-                      Associer patient
+                      Associer consultant
                     </Button>
                     <Button
                       variant="ghost"
@@ -289,10 +289,10 @@ export default function QuestionnairesPage() {
                   </>
                 )}
 
-                {q.status === 'linked_to_patient' && q.linked_patient_id && (
-                  <Link href={`/patients/${q.linked_patient_id}`}>
+                {q.status === 'linked_to_consultant' && q.linked_consultant_id && (
+                  <Link href={`/consultants/${q.linked_consultant_id}`}>
                     <Button variant="secondary" className="text-xs">
-                      Voir patient
+                      Voir consultant
                     </Button>
                   </Link>
                 )}
@@ -312,7 +312,7 @@ export default function QuestionnairesPage() {
           }
           description={
             activeTabLabel === 'En attente'
-              ? 'Les questionnaires remplis par vos patients apparaîtront ici.'
+              ? 'Les questionnaires remplis par vos consultants apparaîtront ici.'
               : 'Ajustez votre recherche ou changez de filtre.'
           }
         />
@@ -327,11 +327,11 @@ export default function QuestionnairesPage() {
         />
       )}
 
-      {/* Modal pour associer un questionnaire à un patient existant */}
+      {/* Modal pour associer un questionnaire à un consultant existant */}
       <LinkQuestionnaireModal
         isOpen={linkingQuestionnaire !== null}
         onClose={() => setLinkingQuestionnaire(null)}
-        onLink={handleLinkToPatient}
+        onLink={handleLinkToConsultant}
         questionnaireInfo={linkingQuestionnaire ? {
           firstName: linkingQuestionnaire.first_name,
           lastName: linkingQuestionnaire.last_name,

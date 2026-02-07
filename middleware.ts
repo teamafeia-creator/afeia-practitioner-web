@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Gérer CORS pour les endpoints API mobile et patient
+  // Gérer CORS pour les endpoints API mobile et consultant
   if (
     request.nextUrl.pathname.startsWith('/api/mobile') ||
-    request.nextUrl.pathname.startsWith('/api/patient')
+    request.nextUrl.pathname.startsWith('/api/consultant')
   ) {
     // Gérer les requêtes OPTIONS (preflight)
     if (request.method === 'OPTIONS') {

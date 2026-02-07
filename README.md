@@ -1,14 +1,14 @@
 # AFEIA Practitioner Web
 
-> Application web pour naturopathes - Gestion de patients, consultations et suivi bien-être
+> Application web pour naturopathes - Gestion de consultants, consultations et suivi bien-être
 
 ## 🎯 Fonctionnalités
 
-- **Dashboard** : Vue d'ensemble des patients et notifications
-- **Gestion patients** : Profil, anamnèse, journal quotidien
+- **Dashboard** : Vue d'ensemble des consultants et notifications
+- **Gestion consultants** : Profil, anamnèse, journal quotidien
 - **Plans personnalisés** : Création et versioning de plans d'accompagnement
 - **Intégration Circular** (Premium) : Données sommeil, HRV, activité
-- **Messagerie** : Communication praticien-patient
+- **Messagerie** : Communication praticien-consultant
 - **Consultations** : Notes et historique des séances
 
 ## 🛠 Stack technique
@@ -62,7 +62,7 @@ afeia-practitioner-web/
 ├── app/                    # Routes Next.js (App Router)
 │   ├── (app)/             # Routes authentifiées
 │   │   ├── dashboard/     # Tableau de bord
-│   │   ├── patients/      # Liste et détail patients
+│   │   ├── consultants/      # Liste et détail consultants
 │   │   ├── consultations/ # Consultations
 │   │   ├── plans/         # Plans d'accompagnement
 │   │   └── settings/      # Paramètres
@@ -74,7 +74,7 @@ afeia-practitioner-web/
 ├── components/            # Composants React
 │   ├── ui/               # Composants UI de base
 │   ├── shell/            # Navigation, layout app
-│   ├── patients/         # Composants spécifiques patients
+│   ├── consultants/         # Composants spécifiques consultants
 │   └── charts/           # Graphiques
 ├── lib/                   # Utilitaires et configurations
 │   ├── mock.ts           # Données de test (temporaire)
@@ -106,7 +106,7 @@ npm run lint     # Vérification ESLint
 - [ ] API CRUD complète
 - [ ] Intégration Circular Ring
 - [ ] Export PDF des plans
-- [ ] Application mobile patient
+- [ ] Application mobile consultant
 
 ## 📄 Licence
 

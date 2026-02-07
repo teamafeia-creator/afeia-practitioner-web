@@ -2,7 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import { AuthTokens } from '../types';
 
 const TOKENS_KEY = 'afeia_tokens';
-const PATIENT_KEY = 'afeia_patient';
+const CONSULTANT_KEY = 'afeia_consultant';
 
 export async function getTokens(): Promise<AuthTokens | null> {
   try {
@@ -19,18 +19,18 @@ export async function setTokens(tokens: AuthTokens): Promise<void> {
 
 export async function clearTokens(): Promise<void> {
   await SecureStore.deleteItemAsync(TOKENS_KEY);
-  await SecureStore.deleteItemAsync(PATIENT_KEY);
+  await SecureStore.deleteItemAsync(CONSULTANT_KEY);
 }
 
-export async function getStoredPatient(): Promise<Record<string, unknown> | null> {
+export async function getStoredConsultant(): Promise<Record<string, unknown> | null> {
   try {
-    const raw = await SecureStore.getItemAsync(PATIENT_KEY);
+    const raw = await SecureStore.getItemAsync(CONSULTANT_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
-export async function setStoredPatient(patient: Record<string, unknown>): Promise<void> {
-  await SecureStore.setItemAsync(PATIENT_KEY, JSON.stringify(patient));
+export async function setStoredConsultant(consultant: Record<string, unknown>): Promise<void> {
+  await SecureStore.setItemAsync(CONSULTANT_KEY, JSON.stringify(consultant));
 }

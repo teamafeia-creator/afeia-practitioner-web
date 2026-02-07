@@ -38,13 +38,13 @@ L'application AFEIA utilise **36 tables** reparties en plusieurs domaines:
 | Table | Description |
 |-------|-------------|
 | `practitioners` | Praticiens/Naturopathes (lies a auth.users) |
-| `patients` | Patients d'un praticien |
+| `consultants` | Consultants d'un praticien |
 | `users` | Utilisateurs de l'app mobile (auth separee) |
-| `patient_memberships` | Lien patient-user pour l'app mobile |
-| `patient_invitations` | Invitations envoyees aux patients |
-| `patient_invites` | Invitations par token |
+| `consultant_memberships` | Lien consultant-user pour l'app mobile |
+| `consultant_invitations` | Invitations envoyees aux consultants |
+| `consultant_invites` | Invitations par token |
 | `otp_codes` | Codes OTP pour activation |
-| `patient_questionnaire_codes` | Codes questionnaire (hashes) |
+| `consultant_questionnaire_codes` | Codes questionnaire (hashes) |
 
 ### Donnees Medicales
 
@@ -52,7 +52,7 @@ L'application AFEIA utilise **36 tables** reparties en plusieurs domaines:
 |-------|-------------|
 | `anamneses` | Anamneses (structure legacy) |
 | `anamnese_instances` | Instances d'anamnese (legacy) |
-| `patient_anamnesis` | Nouvelle table d'anamnese (moderne) |
+| `consultant_anamnesis` | Nouvelle table d'anamnese (moderne) |
 | `preliminary_questionnaires` | Questionnaires preliminaires publics |
 | `anamnesis_history` | Historique des modifications |
 
@@ -62,7 +62,7 @@ L'application AFEIA utilise **36 tables** reparties en plusieurs domaines:
 |-------|-------------|
 | `consultations` | Historique des consultations |
 | `appointments` | Rendez-vous planifies |
-| `case_files` | Dossiers patients |
+| `case_files` | Dossiers consultants |
 
 ### Plans & Soins
 
@@ -71,7 +71,7 @@ L'application AFEIA utilise **36 tables** reparties en plusieurs domaines:
 | `plans` | Plans de soins (structure hierarchique) |
 | `plan_versions` | Versions d'un plan |
 | `plan_sections` | Sections d'une version |
-| `patient_plans` | Plans patient (structure simplifiee) |
+| `consultant_plans` | Plans consultant (structure simplifiee) |
 | `care_plans` | Plans de soins alternatifs (fallback) |
 
 ### Journal & Suivi
@@ -94,9 +94,9 @@ L'application AFEIA utilise **36 tables** reparties en plusieurs domaines:
 
 | Table | Description |
 |-------|-------------|
-| `messages` | Messages entre patients et praticiens |
+| `messages` | Messages entre consultants et praticiens |
 | `notifications` | Notifications |
-| `practitioner_notes` | Notes du praticien sur un patient |
+| `practitioner_notes` | Notes du praticien sur un consultant |
 
 ### Facturation
 
@@ -112,7 +112,7 @@ L'application AFEIA utilise **36 tables** reparties en plusieurs domaines:
 
 | Table | Description |
 |-------|-------------|
-| `patient_analysis_results` | Resultats d'analyses patient |
+| `consultant_analysis_results` | Resultats d'analyses consultant |
 
 ---
 
@@ -134,43 +134,43 @@ Praticiens/Naturopathes - lies a auth.users de Supabase.
 
 ---
 
-### patients
+### consultants
 
-Patients d'un praticien.
+Consultants d'un praticien.
 
 | Colonne | Type | Description | Utilise dans |
 |---------|------|-------------|--------------|
 | `id` | UUID | ID unique | Partout |
 | `practitioner_id` | UUID | FK vers practitioners | `services/practitioner.service.ts`, `lib/queries.ts` |
-| `email` | TEXT | Email | `services/invitation.service.ts`, `services/patients.ts` |
-| `name` | TEXT | Nom affiche | `services/patients.ts`, `lib/queries.ts` |
+| `email` | TEXT | Email | `services/invitation.service.ts`, `services/consultants.ts` |
+| `name` | TEXT | Nom affiche | `services/consultants.ts`, `lib/queries.ts` |
 | `full_name` | TEXT | Nom complet | `services/practitioner.service.ts` |
 | `first_name` | TEXT | Prenom | `services/practitioner.service.ts` |
 | `last_name` | TEXT | Nom | `services/practitioner.service.ts` |
 | `phone` | TEXT | Telephone | `services/practitioner.service.ts` |
-| `city` | TEXT | Ville | `services/patients.ts`, `lib/queries.ts` |
-| `age` | INTEGER | Age | `services/patients.ts`, `lib/queries.ts` |
+| `city` | TEXT | Ville | `services/consultants.ts`, `lib/queries.ts` |
+| `age` | INTEGER | Age | `services/consultants.ts`, `lib/queries.ts` |
 | `date_of_birth` | DATE | Date naissance | `services/invitation.service.ts` |
 | `consultation_reason` | TEXT | Raison consultation | `lib/types.ts` |
 | `status` | TEXT | Statut (standard/premium) | `lib/types.ts` |
 | `is_premium` | BOOLEAN | Premium? | `lib/types.ts`, `app/api/mobile/auth/register/route.ts` |
 | `activated` | BOOLEAN | Active? | `services/invitation.service.ts`, `services/practitioner.service.ts` |
-| `activated_at` | TIMESTAMPTZ | Date activation | `services/patients.ts` |
+| `activated_at` | TIMESTAMPTZ | Date activation | `services/consultants.ts` |
 | `deleted_at` | TIMESTAMPTZ | Soft delete | `lib/queries.ts`, `services/invites.ts` |
 | `created_at` | TIMESTAMPTZ | Date creation | `services/practitioner.service.ts` |
 | `updated_at` | TIMESTAMPTZ | Date maj | `lib/queries.ts` |
 
 ---
 
-### patient_invitations
+### consultant_invitations
 
-Invitations envoyees aux patients (nouveau systeme).
+Invitations envoyees aux consultants (nouveau systeme).
 
 | Colonne | Type | Description | Utilise dans |
 |---------|------|-------------|--------------|
 | `id` | UUID | ID unique | `services/invitation.service.ts` |
 | `practitioner_id` | UUID | FK vers practitioners | `services/invitation.service.ts` |
-| `email` | TEXT | Email patient | `services/invitation.service.ts` |
+| `email` | TEXT | Email consultant | `services/invitation.service.ts` |
 | `full_name` | TEXT | Nom complet | `services/invitation.service.ts` |
 | `first_name` | TEXT | Prenom | `services/invitation.service.ts` |
 | `last_name` | TEXT | Nom | `services/invitation.service.ts` |
@@ -188,7 +188,7 @@ Invitations envoyees aux patients (nouveau systeme).
 
 ### otp_codes
 
-Codes OTP pour activation patient.
+Codes OTP pour activation consultant.
 
 | Colonne | Type | Description | Utilise dans |
 |---------|------|-------------|--------------|
@@ -197,11 +197,11 @@ Codes OTP pour activation patient.
 | `code` | TEXT | Code OTP | `services/invitation.service.ts`, `services/practitioner.service.ts` |
 | `type` | TEXT | activation/login/reset | `services/invitation.service.ts` |
 | `practitioner_id` | UUID | FK praticien | `services/practitioner.service.ts` |
-| `patient_id` | UUID | FK patient | `services/practitioner.service.ts` |
-| `patient_first_name` | TEXT | Prenom patient | `services/practitioner.service.ts` |
-| `patient_last_name` | TEXT | Nom patient | `services/practitioner.service.ts` |
-| `patient_phone` | TEXT | Tel patient | `services/practitioner.service.ts` |
-| `patient_city` | TEXT | Ville patient | `services/practitioner.service.ts` |
+| `consultant_id` | UUID | FK consultant | `services/practitioner.service.ts` |
+| `consultant_first_name` | TEXT | Prenom consultant | `services/practitioner.service.ts` |
+| `consultant_last_name` | TEXT | Nom consultant | `services/practitioner.service.ts` |
+| `consultant_phone` | TEXT | Tel consultant | `services/practitioner.service.ts` |
+| `consultant_city` | TEXT | Ville consultant | `services/practitioner.service.ts` |
 | `expires_at` | TIMESTAMPTZ | Expiration | `services/practitioner.service.ts` |
 | `used` | BOOLEAN | Utilise? | `services/invitation.service.ts`, `services/practitioner.service.ts` |
 | `used_at` | TIMESTAMPTZ | Date utilisation | - |
@@ -210,21 +210,21 @@ Codes OTP pour activation patient.
 
 ### messages
 
-Messages entre patients et praticiens.
+Messages entre consultants et praticiens.
 
 | Colonne | Type | Description | Utilise dans |
 |---------|------|-------------|--------------|
 | `id` | UUID | ID unique | `lib/queries.ts`, `app/api/mobile/messages/route.ts` |
-| `patient_id` | UUID | FK patient | `lib/queries.ts`, `services/patients.ts` |
-| `sender` | TEXT | patient/praticien | `lib/queries.ts`, `app/api/mobile/messages/route.ts` |
-| `sender_role` | TEXT | patient/practitioner | `lib/queries.ts`, `services/patients.ts` |
-| `sender_type` | TEXT | patient/practitioner | `services/patients.ts` |
+| `consultant_id` | UUID | FK consultant | `lib/queries.ts`, `services/consultants.ts` |
+| `sender` | TEXT | consultant/praticien | `lib/queries.ts`, `app/api/mobile/messages/route.ts` |
+| `sender_role` | TEXT | consultant/practitioner | `lib/queries.ts`, `services/consultants.ts` |
+| `sender_type` | TEXT | consultant/practitioner | `services/consultants.ts` |
 | `text` | TEXT | Contenu message | `lib/queries.ts`, `app/api/mobile/messages/route.ts` |
 | `body` | TEXT | Contenu (alias) | `lib/queries.ts` |
-| `read` | BOOLEAN | Lu? | `services/patients.ts` |
+| `read` | BOOLEAN | Lu? | `services/consultants.ts` |
 | `read_at` | TIMESTAMPTZ | Date lecture | `lib/queries.ts`, `app/api/mobile/messages/route.ts` |
 | `sent_at` | TIMESTAMPTZ | Date envoi | `lib/queries.ts`, `app/api/mobile/messages/route.ts` |
-| `created_at` | TIMESTAMPTZ | Date creation | `services/patients.ts` |
+| `created_at` | TIMESTAMPTZ | Date creation | `services/consultants.ts` |
 
 ---
 
@@ -236,7 +236,7 @@ Notifications pour les praticiens.
 |---------|------|-------------|--------------|
 | `id` | UUID | ID unique | `services/notifications.ts` |
 | `practitioner_id` | UUID | FK praticien | `services/notifications.ts` |
-| `patient_id` | UUID | FK patient (optionnel) | `lib/queries.ts` |
+| `consultant_id` | UUID | FK consultant (optionnel) | `lib/queries.ts` |
 | `type` | TEXT | Type notification | `services/notifications.ts`, `lib/types.ts` |
 | `title` | TEXT | Titre | `lib/types.ts` |
 | `description` | TEXT | Description | `lib/types.ts` |
@@ -247,14 +247,14 @@ Notifications pour les praticiens.
 
 ---
 
-### patient_anamnesis
+### consultant_anamnesis
 
-Anamnese patient (structure moderne).
+Anamnese consultant (structure moderne).
 
 | Colonne | Type | Description | Utilise dans |
 |---------|------|-------------|--------------|
 | `id` | UUID | ID unique | `services/anamnese.ts` |
-| `patient_id` | UUID | FK patient (unique) | `services/anamnese.ts`, `lib/queries.ts` |
+| `consultant_id` | UUID | FK consultant (unique) | `services/anamnese.ts`, `lib/queries.ts` |
 | `naturopath_id` | UUID | FK praticien | `services/anamnese.ts` |
 | `answers` | JSONB | Reponses | `services/anamnese.ts`, `lib/queries.ts` |
 | `version` | INTEGER | Version | `lib/types.ts`, `services/preliminary-questionnaire.ts` |
@@ -278,8 +278,8 @@ Questionnaires preliminaires soumis publiquement.
 | `email` | TEXT | Email | `lib/types.ts` |
 | `phone` | TEXT | Telephone | `lib/types.ts` |
 | `responses` | JSONB | Reponses | `lib/types.ts` |
-| `status` | TEXT | pending/linked_to_patient/archived | `services/preliminary-questionnaire.ts` |
-| `linked_patient_id` | UUID | FK patient lie | `lib/types.ts`, `app/api/mobile/auth/register/route.ts` |
+| `status` | TEXT | pending/linked_to_consultant/archived | `services/preliminary-questionnaire.ts` |
+| `linked_consultant_id` | UUID | FK consultant lie | `lib/types.ts`, `app/api/mobile/auth/register/route.ts` |
 | `linked_at` | TIMESTAMPTZ | Date liaison | `lib/types.ts` |
 | `submitted_from_ip` | TEXT | IP soumission | `lib/types.ts` |
 | `user_agent` | TEXT | User agent | `lib/types.ts` |
@@ -318,19 +318,19 @@ Abonnements des praticiens.
 auth.users
     |
     v
-practitioners (1) ----< (N) patients
+practitioners (1) ----< (N) consultants
     |                        |
     |                        +----< (N) messages
     |                        +----< (N) appointments
     |                        +----< (N) consultations
-    |                        +----< (1) patient_anamnesis
+    |                        +----< (1) consultant_anamnesis
     |                        +----< (N) journal_entries
-    |                        +----< (N) patient_plans
+    |                        +----< (N) consultant_plans
     |                        +----< (1) case_files ----< (N) complements
     |                        +----< (N) wearable_summaries
     |                        +----< (N) wearable_insights
     |
-    +----< (N) patient_invitations
+    +----< (N) consultant_invitations
     +----< (N) notifications
     +----< (N) preliminary_questionnaires
     +----< (1) subscriptions ----< (N) invoices
@@ -339,7 +339,7 @@ practitioners (1) ----< (N) patients
 
 subscription_plans (1) ----< (N) subscriptions
 
-users (mobile) (1) ----< (N) patient_memberships ----< (1) patients
+users (mobile) (1) ----< (N) consultant_memberships ----< (1) consultants
 ```
 
 ### Relations detaillees
@@ -347,24 +347,24 @@ users (mobile) (1) ----< (N) patient_memberships ----< (1) patients
 | Table source | Colonne | Table cible | Type |
 |--------------|---------|-------------|------|
 | `practitioners` | `id` | `auth.users` | 1:1 |
-| `patients` | `practitioner_id` | `practitioners` | N:1 |
-| `patient_invitations` | `practitioner_id` | `practitioners` | N:1 |
-| `patient_invites` | `practitioner_id` | `practitioners` | N:1 |
-| `patient_invites` | `patient_id` | `patients` | N:1 |
+| `consultants` | `practitioner_id` | `practitioners` | N:1 |
+| `consultant_invitations` | `practitioner_id` | `practitioners` | N:1 |
+| `consultant_invites` | `practitioner_id` | `practitioners` | N:1 |
+| `consultant_invites` | `consultant_id` | `consultants` | N:1 |
 | `otp_codes` | `practitioner_id` | `practitioners` | N:1 |
-| `otp_codes` | `patient_id` | `patients` | N:1 |
-| `messages` | `patient_id` | `patients` | N:1 |
+| `otp_codes` | `consultant_id` | `consultants` | N:1 |
+| `messages` | `consultant_id` | `consultants` | N:1 |
 | `notifications` | `practitioner_id` | `practitioners` | N:1 |
-| `notifications` | `patient_id` | `patients` | N:1 |
-| `appointments` | `patient_id` | `patients` | N:1 |
+| `notifications` | `consultant_id` | `consultants` | N:1 |
+| `appointments` | `consultant_id` | `consultants` | N:1 |
 | `appointments` | `practitioner_id` | `practitioners` | N:1 |
-| `consultations` | `patient_id` | `patients` | N:1 |
-| `patient_anamnesis` | `patient_id` | `patients` | 1:1 |
-| `patient_anamnesis` | `naturopath_id` | `practitioners` | N:1 |
+| `consultations` | `consultant_id` | `consultants` | N:1 |
+| `consultant_anamnesis` | `consultant_id` | `consultants` | 1:1 |
+| `consultant_anamnesis` | `naturopath_id` | `practitioners` | N:1 |
 | `preliminary_questionnaires` | `naturopath_id` | `practitioners` | N:1 |
-| `preliminary_questionnaires` | `linked_patient_id` | `patients` | N:1 |
-| `patient_plans` | `patient_id` | `patients` | N:1 |
-| `patient_plans` | `practitioner_id` | `practitioners` | N:1 |
+| `preliminary_questionnaires` | `linked_consultant_id` | `consultants` | N:1 |
+| `consultant_plans` | `consultant_id` | `consultants` | N:1 |
+| `consultant_plans` | `practitioner_id` | `practitioners` | N:1 |
 | `subscriptions` | `practitioner_id` | `practitioners` | N:1 |
 | `subscriptions` | `plan_id` | `subscription_plans` | N:1 |
 | `invoices` | `subscription_id` | `subscriptions` | N:1 |
@@ -420,7 +420,7 @@ WHERE table_schema = 'public' ORDER BY table_name;
 -- Verifier les colonnes d'une table specifique
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
-WHERE table_schema = 'public' AND table_name = 'patients'
+WHERE table_schema = 'public' AND table_name = 'consultants'
 ORDER BY ordinal_position;
 ```
 
@@ -440,13 +440,13 @@ ORDER BY ordinal_position;
 
 1. **Row Level Security (RLS)** : Toutes les tables ont RLS active. Les policies sont definies pour que chaque praticien n'accede qu'a ses propres donnees.
 
-2. **Tables legacy** : Certaines tables (`anamneses`, `anamnese_instances`) sont conservees pour compatibilite arriere mais `patient_anamnesis` est la table moderne.
+2. **Tables legacy** : Certaines tables (`anamneses`, `anamnese_instances`) sont conservees pour compatibilite arriere mais `consultant_anamnesis` est la table moderne.
 
-3. **Plans multiples** : Il existe plusieurs systemes de plans (`plans`/`plan_versions`/`plan_sections` vs `patient_plans` vs `care_plans`). `patient_plans` est le systeme principal.
+3. **Plans multiples** : Il existe plusieurs systemes de plans (`plans`/`plan_versions`/`plan_sections` vs `consultant_plans` vs `care_plans`). `consultant_plans` est le systeme principal.
 
-4. **Auth mobile** : L'app mobile utilise sa propre table `users` avec `patient_memberships` pour lier aux `patients`.
+4. **Auth mobile** : L'app mobile utilise sa propre table `users` avec `consultant_memberships` pour lier aux `consultants`.
 
-5. **Soft delete** : Les patients utilisent `deleted_at` pour le soft delete. Les requetes filtrent avec `.is('deleted_at', null)`.
+5. **Soft delete** : Les consultants utilisent `deleted_at` pour le soft delete. Les requetes filtrent avec `.is('deleted_at', null)`.
 
 ---
 

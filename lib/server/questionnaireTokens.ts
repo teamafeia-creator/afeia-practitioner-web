@@ -4,7 +4,7 @@ const JWT_ALGORITHM = 'HS256';
 const JWT_ISSUER = 'afeia-questionnaire';
 
 export type QuestionnaireTokenPayload = {
-  patientId: string;
+  consultantId: string;
   scope: 'questionnaire';
 };
 

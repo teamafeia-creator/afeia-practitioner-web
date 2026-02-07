@@ -18,16 +18,16 @@ export async function GET(request: NextRequest) {
 
     const [
       practitionersCountResult,
-      patientsCountResult,
-      premiumPatientsCountResult,
+      consultantsCountResult,
+      premiumConsultantsCountResult,
       suspendedPractitionersCountResult,
       practitionersResult,
-      patientsResult
+      consultantsResult
     ] = await Promise.all([
       supabase.from('practitioners_public').select('id', { count: 'exact', head: true }),
-      supabase.from('patients_identity').select('id', { count: 'exact', head: true }),
+      supabase.from('consultants_identity').select('id', { count: 'exact', head: true }),
       supabase
-        .from('patients_identity')
+        .from('consultants_identity')
         .select('id', { count: 'exact', head: true })
         .or('is_premium.eq.true,status.eq.premium'),
       supabase
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(DASHBOARD_PREVIEW_LIMIT),
       supabase
-        .from('patients_identity')
+        .from('consultants_identity')
         .select(
           'id, practitioner_id, full_name, email, status, is_premium, created_at, practitioners_public(full_name)'
         )
@@ -52,11 +52,11 @@ export async function GET(request: NextRequest) {
     if (practitionersCountResult.error) {
       console.error('[admin] dashboard practitioners count error:', practitionersCountResult.error);
     }
-    if (patientsCountResult.error) {
-      console.error('[admin] dashboard patients count error:', patientsCountResult.error);
+    if (consultantsCountResult.error) {
+      console.error('[admin] dashboard consultants count error:', consultantsCountResult.error);
     }
-    if (premiumPatientsCountResult.error) {
-      console.error('[admin] dashboard premium patients count error:', premiumPatientsCountResult.error);
+    if (premiumConsultantsCountResult.error) {
+      console.error('[admin] dashboard premium consultants count error:', premiumConsultantsCountResult.error);
     }
     if (suspendedPractitionersCountResult.error) {
       console.error('[admin] dashboard suspended practitioners count error:', suspendedPractitionersCountResult.error);
@@ -64,19 +64,19 @@ export async function GET(request: NextRequest) {
     if (practitionersResult.error) {
       console.error('[admin] dashboard practitioners list error:', practitionersResult.error);
     }
-    if (patientsResult.error) {
-      console.error('[admin] dashboard patients list error:', patientsResult.error);
+    if (consultantsResult.error) {
+      console.error('[admin] dashboard consultants list error:', consultantsResult.error);
     }
 
     const practitioners = practitionersResult.data ?? [];
-    const patients =
-      patientsResult.data?.map((patient: Record<string, unknown>) => {
-        const practitionersPublic = patient.practitioners_public as
+    const consultants =
+      consultantsResult.data?.map((consultant: Record<string, unknown>) => {
+        const practitionersPublic = consultant.practitioners_public as
           | { full_name: string | null }[]
           | { full_name: string | null }
           | null;
         return {
-          ...patient,
+          ...consultant,
           practitioner_name: Array.isArray(practitionersPublic)
             ? practitionersPublic[0]?.full_name ?? null
             : practitionersPublic?.full_name ?? null
@@ -86,12 +86,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       stats: {
         practitioners: practitionersCountResult.error ? null : practitionersCountResult.count ?? null,
-        patients: patientsCountResult.error ? null : patientsCountResult.count ?? null,
-        premiumPatients: premiumPatientsCountResult.error ? null : premiumPatientsCountResult.count ?? null,
+        consultants: consultantsCountResult.error ? null : consultantsCountResult.count ?? null,
+        premiumConsultants: premiumConsultantsCountResult.error ? null : premiumConsultantsCountResult.count ?? null,
         suspendedPractitioners: suspendedPractitionersCountResult.error ? null : suspendedPractitionersCountResult.count ?? null
       },
       practitioners,
-      patients
+      consultants
     });
   } catch (error) {
     console.error('[admin] dashboard error:', error);

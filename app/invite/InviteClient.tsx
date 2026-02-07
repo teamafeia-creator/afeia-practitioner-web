@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
-import { claimPatientInvite } from '../../services/invites';
+import { claimConsultantInvite } from '../../services/invites';
 import { fetchAnamneseStatus } from '../../services/anamnese';
 
 export default function InviteClient() {
@@ -61,8 +61,8 @@ export default function InviteClient() {
       setClaiming(true);
       setClaimError(null);
       try {
-        const patientId = await claimPatientInvite(token);
-        const status = await fetchAnamneseStatus(patientId);
+        const consultantId = await claimConsultantInvite(token);
+        const status = await fetchAnamneseStatus(consultantId);
         if (status === 'PENDING') {
           router.replace('/onboarding/anamnese');
           return;
@@ -99,7 +99,7 @@ export default function InviteClient() {
         password,
         options: {
           data: {
-            role: 'patient'
+            role: 'consultant'
           }
         }
       });
@@ -157,7 +157,7 @@ export default function InviteClient() {
           <Image src="/afeia_symbol.svg" alt="AFEIA" width={36} height={36} />
           <div>
             <div className="text-2xl font-semibold tracking-tight">Afeia</div>
-            <div className="text-sm text-warmgray">Invitation patient</div>
+            <div className="text-sm text-warmgray">Invitation consultant</div>
           </div>
         </div>
 

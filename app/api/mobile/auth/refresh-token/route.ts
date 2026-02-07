@@ -55,16 +55,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get patient membership
+    // Get consultant membership
     const { data: membership } = await getSupabaseAdmin()
-      .from('patient_memberships')
-      .select('patient_id')
-      .eq('patient_user_id', user.id)
+      .from('consultant_memberships')
+      .select('consultant_id')
+      .eq('consultant_user_id', user.id)
       .single();
 
     if (!membership) {
       return NextResponse.json(
-        { message: 'Compte patient non trouvé' },
+        { message: 'Compte consultant non trouvé' },
         { status: 404 }
       );
     }
@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
     const accessToken = await new SignJWT({
       sub: user.id,
       email: user.email,
-      role: 'PATIENT',
-      patientId: membership.patient_id,
+      role: 'CONSULTANT',
+      consultantId: membership.consultant_id,
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuer('afeia-practitioner-web')

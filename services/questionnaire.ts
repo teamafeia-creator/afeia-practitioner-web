@@ -7,14 +7,14 @@ export type SendQuestionnaireCodeResponse = {
 };
 
 export async function sendQuestionnaireCode(
-  patientId: string
+  consultantId: string
 ): Promise<SendQuestionnaireCodeResponse> {
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session) {
     throw new Error('Veuillez vous reconnecter pour envoyer le code.');
   }
 
-  const response = await fetch(`/api/patients/${patientId}/questionnaire/send-code`, {
+  const response = await fetch(`/api/consultants/${consultantId}/questionnaire/send-code`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

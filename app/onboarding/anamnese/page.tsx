@@ -12,7 +12,7 @@ import { ANAMNESIS_SECTIONS } from '../../../lib/anamnesis';
 type AnamneseStatus = 'PENDING' | 'COMPLETED' | null;
 
 export default function AnamnesePage() {
-  const [patientId, setPatientId] = useState<string | null>(null);
+  const [consultantId, setConsultantId] = useState<string | null>(null);
   const [status, setStatus] = useState<AnamneseStatus>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -40,25 +40,25 @@ export default function AnamnesePage() {
 
       const userId = sessionData.session.user.id;
       const { data: membership, error: membershipError } = await supabase
-        .from('patient_memberships')
-        .select('patient_id')
-        .eq('patient_user_id', userId)
+        .from('consultant_memberships')
+        .select('consultant_id')
+        .eq('consultant_user_id', userId)
         .single();
 
       if (!mounted) return;
 
       if (membershipError || !membership) {
-        setError('Nous ne retrouvons pas votre dossier patient.');
+        setError('Nous ne retrouvons pas votre dossier consultant.');
         setLoading(false);
         return;
       }
 
-      setPatientId(membership.patient_id);
+      setConsultantId(membership.consultant_id);
 
       const { data: anamnese, error: anamneseError } = await supabase
         .from('anamnese_instances')
         .select('status, answers')
-        .eq('patient_id', membership.patient_id)
+        .eq('consultant_id', membership.consultant_id)
         .maybeSingle();
 
       if (!mounted) return;
@@ -92,14 +92,14 @@ export default function AnamnesePage() {
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!patientId) return;
+    if (!consultantId) return;
 
     setSubmitting(true);
     setError(null);
     setMessage(null);
 
     try {
-      await submitAnamnese(patientId, answers);
+      await submitAnamnese(consultantId, answers);
       setStatus('COMPLETED');
       setMessage('Merci ! Votre anamnèse est bien enregistrée.');
     } catch (err) {

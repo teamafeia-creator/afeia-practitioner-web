@@ -25,7 +25,7 @@ import { useMessageNotifications } from '@/hooks/useMessageNotifications';
 
 const NAV = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/patients', label: 'Patients', icon: Users },
+  { href: '/consultants', label: 'Consultants', icon: Users },
   { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
   { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/settings', label: 'Parametres', icon: Settings }
@@ -35,7 +35,7 @@ const ADMIN_NAV = [
   { href: '/admin', label: 'Dashboard admin', icon: Shield },
   { href: '/admin/admins', label: 'Admins', icon: Shield },
   { href: '/admin/practitioners', label: 'Praticiens', icon: Users },
-  { href: '/admin/patients', label: 'Patients', icon: Users },
+  { href: '/admin/consultants', label: 'Consultants', icon: Users },
   { href: '/admin/billing', label: 'Billing', icon: ClipboardList },
   { href: '/admin/circular', label: 'Circular', icon: MessageSquare }
 ];
@@ -63,14 +63,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const labelMap: Record<string, string> = {
       dashboard: 'Tableau de bord',
-      patients: 'Patients',
+      consultants: 'Consultants',
       messages: 'Messages',
       questionnaires: 'Questionnaires',
       settings: 'Parametres',
       plans: 'Plans',
       consultations: 'Consultations',
       billing: 'Facturation',
-      new: 'Nouveau patient',
+      new: 'Nouveau consultant',
       admin: 'Admin',
       admins: 'Admins',
       practitioners: 'Praticiens',

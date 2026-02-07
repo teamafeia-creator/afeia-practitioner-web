@@ -15,14 +15,14 @@ export async function POST(request: NextRequest) {
 
     if (token) {
       try {
-        // Verify the token to get patient info for logging
+        // Verify the token to get consultant info for logging
         const { payload } = await jwtVerify(
           token,
           new TextEncoder().encode(process.env.JWT_SECRET)
         );
 
         // Log the logout event (can be extended to store in database)
-        console.log(`[AUTH] Patient ${payload.patientId} logged out at ${new Date().toISOString()}`);
+        console.log(`[AUTH] Consultant ${payload.consultantId} logged out at ${new Date().toISOString()}`);
       } catch {
         // Token might be expired, that's fine for logout
       }

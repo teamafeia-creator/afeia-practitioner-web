@@ -15,11 +15,11 @@
   - `created_at` / `updated_at` (TIMESTAMPTZ) — used in TypeScript types for practitioners.
 - **Routes/pages/actions**: trigger on `auth.users` (SQL).
 
-### patients
-- **Where referenced**: `lib/queries.ts`, `services/patients.ts`, `services/invites.ts`, `app/api/questionnaire`, `app/api/patients/.../send-code`.
+### consultants
+- **Where referenced**: `lib/queries.ts`, `services/consultants.ts`, `services/invites.ts`, `app/api/questionnaire`, `app/api/consultants/.../send-code`.
 - **Columns used**
   - `id` (UUID) — `.eq('id', ...)`, `.select('id')`.
-  - `practitioner_id` (UUID) — inserted when creating a patient; checked in API route.
+  - `practitioner_id` (UUID) — inserted when creating a consultant; checked in API route.
   - `name` (TEXT) — selected and displayed.
   - `email` (TEXT, nullable) — selected, used for invites and questionnaire email.
   - `age` (INTEGER, nullable) — selected/inserted.
@@ -31,21 +31,21 @@
   - `last_circular_sync_at` (TIMESTAMPTZ, nullable) — selected.
   - `created_at` / `updated_at` (TIMESTAMPTZ) — selected/updated.
 - **Relations inferred**
-  - `patients.practitioner_id -> practitioners.id` (checked in API).
-- **Routes/pages/actions**: dashboard, patient list/detail, new patient form, invite creation, questionnaire APIs.
+  - `consultants.practitioner_id -> practitioners.id` (checked in API).
+- **Routes/pages/actions**: dashboard, consultant list/detail, new consultant form, invite creation, questionnaire APIs.
 
 ### anamneses
-- **Where referenced**: `lib/queries.ts` (fetch patient details).
+- **Where referenced**: `lib/queries.ts` (fetch consultant details).
 - **Columns used**
-  - `patient_id` (UUID) — `.eq('patient_id', ...)`.
+  - `consultant_id` (UUID) — `.eq('consultant_id', ...)`.
   - Additional fields read from `select('*')` and consumed in UI/types: `motif`, `objectifs`, `alimentation`, `digestion`, `sommeil`, `stress`, `complement`, `allergies` (TEXT); `created_at`, `updated_at` (TIMESTAMPTZ).
-- **Routes/pages/actions**: patient details (consultations view).
+- **Routes/pages/actions**: consultant details (consultations view).
 
 ### consultations
 - **Where referenced**: `lib/queries.ts`.
 - **Columns used**
   - `id` (UUID) — `.eq('id', ...)`.
-  - `patient_id` (UUID) — `.eq('patient_id', ...)`.
+  - `consultant_id` (UUID) — `.eq('consultant_id', ...)`.
   - `date` (TIMESTAMPTZ) — ordering and UI formatting.
   - `notes` (TEXT, nullable) — used in UI types.
   - `created_at` / `updated_at` (TIMESTAMPTZ) — in types.
@@ -55,10 +55,10 @@
 - **Where referenced**: `lib/queries.ts`.
 - **Columns used**
   - `id` (UUID) — `.eq('id', ...)`.
-  - `patient_id` (UUID) — `.eq('patient_id', ...)`.
+  - `consultant_id` (UUID) — `.eq('consultant_id', ...)`.
   - `created_at` (TIMESTAMPTZ).
 - **Relations inferred**
-  - `plans.patient_id -> patients.id` (selects by patient).
+  - `plans.consultant_id -> consultants.id` (selects by consultant).
 
 ### plan_versions
 - **Where referenced**: `lib/queries.ts`.
@@ -78,38 +78,38 @@
 ### journal_entries
 - **Where referenced**: `lib/queries.ts`.
 - **Columns used**
-  - `patient_id` (UUID) — `.eq('patient_id', ...)`.
+  - `consultant_id` (UUID) — `.eq('consultant_id', ...)`.
   - `date` (DATE/TIMESTAMPTZ) — ordering.
   - Additional fields consumed via `select('*')` and UI/types: `text` (TEXT), `mood`, `energy`, `adherence_hydratation`, `adherence_respiration`, `adherence_mouvement`, `adherence_plantes`.
 
 ### messages
-- **Where referenced**: `lib/queries.ts`, `services/patients.ts`.
+- **Where referenced**: `lib/queries.ts`, `services/consultants.ts`.
 - **Columns used**
   - `id` (UUID).
-  - `patient_id` (UUID) — `.eq('patient_id', ...)`.
+  - `consultant_id` (UUID) — `.eq('consultant_id', ...)`.
   - `text` (TEXT) — insert + UI fallback.
   - `body` (TEXT) — UI fallback.
-  - `sender` (TEXT) — insert (`'patient' | 'praticien'`).
-  - `sender_role` (TEXT) — filters and UI normalization (`'patient' | 'practitioner'`).
+  - `sender` (TEXT) — insert (`'consultant' | 'praticien'`).
+  - `sender_role` (TEXT) — filters and UI normalization (`'consultant' | 'practitioner'`).
   - `read_by_practitioner` (BOOLEAN) — unread count filter.
   - `created_at`, `sent_at`, `updated_at` (TIMESTAMPTZ) — ordering / fallback timestamps.
 - **Relations inferred**
-  - `messages.patient_id -> patients.id`.
+  - `messages.consultant_id -> consultants.id`.
 
 ### wearable_summaries
-- **Where referenced**: `lib/queries.ts`, `services/patients.ts`.
+- **Where referenced**: `lib/queries.ts`, `services/consultants.ts`.
 - **Columns used**
   - `id` (UUID).
-  - `patient_id` (UUID) — `.eq('patient_id', ...)`.
+  - `consultant_id` (UUID) — `.eq('consultant_id', ...)`.
   - `date` (DATE/TIMESTAMPTZ) — ordering.
   - `sleep_duration`, `sleep_score`, `hrv_avg`, `activity_level`, `completeness` (NUMERIC/INTEGER) — UI mapping.
   - `created_at` (TIMESTAMPTZ).
 
 ### wearable_insights
-- **Where referenced**: `lib/queries.ts`, `services/patients.ts`.
+- **Where referenced**: `lib/queries.ts`, `services/consultants.ts`.
 - **Columns used**
   - `id` (UUID).
-  - `patient_id` (UUID) — `.eq('patient_id', ...)`.
+  - `consultant_id` (UUID) — `.eq('consultant_id', ...)`.
   - `type`, `level`, `message`, `suggested_action` (TEXT) — UI mapping.
   - `created_at` (TIMESTAMPTZ).
 
@@ -118,7 +118,7 @@
 - **Columns used**
   - `id` (UUID).
   - `practitioner_id` (UUID).
-  - `patient_id` (UUID, nullable).
+  - `consultant_id` (UUID, nullable).
   - `title` (TEXT).
   - `description` (TEXT, nullable).
   - `level` (TEXT: `'info' | 'attention'`).
@@ -126,45 +126,45 @@
   - `created_at` (TIMESTAMPTZ) — ordering.
 
 ### appointments
-- **Where referenced**: `services/patients.ts`.
+- **Where referenced**: `services/consultants.ts`.
 - **Columns used**
   - `id` (UUID).
-  - `patient_id` (UUID).
+  - `consultant_id` (UUID).
   - `start_at` (TIMESTAMPTZ) — date ordering.
   - `status` (TEXT: `'scheduled' | 'done' | 'cancelled'`).
 
 ### anamnese_instances
-- **Where referenced**: `services/anamnese.ts`, `services/patients.ts`, `app/onboarding/anamnese/page.tsx`.
+- **Where referenced**: `services/anamnese.ts`, `services/consultants.ts`, `app/onboarding/anamnese/page.tsx`.
 - **Columns used**
-  - `patient_id` (UUID) — upsert conflict key, filters.
+  - `consultant_id` (UUID) — upsert conflict key, filters.
   - `status` (TEXT: `'PENDING' | 'COMPLETED'`).
   - `answers` (JSONB) — stored questionnaire answers.
   - `created_at`, `updated_at` (TIMESTAMPTZ).
 
-### patient_invites
-- **Where referenced**: `services/invites.ts` (insert) and SQL RPC `claim_patient_invite`.
+### consultant_invites
+- **Where referenced**: `services/invites.ts` (insert) and SQL RPC `claim_consultant_invite`.
 - **Columns used**
   - `id` (UUID).
   - `practitioner_id` (UUID).
-  - `patient_id` (UUID).
+  - `consultant_id` (UUID).
   - `token` (TEXT).
   - `email` (TEXT).
   - `expires_at` (TIMESTAMPTZ).
   - `used_at` (TIMESTAMPTZ).
   - `created_at`, `updated_at` (TIMESTAMPTZ).
 
-### patient_memberships
-- **Where referenced**: `app/onboarding/anamnese/page.tsx`, `services/patients.ts` (RLS dependencies).
+### consultant_memberships
+- **Where referenced**: `app/onboarding/anamnese/page.tsx`, `services/consultants.ts` (RLS dependencies).
 - **Columns used**
-  - `patient_id` (UUID).
-  - `patient_user_id` (UUID).
+  - `consultant_id` (UUID).
+  - `consultant_user_id` (UUID).
   - `created_at` (TIMESTAMPTZ).
 
-### patient_questionnaire_codes
-- **Where referenced**: `app/api/patients/[patientId]/questionnaire/send-code/route.ts`, `app/api/questionnaire/verify-code/route.ts`.
+### consultant_questionnaire_codes
+- **Where referenced**: `app/api/consultants/[consultantId]/questionnaire/send-code/route.ts`, `app/api/questionnaire/verify-code/route.ts`.
 - **Columns used**
   - `id` (UUID).
-  - `patient_id` (UUID).
+  - `consultant_id` (UUID).
   - `created_at` (TIMESTAMPTZ) — ordering and rate limit.
   - `code_hash` (TEXT).
   - `expires_at` (TIMESTAMPTZ).
@@ -174,7 +174,7 @@
   - `attempts` (INTEGER).
 
 ## RPC / Functions / Triggers referenced
-- **RPC**: `claim_patient_invite(token TEXT)` is called from the app (`services/invites.ts`).
+- **RPC**: `claim_consultant_invite(token TEXT)` is called from the app (`services/invites.ts`).
 - **Triggers**: `handle_new_practitioner` runs `AFTER INSERT` on `auth.users` to create a `public.practitioners` row (defined in migrations).
 
 ## SQL-only references

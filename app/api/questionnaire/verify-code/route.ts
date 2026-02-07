@@ -11,39 +11,39 @@ const GENERIC_ERROR = 'Code invalide ou expiré.';
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as
-    | { email?: string; code?: string; patientId?: string }
+    | { email?: string; code?: string; consultantId?: string }
     | null;
 
   const rawEmail = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
-  const rawPatientId = typeof body?.patientId === 'string' ? body.patientId.trim() : '';
+  const rawConsultantId = typeof body?.consultantId === 'string' ? body.consultantId.trim() : '';
   const rawCode = typeof body?.code === 'string' ? body.code.trim().toUpperCase() : '';
 
   if (!rawCode) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
   }
 
-  if (!rawEmail && !rawPatientId) {
+  if (!rawEmail && !rawConsultantId) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
   }
 
   const supabase = createSupabaseAdminClient();
 
-  const patientQuery = supabase.from('patients').select('id, email').is('deleted_at', null);
-  const patientResult = rawPatientId
-    ? await patientQuery.eq('id', rawPatientId).maybeSingle()
-    : await patientQuery.eq('email', rawEmail).maybeSingle();
+  const consultantQuery = supabase.from('consultants').select('id, email').is('deleted_at', null);
+  const consultantResult = rawConsultantId
+    ? await consultantQuery.eq('id', rawConsultantId).maybeSingle()
+    : await consultantQuery.eq('email', rawEmail).maybeSingle();
 
-  if (patientResult.error || !patientResult.data) {
+  if (consultantResult.error || !consultantResult.data) {
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
   }
 
-  const patient = patientResult.data;
+  const consultant = consultantResult.data;
   const nowIso = new Date().toISOString();
 
   const { data: codeRecord, error: codeError } = await supabase
-    .from('patient_questionnaire_codes')
+    .from('consultant_questionnaire_codes')
     .select('id, code_hash, attempts')
-    .eq('patient_id', patient.id)
+    .eq('consultant_id', consultant.id)
     .is('used_at', null)
     .is('revoked_at', null)
     .gt('expires_at', nowIso)
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   const isValid = isQuestionnaireCodeMatch(rawCode, codeRecord.code_hash);
   if (!isValid) {
     await supabase
-      .from('patient_questionnaire_codes')
+      .from('consultant_questionnaire_codes')
       .update({ attempts: (codeRecord.attempts ?? 0) + 1 })
       .eq('id', codeRecord.id);
     return NextResponse.json({ error: GENERIC_ERROR }, { status: 400 });
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
   const usedAt = new Date().toISOString();
   const { error: updateError } = await supabase
-    .from('patient_questionnaire_codes')
+    .from('consultant_questionnaire_codes')
     .update({ used_at: usedAt })
     .eq('id', codeRecord.id);
 
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   }
 
   const accessTtl = getQuestionnaireAccessTokenTtlMinutes();
-  const accessToken = await signQuestionnaireToken({ patientId: patient.id, scope: 'questionnaire' }, accessTtl);
+  const accessToken = await signQuestionnaireToken({ consultantId: consultant.id, scope: 'questionnaire' }, accessTtl);
   const expiresAt = new Date(Date.now() + accessTtl * 60 * 1000).toISOString();
 
   return NextResponse.json({ ok: true, accessToken, expiresAt });

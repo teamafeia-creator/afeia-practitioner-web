@@ -9,7 +9,7 @@ import { AdminBackBar } from '@/components/admin/AdminBackBar';
 
 type Stats = {
   practitioners: number | null;
-  patients: number | null;
+  consultants: number | null;
   messages: number | null;
   plans: number | null;
 };
@@ -17,7 +17,7 @@ type Stats = {
 export default function AdminDatabasePage() {
   const [stats, setStats] = useState<Stats>({
     practitioners: null,
-    patients: null,
+    consultants: null,
     messages: null,
     plans: null
   });
@@ -80,9 +80,9 @@ export default function AdminDatabasePage() {
             </p>
           </Card>
           <Card className="glass-card p-5">
-            <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Patients</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-warmgray">Consultants</p>
             <p className="mt-3 text-3xl font-semibold text-charcoal">
-              {loading ? '...' : errorMessage ? 'Erreur de chargement' : stats.patients ?? '—'}
+              {loading ? '...' : errorMessage ? 'Erreur de chargement' : stats.consultants ?? '—'}
             </p>
           </Card>
           <Card className="glass-card p-5">

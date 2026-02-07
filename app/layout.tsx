@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     default: 'AFEIA — Espace Naturopathe',
     template: '%s | AFEIA'
   },
-  description: "Plateforme d'accompagnement naturopathique — espace professionnel. Gestion de patients, consultations et suivi bien-être.",
+  description: "Plateforme d'accompagnement naturopathique — espace professionnel. Gestion de consultants, consultations et suivi bien-être.",
   keywords: ['naturopathie', 'praticien', 'santé', 'bien-être', 'accompagnement', 'consultation'],
   authors: [{ name: 'AFEIA' }],
   openGraph: {

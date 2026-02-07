@@ -78,7 +78,7 @@ export default function SignUpPage() {
         <Card className="p-6">
           <h1 className="text-xl font-semibold text-charcoal">Inscription praticien</h1>
           <p className="text-sm text-warmgray mt-1">
-            Rejoignez votre espace sécurisé pour gérer vos patients.
+            Rejoignez votre espace sécurisé pour gérer vos consultants.
           </p>
 
           <form onSubmit={onSubmit} className="mt-5 space-y-4">

@@ -5,8 +5,8 @@ import { supabase } from '@/lib/supabase';
 
 export type Message = {
   id: string;
-  patient_id: string;
-  sender: 'patient' | 'praticien';
+  consultant_id: string;
+  sender: 'consultant' | 'praticien';
   text: string;
   sent_at: string;
   read_at: string | null;
@@ -15,16 +15,16 @@ export type Message = {
 };
 
 /**
- * Hook pour récupérer les messages d'un patient
+ * Hook pour récupérer les messages d'un consultant
  */
-export function useMessages(patientId: string) {
+export function useMessages(consultantId: string) {
   return useQuery({
-    queryKey: ['messages', patientId],
+    queryKey: ['messages', consultantId],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Non authentifié');
 
-      const response = await fetch(`/api/patients/${patientId}/messages`, {
+      const response = await fetch(`/api/consultants/${consultantId}/messages`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
@@ -38,14 +38,14 @@ export function useMessages(patientId: string) {
       const json = await response.json();
       return json.messages as Message[];
     },
-    enabled: !!patientId,
+    enabled: !!consultantId,
   });
 }
 
 /**
  * Hook pour envoyer un message
  */
-export function useSendMessage(patientId: string) {
+export function useSendMessage(consultantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -53,7 +53,7 @@ export function useSendMessage(patientId: string) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Non authentifié');
 
-      const response = await fetch(`/api/patients/${patientId}/messages`, {
+      const response = await fetch(`/api/consultants/${consultantId}/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -71,12 +71,12 @@ export function useSendMessage(patientId: string) {
     },
     onSuccess: (newMessage: Message) => {
       // Optimistically update the cache
-      queryClient.setQueryData<Message[]>(['messages', patientId], (oldMessages: Message[] | undefined) => {
+      queryClient.setQueryData<Message[]>(['messages', consultantId], (oldMessages: Message[] | undefined) => {
         if (!oldMessages) return [newMessage];
         return [...oldMessages, newMessage];
       });
       // Also invalidate to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ['messages', patientId] });
+      queryClient.invalidateQueries({ queryKey: ['messages', consultantId] });
     },
   });
 }
@@ -84,7 +84,7 @@ export function useSendMessage(patientId: string) {
 /**
  * Hook pour marquer les messages comme lus
  */
-export function useMarkMessagesRead(patientId: string) {
+export function useMarkMessagesRead(consultantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -92,7 +92,7 @@ export function useMarkMessagesRead(patientId: string) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Non authentifié');
 
-      const response = await fetch(`/api/patients/${patientId}/messages/mark-read`, {
+      const response = await fetch(`/api/consultants/${consultantId}/messages/mark-read`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -108,11 +108,11 @@ export function useMarkMessagesRead(patientId: string) {
     },
     onSuccess: () => {
       // Update cache to mark messages as read
-      queryClient.setQueryData<Message[]>(['messages', patientId], (oldMessages: Message[] | undefined) => {
+      queryClient.setQueryData<Message[]>(['messages', consultantId], (oldMessages: Message[] | undefined) => {
         if (!oldMessages) return oldMessages;
         const now = new Date().toISOString();
         return oldMessages.map((msg: Message) =>
-          msg.sender === 'patient' && !msg.read_at
+          msg.sender === 'consultant' && !msg.read_at
             ? { ...msg, read_at: now }
             : msg
         );
@@ -124,10 +124,10 @@ export function useMarkMessagesRead(patientId: string) {
 /**
  * Hook combiné pour une gestion simplifiée des messages
  */
-export function usePatientMessages(patientId: string) {
-  const messagesQuery = useMessages(patientId);
-  const sendMessageMutation = useSendMessage(patientId);
-  const markReadMutation = useMarkMessagesRead(patientId);
+export function useConsultantMessages(consultantId: string) {
+  const messagesQuery = useMessages(consultantId);
+  const sendMessageMutation = useSendMessage(consultantId);
+  const markReadMutation = useMarkMessagesRead(consultantId);
 
   return {
     messages: messagesQuery.data ?? [],

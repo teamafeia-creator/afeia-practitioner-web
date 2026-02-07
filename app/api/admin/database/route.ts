@@ -10,18 +10,18 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createAdminClient();
-    const [practitionersResult, patientsResult, messagesResult, plansResult] = await Promise.all([
+    const [practitionersResult, consultantsResult, messagesResult, plansResult] = await Promise.all([
       supabase.from('practitioners_public').select('id', { count: 'exact', head: true }),
-      supabase.from('patients_identity').select('id', { count: 'exact', head: true }),
+      supabase.from('consultants_identity').select('id', { count: 'exact', head: true }),
       supabase.from('messages').select('id', { count: 'exact', head: true }),
-      supabase.from('patient_plans').select('id', { count: 'exact', head: true })
+      supabase.from('consultant_plans').select('id', { count: 'exact', head: true })
     ]);
 
     if (practitionersResult.error) {
       console.error('[admin] database practitioners count error:', practitionersResult.error);
     }
-    if (patientsResult.error) {
-      console.error('[admin] database patients count error:', patientsResult.error);
+    if (consultantsResult.error) {
+      console.error('[admin] database consultants count error:', consultantsResult.error);
     }
     if (messagesResult.error) {
       console.error('[admin] database messages count error:', messagesResult.error);
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       stats: {
         practitioners: practitionersResult.error ? null : practitionersResult.count ?? null,
-        patients: patientsResult.error ? null : patientsResult.count ?? null,
+        consultants: consultantsResult.error ? null : consultantsResult.count ?? null,
         messages: messagesResult.error ? null : messagesResult.count ?? null,
         plans: plansResult.error ? null : plansResult.count ?? null
       }

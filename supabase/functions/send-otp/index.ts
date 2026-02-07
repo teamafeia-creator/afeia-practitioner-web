@@ -13,14 +13,14 @@ serve(async (req) => {
   }
 
   try {
-    const { email, code, type, patientName, practitionerEmail } = await req.json()
+    const { email, code, type, consultantName, practitionerEmail } = await req.json()
 
     console.log('═══════════════════════════════════════')
     console.log('📧 SEND-OTP EDGE FUNCTION')
     console.log('Email:', email)
     console.log('Code:', code)
     console.log('Type:', type)
-    console.log('Patient:', patientName)
+    console.log('Consultant:', consultantName)
     console.log('Praticien:', practitionerEmail)
     console.log('═══════════════════════════════════════')
 
@@ -31,7 +31,7 @@ serve(async (req) => {
     if (RESEND_API_KEY) {
       console.log('📤 Envoi email via Resend...')
 
-      const greeting = patientName ? `Bonjour ${patientName},` : 'Bonjour,'
+      const greeting = consultantName ? `Bonjour ${consultantName},` : 'Bonjour,'
 
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -154,7 +154,7 @@ Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.`,
 ╠═══════════════════════════════════════════════════════════╣
 ║  Destinataire: ${email.padEnd(40)}║
 ║  Code: ${code.padEnd(48)}║
-║  Patient: ${(patientName || 'N/A').padEnd(44)}║
+║  Consultant: ${(consultantName || 'N/A').padEnd(44)}║
 ╚═══════════════════════════════════════════════════════════╝
 
 Pour activer l'envoi d'emails, ajoutez RESEND_API_KEY aux secrets Supabase:

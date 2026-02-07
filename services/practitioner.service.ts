@@ -3,14 +3,14 @@ import { supabase } from '../lib/supabase';
 /**
  * Service pour les opérations du naturopathe
  *
- * NOUVEAU FLUX (correction visibilité patient):
- * 1. Crée IMMÉDIATEMENT une entrée dans `patients` avec activated=false
+ * NOUVEAU FLUX (correction visibilité consultant):
+ * 1. Crée IMMÉDIATEMENT une entrée dans `consultants` avec activated=false
  * 2. Stocke aussi les infos dans otp_codes pour l'activation
- * 3. Le patient apparaît dans la liste du naturo avec statut "En attente"
- * 4. Lors de l'activation, le patient sera mis à jour avec l'ID auth
+ * 3. Le consultant apparaît dans la liste du naturo avec statut "En attente"
+ * 4. Lors de l'activation, le consultant sera mis à jour avec l'ID auth
  */
 
-type CreatePatientInput = {
+type CreateConsultantInput = {
   email: string;
   name?: string;
   firstName?: string;
@@ -19,10 +19,10 @@ type CreatePatientInput = {
   city?: string;
 };
 
-type CreatePatientResult = {
+type CreateConsultantResult = {
   success: boolean;
   code?: string;
-  patientId?: string;
+  consultantId?: string;
   error?: string;
 };
 
@@ -32,11 +32,11 @@ type CreatePatientResult = {
 async function sendActivationCodeViaAPI(params: {
   email: string;
   name: string;
-  patientId?: string;
+  consultantId?: string;
   token: string;
 }): Promise<{ ok: boolean; code?: string; error?: string }> {
   try {
-    const response = await fetch('/api/patients/send-activation-code', {
+    const response = await fetch('/api/consultants/send-activation-code', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ async function sendActivationCodeViaAPI(params: {
       body: JSON.stringify({
         email: params.email,
         name: params.name,
-        patientId: params.patientId
+        consultantId: params.consultantId
       })
     });
 
@@ -63,23 +63,23 @@ async function sendActivationCodeViaAPI(params: {
 }
 
 /**
- * Crée un code d'activation pour un nouveau patient.
+ * Crée un code d'activation pour un nouveau consultant.
  *
  * NOUVEAU FLUX:
- * 1. Crée IMMÉDIATEMENT le patient dans la table `patients` avec activated=false
+ * 1. Crée IMMÉDIATEMENT le consultant dans la table `consultants` avec activated=false
  * 2. Stocke les informations dans `otp_codes` pour l'activation
- * 3. Le naturopathe voit le patient dans sa liste avec statut "En attente"
- * 4. Lors de l'activation, l'ancien patient sera supprimé et recréé avec l'ID auth
+ * 3. Le naturopathe voit le consultant dans sa liste avec statut "En attente"
+ * 4. Lors de l'activation, l'ancien consultant sera supprimé et recréé avec l'ID auth
  */
-export async function createPatientActivationCode(
-  patientData: CreatePatientInput
-): Promise<CreatePatientResult> {
-  let tempPatientId: string | null = null;
+export async function createConsultantActivationCode(
+  consultantData: CreateConsultantInput
+): Promise<CreateConsultantResult> {
+  let tempConsultantId: string | null = null;
 
   try {
     console.log('═══════════════════════════════════════');
-    console.log('👤 CRÉATION PATIENT + CODE D\'ACTIVATION');
-    console.log('Email:', patientData.email);
+    console.log('👤 CRÉATION CONSULTANT + CODE D\'ACTIVATION');
+    console.log('Email:', consultantData.email);
 
     // 1. Vérifier que le naturopathe est connecté
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -92,26 +92,26 @@ export async function createPatientActivationCode(
     const practitionerId = user.id;
     console.log('✅ Naturopathe ID:', practitionerId);
 
-    const normalizedEmail = patientData.email.toLowerCase().trim();
+    const normalizedEmail = consultantData.email.toLowerCase().trim();
 
-    // 2. Vérifier si un patient existe déjà avec cet email pour ce praticien
-    const { data: existingPatient } = await supabase
-      .from('patients')
+    // 2. Vérifier si un consultant existe déjà avec cet email pour ce praticien
+    const { data: existingConsultant } = await supabase
+      .from('consultants')
       .select('id, activated, practitioner_id')
       .eq('email', normalizedEmail)
       .eq('practitioner_id', practitionerId)
       .single();
 
-    if (existingPatient) {
-      if (existingPatient.activated) {
+    if (existingConsultant) {
+      if (existingConsultant.activated) {
         return {
           success: false,
-          error: 'Ce patient a déjà un compte activé.'
+          error: 'Ce consultant a déjà un compte activé.'
         };
       }
-      // Si le patient existe mais pas activé, on retourne son ID et on peut régénérer un code
-      console.log('⚠️ Patient non-activé existant trouvé:', existingPatient.id);
-      tempPatientId = existingPatient.id;
+      // Si le consultant existe mais pas activé, on retourne son ID et on peut régénérer un code
+      console.log('⚠️ Consultant non-activé existant trouvé:', existingConsultant.id);
+      tempConsultantId = existingConsultant.id;
     }
 
     // 3. Vérifier si un code actif existe déjà
@@ -124,12 +124,12 @@ export async function createPatientActivationCode(
       .gt('expires_at', new Date().toISOString())
       .single();
 
-    if (existingCode && tempPatientId) {
+    if (existingCode && tempConsultantId) {
       console.log('⚠️ Code existant trouvé:', existingCode.code);
       return {
         success: true,
         code: existingCode.code,
-        patientId: tempPatientId || undefined,
+        consultantId: tempConsultantId || undefined,
         error: `Un code actif existe déjà pour ${normalizedEmail}`
       };
     }
@@ -138,63 +138,63 @@ export async function createPatientActivationCode(
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     console.log('🔐 Code généré:', code);
 
-    // Préparer les données du patient
-    const firstName = patientData.firstName || patientData.name?.split(' ')[0] || '';
-    const lastName = patientData.lastName || patientData.name?.split(' ').slice(1).join(' ') || '';
-    const fullName = patientData.name || `${firstName} ${lastName}`.trim();
+    // Préparer les données du consultant
+    const firstName = consultantData.firstName || consultantData.name?.split(' ')[0] || '';
+    const lastName = consultantData.lastName || consultantData.name?.split(' ').slice(1).join(' ') || '';
+    const fullName = consultantData.name || `${firstName} ${lastName}`.trim();
 
-    // 5. CRÉER LE PATIENT IMMÉDIATEMENT (si n'existe pas déjà)
-    if (!tempPatientId) {
-      console.log('📝 Création du patient dans la table patients...');
+    // 5. CRÉER LE CONSULTANT IMMÉDIATEMENT (si n'existe pas déjà)
+    if (!tempConsultantId) {
+      console.log('📝 Création du consultant dans la table consultants...');
 
-      const { data: newPatient, error: patientError } = await supabase
-        .from('patients')
+      const { data: newConsultant, error: consultantError } = await supabase
+        .from('consultants')
         .insert({
           practitioner_id: practitionerId,
           email: normalizedEmail,
           full_name: fullName,
           first_name: firstName,
           last_name: lastName,
-          phone: patientData.phone || null,
-          city: patientData.city || null,
+          phone: consultantData.phone || null,
+          city: consultantData.city || null,
           activated: false
         })
         .select('id')
         .single();
 
-      if (patientError) {
-        console.error('❌ Erreur création patient:', patientError);
-        return { success: false, error: patientError.message };
+      if (consultantError) {
+        console.error('❌ Erreur création consultant:', consultantError);
+        return { success: false, error: consultantError.message };
       }
 
-      tempPatientId = newPatient.id;
-      console.log('✅ Patient créé (pending):', tempPatientId);
+      tempConsultantId = newConsultant.id;
+      console.log('✅ Consultant créé (pending):', tempConsultantId);
     } else {
-      // Mettre à jour les infos si le patient existe déjà
-      console.log('📝 Mise à jour du patient existant:', tempPatientId);
+      // Mettre à jour les infos si le consultant existe déjà
+      console.log('📝 Mise à jour du consultant existant:', tempConsultantId);
 
       await supabase
-        .from('patients')
+        .from('consultants')
         .update({
           full_name: fullName,
           first_name: firstName,
           last_name: lastName,
-          phone: patientData.phone || null,
-          city: patientData.city || null
+          phone: consultantData.phone || null,
+          city: consultantData.city || null
         })
-        .eq('id', tempPatientId);
+        .eq('id', tempConsultantId);
     }
 
-    // 6. Stocker le code OTP avec les infos du patient
+    // 6. Stocker le code OTP avec les infos du consultant
     const otpPayload = {
       email: normalizedEmail,
       code: code,
       practitioner_id: practitionerId,
-      patient_id: tempPatientId,
-      patient_first_name: firstName,
-      patient_last_name: lastName,
-      patient_phone: patientData.phone || null,
-      patient_city: patientData.city || null,
+      consultant_id: tempConsultantId,
+      consultant_first_name: firstName,
+      consultant_last_name: lastName,
+      consultant_phone: consultantData.phone || null,
+      consultant_city: consultantData.city || null,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 jours
       used: false
     };
@@ -212,10 +212,10 @@ export async function createPatientActivationCode(
 
     if (otpError) {
       console.error('❌ Erreur stockage code:', otpError);
-      // Rollback: supprimer le patient créé
-      if (tempPatientId && !existingPatient) {
-        console.log('🔄 Rollback: suppression du patient créé');
-        await supabase.from('patients').delete().eq('id', tempPatientId);
+      // Rollback: supprimer le consultant créé
+      if (tempConsultantId && !existingConsultant) {
+        console.log('🔄 Rollback: suppression du consultant créé');
+        await supabase.from('consultants').delete().eq('id', tempConsultantId);
       }
       return { success: false, error: otpError.message };
     }
@@ -233,7 +233,7 @@ export async function createPatientActivationCode(
       const emailResult = await sendActivationCodeViaAPI({
         email: normalizedEmail,
         name: fullName,
-        patientId: tempPatientId || undefined,
+        consultantId: tempConsultantId || undefined,
         token: accessToken
       });
 
@@ -248,10 +248,10 @@ export async function createPatientActivationCode(
     }
 
     console.log('═══════════════════════════════════════');
-    console.log('✅ PATIENT CRÉÉ + CODE GÉNÉRÉ');
+    console.log('✅ CONSULTANT CRÉÉ + CODE GÉNÉRÉ');
     console.log('Email:', normalizedEmail);
     console.log('Code:', emailCode);
-    console.log('Patient ID:', tempPatientId);
+    console.log('Consultant ID:', tempConsultantId);
     console.log('Praticien ID:', practitionerId);
     console.log('Statut: En attente d\'activation');
     console.log('═══════════════════════════════════════');
@@ -259,11 +259,11 @@ export async function createPatientActivationCode(
     return {
       success: true,
       code: emailCode,
-      patientId: tempPatientId || undefined
+      consultantId: tempConsultantId || undefined
     };
 
   } catch (err) {
-    console.error('❌ Exception createPatientActivationCode:', err);
+    console.error('❌ Exception createConsultantActivationCode:', err);
     return { success: false, error: String(err) };
   }
 }
@@ -271,7 +271,7 @@ export async function createPatientActivationCode(
 /**
  * Renvoie un code d'activation existant ou en crée un nouveau
  */
-export async function resendActivationCode(email: string): Promise<CreatePatientResult> {
+export async function resendActivationCode(email: string): Promise<CreateConsultantResult> {
   try {
     console.log('🔄 Renvoi code activation pour:', email);
 
@@ -297,9 +297,9 @@ export async function resendActivationCode(email: string): Promise<CreatePatient
 
     if (existingCode) {
       // Construire le nom complet à partir des colonnes correctes
-      const patientName = [existingCode.patient_first_name, existingCode.patient_last_name]
+      const consultantName = [existingCode.consultant_first_name, existingCode.consultant_last_name]
         .filter(Boolean)
-        .join(' ') || 'Patient';
+        .join(' ') || 'Consultant';
 
       // Renvoyer le même code via API route
       const { data: sessionData } = await supabase.auth.getSession();
@@ -308,8 +308,8 @@ export async function resendActivationCode(email: string): Promise<CreatePatient
       if (accessToken) {
         const emailResult = await sendActivationCodeViaAPI({
           email: normalizedEmail,
-          name: patientName,
-          patientId: existingCode.patient_id || undefined,
+          name: consultantName,
+          consultantId: existingCode.consultant_id || undefined,
           token: accessToken
         });
 
@@ -334,7 +334,7 @@ export async function resendActivationCode(email: string): Promise<CreatePatient
     // Pas de code existant, retourner une erreur
     return {
       success: false,
-      error: 'Aucun code actif trouvé pour cet email. Créez d\'abord le patient.'
+      error: 'Aucun code actif trouvé pour cet email. Créez d\'abord le consultant.'
     };
 
   } catch (err) {
@@ -344,15 +344,15 @@ export async function resendActivationCode(email: string): Promise<CreatePatient
 }
 
 /**
- * Récupérer patients + invitations du praticien connecté
+ * Récupérer consultants + invitations du praticien connecté
  *
  * Retourne:
- * - patients: Patients activés (ont complété leur inscription)
+ * - consultants: Consultants activés (ont complété leur inscription)
  * - invitations: Invitations en attente (pas encore activées)
  */
-export async function getMyPatientsAndInvitations(): Promise<{
+export async function getMyConsultantsAndInvitations(): Promise<{
   success: boolean;
-  patients?: Array<{
+  consultants?: Array<{
     id: string;
     practitioner_id: string;
     email: string;
@@ -368,7 +368,7 @@ export async function getMyPatientsAndInvitations(): Promise<{
   }>;
   invitations?: Array<{
     id: string;
-    patient_id?: string | null;
+    consultant_id?: string | null;
     practitioner_id: string;
     email: string;
     full_name?: string | null;
@@ -384,7 +384,7 @@ export async function getMyPatientsAndInvitations(): Promise<{
 }> {
   try {
     console.log('═══════════════════════════════════════');
-    console.log('📋 RÉCUPÉRATION PATIENTS + INVITATIONS');
+    console.log('📋 RÉCUPÉRATION CONSULTANTS + INVITATIONS');
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -394,22 +394,22 @@ export async function getMyPatientsAndInvitations(): Promise<{
 
     console.log('✅ Praticien ID:', user.id);
 
-    // Récupérer les patients activés
-    const { data: patients, error: patientsError } = await supabase
-      .from('patients')
+    // Récupérer les consultants activés
+    const { data: consultants, error: consultantsError } = await supabase
+      .from('consultants')
       .select('*')
       .eq('practitioner_id', user.id)
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
-    if (patientsError) {
-      console.error('❌ Erreur récupération patients:', patientsError);
-      throw patientsError;
+    if (consultantsError) {
+      console.error('❌ Erreur récupération consultants:', consultantsError);
+      throw consultantsError;
     }
 
     // Récupérer les invitations en attente
     const { data: invitations, error: invitationsError } = await supabase
-      .from('patient_invitations')
+      .from('consultant_invitations')
       .select('*')
       .eq('practitioner_id', user.id)
       .eq('status', 'pending')
@@ -421,18 +421,18 @@ export async function getMyPatientsAndInvitations(): Promise<{
     }
 
     console.log('═══════════════════════════════════════');
-    console.log(`✅ ${patients?.length || 0} patients actifs`);
+    console.log(`✅ ${consultants?.length || 0} consultants actifs`);
     console.log(`✅ ${invitations?.length || 0} invitations en attente`);
     console.log('═══════════════════════════════════════');
 
     return {
       success: true,
-      patients: patients || [],
+      consultants: consultants || [],
       invitations: invitations || []
     };
 
   } catch (err) {
-    console.error('❌ Exception getMyPatientsAndInvitations:', err);
+    console.error('❌ Exception getMyConsultantsAndInvitations:', err);
     return {
       success: false,
       error: String(err)

@@ -29,9 +29,9 @@ export default function ActivateScreen() {
         router.push({
           pathname: '/(auth)/set-password',
           params: {
-            patientId: result.patientId || '',
-            patientEmail: result.patientEmail || '',
-            patientName: result.patientName || '',
+            consultantId: result.consultantId || '',
+            consultantEmail: result.consultantEmail || '',
+            consultantName: result.consultantName || '',
             tempToken: result.tempToken || '',
           },
         });

@@ -48,7 +48,7 @@ export default function AdminCircularPage() {
       }
 
       const data = await response.json();
-      setRows(data.patients ?? []);
+      setRows(data.consultants ?? []);
       setTotal(data.total ?? 0);
     } catch (err) {
       console.error('[admin] loadCircular error:', err);
@@ -64,7 +64,7 @@ export default function AdminCircularPage() {
     loadCircular();
   }, [loadCircular]);
 
-  async function triggerSync(patientId: string) {
+  async function triggerSync(consultantId: string) {
     try {
       const response = await fetch('/api/admin/circular-sync', {
         method: 'POST',
@@ -72,7 +72,7 @@ export default function AdminCircularPage() {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({ patient_id: patientId })
+        body: JSON.stringify({ consultant_id: consultantId })
       });
 
       if (!response.ok) {
@@ -93,16 +93,16 @@ export default function AdminCircularPage() {
   return (
     <div className="space-y-6">
       <AdminBackBar />
-      <PageHeader title="Circular" subtitle="Patients actives et synchronisation manuelle." />
+      <PageHeader title="Circular" subtitle="Consultants actives et synchronisation manuelle." />
 
       <AdminDataTable
         rows={rows}
         isLoading={loading}
-        emptyMessage="Aucun patient active Circular."
+        emptyMessage="Aucun consultant active Circular."
         columns={[
           {
-            key: 'patient',
-            header: 'Patient',
+            key: 'consultant',
+            header: 'Consultant',
             render: (row) => (
               <div className="flex flex-col">
                 <span className="font-medium text-charcoal">{row.full_name}</span>

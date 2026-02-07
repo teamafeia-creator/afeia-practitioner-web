@@ -33,25 +33,25 @@ export function findUserById(id: string): Omit<ApiUser, 'password'> | null {
 }
 
 export async function getSummary() {
-  // Get total patients
-  const { count: totalPatients, error: patientsError } = await supabase
-    .from('patients')
+  // Get total consultants
+  const { count: totalConsultants, error: consultantsError } = await supabase
+    .from('consultants')
     .select('*', { count: 'exact', head: true })
     .is('deleted_at', null);
 
-  if (patientsError) {
-    console.error('Error fetching patients count:', patientsError);
+  if (consultantsError) {
+    console.error('Error fetching consultants count:', consultantsError);
   }
 
-  // Get premium patients count
-  const { count: premiumPatients, error: premiumError } = await supabase
-    .from('patients')
+  // Get premium consultants count
+  const { count: premiumConsultants, error: premiumError } = await supabase
+    .from('consultants')
     .select('*', { count: 'exact', head: true })
     .is('deleted_at', null)
     .eq('is_premium', true);
 
   if (premiumError) {
-    console.error('Error fetching premium patients count:', premiumError);
+    console.error('Error fetching premium consultants count:', premiumError);
   }
 
   // Get unread questionnaires (notifications with type 'questionnaire' and read = false)
@@ -80,7 +80,7 @@ export async function getSummary() {
   const { count: unreadMessages, error: messagesError } = await supabase
     .from('messages')
     .select('*', { count: 'exact', head: true })
-    .eq('sender', 'patient')
+    .eq('sender', 'consultant')
     .is('read_at', null);
 
   if (messagesError) {
@@ -88,8 +88,8 @@ export async function getSummary() {
   }
 
   return {
-    totalPatients: totalPatients ?? 0,
-    premiumPatients: premiumPatients ?? 0,
+    totalConsultants: totalConsultants ?? 0,
+    premiumConsultants: premiumConsultants ?? 0,
     newQuestionnaire: newQuestionnaire ?? 0,
     newCircularData: newCircularData ?? 0,
     unreadMessages: unreadMessages ?? 0
@@ -97,67 +97,67 @@ export async function getSummary() {
 }
 
 export async function getItems() {
-  // Get all patients
-  const { data: patients, error: patientsError } = await supabase
-    .from('patients')
+  // Get all consultants
+  const { data: consultants, error: consultantsError } = await supabase
+    .from('consultants')
     .select('*')
     .is('deleted_at', null)
     .order('name');
 
-  if (patientsError) {
-    console.error('Error fetching patients:', patientsError);
+  if (consultantsError) {
+    console.error('Error fetching consultants:', consultantsError);
     return [];
   }
 
-  const safePatients = patients || [];
-  const patientIds = safePatients.map((p) => p.id);
-  if (patientIds.length === 0) {
+  const safeConsultants = consultants || [];
+  const consultantIds = safeConsultants.map((p) => p.id);
+  if (consultantIds.length === 0) {
     return [];
   }
 
-  // Get counts for each patient
+  // Get counts for each consultant
   const [messagesResult, notificationsResult, consultationsResult, appointmentsResult] = await Promise.all([
     supabase
       .from('messages')
-      .select('patient_id')
-      .in('patient_id', patientIds)
-      .eq('sender', 'patient')
+      .select('consultant_id')
+      .in('consultant_id', consultantIds)
+      .eq('sender', 'consultant')
       .is('read_at', null),
     supabase
       .from('notifications')
-      .select('patient_id, type')
-      .in('patient_id', patientIds)
+      .select('consultant_id, type')
+      .in('consultant_id', consultantIds)
       .eq('read', false),
     supabase
       .from('consultations')
-      .select('patient_id, date')
-      .in('patient_id', patientIds),
+      .select('consultant_id, date')
+      .in('consultant_id', consultantIds),
     supabase
       .from('appointments')
-      .select('patient_id, starts_at, status')
-      .in('patient_id', patientIds)
+      .select('consultant_id, starts_at, status')
+      .in('consultant_id', consultantIds)
       .eq('status', 'scheduled')
   ]);
 
-  // Build counts per patient
+  // Build counts per consultant
   const unreadMessagesMap = (messagesResult.data ?? []).reduce<Record<string, number>>((acc, row) => {
-    acc[row.patient_id] = (acc[row.patient_id] ?? 0) + 1;
+    acc[row.consultant_id] = (acc[row.consultant_id] ?? 0) + 1;
     return acc;
   }, {});
 
   const notificationsMap = (notificationsResult.data ?? []).reduce<Record<string, { questionnaire: boolean; circular: boolean }>>((acc, row) => {
-    if (!acc[row.patient_id]) {
-      acc[row.patient_id] = { questionnaire: false, circular: false };
+    if (!acc[row.consultant_id]) {
+      acc[row.consultant_id] = { questionnaire: false, circular: false };
     }
-    if (row.type === 'questionnaire') acc[row.patient_id].questionnaire = true;
-    if (row.type === 'circular') acc[row.patient_id].circular = true;
+    if (row.type === 'questionnaire') acc[row.consultant_id].questionnaire = true;
+    if (row.type === 'circular') acc[row.consultant_id].circular = true;
     return acc;
   }, {});
 
   const lastConsultationMap = (consultationsResult.data ?? []).reduce<Record<string, string>>((acc, row) => {
-    const existing = acc[row.patient_id];
+    const existing = acc[row.consultant_id];
     if (!existing || new Date(row.date) > new Date(existing)) {
-      acc[row.patient_id] = row.date;
+      acc[row.consultant_id] = row.date;
     }
     return acc;
   }, {});
@@ -166,40 +166,40 @@ export async function getItems() {
     const now = new Date();
     const apptDate = new Date(row.starts_at);
     if (apptDate > now) {
-      const existing = acc[row.patient_id];
+      const existing = acc[row.consultant_id];
       if (!existing || apptDate < new Date(existing)) {
-        acc[row.patient_id] = row.starts_at;
+        acc[row.consultant_id] = row.starts_at;
       }
     }
     return acc;
   }, {});
 
-  return safePatients.map((patient) => ({
-    id: patient.id,
-    name: patient.name,
-    age: patient.age,
-    city: patient.city,
-    isPremium: patient.is_premium ?? false,
-    lastConsultation: lastConsultationMap[patient.id] ?? null,
-    nextConsultation: nextAppointmentMap[patient.id] ?? null,
+  return safeConsultants.map((consultant) => ({
+    id: consultant.id,
+    name: consultant.name,
+    age: consultant.age,
+    city: consultant.city,
+    isPremium: consultant.is_premium ?? false,
+    lastConsultation: lastConsultationMap[consultant.id] ?? null,
+    nextConsultation: nextAppointmentMap[consultant.id] ?? null,
     flags: {
-      newQuestionnaire: notificationsMap[patient.id]?.questionnaire ?? false,
-      newCircularData: notificationsMap[patient.id]?.circular ?? false,
-      unreadMessages: unreadMessagesMap[patient.id] ?? 0
+      newQuestionnaire: notificationsMap[consultant.id]?.questionnaire ?? false,
+      newCircularData: notificationsMap[consultant.id]?.circular ?? false,
+      unreadMessages: unreadMessagesMap[consultant.id] ?? 0
     }
   }));
 }
 
 export async function getItemById(id: string) {
-  const { data: patient, error } = await supabase
-    .from('patients')
+  const { data: consultant, error } = await supabase
+    .from('consultants')
     .select('*')
     .eq('id', id)
     .is('deleted_at', null)
     .single();
 
-  if (error || !patient) {
-    console.error('Error fetching patient by id:', error);
+  if (error || !consultant) {
+    console.error('Error fetching consultant by id:', error);
     return null;
   }
 
@@ -207,15 +207,15 @@ export async function getItemById(id: string) {
   const { count: unreadMessages } = await supabase
     .from('messages')
     .select('*', { count: 'exact', head: true })
-    .eq('patient_id', id)
-    .eq('sender', 'patient')
+    .eq('consultant_id', id)
+    .eq('sender', 'consultant')
     .is('read_at', null);
 
   // Get notification flags
   const { data: notifications } = await supabase
     .from('notifications')
     .select('type')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .eq('read', false);
 
   const hasNewQuestionnaire = notifications?.some((n) => n.type === 'questionnaire') ?? false;
@@ -225,7 +225,7 @@ export async function getItemById(id: string) {
   const { data: lastConsult } = await supabase
     .from('consultations')
     .select('date')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .order('date', { ascending: false })
     .limit(1)
     .single();
@@ -234,7 +234,7 @@ export async function getItemById(id: string) {
   const { data: nextAppt } = await supabase
     .from('appointments')
     .select('starts_at')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .eq('status', 'scheduled')
     .gt('starts_at', new Date().toISOString())
     .order('starts_at', { ascending: true })
@@ -242,11 +242,11 @@ export async function getItemById(id: string) {
     .single();
 
   return {
-    id: patient.id,
-    name: patient.name,
-    age: patient.age,
-    city: patient.city,
-    isPremium: patient.is_premium ?? false,
+    id: consultant.id,
+    name: consultant.name,
+    age: consultant.age,
+    city: consultant.city,
+    isPremium: consultant.is_premium ?? false,
     lastConsultation: lastConsult?.date ?? null,
     nextConsultation: nextAppt?.starts_at ?? null,
     flags: {
