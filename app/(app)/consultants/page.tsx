@@ -363,6 +363,48 @@ export default function ConsultantsPage() {
     }
   };
 
+  const [creatingDev, setCreatingDev] = useState(false);
+
+  const handleCreateDevConsultant = async () => {
+    setCreatingDev(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setToast({ title: 'Erreur', description: 'Non authentifie', variant: 'error' });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('consultants')
+        .insert({
+          practitioner_id: session.user.id,
+          name: `Consultant Demo ${Date.now().toString(36).slice(-4).toUpperCase()}`,
+          email: `demo-${Date.now()}@test.local`,
+          city: 'Paris',
+          phone: '06 00 00 00 00',
+          is_premium: true,
+          activated: true,
+          activated_at: new Date().toISOString(),
+          status: 'premium'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Dev consultant creation error:', error);
+        setToast({ title: 'Erreur', description: error.message, variant: 'error' });
+        return;
+      }
+
+      setToast({ title: 'Consultant demo cree', description: data.name, variant: 'success' });
+      router.push(`/consultants/${data.id}`);
+    } catch (err) {
+      setToast({ title: 'Erreur', description: String(err), variant: 'error' });
+    } finally {
+      setCreatingDev(false);
+    }
+  };
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -443,6 +485,13 @@ export default function ConsultantsPage() {
                 </button>
               )}
             </div>
+            <Button
+              variant="secondary"
+              onClick={handleCreateDevConsultant}
+              disabled={creatingDev}
+            >
+              {creatingDev ? 'Creation...' : '+ Demo'}
+            </Button>
             <Link href="/consultants/new">
               <Button variant="primary" icon={<Plus className="h-4 w-4" />}>
                 Ajouter
