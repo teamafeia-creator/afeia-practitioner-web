@@ -19,8 +19,8 @@ export type PlanContent = {
 
 export type Plan = {
   id: string;
-  patientId: string;
-  patientName?: string;
+  consultantId: string;
+  consultantName?: string;
   version: number;
   status: 'draft' | 'shared';
   content: PlanContent;
@@ -29,11 +29,11 @@ export type Plan = {
   updatedAt: string;
 };
 
-export async function fetchPlansForPatient(patientId: string): Promise<Plan[]> {
+export async function fetchPlansForConsultant(consultantId: string): Promise<Plan[]> {
   const { data, error } = await supabase
-    .from('patient_plans')
+    .from('consultant_plans')
     .select('*')
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -41,7 +41,7 @@ export async function fetchPlansForPatient(patientId: string): Promise<Plan[]> {
     const { data: carePlans, error: carePlansError } = await supabase
       .from('care_plans')
       .select('*')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .order('created_at', { ascending: false });
 
     if (carePlansError) {
@@ -51,7 +51,7 @@ export async function fetchPlansForPatient(patientId: string): Promise<Plan[]> {
 
     return (carePlans || []).map((p) => ({
       id: p.id,
-      patientId: p.patient_id,
+      consultantId: p.consultant_id,
       version: 1,
       status: p.status === 'sent' || p.status === 'viewed' ? 'shared' : 'draft',
       content: p.content || { title: p.title, description: p.description },
@@ -63,7 +63,7 @@ export async function fetchPlansForPatient(patientId: string): Promise<Plan[]> {
 
   return (data || []).map((p) => ({
     id: p.id,
-    patientId: p.patient_id,
+    consultantId: p.consultant_id,
     version: p.version || 1,
     status: p.status,
     content: p.content,
@@ -74,7 +74,7 @@ export async function fetchPlansForPatient(patientId: string): Promise<Plan[]> {
 }
 
 export async function createPlan(
-  patientId: string,
+  consultantId: string,
   content: PlanContent
 ): Promise<{ planId: string } | null> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -83,11 +83,11 @@ export async function createPlan(
     return null;
   }
 
-  // Try patient_plans first
+  // Try consultant_plans first
   const { data, error } = await supabase
-    .from('patient_plans')
+    .from('consultant_plans')
     .insert({
-      patient_id: patientId,
+      consultant_id: consultantId,
       practitioner_id: userData.user.id,
       version: 1,
       status: 'draft',
@@ -101,7 +101,7 @@ export async function createPlan(
     const { data: carePlan, error: carePlanError } = await supabase
       .from('care_plans')
       .insert({
-        patient_id: patientId,
+        consultant_id: consultantId,
         practitioner_id: userData.user.id,
         title: content.title,
         description: content.description,
@@ -126,9 +126,9 @@ export async function updatePlan(
   planId: string,
   content: PlanContent
 ): Promise<boolean> {
-  // Try patient_plans first
+  // Try consultant_plans first
   const { error } = await supabase
-    .from('patient_plans')
+    .from('consultant_plans')
     .update({
       content: content,
       updated_at: new Date().toISOString(),
@@ -156,12 +156,12 @@ export async function updatePlan(
   return true;
 }
 
-export async function sharePlanWithPatient(planId: string): Promise<boolean> {
+export async function sharePlanWithConsultant(planId: string): Promise<boolean> {
   const now = new Date().toISOString();
 
-  // Try patient_plans first
+  // Try consultant_plans first
   const { error } = await supabase
-    .from('patient_plans')
+    .from('consultant_plans')
     .update({
       status: 'shared',
       shared_at: now,
@@ -190,9 +190,9 @@ export async function sharePlanWithPatient(planId: string): Promise<boolean> {
 }
 
 export async function deletePlan(planId: string): Promise<boolean> {
-  // Try patient_plans first
+  // Try consultant_plans first
   const { error } = await supabase
-    .from('patient_plans')
+    .from('consultant_plans')
     .delete()
     .eq('id', planId);
 

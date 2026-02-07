@@ -17,7 +17,7 @@ import { cn } from '../../lib/cn';
 type PresetIcon =
   | 'calendar'
   | 'messages'
-  | 'patients'
+  | 'consultants'
   | 'documents'
   | 'search'
   | 'inbox'
@@ -36,7 +36,7 @@ interface EmptyStateProps {
 const presetIcons: Record<PresetIcon, LucideIcon> = {
   calendar: Calendar,
   messages: MessageSquare,
-  patients: Users,
+  consultants: Users,
   documents: FileText,
   search: Search,
   inbox: Inbox,
@@ -151,12 +151,12 @@ export function EmptyState({
 }
 
 // Pre-configured empty states for common use cases
-export function NoPatients({ action }: { action?: React.ReactNode }) {
+export function NoConsultants({ action }: { action?: React.ReactNode }) {
   return (
     <EmptyState
-      icon="patients"
-      title="Aucun patient"
-      description="Commencez par ajouter votre premier patient pour suivre son parcours de soins."
+      icon="consultants"
+      title="Aucun consultant"
+      description="Commencez par ajouter votre premier consultant pour suivre son parcours de soins."
       action={action}
       size="lg"
     />
@@ -179,7 +179,7 @@ export function NoMessages({ action }: { action?: React.ReactNode }) {
     <EmptyState
       icon="messages"
       title="Aucun message"
-      description="Vous n'avez pas encore de conversations. Les messages de vos patients apparaîtront ici."
+      description="Vous n'avez pas encore de conversations. Les messages de vos consultants apparaîtront ici."
       action={action}
     />
   );

@@ -21,7 +21,7 @@ export interface SubscriptionPlan {
   price_monthly: number;
   price_yearly: number;
   features: string[];
-  max_patients: number | null;
+  max_consultants: number | null;
   circular_integration: boolean;
   is_active: boolean;
   created_at: string;

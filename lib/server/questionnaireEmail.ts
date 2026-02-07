@@ -1,6 +1,6 @@
 type QuestionnaireEmailParams = {
   to: string;
-  patientName?: string | null;
+  consultantName?: string | null;
   code: string;
   expiresInMinutes: number;
 };
@@ -18,11 +18,11 @@ const IOS_LINK = 'https://afeia.app/ios';
 
 export function buildQuestionnaireCodeEmail({
   to,
-  patientName,
+  consultantName,
   code,
   expiresInMinutes
 }: QuestionnaireEmailParams): QuestionnaireEmailContent {
-  const greetingName = patientName?.trim() ? `Bonjour ${patientName.trim()},` : 'Bonjour,';
+  const greetingName = consultantName?.trim() ? `Bonjour ${consultantName.trim()},` : 'Bonjour,';
   const subject = 'Bienvenue chez AFEIA - Votre code d\'accès';
   // Use resend.dev domain for testing, or configure your verified domain
   const from = process.env.RESEND_FROM_EMAIL || 'AFEIA <onboarding@resend.dev>';

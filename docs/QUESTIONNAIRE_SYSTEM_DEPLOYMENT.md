@@ -7,7 +7,7 @@ Ce document décrit le déploiement du nouveau système de questionnaire public 
 Le nouveau système comprend:
 1. **Page publique de questionnaire** (`/questionnaire`) - Accessible sans authentification
 2. **Section Questionnaires préliminaires** pour les naturopathes
-3. **Liaison automatique** des questionnaires aux patients
+3. **Liaison automatique** des questionnaires aux consultants
 4. **Système de notifications** en temps réel
 5. **Anamnèse optionnelle** dans l'application mobile
 
@@ -33,7 +33,7 @@ Cette migration crée:
 |-------|-------------|
 | `preliminary_questionnaires` | Stocke les questionnaires soumis publiquement |
 | `anamnesis_history` | Historique des modifications d'anamnèse |
-| Colonnes ajoutées à `patient_anamnesis` | `version`, `naturopath_id`, `source`, `preliminary_questionnaire_id` |
+| Colonnes ajoutées à `consultant_anamnesis` | `version`, `naturopath_id`, `source`, `preliminary_questionnaire_id` |
 | Colonnes ajoutées à `notifications` | `metadata` (JSONB), `type` |
 
 ### 1.2 Vérifier les policies RLS
@@ -133,16 +133,16 @@ curl -X POST https://your-supabase-url.supabase.co/rest/v1/rpc/submit_preliminar
 ### 4.2 Test de la liaison automatique
 
 1. Soumettre un questionnaire public avec un email
-2. Créer un patient avec le même email via l'interface naturopathe
+2. Créer un consultant avec le même email via l'interface naturopathe
 3. Vérifier que:
-   - Le questionnaire passe en statut `linked_to_patient`
-   - L'anamnèse du patient contient les réponses
+   - Le questionnaire passe en statut `linked_to_consultant`
+   - L'anamnèse du consultant contient les réponses
    - Une notification est créée
 
 ### 4.3 Test des notifications Realtime
 
-1. Ouvrir deux onglets: un en tant que patient, un en tant que naturopathe
-2. Modifier l'anamnèse côté patient
+1. Ouvrir deux onglets: un en tant que consultant, un en tant que naturopathe
+2. Modifier l'anamnèse côté consultant
 3. Vérifier qu'une notification apparaît en temps réel côté naturopathe
 
 ## Étape 5: Rollback (si nécessaire)
@@ -155,21 +155,21 @@ DROP TABLE IF EXISTS public.anamnesis_history;
 DROP TABLE IF EXISTS public.preliminary_questionnaires CASCADE;
 
 -- Supprimer les colonnes ajoutées
-ALTER TABLE public.patient_anamnesis DROP COLUMN IF EXISTS version;
-ALTER TABLE public.patient_anamnesis DROP COLUMN IF EXISTS naturopath_id;
-ALTER TABLE public.patient_anamnesis DROP COLUMN IF EXISTS source;
-ALTER TABLE public.patient_anamnesis DROP COLUMN IF EXISTS preliminary_questionnaire_id;
+ALTER TABLE public.consultant_anamnesis DROP COLUMN IF EXISTS version;
+ALTER TABLE public.consultant_anamnesis DROP COLUMN IF EXISTS naturopath_id;
+ALTER TABLE public.consultant_anamnesis DROP COLUMN IF EXISTS source;
+ALTER TABLE public.consultant_anamnesis DROP COLUMN IF EXISTS preliminary_questionnaire_id;
 
 ALTER TABLE public.notifications DROP COLUMN IF EXISTS metadata;
 ALTER TABLE public.notifications DROP COLUMN IF EXISTS type;
 
 -- Supprimer les fonctions
-DROP FUNCTION IF EXISTS public.link_preliminary_questionnaire_on_patient_create();
+DROP FUNCTION IF EXISTS public.link_preliminary_questionnaire_on_consultant_create();
 DROP FUNCTION IF EXISTS public.track_anamnesis_changes();
 DROP FUNCTION IF EXISTS public.notify_new_preliminary_questionnaire();
 DROP FUNCTION IF EXISTS public.get_public_practitioners();
 DROP FUNCTION IF EXISTS public.submit_preliminary_questionnaire(UUID, TEXT, TEXT, TEXT, TEXT, JSONB);
-DROP FUNCTION IF EXISTS public.create_patient_from_questionnaire(UUID);
+DROP FUNCTION IF EXISTS public.create_consultant_from_questionnaire(UUID);
 DROP FUNCTION IF EXISTS public.get_preliminary_questionnaires(TEXT, INTEGER, INTEGER);
 DROP FUNCTION IF EXISTS public.get_anamnesis_history(UUID, TEXT, INTEGER);
 ```
@@ -205,8 +205,8 @@ mobile-app/screens/AnamneseScreen.tsx # Bouton skip
 | Table | INSERT | SELECT | UPDATE | DELETE |
 |-------|--------|--------|--------|--------|
 | `preliminary_questionnaires` | Public | Naturopathe propriétaire | Naturopathe propriétaire | Naturopathe propriétaire |
-| `anamnesis_history` | Trigger only | Naturopathe/Patient | - | - |
-| `patient_anamnesis` | Auth | Naturopathe/Patient | Naturopathe/Patient | Naturopathe |
+| `anamnesis_history` | Trigger only | Naturopathe/Consultant | - | - |
+| `consultant_anamnesis` | Auth | Naturopathe/Consultant | Naturopathe/Consultant | Naturopathe |
 | `notifications` | Trigger only | Naturopathe propriétaire | Naturopathe propriétaire | Naturopathe propriétaire |
 
 ## Monitoring

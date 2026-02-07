@@ -1,25 +1,25 @@
 import { api } from './api';
-import { PatientProfile } from '../types';
+import { ConsultantProfile } from '../types';
 
 interface VerifyOtpResponse {
   valid: boolean;
-  patientId?: string;
-  patientEmail?: string;
-  patientName?: string;
+  consultantId?: string;
+  consultantEmail?: string;
+  consultantName?: string;
   tempToken?: string;
 }
 
 interface RegisterResponse {
   accessToken: string;
   refreshToken: string;
-  patient: PatientProfile;
+  consultant: ConsultantProfile;
   needsAnamnese?: boolean;
 }
 
 interface LoginResponse {
   accessToken: string;
   refreshToken: string;
-  patient: PatientProfile;
+  consultant: ConsultantProfile;
   needsAnamnese?: boolean;
 }
 
@@ -32,7 +32,7 @@ export async function verifyOtp(otp: string): Promise<VerifyOtpResponse> {
 }
 
 export async function register(params: {
-  patientId: string;
+  consultantId: string;
   email: string;
   password: string;
   tempToken: string;

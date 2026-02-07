@@ -26,7 +26,7 @@ export { Toaster, showToast } from './Toaster';
 // Empty States
 export {
   EmptyState,
-  NoPatients,
+  NoConsultants,
   NoAppointments,
   NoMessages,
   NoNotifications,

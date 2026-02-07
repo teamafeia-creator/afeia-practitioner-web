@@ -20,5 +20,5 @@ Ajoutez les variables suivantes a votre `.env.local` (ou a votre gestionnaire de
 ## Verifications rapides
 
 - Un non-admin est redirige vers `/`.
-- L'admin peut voir `patients_identity` mais pas `patients_health` (RLS).
+- L'admin peut voir `consultants_identity` mais pas `consultants_health` (RLS).
 - Les actions invite/reset/circular passent par `/api/admin/*`.

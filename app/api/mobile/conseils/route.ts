@@ -1,17 +1,17 @@
 /**
  * GET /api/mobile/conseils
- * Get patient's conseils from naturopathe
+ * Get consultant's conseils from naturopathe
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { resolvePatientId } from '@/lib/mobile-auth';
+import { resolveConsultantId } from '@/lib/mobile-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const { data: caseFile } = await getSupabaseAdmin()
       .from('case_files')
       .select('id')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
     if (!caseFile) {

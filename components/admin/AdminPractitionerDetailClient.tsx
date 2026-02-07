@@ -23,12 +23,12 @@ export type PractitionerDetail = {
 
 type AdminPractitionerDetailClientProps = {
   practitioner: PractitionerDetail;
-  patientsCount: number | null;
+  consultantsCount: number | null;
 };
 
 export function AdminPractitionerDetailClient({
   practitioner: initialPractitioner,
-  patientsCount
+  consultantsCount
 }: AdminPractitionerDetailClientProps) {
   const router = useRouter();
   const [practitioner, setPractitioner] = useState<PractitionerDetail>(initialPractitioner);
@@ -138,8 +138,8 @@ export function AdminPractitionerDetailClient({
             <Button variant="outline" onClick={triggerPasswordReset}>
               Reinitialiser mot de passe
             </Button>
-            <Button onClick={() => router.push(`/admin/patients?practitioner=${practitioner.id}`)}>
-              Voir patients
+            <Button onClick={() => router.push(`/admin/consultants?practitioner=${practitioner.id}`)}>
+              Voir consultants
             </Button>
           </div>
         }
@@ -229,7 +229,7 @@ export function AdminPractitionerDetailClient({
               : '—'}
           </div>
           <div className="text-xs text-warmgray">
-            Patients associes: {patientsCount ?? '—'}
+            Consultants associes: {consultantsCount ?? '—'}
           </div>
           <Button onClick={saveChanges} disabled={saving}>
             {saving ? 'Enregistrement...' : 'Enregistrer'}

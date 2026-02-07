@@ -22,7 +22,7 @@ import { todayISO } from '../../utils/dates';
 import { colors, spacing, fontSize } from '../../constants/theme';
 
 export default function ProfileScreen() {
-  const { patient, logout, refreshProfile } = useAuth();
+  const { consultant, logout, refreshProfile } = useAuth();
   const [complements, setComplements] = useState<Complement[]>([]);
   const [naturopathe, setNaturopathe] = useState<Naturopathe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function ProfileScreen() {
       const [compRes, naturoRes] = await Promise.allSettled([
         api.get<{ complements: Complement[] }>('/api/mobile/complements'),
         api.get<{ naturopathe: Naturopathe }>(
-          '/api/mobile/patient/naturopathe-info',
+          '/api/mobile/consultant/naturopathe-info',
         ),
       ]);
 
@@ -102,9 +102,9 @@ export default function ProfileScreen() {
   if (loading) return <LoadingScreen />;
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
 
-  const fullName = patient
-    ? `${patient.firstName} ${patient.lastName}`
-    : 'Patient';
+  const fullName = consultant
+    ? `${consultant.firstName} ${consultant.lastName}`
+    : 'Consultant';
   const activeComplements = complements.filter((c) => c.active);
 
   return (
@@ -132,8 +132,8 @@ export default function ProfileScreen() {
             <Avatar name={fullName} size={64} />
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>{fullName}</Text>
-              <Text style={styles.profileEmail}>{patient?.email}</Text>
-              {patient?.isPremium && (
+              <Text style={styles.profileEmail}>{consultant?.email}</Text>
+              {consultant?.isPremium && (
                 <View style={styles.premiumBadge}>
                   <Text style={styles.premiumText}>Premium</Text>
                 </View>
@@ -141,16 +141,16 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {patient?.phone && (
+          {consultant?.phone && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Téléphone</Text>
-              <Text style={styles.detailValue}>{patient.phone}</Text>
+              <Text style={styles.detailValue}>{consultant.phone}</Text>
             </View>
           )}
-          {patient?.city && (
+          {consultant?.city && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Ville</Text>
-              <Text style={styles.detailValue}>{patient.city}</Text>
+              <Text style={styles.detailValue}>{consultant.city}</Text>
             </View>
           )}
         </Card>

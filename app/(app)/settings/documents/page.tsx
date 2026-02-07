@@ -304,7 +304,7 @@ export default function DocumentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Documents</CardTitle>
-          <CardDescription>Retrouvez vos fichiers PDF partagés avec vos patients.</CardDescription>
+          <CardDescription>Retrouvez vos fichiers PDF partagés avec vos consultants.</CardDescription>
         </CardHeader>
         <CardContent>
           {loadingDocuments ? (

@@ -6,14 +6,14 @@ import { Button } from '../ui/Button';
 const CALENDLY_SCRIPT_SRC = 'https://assets.calendly.com/assets/external/widget.js';
 const CALENDLY_STYLE_SRC = 'https://assets.calendly.com/assets/external/widget.css';
 
-type PatientInfo = {
+type ConsultantInfo = {
   id: string;
   name: string;
   email?: string | null;
 };
 
 type CalendlyButtonProps = {
-  patient: PatientInfo;
+  consultant: ConsultantInfo;
   calendlyUrl?: string | null;
 };
 
@@ -35,7 +35,7 @@ declare global {
   }
 }
 
-export function CalendlyButton({ patient, calendlyUrl }: CalendlyButtonProps) {
+export function CalendlyButton({ consultant, calendlyUrl }: CalendlyButtonProps) {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
@@ -82,8 +82,8 @@ export function CalendlyButton({ patient, calendlyUrl }: CalendlyButtonProps) {
       return;
     }
 
-    if (!patient.email) {
-      setError('Ajoutez un email patient pour pré-remplir la réservation.');
+    if (!consultant.email) {
+      setError('Ajoutez un email consultant pour pré-remplir la réservation.');
       return;
     }
 
@@ -93,14 +93,14 @@ export function CalendlyButton({ patient, calendlyUrl }: CalendlyButtonProps) {
     }
 
     setOpening(true);
-    console.log('[calendly] open widget', { calendlyUrl, patientId: patient.id });
+    console.log('[calendly] open widget', { calendlyUrl, consultantId: consultant.id });
     window.Calendly.initPopupWidget({
       url: calendlyUrl,
       prefill: {
-        name: patient.name,
-        email: patient.email,
+        name: consultant.name,
+        email: consultant.email,
         customAnswers: {
-          a1: patient.id
+          a1: consultant.id
         }
       },
       utm: {

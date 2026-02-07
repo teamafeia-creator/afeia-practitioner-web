@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = createAdminClient();
     const { data, count, error } = await supabase
-      .from('patients_identity')
+      .from('consultants_identity')
       .select(
         'id, full_name, email, practitioner_id, circular_enabled, last_circular_sync_at, last_circular_sync_status, practitioners_public(full_name)',
         { count: 'exact' }
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors du chargement Circular.' }, { status: 500 });
     }
 
-    return NextResponse.json({ patients: data ?? [], total: count ?? 0 });
+    return NextResponse.json({ consultants: data ?? [], total: count ?? 0 });
   } catch (error) {
     console.error('[admin] circular fetch exception:', error);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });

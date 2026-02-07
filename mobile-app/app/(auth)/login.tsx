@@ -55,7 +55,7 @@ export default function LoginScreen() {
         >
           <Text style={styles.title}>Connexion</Text>
           <Text style={styles.description}>
-            Connectez-vous à votre espace patient AFEIA.
+            Connectez-vous à votre espace consultant AFEIA.
           </Text>
 
           <View style={styles.form}>

@@ -153,7 +153,7 @@ export default function SettingsPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-sm font-semibold">Profil professionnel</h2>
-                <p className="text-xs text-warmgray">Vos informations visibles par vos patients.</p>
+                <p className="text-xs text-warmgray">Vos informations visibles par vos consultants.</p>
               </div>
               {profile ? (
                 <Button
@@ -271,7 +271,7 @@ export default function SettingsPage() {
               <Badge variant="premium">Premium</Badge>
             </div>
             <div className="rounded-lg bg-white/60 p-3 text-sm text-charcoal border border-teal/10">
-              Circular (sommeil, HRV, activite) active pour les patients Premium.
+              Circular (sommeil, HRV, activite) active pour les consultants Premium.
             </div>
             <Button variant="secondary" onClick={() => router.push('/billing')}>
               Gérer la facturation

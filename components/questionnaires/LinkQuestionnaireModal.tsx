@@ -8,7 +8,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { supabase } from '@/lib/supabase';
 
-type Patient = {
+type Consultant = {
   id: string;
   full_name?: string | null;
   first_name?: string | null;
@@ -21,7 +21,7 @@ type Patient = {
 type LinkQuestionnaireModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onLink: (patientId: string) => Promise<void>;
+  onLink: (consultantId: string) => Promise<void>;
   questionnaireInfo?: {
     firstName?: string;
     lastName?: string;
@@ -29,11 +29,11 @@ type LinkQuestionnaireModalProps = {
   };
 };
 
-function getDisplayName(patient: Patient): string {
-  if (patient.full_name) return patient.full_name;
-  const parts = [patient.first_name, patient.last_name].filter(Boolean);
+function getDisplayName(consultant: Consultant): string {
+  if (consultant.full_name) return consultant.full_name;
+  const parts = [consultant.first_name, consultant.last_name].filter(Boolean);
   if (parts.length > 0) return parts.join(' ');
-  return patient.email || 'Non renseigné';
+  return consultant.email || 'Non renseigné';
 }
 
 export function LinkQuestionnaireModal({
@@ -42,74 +42,74 @@ export function LinkQuestionnaireModal({
   onLink,
   questionnaireInfo
 }: LinkQuestionnaireModalProps) {
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [selectedConsultantId, setSelectedConsultantId] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load patients when modal opens
+  // Load consultants when modal opens
   useEffect(() => {
     if (isOpen) {
-      loadPatients();
+      loadConsultants();
       // Pre-fill search with questionnaire info
       if (questionnaireInfo?.lastName) {
         setSearch(questionnaireInfo.lastName);
       }
     } else {
       // Reset state when modal closes
-      setSelectedPatientId(null);
+      setSelectedConsultantId(null);
       setSearch('');
       setError(null);
     }
   }, [isOpen, questionnaireInfo]);
 
-  const loadPatients = async () => {
+  const loadConsultants = async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error: fetchError } = await supabase
-        .from('patients')
+        .from('consultants')
         .select('id, full_name, first_name, last_name, email, city, activated')
         .eq('practitioner_id', user.id)
         .order('full_name', { ascending: true });
 
       if (fetchError) {
-        console.error('Error loading patients:', fetchError);
-        setError('Impossible de charger la liste des patients.');
+        console.error('Error loading consultants:', fetchError);
+        setError('Impossible de charger la liste des consultants.');
         return;
       }
 
-      setPatients(data || []);
+      setConsultants(data || []);
     } catch (err) {
-      console.error('Exception loading patients:', err);
-      setError('Erreur lors du chargement des patients.');
+      console.error('Exception loading consultants:', err);
+      setError('Erreur lors du chargement des consultants.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter patients by search
-  const filteredPatients = useMemo(() => {
+  // Filter consultants by search
+  const filteredConsultants = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return patients;
-    return patients.filter((p) =>
+    if (!term) return consultants;
+    return consultants.filter((p) =>
       [getDisplayName(p), p.email, p.city].some((value) =>
         value?.toLowerCase().includes(term)
       )
     );
-  }, [patients, search]);
+  }, [consultants, search]);
 
   const handleLink = async () => {
-    if (!selectedPatientId) return;
+    if (!selectedConsultantId) return;
 
     setLinking(true);
     setError(null);
     try {
-      await onLink(selectedPatientId);
+      await onLink(selectedConsultantId);
       onClose();
     } catch (err) {
       console.error('Error linking questionnaire:', err);
@@ -119,14 +119,14 @@ export function LinkQuestionnaireModal({
     }
   };
 
-  const selectedPatient = patients.find((p) => p.id === selectedPatientId);
+  const selectedConsultant = consultants.find((p) => p.id === selectedConsultantId);
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Associer à un patient existant"
-      description="Sélectionnez le patient auquel associer ce questionnaire. Les données du questionnaire seront ajoutées à son anamnèse."
+      title="Associer à un consultant existant"
+      description="Sélectionnez le consultant auquel associer ce questionnaire. Les données du questionnaire seront ajoutées à son anamnèse."
       size="lg"
     >
       <div className="space-y-4">
@@ -156,28 +156,28 @@ export function LinkQuestionnaireModal({
           </div>
         )}
 
-        {/* Patient list */}
+        {/* Consultant list */}
         <div className="max-h-[300px] overflow-y-auto rounded-sm border border-teal/15">
           {loading ? (
             <div className="p-4 text-center text-warmgray">
-              Chargement des patients...
+              Chargement des consultants...
             </div>
-          ) : filteredPatients.length === 0 ? (
+          ) : filteredConsultants.length === 0 ? (
             <div className="p-4 text-center text-warmgray">
-              {search ? 'Aucun patient trouvé.' : 'Aucun patient disponible.'}
+              {search ? 'Aucun consultant trouvé.' : 'Aucun consultant disponible.'}
             </div>
           ) : (
             <div className="divide-y divide-neutral-100">
-              {filteredPatients.map((patient) => {
-                const isSelected = patient.id === selectedPatientId;
-                const displayName = getDisplayName(patient);
-                const isActive = patient.activated !== false;
+              {filteredConsultants.map((consultant) => {
+                const isSelected = consultant.id === selectedConsultantId;
+                const displayName = getDisplayName(consultant);
+                const isActive = consultant.activated !== false;
 
                 return (
                   <button
-                    key={patient.id}
+                    key={consultant.id}
                     type="button"
-                    onClick={() => setSelectedPatientId(patient.id)}
+                    onClick={() => setSelectedConsultantId(consultant.id)}
                     className={`w-full p-3 text-left transition hover:bg-teal/5 ${
                       isSelected ? 'bg-teal/10 ring-2 ring-teal ring-inset' : ''
                     }`}
@@ -196,8 +196,8 @@ export function LinkQuestionnaireModal({
                           )}
                         </div>
                         <div className="text-xs text-warmgray truncate">
-                          {patient.email}
-                          {patient.city && ` • ${patient.city}`}
+                          {consultant.email}
+                          {consultant.city && ` • ${consultant.city}`}
                         </div>
                       </div>
                       {isSelected && (
@@ -223,10 +223,10 @@ export function LinkQuestionnaireModal({
           )}
         </div>
 
-        {/* Selected patient summary */}
-        {selectedPatient && (
+        {/* Selected consultant summary */}
+        {selectedConsultant && (
           <div className="text-sm text-charcoal bg-teal/10 rounded-sm p-3 border border-teal/20">
-            Patient selectionne : <strong>{getDisplayName(selectedPatient)}</strong>
+            Consultant selectionne : <strong>{getDisplayName(selectedConsultant)}</strong>
           </div>
         )}
       </div>
@@ -238,7 +238,7 @@ export function LinkQuestionnaireModal({
         <Button
           variant="primary"
           onClick={handleLink}
-          disabled={!selectedPatientId || linking}
+          disabled={!selectedConsultantId || linking}
           loading={linking}
         >
           Associer le questionnaire

@@ -136,15 +136,15 @@ export function NotificationDropdown() {
         return '/questionnaires';
       case 'questionnaire_linked':
       case 'anamnesis_modified':
-        if (notification.patient_id) {
-          return `/patients/${notification.patient_id}`;
+        if (notification.consultant_id) {
+          return `/consultants/${notification.consultant_id}`;
         }
-        return '/patients';
+        return '/consultants';
       case 'message':
-        if (notification.patient_id) {
-          return `/patients/${notification.patient_id}?tab=messages`;
+        if (notification.consultant_id) {
+          return `/consultants/${notification.consultant_id}?tab=messages`;
         }
-        return '/patients';
+        return '/consultants';
       default:
         return '/dashboard';
     }

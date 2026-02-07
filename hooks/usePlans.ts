@@ -2,18 +2,18 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import type { PatientPlan } from '@/lib/types';
+import type { ConsultantPlan } from '@/lib/types';
 
 type SharePlanResponse = {
   success: boolean;
-  plan: PatientPlan;
+  plan: ConsultantPlan;
   message: string;
 };
 
 /**
- * Hook pour partager un plan avec un patient
+ * Hook pour partager un plan avec un consultant
  */
-export function useSharePlan(patientId: string, planId: string) {
+export function useSharePlan(consultantId: string, planId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -22,7 +22,7 @@ export function useSharePlan(patientId: string, planId: string) {
       if (!session) throw new Error('Non authentifié');
 
       const response = await fetch(
-        `/api/patients/${patientId}/plans/${planId}/share`,
+        `/api/consultants/${consultantId}/plans/${planId}/share`,
         {
           method: 'POST',
           headers: {
@@ -40,14 +40,14 @@ export function useSharePlan(patientId: string, planId: string) {
     },
     onSuccess: (data: SharePlanResponse) => {
       // Invalider les caches pertinents
-      queryClient.invalidateQueries({ queryKey: ['patients', patientId, 'plans'] });
+      queryClient.invalidateQueries({ queryKey: ['consultants', consultantId, 'plans'] });
       queryClient.invalidateQueries({ queryKey: ['plans', planId] });
-      queryClient.invalidateQueries({ queryKey: ['patient', patientId] });
+      queryClient.invalidateQueries({ queryKey: ['consultant', consultantId] });
 
       // Mettre à jour le cache local si possible
-      queryClient.setQueryData<PatientPlan[]>(['patients', patientId, 'plans'], (oldPlans: PatientPlan[] | undefined) => {
+      queryClient.setQueryData<ConsultantPlan[]>(['consultants', consultantId, 'plans'], (oldPlans: ConsultantPlan[] | undefined) => {
         if (!oldPlans) return oldPlans;
-        return oldPlans.map((plan: PatientPlan) =>
+        return oldPlans.map((plan: ConsultantPlan) =>
           plan.id === planId ? data.plan : plan
         );
       });
@@ -58,7 +58,7 @@ export function useSharePlan(patientId: string, planId: string) {
 /**
  * Hook générique pour partager un plan (sans planId prédéfini)
  */
-export function useSharePlanMutation(patientId: string) {
+export function useSharePlanMutation(consultantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -67,7 +67,7 @@ export function useSharePlanMutation(patientId: string) {
       if (!session) throw new Error('Non authentifié');
 
       const response = await fetch(
-        `/api/patients/${patientId}/plans/${planId}/share`,
+        `/api/consultants/${consultantId}/plans/${planId}/share`,
         {
           method: 'POST',
           headers: {
@@ -85,9 +85,9 @@ export function useSharePlanMutation(patientId: string) {
     },
     onSuccess: (_data: SharePlanResponse, planId: string) => {
       // Invalider les caches pertinents
-      queryClient.invalidateQueries({ queryKey: ['patients', patientId, 'plans'] });
+      queryClient.invalidateQueries({ queryKey: ['consultants', consultantId, 'plans'] });
       queryClient.invalidateQueries({ queryKey: ['plans', planId] });
-      queryClient.invalidateQueries({ queryKey: ['patient', patientId] });
+      queryClient.invalidateQueries({ queryKey: ['consultant', consultantId] });
     },
   });
 }

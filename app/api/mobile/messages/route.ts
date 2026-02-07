@@ -5,13 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { resolvePatientId } from '@/lib/mobile-auth';
+import { resolveConsultantId } from '@/lib/mobile-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const { data: messages, error, count } = await getSupabaseAdmin()
       .from('messages')
       .select('id, sender, text, sent_at, read_at', { count: 'exact' })
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .order('sent_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
 
     const formattedMessages = messages?.map((m) => ({
       id: m.id,
-      senderId: patientId, // Simplified
-      senderType: m.sender === 'praticien' ? 'praticien' : 'patient',
+      senderId: consultantId, // Simplified
+      senderType: m.sender === 'praticien' ? 'praticien' : 'consultant',
       content: m.text,
       read: !!m.read_at,
       readAt: m.read_at,
@@ -63,9 +63,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const { data: caseFile } = await getSupabaseAdmin()
       .from('case_files')
       .select('practitioner_id')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
     const now = new Date().toISOString();
@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
     const { data: message, error } = await getSupabaseAdmin()
       .from('messages')
       .insert({
-        patient_id: patientId,
-        sender: 'patient',
+        consultant_id: consultantId,
+        sender: 'consultant',
         text: content.trim(),
         sent_at: now,
       })
@@ -110,8 +110,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: {
         id: message.id,
-        senderId: patientId,
-        senderType: 'patient',
+        senderId: consultantId,
+        senderType: 'consultant',
         content: message.text,
         read: false,
         createdAt: message.sent_at,

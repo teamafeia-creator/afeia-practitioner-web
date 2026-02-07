@@ -1,6 +1,6 @@
 /**
  * POST /api/mobile/auth/register
- * Register a new patient account
+ * Register a new consultant account
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -32,9 +32,9 @@ function validatePassword(password: string): { valid: boolean; message?: string 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { patientId, email, password, tempToken } = body;
+    const { consultantId, email, password, tempToken } = body;
 
-    if (!patientId || !email || !password || !tempToken) {
+    if (!consultantId || !email || !password || !tempToken) {
       return NextResponse.json(
         { message: 'Données manquantes' },
         { status: 400 }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (tokenPayload.patientId !== patientId || tokenPayload.purpose !== 'registration') {
+    if (tokenPayload.consultantId !== consultantId || tokenPayload.purpose !== 'registration') {
       return NextResponse.json(
         { message: 'Token invalide' },
         { status: 401 }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         id: userId,
         email: email.toLowerCase(),
         password_hash: passwordHash,
-        role: 'PATIENT',
+        role: 'CONSULTANT',
         status: 'ACTIVE',
       });
 
@@ -108,12 +108,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create patient membership
+    // Create consultant membership
     const { error: membershipError } = await getSupabaseAdmin()
-      .from('patient_memberships')
+      .from('consultant_memberships')
       .insert({
-        patient_id: patientId,
-        patient_user_id: userId,
+        consultant_id: consultantId,
+        consultant_user_id: userId,
       });
 
     if (membershipError) {
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     // Mark OTP as used in both tables (only one will match)
     await getSupabaseAdmin()
-      .from('patient_questionnaire_codes')
+      .from('consultant_questionnaire_codes')
       .update({ used_at: new Date().toISOString() })
       .eq('id', tokenPayload.otpId);
 
@@ -137,32 +137,32 @@ export async function POST(request: NextRequest) {
       .update({ used: true })
       .eq('id', tokenPayload.otpId);
 
-    // Get patient info
-    const { data: patient } = await getSupabaseAdmin()
-      .from('patients')
+    // Get consultant info
+    const { data: consultant } = await getSupabaseAdmin()
+      .from('consultants')
       .select('id, name, email, phone, status, is_premium, practitioner_id')
-      .eq('id', patientId)
+      .eq('id', consultantId)
       .single();
 
     // Check if anamnesis exists (check both old and new tables)
     const { data: anamnesisNew } = await getSupabaseAdmin()
-      .from('patient_anamnesis')
+      .from('consultant_anamnesis')
       .select('id, answers')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
     const { data: anamnesisOld } = await getSupabaseAdmin()
       .from('anamneses')
       .select('id')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
-    // Check if patient has a linked preliminary questionnaire
+    // Check if consultant has a linked preliminary questionnaire
     const { data: preliminaryQuestionnaire } = await getSupabaseAdmin()
       .from('preliminary_questionnaires')
       .select('id')
-      .eq('linked_patient_id', patientId)
-      .eq('status', 'linked_to_patient')
+      .eq('linked_consultant_id', consultantId)
+      .eq('status', 'linked_to_consultant')
       .maybeSingle();
 
     // Has anamnesis if any of these exist with actual answers
@@ -176,8 +176,8 @@ export async function POST(request: NextRequest) {
     const accessToken = await new SignJWT({
       sub: userId,
       email: email.toLowerCase(),
-      role: 'PATIENT',
-      patientId,
+      role: 'CONSULTANT',
+      consultantId,
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuer('afeia-practitioner-web')
@@ -192,18 +192,18 @@ export async function POST(request: NextRequest) {
       .setExpirationTime('30d')
       .sign(new TextEncoder().encode(process.env.JWT_SECRET));
 
-    const nameParts = patient?.name?.split(' ') || ['', ''];
+    const nameParts = consultant?.name?.split(' ') || ['', ''];
 
     return NextResponse.json({
       accessToken,
       refreshToken,
-      patient: {
-        id: patient?.id,
+      consultant: {
+        id: consultant?.id,
         email: email.toLowerCase(),
         firstName: nameParts[0],
         lastName: nameParts.slice(1).join(' '),
-        phone: patient?.phone,
-        isPremium: patient?.is_premium || false,
+        phone: consultant?.phone,
+        isPremium: consultant?.is_premium || false,
       },
       needsAnamnese: !hasAnamnesis,
     });

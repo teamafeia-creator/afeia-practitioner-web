@@ -1,17 +1,17 @@
 /**
  * GET /api/mobile/plans
- * Get patient's care plans shared by their practitioner
+ * Get consultant's care plans shared by their practitioner
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { resolvePatientId } from '@/lib/mobile-auth';
+import { resolveConsultantId } from '@/lib/mobile-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status'); // 'shared', 'all'
 
-    // Get patient's shared plans from patient_plans table
+    // Get consultant's shared plans from consultant_plans table
     let query = getSupabaseAdmin()
-      .from('patient_plans')
+      .from('consultant_plans')
       .select(`
         id,
         version,
@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
           email
         )
       `)
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .order('created_at', { ascending: false });
 
-    // By default, only show shared plans to patients
+    // By default, only show shared plans to consultants
     if (status !== 'all') {
       query = query.eq('status', 'shared');
     }
@@ -83,13 +83,13 @@ export async function GET(request: NextRequest) {
 
 /**
  * PATCH /api/mobile/plans
- * Mark a plan as viewed by the patient
+ * Mark a plan as viewed by the consultant
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -106,12 +106,12 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Verify the plan belongs to this patient
+    // Verify the plan belongs to this consultant
     const { data: plan, error: findError } = await getSupabaseAdmin()
-      .from('patient_plans')
+      .from('consultant_plans')
       .select('id, status')
       .eq('id', planId)
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .single();
 
     if (findError || !plan) {
@@ -125,7 +125,7 @@ export async function PATCH(request: NextRequest) {
     // Note: We might want to add a 'viewed' status or viewed_at timestamp
     // For now, we'll just update the updated_at timestamp to track viewing
     const { error: updateError } = await getSupabaseAdmin()
-      .from('patient_plans')
+      .from('consultant_plans')
       .update({
         updated_at: new Date().toISOString(),
       })

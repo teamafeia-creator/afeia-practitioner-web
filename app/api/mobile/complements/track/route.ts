@@ -5,13 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { resolvePatientId } from '@/lib/mobile-auth';
+import { resolveConsultantId } from '@/lib/mobile-auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       .from('complement_tracking')
       .select('id')
       .eq('complement_id', complementId)
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .eq('date', date)
       .maybeSingle();
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         .from('complement_tracking')
         .insert({
           complement_id: complementId,
-          patient_id: patientId,
+          consultant_id: consultantId,
           date,
           taken,
           time_taken: taken ? new Date().toISOString() : null,

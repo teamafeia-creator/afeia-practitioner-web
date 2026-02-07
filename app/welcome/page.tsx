@@ -28,7 +28,7 @@ const slides: Slide[] = [
     id: 1,
     title: 'Bienvenue sur AFEIA',
     description:
-      'La plateforme qui connecte les naturopathes à leurs patients pour un accompagnement holistique et personnalisé.',
+      'La plateforme qui connecte les naturopathes à leurs consultants pour un accompagnement holistique et personnalisé.',
     icon: <Sparkles className="w-8 h-8 text-white" />,
     gradient: 'from-teal via-teal-deep to-emerald-700',
     illustration: (
@@ -50,7 +50,7 @@ const slides: Slide[] = [
     id: 3,
     title: 'Communiquez en sécurité',
     description:
-      'Messagerie sécurisée conforme RGPD pour échanger avec vos patients en toute confidentialité.',
+      'Messagerie sécurisée conforme RGPD pour échanger avec vos consultants en toute confidentialité.',
     icon: <MessageSquare className="w-8 h-8 text-white" />,
     gradient: 'from-emerald-500 via-emerald-600 to-teal',
     illustration: (
@@ -61,7 +61,7 @@ const slides: Slide[] = [
     id: 4,
     title: 'Suivez les progrès',
     description:
-      'Tableaux de bord et métriques pour accompagner efficacement le parcours de santé de vos patients.',
+      'Tableaux de bord et métriques pour accompagner efficacement le parcours de santé de vos consultants.',
     icon: <Activity className="w-8 h-8 text-white" />,
     gradient: 'from-accent-pink via-purple-600 to-primary-600',
     illustration: (

@@ -4,7 +4,7 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-export interface PatientProfile {
+export interface ConsultantProfile {
   id: string;
   email: string;
   firstName: string;
@@ -17,7 +17,7 @@ export interface PatientProfile {
 export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
-  patient: PatientProfile | null;
+  consultant: ConsultantProfile | null;
   tokens: AuthTokens | null;
 }
 
@@ -35,7 +35,7 @@ export interface Naturopathe {
 export interface Message {
   id: string;
   senderId: string;
-  senderType: 'patient' | 'praticien';
+  senderType: 'consultant' | 'praticien';
   content: string;
   read: boolean;
   readAt?: string;

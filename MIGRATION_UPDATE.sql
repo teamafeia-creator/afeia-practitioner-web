@@ -17,23 +17,23 @@ CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('PATIENT', 'PRACTITIONER', 'ADMIN')),
+    role TEXT NOT NULL CHECK (role IN ('CONSULTANT', 'PRACTITIONER', 'ADMIN')),
     status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE', 'SUSPENDED')),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- Table: patient_memberships
-CREATE TABLE IF NOT EXISTS public.patient_memberships (
+-- Table: consultant_memberships
+CREATE TABLE IF NOT EXISTS public.consultant_memberships (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
-    patient_user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
+    consultant_user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, patient_user_id)
+    UNIQUE(consultant_id, consultant_user_id)
 );
 
--- Table: patient_invitations
-CREATE TABLE IF NOT EXISTS public.patient_invitations (
+-- Table: consultant_invitations
+CREATE TABLE IF NOT EXISTS public.consultant_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -53,11 +53,11 @@ CREATE TABLE IF NOT EXISTS public.patient_invitations (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- Table: patient_invites (token-based)
-CREATE TABLE IF NOT EXISTS public.patient_invites (
+-- Table: consultant_invites (token-based)
+CREATE TABLE IF NOT EXISTS public.consultant_invites (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
     token TEXT NOT NULL UNIQUE,
     expires_at TIMESTAMPTZ,
@@ -72,21 +72,21 @@ CREATE TABLE IF NOT EXISTS public.otp_codes (
     code TEXT NOT NULL,
     type TEXT DEFAULT 'activation' CHECK (type IN ('activation', 'login', 'reset')),
     practitioner_id UUID REFERENCES public.practitioners(id) ON DELETE SET NULL,
-    patient_id UUID REFERENCES public.patients(id) ON DELETE SET NULL,
-    patient_first_name TEXT,
-    patient_last_name TEXT,
-    patient_phone TEXT,
-    patient_city TEXT,
+    consultant_id UUID REFERENCES public.consultants(id) ON DELETE SET NULL,
+    consultant_first_name TEXT,
+    consultant_last_name TEXT,
+    consultant_phone TEXT,
+    consultant_city TEXT,
     expires_at TIMESTAMPTZ NOT NULL,
     used BOOLEAN DEFAULT FALSE,
     used_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- Table: patient_questionnaire_codes
-CREATE TABLE IF NOT EXISTS public.patient_questionnaire_codes (
+-- Table: consultant_questionnaire_codes
+CREATE TABLE IF NOT EXISTS public.consultant_questionnaire_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     code_hash TEXT NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     used_at TIMESTAMPTZ,
@@ -99,28 +99,28 @@ CREATE TABLE IF NOT EXISTS public.patient_questionnaire_codes (
 -- Table: case_files
 CREATE TABLE IF NOT EXISTS public.case_files (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id)
+    UNIQUE(consultant_id)
 );
 
 -- Table: anamnese_instances
 CREATE TABLE IF NOT EXISTS public.anamnese_instances (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'COMPLETED')),
     answers JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id)
+    UNIQUE(consultant_id)
 );
 
--- Table: patient_anamnesis
-CREATE TABLE IF NOT EXISTS public.patient_anamnesis (
+-- Table: consultant_anamnesis
+CREATE TABLE IF NOT EXISTS public.consultant_anamnesis (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     naturopath_id UUID REFERENCES public.practitioners(id) ON DELETE SET NULL,
     answers JSONB,
     version INTEGER DEFAULT 1,
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS public.patient_anamnesis (
     preliminary_questionnaire_id UUID,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id)
+    UNIQUE(consultant_id)
 );
 
 -- Table: preliminary_questionnaires
@@ -140,8 +140,8 @@ CREATE TABLE IF NOT EXISTS public.preliminary_questionnaires (
     email TEXT NOT NULL,
     phone TEXT,
     responses JSONB NOT NULL DEFAULT '{}',
-    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'linked_to_patient', 'archived')),
-    linked_patient_id UUID REFERENCES public.patients(id) ON DELETE SET NULL,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'linked_to_consultant', 'archived')),
+    linked_consultant_id UUID REFERENCES public.consultants(id) ON DELETE SET NULL,
     linked_at TIMESTAMPTZ,
     submitted_from_ip TEXT,
     user_agent TEXT,
@@ -152,14 +152,14 @@ CREATE TABLE IF NOT EXISTS public.preliminary_questionnaires (
 -- Table: anamnesis_history
 CREATE TABLE IF NOT EXISTS public.anamnesis_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    anamnesis_id UUID NOT NULL REFERENCES public.patient_anamnesis(id) ON DELETE CASCADE,
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    anamnesis_id UUID NOT NULL REFERENCES public.consultant_anamnesis(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     modified_section TEXT NOT NULL,
     old_value JSONB,
     new_value JSONB,
     full_snapshot JSONB,
     version INTEGER NOT NULL,
-    modified_by_type TEXT NOT NULL CHECK (modified_by_type IN ('patient', 'practitioner', 'system')),
+    modified_by_type TEXT NOT NULL CHECK (modified_by_type IN ('consultant', 'practitioner', 'system')),
     modified_by_id UUID,
     modified_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -167,18 +167,18 @@ CREATE TABLE IF NOT EXISTS public.anamnesis_history (
 -- Table: practitioner_notes
 CREATE TABLE IF NOT EXISTS public.practitioner_notes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     content TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, practitioner_id)
+    UNIQUE(consultant_id, practitioner_id)
 );
 
--- Table: patient_analysis_results
-CREATE TABLE IF NOT EXISTS public.patient_analysis_results (
+-- Table: consultant_analysis_results
+CREATE TABLE IF NOT EXISTS public.consultant_analysis_results (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     file_name TEXT NOT NULL,
     file_path TEXT NOT NULL,
@@ -194,10 +194,10 @@ CREATE TABLE IF NOT EXISTS public.patient_analysis_results (
 -- Table: plans
 CREATE TABLE IF NOT EXISTS public.plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id)
+    UNIQUE(consultant_id)
 );
 
 -- Table: plan_versions
@@ -223,10 +223,10 @@ CREATE TABLE IF NOT EXISTS public.plan_sections (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- Table: patient_plans
-CREATE TABLE IF NOT EXISTS public.patient_plans (
+-- Table: consultant_plans
+CREATE TABLE IF NOT EXISTS public.consultant_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     version INTEGER DEFAULT 1,
     status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'shared')),
@@ -239,7 +239,7 @@ CREATE TABLE IF NOT EXISTS public.patient_plans (
 -- Table: care_plans
 CREATE TABLE IF NOT EXISTS public.care_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     title TEXT,
     description TEXT,
@@ -253,7 +253,7 @@ CREATE TABLE IF NOT EXISTS public.care_plans (
 -- Table: daily_journals (mobile)
 CREATE TABLE IF NOT EXISTS public.daily_journals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     case_file_id UUID REFERENCES public.case_files(id) ON DELETE SET NULL,
     date DATE NOT NULL,
     mood TEXT,
@@ -265,7 +265,7 @@ CREATE TABLE IF NOT EXISTS public.daily_journals (
     note_naturopathe TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, date)
+    UNIQUE(consultant_id, date)
 );
 
 -- Table: complements
@@ -287,12 +287,12 @@ CREATE TABLE IF NOT EXISTS public.complements (
 -- Table: complement_tracking
 CREATE TABLE IF NOT EXISTS public.complement_tracking (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     complement_id UUID NOT NULL REFERENCES public.complements(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     taken BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, complement_id, date)
+    UNIQUE(consultant_id, complement_id, date)
 );
 
 -- Table: subscription_plans
@@ -304,7 +304,7 @@ CREATE TABLE IF NOT EXISTS public.subscription_plans (
     price_monthly DECIMAL(10,2) DEFAULT 0,
     price_yearly DECIMAL(10,2) DEFAULT 0,
     features JSONB DEFAULT '[]',
-    max_patients INTEGER,
+    max_consultants INTEGER,
     circular_integration BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -392,21 +392,21 @@ ALTER TABLE public.practitioners ADD COLUMN IF NOT EXISTS default_consultation_r
 ALTER TABLE public.practitioners ADD COLUMN IF NOT EXISTS calendly_url TEXT;
 ALTER TABLE public.practitioners ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
--- Table: patients
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS full_name TEXT;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS first_name TEXT;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS last_name TEXT;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS phone TEXT;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS city TEXT;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS age INTEGER;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS date_of_birth DATE;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS consultation_reason TEXT;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'standard';
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS activated BOOLEAN DEFAULT FALSE;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS activated_at TIMESTAMPTZ;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
-ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+-- Table: consultants
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS full_name TEXT;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS first_name TEXT;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS last_name TEXT;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS age INTEGER;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS date_of_birth DATE;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS consultation_reason TEXT;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'standard';
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS activated BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS activated_at TIMESTAMPTZ;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+ALTER TABLE public.consultants ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- Table: anamneses
 ALTER TABLE public.anamneses ADD COLUMN IF NOT EXISTS case_file_id UUID;
@@ -422,7 +422,7 @@ ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS read BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- Table: notifications
-ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS patient_id UUID;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS consultant_id UUID;
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'general';
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS description TEXT;
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS level TEXT DEFAULT 'info';
@@ -460,64 +460,64 @@ ALTER TABLE public.wearable_insights ADD COLUMN IF NOT EXISTS suggested_action T
 -- 3. AJOUT DES INDEX MANQUANTS
 -- ====================================================================
 
--- Patients
-CREATE INDEX IF NOT EXISTS idx_patients_practitioner ON public.patients(practitioner_id);
-CREATE INDEX IF NOT EXISTS idx_patients_email ON public.patients(email);
-CREATE INDEX IF NOT EXISTS idx_patients_activated ON public.patients(activated);
-CREATE INDEX IF NOT EXISTS idx_patients_deleted_at ON public.patients(deleted_at);
+-- Consultants
+CREATE INDEX IF NOT EXISTS idx_consultants_practitioner ON public.consultants(practitioner_id);
+CREATE INDEX IF NOT EXISTS idx_consultants_email ON public.consultants(email);
+CREATE INDEX IF NOT EXISTS idx_consultants_activated ON public.consultants(activated);
+CREATE INDEX IF NOT EXISTS idx_consultants_deleted_at ON public.consultants(deleted_at);
 
 -- Invitations
-CREATE INDEX IF NOT EXISTS idx_patient_invitations_practitioner ON public.patient_invitations(practitioner_id);
-CREATE INDEX IF NOT EXISTS idx_patient_invitations_email ON public.patient_invitations(email);
-CREATE INDEX IF NOT EXISTS idx_patient_invitations_status ON public.patient_invitations(status);
+CREATE INDEX IF NOT EXISTS idx_consultant_invitations_practitioner ON public.consultant_invitations(practitioner_id);
+CREATE INDEX IF NOT EXISTS idx_consultant_invitations_email ON public.consultant_invitations(email);
+CREATE INDEX IF NOT EXISTS idx_consultant_invitations_status ON public.consultant_invitations(status);
 
 -- OTP codes
 CREATE INDEX IF NOT EXISTS idx_otp_codes_email ON public.otp_codes(email);
 CREATE INDEX IF NOT EXISTS idx_otp_codes_practitioner ON public.otp_codes(practitioner_id);
 
 -- Messages
-CREATE INDEX IF NOT EXISTS idx_messages_patient ON public.messages(patient_id);
+CREATE INDEX IF NOT EXISTS idx_messages_consultant ON public.messages(consultant_id);
 CREATE INDEX IF NOT EXISTS idx_messages_read ON public.messages(read);
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON public.messages(sender);
 CREATE INDEX IF NOT EXISTS idx_messages_sent_at ON public.messages(sent_at);
 
 -- Notifications
 CREATE INDEX IF NOT EXISTS idx_notifications_practitioner ON public.notifications(practitioner_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_patient ON public.notifications(patient_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_consultant ON public.notifications(consultant_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_read ON public.notifications(read);
 CREATE INDEX IF NOT EXISTS idx_notifications_type ON public.notifications(type);
 
 -- Appointments
-CREATE INDEX IF NOT EXISTS idx_appointments_patient ON public.appointments(patient_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_consultant ON public.appointments(consultant_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_practitioner ON public.appointments(practitioner_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_starts_at ON public.appointments(starts_at);
 
 -- Consultations
-CREATE INDEX IF NOT EXISTS idx_consultations_patient ON public.consultations(patient_id);
+CREATE INDEX IF NOT EXISTS idx_consultations_consultant ON public.consultations(consultant_id);
 CREATE INDEX IF NOT EXISTS idx_consultations_date ON public.consultations(date);
 
--- Patient anamnesis
-CREATE INDEX IF NOT EXISTS idx_patient_anamnesis_patient ON public.patient_anamnesis(patient_id);
-CREATE INDEX IF NOT EXISTS idx_patient_anamnesis_naturopath ON public.patient_anamnesis(naturopath_id);
+-- Consultant anamnesis
+CREATE INDEX IF NOT EXISTS idx_consultant_anamnesis_consultant ON public.consultant_anamnesis(consultant_id);
+CREATE INDEX IF NOT EXISTS idx_consultant_anamnesis_naturopath ON public.consultant_anamnesis(naturopath_id);
 
 -- Preliminary questionnaires
 CREATE INDEX IF NOT EXISTS idx_preliminary_questionnaires_naturopath ON public.preliminary_questionnaires(naturopath_id);
 CREATE INDEX IF NOT EXISTS idx_preliminary_questionnaires_status ON public.preliminary_questionnaires(status);
 CREATE INDEX IF NOT EXISTS idx_preliminary_questionnaires_email ON public.preliminary_questionnaires(email);
 
--- Patient plans
-CREATE INDEX IF NOT EXISTS idx_patient_plans_patient ON public.patient_plans(patient_id);
-CREATE INDEX IF NOT EXISTS idx_patient_plans_practitioner ON public.patient_plans(practitioner_id);
-CREATE INDEX IF NOT EXISTS idx_patient_plans_status ON public.patient_plans(status);
+-- Consultant plans
+CREATE INDEX IF NOT EXISTS idx_consultant_plans_consultant ON public.consultant_plans(consultant_id);
+CREATE INDEX IF NOT EXISTS idx_consultant_plans_practitioner ON public.consultant_plans(practitioner_id);
+CREATE INDEX IF NOT EXISTS idx_consultant_plans_status ON public.consultant_plans(status);
 
 -- Journal entries
-CREATE INDEX IF NOT EXISTS idx_journal_entries_patient ON public.journal_entries(patient_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_consultant ON public.journal_entries(consultant_id);
 CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON public.journal_entries(date);
 
 -- Wearables
-CREATE INDEX IF NOT EXISTS idx_wearable_summaries_patient ON public.wearable_summaries(patient_id);
+CREATE INDEX IF NOT EXISTS idx_wearable_summaries_consultant ON public.wearable_summaries(consultant_id);
 CREATE INDEX IF NOT EXISTS idx_wearable_summaries_date ON public.wearable_summaries(date);
-CREATE INDEX IF NOT EXISTS idx_wearable_insights_patient ON public.wearable_insights(patient_id);
+CREATE INDEX IF NOT EXISTS idx_wearable_insights_consultant ON public.wearable_insights(consultant_id);
 
 -- Subscriptions
 CREATE INDEX IF NOT EXISTS idx_subscriptions_practitioner ON public.subscriptions(practitioner_id);
@@ -535,22 +535,22 @@ CREATE INDEX IF NOT EXISTS idx_invoices_status ON public.invoices(status);
 -- ====================================================================
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_memberships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_invitations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_invites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_memberships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_invitations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_invites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.otp_codes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_questionnaire_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_questionnaire_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.case_files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anamnese_instances ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_anamnesis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_anamnesis ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.preliminary_questionnaires ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anamnesis_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.practitioner_notes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_analysis_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_analysis_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.plan_versions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.plan_sections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.care_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_journals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.complements ENABLE ROW LEVEL SECURITY;
@@ -572,8 +572,8 @@ CREATE POLICY "otp_codes_all" ON public.otp_codes
     FOR ALL USING (true) WITH CHECK (true);
 
 -- Invitations: acces aux invitations de son praticien
-DROP POLICY IF EXISTS "invitations_practitioner" ON public.patient_invitations;
-CREATE POLICY "invitations_practitioner" ON public.patient_invitations
+DROP POLICY IF EXISTS "invitations_practitioner" ON public.consultant_invitations;
+CREATE POLICY "invitations_practitioner" ON public.consultant_invitations
     FOR ALL USING (practitioner_id = auth.uid()) WITH CHECK (practitioner_id = auth.uid());
 
 -- Subscription plans: lecture publique
@@ -615,10 +615,10 @@ CREATE POLICY "preliminary_questionnaires_update" ON public.preliminary_question
 -- ====================================================================
 
 -- Plans d'abonnement par defaut
-INSERT INTO public.subscription_plans (name, display_name, description, price_monthly, price_yearly, features, max_patients, circular_integration, is_active)
+INSERT INTO public.subscription_plans (name, display_name, description, price_monthly, price_yearly, features, max_consultants, circular_integration, is_active)
 VALUES
-    ('free', 'Gratuit', 'Plan gratuit pour demarrer', 0, 0, '["Jusqu''a 5 patients", "Anamnese de base", "Messagerie"]', 5, false, true),
-    ('premium', 'Premium', 'Plan premium avec toutes les fonctionnalites', 29.90, 299, '["Patients illimites", "Integration Circular", "Analyses avancees", "Support prioritaire"]', null, true, true)
+    ('free', 'Gratuit', 'Plan gratuit pour demarrer', 0, 0, '["Jusqu''a 5 consultants", "Anamnese de base", "Messagerie"]', 5, false, true),
+    ('premium', 'Premium', 'Plan premium avec toutes les fonctionnalites', 29.90, 299, '["Consultants illimites", "Integration Circular", "Analyses avancees", "Support prioritaire"]', null, true, true)
 ON CONFLICT (name) DO NOTHING;
 
 

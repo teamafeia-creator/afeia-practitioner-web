@@ -12,15 +12,15 @@ export async function generateInviteToken() {
   return data.token;
 }
 
-export async function createPatientInvite({
+export async function createConsultantInvite({
   practitionerId,
-  patientId,
+  consultantId,
   token,
   expiresAt,
   email
 }: {
   practitionerId?: string;
-  patientId: string;
+  consultantId: string;
   token: string;
   expiresAt?: string;
   email?: string;
@@ -38,26 +38,26 @@ export async function createPatientInvite({
 
   if (!inviteEmail) {
     const { data, error } = await supabase
-      .from('patients')
+      .from('consultants')
       .select('email')
-      .eq('id', patientId)
+      .eq('id', consultantId)
       .is('deleted_at', null)
       .single();
 
     if (error) {
-      throw new Error('Impossible de récupérer l’email du patient.');
+      throw new Error('Impossible de récupérer l’email du consultant.');
     }
 
     inviteEmail = data?.email?.trim() ?? '';
   }
 
   if (!inviteEmail) {
-    throw new Error('Un email valide est requis pour créer une invitation patient.');
+    throw new Error('Un email valide est requis pour créer une invitation consultant.');
   }
 
   const payload: Record<string, string> = {
     practitioner_id: resolvedPractitionerId,
-    patient_id: patientId,
+    consultant_id: consultantId,
     token,
     email: inviteEmail
   };
@@ -66,15 +66,15 @@ export async function createPatientInvite({
     payload.expires_at = expiresAt;
   }
 
-  const { error } = await supabase.from('patient_invites').insert(payload);
+  const { error } = await supabase.from('consultant_invites').insert(payload);
 
   if (error) {
     throw new Error(error.message ?? 'Impossible de créer le lien d\'invitation.');
   }
 }
 
-export async function claimPatientInvite(token: string) {
-  const { data, error } = await supabase.rpc('claim_patient_invite', { token });
+export async function claimConsultantInvite(token: string) {
+  const { data, error } = await supabase.rpc('claim_consultant_invite', { token });
 
   if (error) {
     throw new Error(error.message ?? 'Impossible de valider le lien d\'invitation.');

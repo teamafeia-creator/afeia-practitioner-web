@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type {
   PreliminaryQuestionnaire,
-  PreliminaryQuestionnaireWithPatient,
+  PreliminaryQuestionnaireWithConsultant,
   PublicPractitioner,
   AnamnesisHistory
 } from '../lib/types';
@@ -68,7 +68,7 @@ export async function submitPreliminaryQuestionnaire(params: {
  * Get preliminary questionnaires for the current practitioner
  */
 export async function getPreliminaryQuestionnaires(params?: {
-  status?: 'pending' | 'linked_to_patient' | 'archived';
+  status?: 'pending' | 'linked_to_consultant' | 'archived';
   limit?: number;
   offset?: number;
 }): Promise<PreliminaryQuestionnaire[]> {
@@ -90,13 +90,13 @@ export async function getPreliminaryQuestionnaires(params?: {
  */
 export async function getPreliminaryQuestionnaireById(
   id: string
-): Promise<PreliminaryQuestionnaireWithPatient | null> {
+): Promise<PreliminaryQuestionnaireWithConsultant | null> {
   const { data, error } = await supabase
     .from('preliminary_questionnaires')
     .select(
       `
       *,
-      linked_patient:patients(*)
+      linked_consultant:consultants(*)
     `
     )
     .eq('id', id)
@@ -106,42 +106,42 @@ export async function getPreliminaryQuestionnaireById(
     throw new Error(error.message ?? 'Impossible de charger le questionnaire.');
   }
 
-  return data as PreliminaryQuestionnaireWithPatient | null;
+  return data as PreliminaryQuestionnaireWithConsultant | null;
 }
 
 /**
- * Create a patient from a preliminary questionnaire
- * Returns { patientId, code } - code is the OTP sent to the patient
+ * Create a consultant from a preliminary questionnaire
+ * Returns { consultantId, code } - code is the OTP sent to the consultant
  */
-export async function createPatientFromQuestionnaire(questionnaireId: string): Promise<{
-  patientId: string;
+export async function createConsultantFromQuestionnaire(questionnaireId: string): Promise<{
+  consultantId: string;
   code?: string;
   email?: string;
 }> {
-  // 1. Créer le patient depuis le questionnaire (RPC existant)
-  const { data, error } = await supabase.rpc('create_patient_from_questionnaire', {
+  // 1. Créer le consultant depuis le questionnaire (RPC existant)
+  const { data, error } = await supabase.rpc('create_consultant_from_questionnaire', {
     p_questionnaire_id: questionnaireId
   });
 
   if (error) {
     if (error.message.includes('not found or already linked')) {
-      throw new Error('Questionnaire non trouvé ou déjà associé à un patient.');
+      throw new Error('Questionnaire non trouvé ou déjà associé à un consultant.');
     }
-    throw new Error(error.message ?? 'Erreur lors de la création du patient.');
+    throw new Error(error.message ?? 'Erreur lors de la création du consultant.');
   }
 
-  const patientId = data as string;
+  const consultantId = data as string;
 
-  // 2. Récupérer les infos du patient créé
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
+  // 2. Récupérer les infos du consultant créé
+  const { data: consultant, error: consultantError } = await supabase
+    .from('consultants')
     .select('email, full_name, first_name, last_name')
-    .eq('id', patientId)
+    .eq('id', consultantId)
     .single();
 
-  if (patientError || !patient) {
-    console.error('❌ Erreur récupération patient après création:', patientError);
-    return { patientId };
+  if (consultantError || !consultant) {
+    console.error('❌ Erreur récupération consultant après création:', consultantError);
+    return { consultantId };
   }
 
   // 3. Récupérer le token de session pour l'API
@@ -150,46 +150,46 @@ export async function createPatientFromQuestionnaire(questionnaireId: string): P
 
   if (!accessToken) {
     console.error('⚠️ Pas de token de session pour envoyer le code d\'activation');
-    return { patientId, email: patient.email };
+    return { consultantId, email: consultant.email };
   }
 
   // 4. Envoyer le code d'activation via l'API route
-  const patientName = patient.full_name ||
-    [patient.first_name, patient.last_name].filter(Boolean).join(' ') ||
-    'Patient';
+  const consultantName = consultant.full_name ||
+    [consultant.first_name, consultant.last_name].filter(Boolean).join(' ') ||
+    'Consultant';
 
   try {
-    const response = await fetch('/api/patients/send-activation-code', {
+    const response = await fetch('/api/consultants/send-activation-code', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify({
-        email: patient.email,
-        name: patientName,
-        patientId: patientId
+        email: consultant.email,
+        name: consultantName,
+        consultantId: consultantId
       })
     });
 
     const result = await response.json();
 
     if (result.ok) {
-      console.log('✅ Code d\'activation envoyé pour patient créé depuis questionnaire');
-      console.log('📧 Email:', patient.email);
+      console.log('✅ Code d\'activation envoyé pour consultant créé depuis questionnaire');
+      console.log('📧 Email:', consultant.email);
       console.log('🔑 Code:', result.code);
       return {
-        patientId,
+        consultantId,
         code: result.code,
-        email: patient.email
+        email: consultant.email
       };
     } else {
       console.error('⚠️ Erreur envoi code activation:', result.error);
-      return { patientId, email: patient.email };
+      return { consultantId, email: consultant.email };
     }
   } catch (err) {
     console.error('⚠️ Exception envoi code activation:', err);
-    return { patientId, email: patient.email };
+    return { consultantId, email: consultant.email };
   }
 }
 
@@ -208,17 +208,17 @@ export async function archivePreliminaryQuestionnaire(questionnaireId: string): 
 }
 
 /**
- * Link a preliminary questionnaire to an existing patient
- * Merges the questionnaire responses into the patient's anamnesis
+ * Link a preliminary questionnaire to an existing consultant
+ * Merges the questionnaire responses into the consultant's anamnesis
  */
-export async function linkQuestionnaireToExistingPatient(
+export async function linkQuestionnaireToExistingConsultant(
   questionnaireId: string,
-  patientId: string
+  consultantId: string
 ): Promise<void> {
   console.log('═══════════════════════════════════════');
-  console.log('🔗 LIAISON QUESTIONNAIRE → PATIENT');
+  console.log('🔗 LIAISON QUESTIONNAIRE → CONSULTANT');
   console.log('Questionnaire ID:', questionnaireId);
-  console.log('Patient ID:', patientId);
+  console.log('Consultant ID:', consultantId);
 
   // 1. Récupérer les données du questionnaire
   const { data: questionnaire, error: qError } = await supabase
@@ -233,19 +233,19 @@ export async function linkQuestionnaireToExistingPatient(
   }
 
   if (questionnaire.status !== 'pending') {
-    throw new Error('Ce questionnaire est déjà associé à un patient.');
+    throw new Error('Ce questionnaire est déjà associé à un consultant.');
   }
 
-  // 2. Récupérer l'anamnèse du patient (si elle existe)
+  // 2. Récupérer l'anamnèse du consultant (si elle existe)
   const { data: anamnesis, error: aError } = await supabase
-    .from('patient_anamnesis')
+    .from('consultant_anamnesis')
     .select('answers, version')
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .maybeSingle();
 
   if (aError) {
     console.error('❌ Erreur récupération anamnèse:', aError);
-    throw new Error('Impossible de récupérer l\'anamnèse du patient.');
+    throw new Error('Impossible de récupérer l\'anamnèse du consultant.');
   }
 
   // 3. Fusionner les réponses (les données du questionnaire complètent l'anamnèse)
@@ -270,15 +270,15 @@ export async function linkQuestionnaireToExistingPatient(
   const newVersion = (anamnesis?.version || 0) + 1;
 
   const { error: upsertError } = await supabase
-    .from('patient_anamnesis')
+    .from('consultant_anamnesis')
     .upsert({
-      patient_id: patientId,
+      consultant_id: consultantId,
       answers: mergedAnswers,
       version: newVersion,
       status: 'COMPLETED',
       updated_at: new Date().toISOString()
     }, {
-      onConflict: 'patient_id'
+      onConflict: 'consultant_id'
     });
 
   if (upsertError) {
@@ -292,8 +292,8 @@ export async function linkQuestionnaireToExistingPatient(
   const { error: linkError } = await supabase
     .from('preliminary_questionnaires')
     .update({
-      status: 'linked_to_patient',
-      linked_patient_id: patientId,
+      status: 'linked_to_consultant',
+      linked_consultant_id: consultantId,
       linked_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
@@ -304,7 +304,7 @@ export async function linkQuestionnaireToExistingPatient(
     throw new Error('Impossible de lier le questionnaire.');
   }
 
-  console.log('✅ Questionnaire lié au patient');
+  console.log('✅ Questionnaire lié au consultant');
   console.log('═══════════════════════════════════════');
 }
 
@@ -330,15 +330,15 @@ export async function getPendingQuestionnaireCount(): Promise<number> {
 // ============================================
 
 /**
- * Get anamnesis modification history for a patient
+ * Get anamnesis modification history for a consultant
  */
 export async function getAnamnesisHistory(params: {
-  patientId: string;
+  consultantId: string;
   section?: string;
   limit?: number;
 }): Promise<AnamnesisHistory[]> {
   const { data, error } = await supabase.rpc('get_anamnesis_history', {
-    p_patient_id: params.patientId,
+    p_consultant_id: params.consultantId,
     p_section: params.section ?? null,
     p_limit: params.limit ?? 50
   });
@@ -351,13 +351,13 @@ export async function getAnamnesisHistory(params: {
 }
 
 /**
- * Get the latest version number for a patient's anamnesis
+ * Get the latest version number for a consultant's anamnesis
  */
-export async function getAnamnesisVersion(patientId: string): Promise<number> {
+export async function getAnamnesisVersion(consultantId: string): Promise<number> {
   const { data, error } = await supabase
-    .from('patient_anamnesis')
+    .from('consultant_anamnesis')
     .select('version')
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .maybeSingle();
 
   if (error) {

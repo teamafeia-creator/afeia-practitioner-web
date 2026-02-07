@@ -12,7 +12,7 @@ export type Practitioner = {
   updated_at: string;
 };
 
-export type Patient = {
+export type Consultant = {
   id: string;
   practitioner_id: string;
   name: string;
@@ -30,10 +30,10 @@ export type Patient = {
   updated_at: string;
 };
 
-export type PatientInvitation = {
+export type ConsultantInvitation = {
   id: string;
   practitioner_id: string;
-  patient_id?: string | null;
+  consultant_id?: string | null;
   email: string;
   full_name?: string | null;
   first_name?: string | null;
@@ -57,7 +57,7 @@ export type OtpCode = {
   code: string;
   type: 'activation' | 'login' | 'reset';
   practitioner_id?: string | null;
-  patient_id?: string | null;
+  consultant_id?: string | null;
   expires_at: string;
   used: boolean;
   used_at?: string | null;
@@ -66,7 +66,7 @@ export type OtpCode = {
 
 export type Anamnese = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   motif?: string;
   objectifs?: string;
   alimentation?: string;
@@ -84,9 +84,9 @@ export type AnamnesisAnswersFlat = Record<string, string>;
 export type AnamnesisAnswersNested = Record<string, Record<string, string>>;
 export type AnamnesisAnswers = AnamnesisAnswersFlat | AnamnesisAnswersNested;
 
-export type PatientAnamnesis = {
+export type ConsultantAnamnesis = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   naturopath_id?: string | null;
   answers?: AnamnesisAnswers | null;
   version?: number;
@@ -105,8 +105,8 @@ export type PreliminaryQuestionnaire = {
   email: string;
   phone?: string | null;
   responses: Record<string, Record<string, string>>;
-  status: 'pending' | 'linked_to_patient' | 'archived';
-  linked_patient_id?: string | null;
+  status: 'pending' | 'linked_to_consultant' | 'archived';
+  linked_consultant_id?: string | null;
   linked_at?: string | null;
   submitted_from_ip?: string | null;
   user_agent?: string | null;
@@ -118,13 +118,13 @@ export type PreliminaryQuestionnaire = {
 export type AnamnesisHistory = {
   id: string;
   anamnesis_id: string;
-  patient_id: string;
+  consultant_id: string;
   modified_section: string;
   old_value?: Record<string, string> | null;
   new_value?: Record<string, string> | null;
   full_snapshot?: Record<string, Record<string, string>> | null;
   version: number;
-  modified_by_type: 'patient' | 'practitioner' | 'system';
+  modified_by_type: 'consultant' | 'practitioner' | 'system';
   modified_by_id?: string | null;
   modified_at: string;
 };
@@ -137,7 +137,7 @@ export type PublicPractitioner = {
 
 export type Consultation = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   date: string;
   notes?: string;
   created_at: string;
@@ -146,7 +146,7 @@ export type Consultation = {
 
 export type Appointment = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   practitioner_id: string;
   starts_at: string;
   ends_at?: string | null;
@@ -158,7 +158,7 @@ export type Appointment = {
 
 export type Plan = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   created_at: string;
 };
 
@@ -178,9 +178,9 @@ export type PlanSection = {
   sort_order: number;
 };
 
-export type PatientPlan = {
+export type ConsultantPlan = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   practitioner_id: string;
   version: number;
   status: 'draft' | 'shared';
@@ -192,7 +192,7 @@ export type PatientPlan = {
 
 export type JournalEntry = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   date: string;
   mood?: '🙂' | '😐' | '🙁';
   energy?: 'Bas' | 'Moyen' | 'Élevé';
@@ -206,8 +206,8 @@ export type JournalEntry = {
 
 export type Message = {
   id: string;
-  patient_id: string;
-  sender: 'patient' | 'praticien';
+  consultant_id: string;
+  sender: 'consultant' | 'praticien';
   text: string;
   sent_at: string;
   read_at?: string;
@@ -215,7 +215,7 @@ export type Message = {
 
 export type WearableSummary = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   date: string;
   sleep_duration?: number;
   sleep_score?: number;
@@ -227,7 +227,7 @@ export type WearableSummary = {
 
 export type WearableInsight = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   type?: 'sleep' | 'hrv' | 'activity';
   level?: 'info' | 'attention';
   message?: string;
@@ -245,8 +245,8 @@ export type NotificationType =
 
 export type NotificationMetadata = {
   questionnaire_id?: string;
-  patient_name?: string;
-  patient_id?: string;
+  consultant_name?: string;
+  consultant_id?: string;
   modified_sections?: string[];
   version?: number;
   modified_at?: string;
@@ -261,7 +261,7 @@ export type NotificationMetadata = {
 export type Notification = {
   id: string;
   practitioner_id: string;
-  patient_id?: string | null;
+  consultant_id?: string | null;
   type?: NotificationType;
   title: string;
   description?: string;
@@ -273,16 +273,16 @@ export type Notification = {
 
 export type PractitionerNote = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   practitioner_id: string;
   content?: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type PatientAnalysisResult = {
+export type ConsultantAnalysisResult = {
   id: string;
-  patient_id: string;
+  consultant_id: string;
   practitioner_id: string;
   file_name: string;
   file_path: string;
@@ -295,21 +295,21 @@ export type PatientAnalysisResult = {
   updated_at: string;
 };
 
-export type PatientWithUnreadCounts = Patient & {
+export type ConsultantWithUnreadCounts = Consultant & {
   unreadMessages: number;
   unreadNotifications: number;
   lastConsultationAt: string | null;
 };
 
-// Preliminary questionnaire with linked patient details
-export type PreliminaryQuestionnaireWithPatient = PreliminaryQuestionnaire & {
-  linked_patient?: Patient | null;
+// Preliminary questionnaire with linked consultant details
+export type PreliminaryQuestionnaireWithConsultant = PreliminaryQuestionnaire & {
+  linked_consultant?: Consultant | null;
 };
 
 // Types enrichis (avec relations)
-export type PatientWithDetails = Patient & {
+export type ConsultantWithDetails = Consultant & {
   anamnese?: Anamnese;
-  patient_anamnesis?: PatientAnamnesis | null;
+  consultant_anamnesis?: ConsultantAnamnesis | null;
   practitioner_note?: PractitionerNote | null;
   consultations?: Consultation[];
   appointments?: Appointment[];
@@ -322,6 +322,6 @@ export type PatientWithDetails = Patient & {
   messages?: Message[];
   wearable_summaries?: WearableSummary[];
   wearable_insights?: WearableInsight[];
-  patient_plans?: PatientPlan[];
-  analysis_results?: PatientAnalysisResult[];
+  consultant_plans?: ConsultantPlan[];
+  analysis_results?: ConsultantAnalysisResult[];
 };

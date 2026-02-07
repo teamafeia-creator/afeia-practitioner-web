@@ -391,7 +391,7 @@ export default function AdminPractitionersPage() {
           </p>
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
             <p className="text-sm text-red-800">
-              Attention : Cette action supprimera egalement tous les patients associes a ce praticien.
+              Attention : Cette action supprimera egalement tous les consultants associes a ce praticien.
             </p>
           </div>
         </div>

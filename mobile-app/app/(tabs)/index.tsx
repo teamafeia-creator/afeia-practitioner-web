@@ -29,7 +29,7 @@ interface DashboardData {
 }
 
 export default function HomeScreen() {
-  const { patient, logout } = useAuth();
+  const { consultant, logout } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<DashboardData>({
     naturopathe: null,
@@ -51,7 +51,7 @@ export default function HomeScreen() {
             naturopathe: Naturopathe;
             nextConsultation?: string;
             calendlyUrl?: string;
-          }>('/api/mobile/patient/naturopathe-info'),
+          }>('/api/mobile/consultant/naturopathe-info'),
           api.get<{ count: number }>('/api/mobile/messages/unread-count'),
           api.get<{ complements: Complement[] }>('/api/mobile/complements'),
           api.get<{ entry: JournalEntry | null }>('/api/mobile/journal/today'),
@@ -104,7 +104,7 @@ export default function HomeScreen() {
 
   if (loading) return <LoadingScreen />;
 
-  const firstName = patient?.firstName || 'Patient';
+  const firstName = consultant?.firstName || 'Consultant';
   const today = format(new Date(), 'EEEE d MMMM', { locale: fr });
   const complementsTaken = data.complements.filter((c) => c.takenToday).length;
   const complementsTotal = data.complements.filter((c) => c.active).length;

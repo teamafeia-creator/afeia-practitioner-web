@@ -1,22 +1,22 @@
 import { supabase } from './supabase';
 import type { 
-  Patient, 
+  Consultant, 
   Anamnese, 
   Consultation, 
   Appointment,
   Plan, 
   PlanVersion, 
   PlanSection,
-  PatientPlan,
+  ConsultantPlan,
   JournalEntry, 
   Message, 
   WearableSummary, 
   WearableInsight,
   Notification,
-  PatientAnamnesis,
+  ConsultantAnamnesis,
   PractitionerNote,
-  PatientWithDetails,
-  PatientWithUnreadCounts
+  ConsultantWithDetails,
+  ConsultantWithUnreadCounts
 } from './types';
 
 type SupabaseErrorLike = {
@@ -34,60 +34,60 @@ function describeSupabaseError(error: SupabaseErrorLike | null | undefined) {
 }
 
 // ============================================
-// PATIENTS
+// CONSULTANTS
 // ============================================
 
-export async function getPatients(): Promise<Patient[]> {
-  console.log('[patients] fetch start');
+export async function getConsultants(): Promise<Consultant[]> {
+  console.log('[consultants] fetch start');
   const { data, error } = await supabase
-    .from('patients')
+    .from('consultants')
     .select('*')
     .is('deleted_at', null)
     .order('name');
   
   if (error) {
-    console.error('Error fetching patients:', error);
+    console.error('Error fetching consultants:', error);
     throw new Error(describeSupabaseError(error));
   }
-  console.log('[patients] fetch success', { count: data?.length ?? 0 });
+  console.log('[consultants] fetch success', { count: data?.length ?? 0 });
   return data || [];
 }
 
-export async function getPatientsWithUnreadCounts(): Promise<PatientWithUnreadCounts[]> {
-  console.log('[patients] fetch with counts start');
-  const { data: patients, error } = await supabase
-    .from('patients')
+export async function getConsultantsWithUnreadCounts(): Promise<ConsultantWithUnreadCounts[]> {
+  console.log('[consultants] fetch with counts start');
+  const { data: consultants, error } = await supabase
+    .from('consultants')
     .select('*')
     .is('deleted_at', null)
     .order('name');
 
   if (error) {
-    console.error('Error fetching patients with counts:', error);
+    console.error('Error fetching consultants with counts:', error);
     throw new Error(describeSupabaseError(error));
   }
 
-  const safePatients = patients || [];
-  const patientIds = safePatients.map((patient) => patient.id);
-  if (patientIds.length === 0) {
+  const safeConsultants = consultants || [];
+  const consultantIds = safeConsultants.map((consultant) => consultant.id);
+  if (consultantIds.length === 0) {
     return [];
   }
 
   const [messagesResult, notificationsResult, consultationsResult] = await Promise.all([
     supabase
       .from('messages')
-      .select('patient_id')
-      .in('patient_id', patientIds)
-      .eq('sender', 'patient')
+      .select('consultant_id')
+      .in('consultant_id', consultantIds)
+      .eq('sender', 'consultant')
       .is('read_at', null),
     supabase
       .from('notifications')
-      .select('patient_id')
-      .in('patient_id', patientIds)
+      .select('consultant_id')
+      .in('consultant_id', consultantIds)
       .eq('read', false),
     supabase
       .from('consultations')
-      .select('patient_id, date')
-      .in('patient_id', patientIds)
+      .select('consultant_id, date')
+      .in('consultant_id', consultantIds)
   ]);
 
   if (messagesResult.error) {
@@ -100,39 +100,39 @@ export async function getPatientsWithUnreadCounts(): Promise<PatientWithUnreadCo
     console.error('Error fetching consultations:', consultationsResult.error);
   }
 
-  console.log('[patients] fetch with counts success', {
-    count: safePatients.length,
+  console.log('[consultants] fetch with counts success', {
+    count: safeConsultants.length,
     unreadMessagesCount: messagesResult.data?.length ?? 0,
     unreadNotificationsCount: notificationsResult.data?.length ?? 0
   });
 
   const unreadMessagesMap = (messagesResult.data ?? []).reduce<Record<string, number>>((acc, row) => {
-    acc[row.patient_id] = (acc[row.patient_id] ?? 0) + 1;
+    acc[row.consultant_id] = (acc[row.consultant_id] ?? 0) + 1;
     return acc;
   }, {});
 
   const unreadNotificationsMap = (notificationsResult.data ?? []).reduce<Record<string, number>>((acc, row) => {
-    acc[row.patient_id] = (acc[row.patient_id] ?? 0) + 1;
+    acc[row.consultant_id] = (acc[row.consultant_id] ?? 0) + 1;
     return acc;
   }, {});
 
   const lastConsultationMap = (consultationsResult.data ?? []).reduce<Record<string, string>>((acc, row) => {
-    const existing = acc[row.patient_id];
+    const existing = acc[row.consultant_id];
     if (!existing || new Date(row.date) > new Date(existing)) {
-      acc[row.patient_id] = row.date;
+      acc[row.consultant_id] = row.date;
     }
     return acc;
   }, {});
 
-  return safePatients.map((patient) => ({
-    ...patient,
-    unreadMessages: unreadMessagesMap[patient.id] ?? 0,
-    unreadNotifications: unreadNotificationsMap[patient.id] ?? 0,
-    lastConsultationAt: lastConsultationMap[patient.id] ?? null
+  return safeConsultants.map((consultant) => ({
+    ...consultant,
+    unreadMessages: unreadMessagesMap[consultant.id] ?? 0,
+    unreadNotifications: unreadNotificationsMap[consultant.id] ?? 0,
+    lastConsultationAt: lastConsultationMap[consultant.id] ?? null
   }));
 }
 
-export async function getPatientsWithUnreadCountsPaged({
+export async function getConsultantsWithUnreadCountsPaged({
   page,
   pageSize,
   search
@@ -140,14 +140,14 @@ export async function getPatientsWithUnreadCountsPaged({
   page: number;
   pageSize: number;
   search?: string;
-}): Promise<{ patients: PatientWithUnreadCounts[]; total: number }> {
+}): Promise<{ consultants: ConsultantWithUnreadCounts[]; total: number }> {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
   const trimmedSearch = search?.trim();
 
-  console.log('[patients] fetch with counts paged start', { page, pageSize, search: trimmedSearch });
+  console.log('[consultants] fetch with counts paged start', { page, pageSize, search: trimmedSearch });
   let query = supabase
-    .from('patients')
+    .from('consultants')
     .select('*', { count: 'exact' })
     .is('deleted_at', null);
 
@@ -155,35 +155,35 @@ export async function getPatientsWithUnreadCountsPaged({
     query = query.or(`name.ilike.%${trimmedSearch}%,city.ilike.%${trimmedSearch}%`);
   }
 
-  const { data: patients, error, count } = await query.order('name').range(from, to);
+  const { data: consultants, error, count } = await query.order('name').range(from, to);
 
   if (error) {
-    console.error('Error fetching patients with counts paged:', error);
+    console.error('Error fetching consultants with counts paged:', error);
     throw new Error(describeSupabaseError(error));
   }
 
-  const safePatients = patients || [];
-  const patientIds = safePatients.map((patient) => patient.id);
-  if (patientIds.length === 0) {
-    return { patients: [], total: count ?? 0 };
+  const safeConsultants = consultants || [];
+  const consultantIds = safeConsultants.map((consultant) => consultant.id);
+  if (consultantIds.length === 0) {
+    return { consultants: [], total: count ?? 0 };
   }
 
   const [messagesResult, notificationsResult, consultationsResult] = await Promise.all([
     supabase
       .from('messages')
-      .select('patient_id')
-      .in('patient_id', patientIds)
-      .eq('sender', 'patient')
+      .select('consultant_id')
+      .in('consultant_id', consultantIds)
+      .eq('sender', 'consultant')
       .is('read_at', null),
     supabase
       .from('notifications')
-      .select('patient_id')
-      .in('patient_id', patientIds)
+      .select('consultant_id')
+      .in('consultant_id', consultantIds)
       .eq('read', false),
     supabase
       .from('consultations')
-      .select('patient_id, date')
-      .in('patient_id', patientIds)
+      .select('consultant_id, date')
+      .in('consultant_id', consultantIds)
   ]);
 
   if (messagesResult.error) {
@@ -197,80 +197,80 @@ export async function getPatientsWithUnreadCountsPaged({
   }
 
   const unreadMessagesMap = (messagesResult.data ?? []).reduce<Record<string, number>>((acc, row) => {
-    acc[row.patient_id] = (acc[row.patient_id] ?? 0) + 1;
+    acc[row.consultant_id] = (acc[row.consultant_id] ?? 0) + 1;
     return acc;
   }, {});
 
   const unreadNotificationsMap = (notificationsResult.data ?? []).reduce<Record<string, number>>((acc, row) => {
-    acc[row.patient_id] = (acc[row.patient_id] ?? 0) + 1;
+    acc[row.consultant_id] = (acc[row.consultant_id] ?? 0) + 1;
     return acc;
   }, {});
 
   const lastConsultationMap = (consultationsResult.data ?? []).reduce<Record<string, string>>((acc, row) => {
-    const existing = acc[row.patient_id];
+    const existing = acc[row.consultant_id];
     if (!existing || new Date(row.date) > new Date(existing)) {
-      acc[row.patient_id] = row.date;
+      acc[row.consultant_id] = row.date;
     }
     return acc;
   }, {});
 
-  console.log('[patients] fetch with counts paged success', {
-    count: safePatients.length,
+  console.log('[consultants] fetch with counts paged success', {
+    count: safeConsultants.length,
     total: count ?? 0
   });
 
   return {
-    patients: safePatients.map((patient) => ({
-      ...patient,
-      unreadMessages: unreadMessagesMap[patient.id] ?? 0,
-      unreadNotifications: unreadNotificationsMap[patient.id] ?? 0,
-      lastConsultationAt: lastConsultationMap[patient.id] ?? null
+    consultants: safeConsultants.map((consultant) => ({
+      ...consultant,
+      unreadMessages: unreadMessagesMap[consultant.id] ?? 0,
+      unreadNotifications: unreadNotificationsMap[consultant.id] ?? 0,
+      lastConsultationAt: lastConsultationMap[consultant.id] ?? null
     })),
     total: count ?? 0
   };
 }
 
-export async function getPatientById(id: string): Promise<PatientWithDetails | null> {
-  // Récupérer le patient
-  console.log('[patients] fetch detail start', { patientId: id });
-  const { data: patient, error: patientError } = await supabase
-    .from('patients')
+export async function getConsultantById(id: string): Promise<ConsultantWithDetails | null> {
+  // Récupérer le consultant
+  console.log('[consultants] fetch detail start', { consultantId: id });
+  const { data: consultant, error: consultantError } = await supabase
+    .from('consultants')
     .select('*')
     .eq('id', id)
     .is('deleted_at', null)
     .single();
   
-  if (patientError || !patient) {
-    console.error('Error fetching patient:', patientError);
+  if (consultantError || !consultant) {
+    console.error('Error fetching consultant:', consultantError);
     return null;
   }
-  console.log('[patients] fetch detail success', { patientId: id });
+  console.log('[consultants] fetch detail success', { consultantId: id });
 
   // Récupérer l'anamnèse
   const { data: anamnese } = await supabase
     .from('anamneses')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .single();
 
   // Récupérer les consultations
   const { data: consultations } = await supabase
     .from('consultations')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .order('date', { ascending: false });
 
   const { data: appointments } = await supabase
     .from('appointments')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .order('starts_at', { ascending: false });
 
   // Récupérer le plan avec ses versions et sections
   const { data: plan } = await supabase
     .from('plans')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .single();
 
   let planWithVersions = plan;
@@ -300,84 +300,84 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
   const { data: journal_entries } = await supabase
     .from('journal_entries')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .order('date', { ascending: false });
 
-  const { data: patientAnamnesis } = await supabase
-    .from('patient_anamnesis')
+  const { data: consultantAnamnesis } = await supabase
+    .from('consultant_anamnesis')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .maybeSingle();
 
   const { data: anamneseInstance } = await supabase
     .from('anamnese_instances')
     .select('answers')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .maybeSingle();
 
   const { data: practitionerNote } = await supabase
     .from('practitioner_notes')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .maybeSingle();
 
   // Récupérer les messages
   const { data: messages } = await supabase
     .from('messages')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .order('sent_at', { ascending: true });
 
   // Récupérer les données wearable
   const { data: wearable_summaries } = await supabase
     .from('wearable_summaries')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .order('date', { ascending: false });
 
   // Récupérer les insights wearable
   const { data: wearable_insights } = await supabase
     .from('wearable_insights')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .order('created_at', { ascending: false });
 
-  const { data: patientPlans } = await supabase
-    .from('patient_plans')
+  const { data: consultantPlans } = await supabase
+    .from('consultant_plans')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .order('version', { ascending: false });
 
   // Fetch analysis results
   const { data: analysisResults } = await supabase
-    .from('patient_analysis_results')
+    .from('consultant_analysis_results')
     .select('*')
-    .eq('patient_id', id)
+    .eq('consultant_id', id)
     .order('analysis_date', { ascending: false });
 
   return {
-    ...patient,
+    ...consultant,
     anamnese: anamnese || undefined,
     consultations: consultations || [],
     appointments: appointments || [],
     plan: planWithVersions || undefined,
-    patient_anamnesis:
-      patientAnamnesis ||
+    consultant_anamnesis:
+      consultantAnamnesis ||
       (anamneseInstance?.answers
         ? ({
             id: 'legacy',
-            patient_id: id,
+            consultant_id: id,
             answers: anamneseInstance.answers as Record<string, string>,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          } as PatientAnamnesis)
+          } as ConsultantAnamnesis)
         : null),
     practitioner_note: practitionerNote || null,
     journal_entries: journal_entries || [],
     messages: messages || [],
     wearable_summaries: wearable_summaries || [],
     wearable_insights: wearable_insights || [],
-    patient_plans: patientPlans || [],
+    consultant_plans: consultantPlans || [],
     analysis_results: analysisResults || []
   };
 }
@@ -386,12 +386,12 @@ export async function getPatientById(id: string): Promise<PatientWithDetails | n
 // NOTIFICATIONS
 // ============================================
 
-export async function getNotifications(): Promise<(Notification & { patient?: Patient })[]> {
+export async function getNotifications(): Promise<(Notification & { consultant?: Consultant })[]> {
   const { data, error } = await supabase
     .from('notifications')
     .select(`
       *,
-      patient:patients(*)
+      consultant:consultants(*)
     `)
     .order('created_at', { ascending: false });
   
@@ -406,12 +406,12 @@ export async function getNotifications(): Promise<(Notification & { patient?: Pa
 // CONSULTATIONS
 // ============================================
 
-export async function getConsultationById(id: string): Promise<(Consultation & { patient?: Patient }) | null> {
+export async function getConsultationById(id: string): Promise<(Consultation & { consultant?: Consultant }) | null> {
   const { data, error } = await supabase
     .from('consultations')
     .select(`
       *,
-      patient:patients(*)
+      consultant:consultants(*)
     `)
     .eq('id', id)
     .single();
@@ -428,14 +428,14 @@ export async function getConsultationById(id: string): Promise<(Consultation & {
 // ============================================
 
 export async function getPlanById(id: string): Promise<(Plan & { 
-  patient?: Patient, 
+  consultant?: Consultant, 
   versions?: (PlanVersion & { sections?: PlanSection[] })[] 
 }) | null> {
   const { data: plan, error } = await supabase
     .from('plans')
     .select(`
       *,
-      patient:patients(*)
+      consultant:consultants(*)
     `)
     .eq('id', id)
     .single();
@@ -473,12 +473,12 @@ export async function getPlanById(id: string): Promise<(Plan & {
 // MESSAGES
 // ============================================
 
-export async function sendMessage(patientId: string, text: string, sender: 'patient' | 'praticien'): Promise<Message | null> {
+export async function sendMessage(consultantId: string, text: string, sender: 'consultant' | 'praticien'): Promise<Message | null> {
   const now = new Date().toISOString();
   const senderRole = sender === 'praticien' ? 'practitioner' : sender;
   const { data, error } = await supabase
     .from('messages')
-    .insert({ patient_id: patientId, text, body: text, sender, sender_role: senderRole, sent_at: now, created_at: now })
+    .insert({ consultant_id: consultantId, text, body: text, sender, sender_role: senderRole, sent_at: now, created_at: now })
     .select()
     .single();
   
@@ -489,12 +489,12 @@ export async function sendMessage(patientId: string, text: string, sender: 'pati
   return data;
 }
 
-export async function markMessagesAsRead(patientId: string): Promise<boolean> {
+export async function markMessagesAsRead(consultantId: string): Promise<boolean> {
   const { error } = await supabase
     .from('messages')
     .update({ read_at: new Date().toISOString() })
-    .eq('patient_id', patientId)
-    .eq('sender', 'patient')
+    .eq('consultant_id', consultantId)
+    .eq('sender', 'consultant')
     .is('read_at', null);
 
   if (error) {
@@ -504,12 +504,12 @@ export async function markMessagesAsRead(patientId: string): Promise<boolean> {
   return true;
 }
 
-export async function getUnreadMessagesCount(patientId: string): Promise<number> {
+export async function getUnreadMessagesCount(consultantId: string): Promise<number> {
   const { count, error } = await supabase
     .from('messages')
     .select('id', { count: 'exact', head: true })
-    .eq('patient_id', patientId)
-    .eq('sender', 'patient')
+    .eq('consultant_id', consultantId)
+    .eq('sender', 'consultant')
     .is('read_at', null);
 
   if (error) {
@@ -519,11 +519,11 @@ export async function getUnreadMessagesCount(patientId: string): Promise<number>
   return count ?? 0;
 }
 
-export async function getUnreadNotificationsCount(patientId: string): Promise<number> {
+export async function getUnreadNotificationsCount(consultantId: string): Promise<number> {
   const { count, error } = await supabase
     .from('notifications')
     .select('id', { count: 'exact', head: true })
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .eq('read', false);
 
   if (error) {
@@ -534,12 +534,12 @@ export async function getUnreadNotificationsCount(patientId: string): Promise<nu
 }
 
 // ============================================
-// PATIENTS - CREATE/UPDATE
+// CONSULTANTS - CREATE/UPDATE
 // ============================================
 
-export async function createPatient(
-  patient: Omit<Patient, 'id' | 'created_at' | 'updated_at' | 'practitioner_id'>
-): Promise<Patient | null> {
+export async function createConsultant(
+  consultant: Omit<Consultant, 'id' | 'created_at' | 'updated_at' | 'practitioner_id'>
+): Promise<Consultant | null> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
     console.error('Error fetching user:', userError);
@@ -547,26 +547,26 @@ export async function createPatient(
   }
 
   const { data, error } = await supabase
-    .from('patients')
-    .insert({ ...patient, practitioner_id: userData.user.id })
+    .from('consultants')
+    .insert({ ...consultant, practitioner_id: userData.user.id })
     .select()
     .single();
   
   if (error) {
-    console.error('Error creating patient:', error);
+    console.error('Error creating consultant:', error);
     return null;
   }
   return data;
 }
 
 export async function updateAnamnese(
-  patientId: string,
+  consultantId: string,
   data: { motif?: string | null; objectifs?: string | null }
 ): Promise<Anamnese | null> {
   const { data: updated, error } = await supabase
     .from('anamneses')
     .update({ ...data, updated_at: new Date().toISOString() })
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .select()
     .single();
 
@@ -577,9 +577,9 @@ export async function updateAnamnese(
   return updated;
 }
 
-export async function updatePatient(id: string, updates: Partial<Patient>): Promise<Patient> {
+export async function updateConsultant(id: string, updates: Partial<Consultant>): Promise<Consultant> {
   const { data, error } = await supabase
-    .from('patients')
+    .from('consultants')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .is('deleted_at', null)
@@ -587,19 +587,19 @@ export async function updatePatient(id: string, updates: Partial<Patient>): Prom
     .single();
   
   if (error) {
-    console.error('Error updating patient:', error);
+    console.error('Error updating consultant:', error);
     throw new Error(describeSupabaseError(error));
   }
   return data;
 }
 
 export async function createAppointment({
-  patientId,
+  consultantId,
   startsAt,
   endsAt,
   notes
 }: {
-  patientId: string;
+  consultantId: string;
   startsAt: string;
   endsAt?: string | null;
   notes?: string | null;
@@ -612,7 +612,7 @@ export async function createAppointment({
   const { data, error } = await supabase
     .from('appointments')
     .insert({
-      patient_id: patientId,
+      consultant_id: consultantId,
       practitioner_id: userData.user.id,
       starts_at: startsAt,
       ends_at: endsAt,
@@ -629,32 +629,32 @@ export async function createAppointment({
   return data;
 }
 
-export async function upsertPatientAnamnesis(
-  patientId: string,
+export async function upsertConsultantAnamnesis(
+  consultantId: string,
   answers: Record<string, string>
-): Promise<PatientAnamnesis | null> {
+): Promise<ConsultantAnamnesis | null> {
   const { data, error } = await supabase
-    .from('patient_anamnesis')
+    .from('consultant_anamnesis')
     .upsert(
       {
-        patient_id: patientId,
+        consultant_id: consultantId,
         answers,
         updated_at: new Date().toISOString()
       },
-      { onConflict: 'patient_id' }
+      { onConflict: 'consultant_id' }
     )
     .select()
     .single();
 
   if (error) {
-    console.error('Error upserting patient anamnesis:', error);
+    console.error('Error upserting consultant anamnesis:', error);
     return null;
   }
   return data;
 }
 
 export async function upsertJournalEntry(
-  patientId: string,
+  consultantId: string,
   entry: Partial<JournalEntry> & { date: string }
 ): Promise<JournalEntry | null> {
   if (entry.id) {
@@ -671,7 +671,7 @@ export async function upsertJournalEntry(
         date: entry.date
       })
       .eq('id', entry.id)
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .select()
       .single();
 
@@ -685,7 +685,7 @@ export async function upsertJournalEntry(
   const { data, error } = await supabase
     .from('journal_entries')
     .insert({
-      patient_id: patientId,
+      consultant_id: consultantId,
       date: entry.date,
       mood: entry.mood ?? null,
       energy: entry.energy ?? null,
@@ -705,65 +705,65 @@ export async function upsertJournalEntry(
   return data;
 }
 
-export async function deletePatient(patientId: string): Promise<void> {
+export async function deleteConsultant(consultantId: string): Promise<void> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
     console.error('Error fetching user:', userError);
-    throw new Error('Veuillez vous reconnecter pour supprimer ce patient.');
+    throw new Error('Veuillez vous reconnecter pour supprimer ce consultant.');
   }
 
-  console.log('[patients] delete start', { patientId, practitionerId: userData.user.id });
+  console.log('[consultants] delete start', { consultantId, practitionerId: userData.user.id });
   const { data, error } = await supabase
-    .from('patients')
+    .from('consultants')
     .delete()
-    .eq('id', patientId)
+    .eq('id', consultantId)
     .eq('practitioner_id', userData.user.id)
     .select('id');
 
   if (error) {
-    console.error('Error deleting patient:', error);
+    console.error('Error deleting consultant:', error);
     throw new Error(describeSupabaseError(error));
   }
 
   if (!data || data.length === 0) {
-    throw new Error('Suppression impossible pour ce patient.');
+    throw new Error('Suppression impossible pour ce consultant.');
   }
-  console.log('[patients] delete success', { patientId });
+  console.log('[consultants] delete success', { consultantId });
 }
 
-export async function getPatientPlans(patientId: string): Promise<PatientPlan[]> {
+export async function getConsultantPlans(consultantId: string): Promise<ConsultantPlan[]> {
   const { data, error } = await supabase
-    .from('patient_plans')
+    .from('consultant_plans')
     .select('*')
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .order('version', { ascending: false });
 
   if (error) {
-    console.error('Error fetching patient plans:', error);
+    console.error('Error fetching consultant plans:', error);
     throw new Error(describeSupabaseError(error));
   }
 
-  return (data ?? []) as PatientPlan[];
+  return (data ?? []) as ConsultantPlan[];
 }
 
-export async function createPatientPlanVersion({
-  patientId,
+export async function createConsultantPlanVersion({
+  consultantId,
   version,
   content
 }: {
-  patientId: string;
+  consultantId: string;
   version: number;
   content: Record<string, string>;
-}): Promise<PatientPlan> {
+}): Promise<ConsultantPlan> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
     throw new Error('Veuillez vous reconnecter pour créer un plan.');
   }
 
   const { data, error } = await supabase
-    .from('patient_plans')
+    .from('consultant_plans')
     .insert({
-      patient_id: patientId,
+      consultant_id: consultantId,
       practitioner_id: userData.user.id,
       version,
       status: 'draft',
@@ -773,38 +773,38 @@ export async function createPatientPlanVersion({
     .single();
 
   if (error || !data) {
-    console.error('Error creating patient plan:', error);
+    console.error('Error creating consultant plan:', error);
     throw new Error(describeSupabaseError(error));
   }
 
-  return data as PatientPlan;
+  return data as ConsultantPlan;
 }
 
-export async function updatePatientPlanContent({
+export async function updateConsultantPlanContent({
   planId,
   content
 }: {
   planId: string;
   content: Record<string, string>;
-}): Promise<PatientPlan> {
+}): Promise<ConsultantPlan> {
   const { data, error } = await supabase
-    .from('patient_plans')
+    .from('consultant_plans')
     .update({ content, updated_at: new Date().toISOString() })
     .eq('id', planId)
     .select()
     .single();
 
   if (error || !data) {
-    console.error('Error updating patient plan:', error);
+    console.error('Error updating consultant plan:', error);
     throw new Error(describeSupabaseError(error));
   }
 
-  return data as PatientPlan;
+  return data as ConsultantPlan;
 }
 
-export async function sharePatientPlanVersion(planId: string): Promise<PatientPlan> {
+export async function shareConsultantPlanVersion(planId: string): Promise<ConsultantPlan> {
   const { data, error } = await supabase
-    .from('patient_plans')
+    .from('consultant_plans')
     .update({
       status: 'shared',
       shared_at: new Date().toISOString(),
@@ -815,11 +815,11 @@ export async function sharePatientPlanVersion(planId: string): Promise<PatientPl
     .single();
 
   if (error || !data) {
-    console.error('Error sharing patient plan:', error);
+    console.error('Error sharing consultant plan:', error);
     throw new Error(describeSupabaseError(error));
   }
 
-  return data as PatientPlan;
+  return data as ConsultantPlan;
 }
 
 // ============================================
@@ -948,7 +948,7 @@ export async function updatePractitionerCalendlyUrl(calendlyUrl: string | null):
 }
 
 export async function upsertPractitionerNote(
-  patientId: string,
+  consultantId: string,
   content: string
 ): Promise<PractitionerNote | null> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -961,12 +961,12 @@ export async function upsertPractitionerNote(
     .from('practitioner_notes')
     .upsert(
       {
-        patient_id: patientId,
+        consultant_id: consultantId,
         practitioner_id: userData.user.id,
         content,
         updated_at: new Date().toISOString()
       },
-      { onConflict: 'patient_id,practitioner_id' }
+      { onConflict: 'consultant_id,practitioner_id' }
     )
     .select()
     .single();

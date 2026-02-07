@@ -52,15 +52,15 @@ export default async function AdminPractitionerDetailPage({ params }: PageProps)
       );
     }
 
-    const { count: patientsCount } = await supabase
-      .from('patients_identity')
+    const { count: consultantsCount } = await supabase
+      .from('consultants_identity')
       .select('id', { count: 'exact', head: true })
       .eq('practitioner_id', practitioner.id)
 
     return (
       <AdminPractitionerDetailClient
         practitioner={practitioner}
-        patientsCount={patientsCount ?? null}
+        consultantsCount={consultantsCount ?? null}
       />
     );
   } catch (error) {

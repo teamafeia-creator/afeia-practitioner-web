@@ -15,7 +15,7 @@ type PractitionerPreview = {
   subscription_status: string | null;
 };
 
-type PatientPreview = {
+type ConsultantPreview = {
   id: string;
   practitioner_id: string | null;
   full_name: string | null;
@@ -27,8 +27,8 @@ type PatientPreview = {
 
 type DashboardStats = {
   practitioners: number | null;
-  patients: number | null;
-  premiumPatients: number | null;
+  consultants: number | null;
+  premiumConsultants: number | null;
   suspendedPractitioners: number | null;
 };
 
@@ -39,9 +39,9 @@ const shortcuts = [
     href: '/admin/practitioners'
   },
   {
-    title: 'Patients',
-    description: 'Accéder aux identités et statuts patients.',
-    href: '/admin/patients'
+    title: 'Consultants',
+    description: 'Accéder aux identités et statuts consultants.',
+    href: '/admin/consultants'
   },
   {
     title: 'Facturation',
@@ -50,7 +50,7 @@ const shortcuts = [
   },
   {
     title: 'Circular',
-    description: 'Synchroniser les patients et statuts Circular.',
+    description: 'Synchroniser les consultants et statuts Circular.',
     href: '/admin/circular'
   },
   {
@@ -76,16 +76,16 @@ const buttonSizes = {
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     practitioners: null,
-    patients: null,
-    premiumPatients: null,
+    consultants: null,
+    premiumConsultants: null,
     suspendedPractitioners: null
   });
   const [practitioners, setPractitioners] = useState<PractitionerPreview[]>([]);
-  const [patients, setPatients] = useState<PatientPreview[]>([]);
+  const [consultants, setConsultants] = useState<ConsultantPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [statsHasError, setStatsHasError] = useState(false);
   const [practitionersHasError, setPractitionersHasError] = useState(false);
-  const [patientsHasError, setPatientsHasError] = useState(false);
+  const [consultantsHasError, setConsultantsHasError] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
         if (!response.ok) {
           setStatsHasError(true);
           setPractitionersHasError(true);
-          setPatientsHasError(true);
+          setConsultantsHasError(true);
           return;
         }
 
@@ -106,13 +106,13 @@ export default function AdminDashboardPage() {
 
         setStats(data.stats ?? {});
         setPractitioners(data.practitioners ?? []);
-        setPatients(data.patients ?? []);
+        setConsultants(data.consultants ?? []);
 
         const s = data.stats;
         if (
           s?.practitioners === null &&
-          s?.patients === null &&
-          s?.premiumPatients === null &&
+          s?.consultants === null &&
+          s?.premiumConsultants === null &&
           s?.suspendedPractitioners === null
         ) {
           setStatsHasError(true);
@@ -122,7 +122,7 @@ export default function AdminDashboardPage() {
         if (isMounted) {
           setStatsHasError(true);
           setPractitionersHasError(true);
-          setPatientsHasError(true);
+          setConsultantsHasError(true);
         }
       } finally {
         if (isMounted) {
@@ -140,8 +140,8 @@ export default function AdminDashboardPage() {
 
   const statsRows = [
     { label: 'Naturopathes total', value: stats.practitioners },
-    { label: 'Patients total', value: stats.patients },
-    { label: 'Patients premium', value: stats.premiumPatients },
+    { label: 'Consultants total', value: stats.consultants },
+    { label: 'Consultants premium', value: stats.premiumConsultants },
     { label: 'Naturopathes suspendus', value: stats.suspendedPractitioners }
   ];
 
@@ -272,11 +272,11 @@ export default function AdminDashboardPage() {
       <PageShell className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-charcoal">Derniers patients</h2>
-            <p className="text-sm text-warmgray">Identités patients sans données médicales.</p>
+            <h2 className="text-lg font-semibold text-charcoal">Derniers consultants</h2>
+            <p className="text-sm text-warmgray">Identités consultants sans données médicales.</p>
           </div>
           <Link
-            href="/admin/patients"
+            href="/admin/consultants"
             className={cn(buttonClasses, buttonVariants.ghost, buttonSizes.md)}
           >
             Voir tous
@@ -300,20 +300,20 @@ export default function AdminDashboardPage() {
                     Chargement...
                   </td>
                 </tr>
-              ) : patientsHasError ? (
+              ) : consultantsHasError ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-amber-600">
-                    Impossible de charger les patients.
+                    Impossible de charger les consultants.
                   </td>
                 </tr>
-              ) : patients.length === 0 ? (
+              ) : consultants.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-warmgray">
-                    Aucun patient récent.
+                    Aucun consultant récent.
                   </td>
                 </tr>
               ) : (
-                patients.map((row) => (
+                consultants.map((row) => (
                   <tr key={row.id} className="text-charcoal">
                     <td className="px-4 py-3">{row.full_name ?? '—'}</td>
                     <td className="px-4 py-3">{row.email ?? '—'}</td>
@@ -323,7 +323,7 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
-                        href={`/admin/patients/${row.id}`}
+                        href={`/admin/consultants/${row.id}`}
                         className={cn(buttonClasses, buttonVariants.outline, buttonSizes.sm)}
                       >
                         Voir

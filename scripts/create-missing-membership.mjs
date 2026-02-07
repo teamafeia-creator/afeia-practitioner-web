@@ -1,8 +1,8 @@
 /**
- * Create a missing patient_membership record.
+ * Create a missing consultant_membership record.
  *
  * Usage:
- *   node --env-file=.env.local scripts/create-missing-membership.mjs <patientId> <email>
+ *   node --env-file=.env.local scripts/create-missing-membership.mjs <consultantId> <email>
  *
  * Example:
  *   node --env-file=.env.local scripts/create-missing-membership.mjs \
@@ -16,33 +16,33 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error(
-    '❌ Missing env vars. Run with:\n  node --env-file=.env.local scripts/create-missing-membership.mjs <patientId> <email>'
+    '❌ Missing env vars. Run with:\n  node --env-file=.env.local scripts/create-missing-membership.mjs <consultantId> <email>'
   );
   process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-const patientId = process.argv[2] || '679ca8c1-db86-49b0-a8d2-d4b534923705';
+const consultantId = process.argv[2] || '679ca8c1-db86-49b0-a8d2-d4b534923705';
 const userEmail = process.argv[3] || '';
 
 console.log('🔧 Creating missing membership...\n');
 
-// 1. Fetch the patient
-const { data: patient, error: patientError } = await supabase
-  .from('patients')
+// 1. Fetch the consultant
+const { data: consultant, error: consultantError } = await supabase
+  .from('consultants')
   .select('*')
-  .eq('id', patientId)
+  .eq('id', consultantId)
   .single();
 
-if (patientError || !patient) {
-  console.log('❌ Patient not found:', patientId, patientError?.message);
+if (consultantError || !consultant) {
+  console.log('❌ Consultant not found:', consultantId, consultantError?.message);
   process.exit(1);
 }
 
-console.log('📋 Patient:', patient.name, patient.email);
+console.log('📋 Consultant:', consultant.name, consultant.email);
 
-const emailToSearch = userEmail || patient.email;
+const emailToSearch = userEmail || consultant.email;
 
 // 2. Find the auth user
 const { data: { users } } = await supabase.auth.admin.listUsers();
@@ -58,9 +58,9 @@ if (!matchingUser) {
 
 // 3. Check if membership already exists
 const { data: existing } = await supabase
-  .from('patient_memberships')
+  .from('consultant_memberships')
   .select('*')
-  .eq('patient_id', patientId)
+  .eq('consultant_id', consultantId)
   .maybeSingle();
 
 if (existing) {
@@ -70,10 +70,10 @@ if (existing) {
 
 // 4. Create the membership
 const { data: newMembership, error } = await supabase
-  .from('patient_memberships')
+  .from('consultant_memberships')
   .insert({
-    patient_id: patientId,
-    patient_user_id: matchingUser.id,
+    consultant_id: consultantId,
+    consultant_user_id: matchingUser.id,
   })
   .select()
   .single();
@@ -84,4 +84,4 @@ if (error) {
 }
 
 console.log('✅ Membership created:', newMembership);
-console.log('\nThe patient can now connect to the mobile app.');
+console.log('\nThe consultant can now connect to the mobile app.');

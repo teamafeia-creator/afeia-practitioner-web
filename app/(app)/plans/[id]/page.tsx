@@ -10,10 +10,10 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Toast } from '@/components/ui/Toast';
-import type { Patient, Plan, PlanVersion, PlanSection } from '@/lib/types';
+import type { Consultant, Plan, PlanVersion, PlanSection } from '@/lib/types';
 
 type PlanWithDetails = Plan & {
-  patient?: Patient;
+  consultant?: Consultant;
   versions?: (PlanVersion & { sections?: PlanSection[] })[];
 };
 
@@ -226,10 +226,10 @@ export default function PlanPage() {
         <h1 className="text-2xl font-semibold">Plan introuvable</h1>
         <p className="text-sm text-warmgray">
           Ce plan n&apos;existe pas ou n&apos;a pas de versions.
-          Vous pouvez créer un plan depuis la fiche patient.
+          Vous pouvez créer un plan depuis la fiche consultant.
         </p>
-        <Button variant="secondary" onClick={() => router.push('/patients')}>
-          Retour aux patients
+        <Button variant="secondary" onClick={() => router.push('/consultants')}>
+          Retour aux consultants
         </Button>
       </div>
     );
@@ -237,7 +237,7 @@ export default function PlanPage() {
 
   const current = plan.versions[selected];
   const isLatest = selected === plan.versions.length - 1;
-  const patient = plan.patient;
+  const consultant = plan.consultant;
 
   return (
     <div className="space-y-4">
@@ -245,20 +245,20 @@ export default function PlanPage() {
         <div>
           <h1 className="text-2xl font-semibold text-charcoal">Plan d&apos;accompagnement</h1>
           <div className="mt-1 text-sm text-warmgray">
-            {patient ? (
-              <Link className="text-teal hover:underline" href={`/patients/${patient.id}`}>
-                {patient.name}
+            {consultant ? (
+              <Link className="text-teal hover:underline" href={`/consultants/${consultant.id}`}>
+                {consultant.name}
               </Link>
             ) : (
-              <span>Patient inconnu</span>
+              <span>Consultant inconnu</span>
             )}
             <span className="mx-2">•</span>
             <span>Plan #{plan.id.slice(0, 8)}</span>
-            {patient && (
+            {consultant && (
               <>
                 <span className="mx-2">•</span>
-                <Badge variant={patient.is_premium ? 'premium' : 'info'}>
-                  {patient.is_premium ? 'Premium' : 'Standard'}
+                <Badge variant={consultant.is_premium ? 'premium' : 'info'}>
+                  {consultant.is_premium ? 'Premium' : 'Standard'}
                 </Badge>
               </>
             )}
@@ -276,12 +276,12 @@ export default function PlanPage() {
             onClick={() =>
               setToast({
                 title: 'Publication',
-                description: 'Utilisez l\'onglet Plan dans la fiche patient pour partager le plan.',
+                description: 'Utilisez l\'onglet Plan dans la fiche consultant pour partager le plan.',
                 variant: 'info'
               })
             }
           >
-            Publier au patient
+            Publier au consultant
           </Button>
         </div>
       </div>

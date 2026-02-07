@@ -33,9 +33,9 @@ async function seedTestData() {
       console.log('   Email:', existingPractitioners[0].email);
       console.log('   Nom:', existingPractitioners[0].full_name);
 
-      // Créer des patients de test pour ce praticien
+      // Créer des consultants de test pour ce praticien
       const practitionerId = existingPractitioners[0].id;
-      await createTestPatients(practitionerId);
+      await createTestConsultants(practitionerId);
     } else {
       console.log('ℹ️  Aucun praticien trouvé. Créez-en un via le dashboard web d\'abord.');
       console.log('   Ou utilisez /api/admin/invite-practitioner pour inviter un praticien.');
@@ -47,10 +47,10 @@ async function seedTestData() {
   }
 }
 
-async function createTestPatients(practitionerId) {
-  console.log('\n📋 Création de patients de test...');
+async function createTestConsultants(practitionerId) {
+  console.log('\n📋 Création de consultants de test...');
 
-  const testPatients = [
+  const testConsultants = [
     {
       practitioner_id: practitionerId,
       name: 'Sophie Martin',
@@ -88,33 +88,33 @@ async function createTestPatients(practitionerId) {
     },
   ];
 
-  for (const patient of testPatients) {
-    // Vérifier si le patient existe déjà
+  for (const consultant of testConsultants) {
+    // Vérifier si le consultant existe déjà
     const { data: existing, error: checkError } = await supabase
-      .from('patients')
+      .from('consultants')
       .select('id')
-      .eq('email', patient.email)
+      .eq('email', consultant.email)
       .maybeSingle();
 
     if (checkError) {
-      console.error(`   ❌ Erreur vérification ${patient.name}:`, checkError.message);
+      console.error(`   ❌ Erreur vérification ${consultant.name}:`, checkError.message);
       continue;
     }
 
     if (!existing) {
       const { data, error } = await supabase
-        .from('patients')
-        .insert(patient)
+        .from('consultants')
+        .insert(consultant)
         .select()
         .single();
 
       if (error) {
-        console.error(`   ❌ Erreur création ${patient.name}:`, error.message);
+        console.error(`   ❌ Erreur création ${consultant.name}:`, error.message);
       } else {
-        console.log(`   ✅ Patient créé: ${patient.name} (${data.id})`);
+        console.log(`   ✅ Consultant créé: ${consultant.name} (${data.id})`);
       }
     } else {
-      console.log(`   ℹ️  Patient existe déjà: ${patient.name}`);
+      console.log(`   ℹ️  Consultant existe déjà: ${consultant.name}`);
     }
   }
 }

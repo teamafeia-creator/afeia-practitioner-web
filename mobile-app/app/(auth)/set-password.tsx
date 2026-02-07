@@ -25,9 +25,9 @@ function validatePassword(password: string): string | null {
 export default function SetPasswordScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
-    patientId: string;
-    patientEmail: string;
-    patientName: string;
+    consultantId: string;
+    consultantEmail: string;
+    consultantName: string;
     tempToken: string;
   }>();
 
@@ -57,8 +57,8 @@ export default function SetPasswordScreen() {
 
     try {
       const result = await register({
-        patientId: params.patientId,
-        email: params.patientEmail,
+        consultantId: params.consultantId,
+        email: params.consultantEmail,
         password,
         tempToken: params.tempToken,
       });
@@ -84,9 +84,9 @@ export default function SetPasswordScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.title}>Créer votre mot de passe</Text>
-          {params.patientName ? (
+          {params.consultantName ? (
             <Text style={styles.greeting}>
-              Bienvenue, {params.patientName}
+              Bienvenue, {params.consultantName}
             </Text>
           ) : null}
           <Text style={styles.description}>

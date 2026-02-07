@@ -5,16 +5,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { resolvePatientId } from '@/lib/mobile-auth';
+import { resolveConsultantId } from '@/lib/mobile-auth';
 
 /**
  * GET - Retrieve the current draft
  */
 export async function GET(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const { data: draft, error } = await getSupabaseAdmin()
       .from('anamnese_drafts')
       .select('data, updated_at')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
@@ -55,9 +55,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     const { data: existing } = await getSupabaseAdmin()
       .from('anamnese_drafts')
       .select('id')
-      .eq('patient_id', patientId)
+      .eq('consultant_id', consultantId)
       .maybeSingle();
 
     if (existing) {
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       const { error } = await getSupabaseAdmin()
         .from('anamnese_drafts')
         .insert({
-          patient_id: patientId,
+          consultant_id: consultantId,
           data: sections,
           created_at: now,
           updated_at: now,
@@ -130,9 +130,9 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const patientId = await resolvePatientId(request);
+    const consultantId = await resolveConsultantId(request);
 
-    if (!patientId) {
+    if (!consultantId) {
       return NextResponse.json(
         { message: 'Non autorisé' },
         { status: 401 }
@@ -142,7 +142,7 @@ export async function DELETE(request: NextRequest) {
     await getSupabaseAdmin()
       .from('anamnese_drafts')
       .delete()
-      .eq('patient_id', patientId);
+      .eq('consultant_id', consultantId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

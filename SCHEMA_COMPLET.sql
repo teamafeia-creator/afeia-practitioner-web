@@ -28,26 +28,26 @@ DROP TABLE IF EXISTS public.wearable_summaries CASCADE;
 DROP TABLE IF EXISTS public.plan_sections CASCADE;
 DROP TABLE IF EXISTS public.plan_versions CASCADE;
 DROP TABLE IF EXISTS public.plans CASCADE;
-DROP TABLE IF EXISTS public.patient_plans CASCADE;
+DROP TABLE IF EXISTS public.consultant_plans CASCADE;
 DROP TABLE IF EXISTS public.care_plans CASCADE;
 DROP TABLE IF EXISTS public.anamnesis_history CASCADE;
-DROP TABLE IF EXISTS public.patient_anamnesis CASCADE;
+DROP TABLE IF EXISTS public.consultant_anamnesis CASCADE;
 DROP TABLE IF EXISTS public.anamnese_instances CASCADE;
 DROP TABLE IF EXISTS public.anamneses CASCADE;
 DROP TABLE IF EXISTS public.preliminary_questionnaires CASCADE;
 DROP TABLE IF EXISTS public.messages CASCADE;
 DROP TABLE IF EXISTS public.notifications CASCADE;
 DROP TABLE IF EXISTS public.practitioner_notes CASCADE;
-DROP TABLE IF EXISTS public.patient_analysis_results CASCADE;
+DROP TABLE IF EXISTS public.consultant_analysis_results CASCADE;
 DROP TABLE IF EXISTS public.appointments CASCADE;
 DROP TABLE IF EXISTS public.consultations CASCADE;
 DROP TABLE IF EXISTS public.case_files CASCADE;
-DROP TABLE IF EXISTS public.patient_questionnaire_codes CASCADE;
+DROP TABLE IF EXISTS public.consultant_questionnaire_codes CASCADE;
 DROP TABLE IF EXISTS public.otp_codes CASCADE;
-DROP TABLE IF EXISTS public.patient_memberships CASCADE;
-DROP TABLE IF EXISTS public.patient_invites CASCADE;
-DROP TABLE IF EXISTS public.patient_invitations CASCADE;
-DROP TABLE IF EXISTS public.patients CASCADE;
+DROP TABLE IF EXISTS public.consultant_memberships CASCADE;
+DROP TABLE IF EXISTS public.consultant_invites CASCADE;
+DROP TABLE IF EXISTS public.consultant_invitations CASCADE;
+DROP TABLE IF EXISTS public.consultants CASCADE;
 DROP TABLE IF EXISTS public.users CASCADE;
 DROP TABLE IF EXISTS public.practitioners CASCADE;
 
@@ -66,10 +66,10 @@ CREATE TABLE public.practitioners (
 );
 
 -- ====================================================================
--- TABLE: patients
--- Patients d'un praticien
+-- TABLE: consultants
+-- Consultants d'un praticien
 -- ====================================================================
-CREATE TABLE public.patients (
+CREATE TABLE public.consultants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     email TEXT,
@@ -99,29 +99,29 @@ CREATE TABLE public.users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('PATIENT', 'PRACTITIONER', 'ADMIN')),
+    role TEXT NOT NULL CHECK (role IN ('CONSULTANT', 'PRACTITIONER', 'ADMIN')),
     status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE', 'SUSPENDED')),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- ====================================================================
--- TABLE: patient_memberships
--- Lien entre patients et users (app mobile)
+-- TABLE: consultant_memberships
+-- Lien entre consultants et users (app mobile)
 -- ====================================================================
-CREATE TABLE public.patient_memberships (
+CREATE TABLE public.consultant_memberships (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
-    patient_user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
+    consultant_user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, patient_user_id)
+    UNIQUE(consultant_id, consultant_user_id)
 );
 
 -- ====================================================================
--- TABLE: patient_invitations
--- Invitations envoyees aux patients
+-- TABLE: consultant_invitations
+-- Invitations envoyees aux consultants
 -- ====================================================================
-CREATE TABLE public.patient_invitations (
+CREATE TABLE public.consultant_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
@@ -142,13 +142,13 @@ CREATE TABLE public.patient_invitations (
 );
 
 -- ====================================================================
--- TABLE: patient_invites (token-based)
+-- TABLE: consultant_invites (token-based)
 -- Invitations par token
 -- ====================================================================
-CREATE TABLE public.patient_invites (
+CREATE TABLE public.consultant_invites (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
     token TEXT NOT NULL UNIQUE,
     expires_at TIMESTAMPTZ,
@@ -158,7 +158,7 @@ CREATE TABLE public.patient_invites (
 
 -- ====================================================================
 -- TABLE: otp_codes
--- Codes OTP pour activation patient
+-- Codes OTP pour activation consultant
 -- ====================================================================
 CREATE TABLE public.otp_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -166,11 +166,11 @@ CREATE TABLE public.otp_codes (
     code TEXT NOT NULL,
     type TEXT DEFAULT 'activation' CHECK (type IN ('activation', 'login', 'reset')),
     practitioner_id UUID REFERENCES public.practitioners(id) ON DELETE SET NULL,
-    patient_id UUID REFERENCES public.patients(id) ON DELETE SET NULL,
-    patient_first_name TEXT,
-    patient_last_name TEXT,
-    patient_phone TEXT,
-    patient_city TEXT,
+    consultant_id UUID REFERENCES public.consultants(id) ON DELETE SET NULL,
+    consultant_first_name TEXT,
+    consultant_last_name TEXT,
+    consultant_phone TEXT,
+    consultant_city TEXT,
     expires_at TIMESTAMPTZ NOT NULL,
     used BOOLEAN DEFAULT FALSE,
     used_at TIMESTAMPTZ,
@@ -178,12 +178,12 @@ CREATE TABLE public.otp_codes (
 );
 
 -- ====================================================================
--- TABLE: patient_questionnaire_codes
--- Codes pour questionnaires patients (hashes)
+-- TABLE: consultant_questionnaire_codes
+-- Codes pour questionnaires consultants (hashes)
 -- ====================================================================
-CREATE TABLE public.patient_questionnaire_codes (
+CREATE TABLE public.consultant_questionnaire_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     code_hash TEXT NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     used_at TIMESTAMPTZ,
@@ -195,15 +195,15 @@ CREATE TABLE public.patient_questionnaire_codes (
 
 -- ====================================================================
 -- TABLE: case_files
--- Dossiers patients
+-- Dossiers consultants
 -- ====================================================================
 CREATE TABLE public.case_files (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id)
+    UNIQUE(consultant_id)
 );
 
 -- ====================================================================
@@ -212,7 +212,7 @@ CREATE TABLE public.case_files (
 -- ====================================================================
 CREATE TABLE public.consultations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -225,7 +225,7 @@ CREATE TABLE public.consultations (
 -- ====================================================================
 CREATE TABLE public.appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     starts_at TIMESTAMPTZ NOT NULL,
     ends_at TIMESTAMPTZ,
@@ -241,7 +241,7 @@ CREATE TABLE public.appointments (
 -- ====================================================================
 CREATE TABLE public.anamneses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     case_file_id UUID REFERENCES public.case_files(id) ON DELETE SET NULL,
     motif TEXT,
     objectifs TEXT,
@@ -256,7 +256,7 @@ CREATE TABLE public.anamneses (
     completed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id)
+    UNIQUE(consultant_id)
 );
 
 -- ====================================================================
@@ -265,21 +265,21 @@ CREATE TABLE public.anamneses (
 -- ====================================================================
 CREATE TABLE public.anamnese_instances (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'COMPLETED')),
     answers JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id)
+    UNIQUE(consultant_id)
 );
 
 -- ====================================================================
--- TABLE: patient_anamnesis
+-- TABLE: consultant_anamnesis
 -- Nouvelle table d'anamnese (structure modernisee)
 -- ====================================================================
-CREATE TABLE public.patient_anamnesis (
+CREATE TABLE public.consultant_anamnesis (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     naturopath_id UUID REFERENCES public.practitioners(id) ON DELETE SET NULL,
     answers JSONB,
     version INTEGER DEFAULT 1,
@@ -287,7 +287,7 @@ CREATE TABLE public.patient_anamnesis (
     preliminary_questionnaire_id UUID,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id)
+    UNIQUE(consultant_id)
 );
 
 -- ====================================================================
@@ -302,8 +302,8 @@ CREATE TABLE public.preliminary_questionnaires (
     email TEXT NOT NULL,
     phone TEXT,
     responses JSONB NOT NULL DEFAULT '{}',
-    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'linked_to_patient', 'archived')),
-    linked_patient_id UUID REFERENCES public.patients(id) ON DELETE SET NULL,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'linked_to_consultant', 'archived')),
+    linked_consultant_id UUID REFERENCES public.consultants(id) ON DELETE SET NULL,
     linked_at TIMESTAMPTZ,
     submitted_from_ip TEXT,
     user_agent TEXT,
@@ -312,7 +312,7 @@ CREATE TABLE public.preliminary_questionnaires (
 );
 
 -- Ajouter la FK apres creation de la table
-ALTER TABLE public.patient_anamnesis
+ALTER TABLE public.consultant_anamnesis
     ADD CONSTRAINT fk_preliminary_questionnaire
     FOREIGN KEY (preliminary_questionnaire_id)
     REFERENCES public.preliminary_questionnaires(id) ON DELETE SET NULL;
@@ -323,28 +323,28 @@ ALTER TABLE public.patient_anamnesis
 -- ====================================================================
 CREATE TABLE public.anamnesis_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    anamnesis_id UUID NOT NULL REFERENCES public.patient_anamnesis(id) ON DELETE CASCADE,
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    anamnesis_id UUID NOT NULL REFERENCES public.consultant_anamnesis(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     modified_section TEXT NOT NULL,
     old_value JSONB,
     new_value JSONB,
     full_snapshot JSONB,
     version INTEGER NOT NULL,
-    modified_by_type TEXT NOT NULL CHECK (modified_by_type IN ('patient', 'practitioner', 'system')),
+    modified_by_type TEXT NOT NULL CHECK (modified_by_type IN ('consultant', 'practitioner', 'system')),
     modified_by_id UUID,
     modified_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- ====================================================================
 -- TABLE: messages
--- Messages entre patients et praticiens
+-- Messages entre consultants et praticiens
 -- ====================================================================
 CREATE TABLE public.messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
-    sender TEXT NOT NULL CHECK (sender IN ('patient', 'praticien')),
-    sender_role TEXT CHECK (sender_role IN ('patient', 'practitioner')),
-    sender_type TEXT CHECK (sender_type IN ('patient', 'practitioner')),
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
+    sender TEXT NOT NULL CHECK (sender IN ('consultant', 'praticien')),
+    sender_role TEXT CHECK (sender_role IN ('consultant', 'practitioner')),
+    sender_type TEXT CHECK (sender_type IN ('consultant', 'practitioner')),
     text TEXT,
     body TEXT,
     read BOOLEAN DEFAULT FALSE,
@@ -361,7 +361,7 @@ CREATE TABLE public.messages (
 CREATE TABLE public.notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
-    patient_id UUID REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID REFERENCES public.consultants(id) ON DELETE CASCADE,
     type TEXT DEFAULT 'general' CHECK (type IN ('general', 'anamnesis_modified', 'new_preliminary_questionnaire', 'questionnaire_linked', 'message', 'appointment')),
     title TEXT NOT NULL,
     description TEXT,
@@ -373,25 +373,25 @@ CREATE TABLE public.notifications (
 
 -- ====================================================================
 -- TABLE: practitioner_notes
--- Notes du praticien sur un patient
+-- Notes du praticien sur un consultant
 -- ====================================================================
 CREATE TABLE public.practitioner_notes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     content TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, practitioner_id)
+    UNIQUE(consultant_id, practitioner_id)
 );
 
 -- ====================================================================
--- TABLE: patient_analysis_results
--- Resultats d'analyses patient
+-- TABLE: consultant_analysis_results
+-- Resultats d'analyses consultant
 -- ====================================================================
-CREATE TABLE public.patient_analysis_results (
+CREATE TABLE public.consultant_analysis_results (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     file_name TEXT NOT NULL,
     file_path TEXT NOT NULL,
@@ -410,10 +410,10 @@ CREATE TABLE public.patient_analysis_results (
 -- ====================================================================
 CREATE TABLE public.plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id)
+    UNIQUE(consultant_id)
 );
 
 -- ====================================================================
@@ -446,12 +446,12 @@ CREATE TABLE public.plan_sections (
 );
 
 -- ====================================================================
--- TABLE: patient_plans
--- Plans patient (structure simplifiee)
+-- TABLE: consultant_plans
+-- Plans consultant (structure simplifiee)
 -- ====================================================================
-CREATE TABLE public.patient_plans (
+CREATE TABLE public.consultant_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     version INTEGER DEFAULT 1,
     status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'shared')),
@@ -467,7 +467,7 @@ CREATE TABLE public.patient_plans (
 -- ====================================================================
 CREATE TABLE public.care_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
     title TEXT,
     description TEXT,
@@ -484,7 +484,7 @@ CREATE TABLE public.care_plans (
 -- ====================================================================
 CREATE TABLE public.journal_entries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     mood TEXT CHECK (mood IN ('happy', 'neutral', 'sad')),
     energy TEXT CHECK (energy IN ('Bas', 'Moyen', 'Eleve')),
@@ -495,7 +495,7 @@ CREATE TABLE public.journal_entries (
     adherence_plantes BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, date)
+    UNIQUE(consultant_id, date)
 );
 
 -- ====================================================================
@@ -504,7 +504,7 @@ CREATE TABLE public.journal_entries (
 -- ====================================================================
 CREATE TABLE public.daily_journals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     case_file_id UUID REFERENCES public.case_files(id) ON DELETE SET NULL,
     date DATE NOT NULL,
     mood TEXT,
@@ -516,7 +516,7 @@ CREATE TABLE public.daily_journals (
     note_naturopathe TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, date)
+    UNIQUE(consultant_id, date)
 );
 
 -- ====================================================================
@@ -525,7 +525,7 @@ CREATE TABLE public.daily_journals (
 -- ====================================================================
 CREATE TABLE public.wearable_summaries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     sleep_duration INTEGER,
     sleep_score INTEGER,
@@ -533,7 +533,7 @@ CREATE TABLE public.wearable_summaries (
     activity_level INTEGER,
     completeness INTEGER,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, date)
+    UNIQUE(consultant_id, date)
 );
 
 -- ====================================================================
@@ -542,7 +542,7 @@ CREATE TABLE public.wearable_summaries (
 -- ====================================================================
 CREATE TABLE public.wearable_insights (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     type TEXT CHECK (type IN ('sleep', 'hrv', 'activity')),
     level TEXT CHECK (level IN ('info', 'attention')),
     message TEXT,
@@ -575,12 +575,12 @@ CREATE TABLE public.complements (
 -- ====================================================================
 CREATE TABLE public.complement_tracking (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    consultant_id UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
     complement_id UUID NOT NULL REFERENCES public.complements(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     taken BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    UNIQUE(patient_id, complement_id, date)
+    UNIQUE(consultant_id, complement_id, date)
 );
 
 -- ====================================================================
@@ -595,7 +595,7 @@ CREATE TABLE public.subscription_plans (
     price_monthly DECIMAL(10,2) DEFAULT 0,
     price_yearly DECIMAL(10,2) DEFAULT 0,
     features JSONB DEFAULT '[]',
-    max_patients INTEGER,
+    max_consultants INTEGER,
     circular_integration BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -689,64 +689,64 @@ CREATE TABLE public.billing_history (
 -- INDEX
 -- ====================================================================
 
--- Patients
-CREATE INDEX idx_patients_practitioner ON public.patients(practitioner_id);
-CREATE INDEX idx_patients_email ON public.patients(email);
-CREATE INDEX idx_patients_activated ON public.patients(activated);
-CREATE INDEX idx_patients_deleted_at ON public.patients(deleted_at);
+-- Consultants
+CREATE INDEX idx_consultants_practitioner ON public.consultants(practitioner_id);
+CREATE INDEX idx_consultants_email ON public.consultants(email);
+CREATE INDEX idx_consultants_activated ON public.consultants(activated);
+CREATE INDEX idx_consultants_deleted_at ON public.consultants(deleted_at);
 
 -- Invitations
-CREATE INDEX idx_patient_invitations_practitioner ON public.patient_invitations(practitioner_id);
-CREATE INDEX idx_patient_invitations_email ON public.patient_invitations(email);
-CREATE INDEX idx_patient_invitations_status ON public.patient_invitations(status);
+CREATE INDEX idx_consultant_invitations_practitioner ON public.consultant_invitations(practitioner_id);
+CREATE INDEX idx_consultant_invitations_email ON public.consultant_invitations(email);
+CREATE INDEX idx_consultant_invitations_status ON public.consultant_invitations(status);
 
 -- OTP codes
 CREATE INDEX idx_otp_codes_email ON public.otp_codes(email);
 CREATE INDEX idx_otp_codes_practitioner ON public.otp_codes(practitioner_id);
 
 -- Messages
-CREATE INDEX idx_messages_patient ON public.messages(patient_id);
+CREATE INDEX idx_messages_consultant ON public.messages(consultant_id);
 CREATE INDEX idx_messages_read ON public.messages(read);
 CREATE INDEX idx_messages_sender ON public.messages(sender);
 CREATE INDEX idx_messages_sent_at ON public.messages(sent_at);
 
 -- Notifications
 CREATE INDEX idx_notifications_practitioner ON public.notifications(practitioner_id);
-CREATE INDEX idx_notifications_patient ON public.notifications(patient_id);
+CREATE INDEX idx_notifications_consultant ON public.notifications(consultant_id);
 CREATE INDEX idx_notifications_read ON public.notifications(read);
 CREATE INDEX idx_notifications_type ON public.notifications(type);
 
 -- Appointments
-CREATE INDEX idx_appointments_patient ON public.appointments(patient_id);
+CREATE INDEX idx_appointments_consultant ON public.appointments(consultant_id);
 CREATE INDEX idx_appointments_practitioner ON public.appointments(practitioner_id);
 CREATE INDEX idx_appointments_starts_at ON public.appointments(starts_at);
 
 -- Consultations
-CREATE INDEX idx_consultations_patient ON public.consultations(patient_id);
+CREATE INDEX idx_consultations_consultant ON public.consultations(consultant_id);
 CREATE INDEX idx_consultations_date ON public.consultations(date);
 
--- Patient anamnesis
-CREATE INDEX idx_patient_anamnesis_patient ON public.patient_anamnesis(patient_id);
-CREATE INDEX idx_patient_anamnesis_naturopath ON public.patient_anamnesis(naturopath_id);
+-- Consultant anamnesis
+CREATE INDEX idx_consultant_anamnesis_consultant ON public.consultant_anamnesis(consultant_id);
+CREATE INDEX idx_consultant_anamnesis_naturopath ON public.consultant_anamnesis(naturopath_id);
 
 -- Preliminary questionnaires
 CREATE INDEX idx_preliminary_questionnaires_naturopath ON public.preliminary_questionnaires(naturopath_id);
 CREATE INDEX idx_preliminary_questionnaires_status ON public.preliminary_questionnaires(status);
 CREATE INDEX idx_preliminary_questionnaires_email ON public.preliminary_questionnaires(email);
 
--- Patient plans
-CREATE INDEX idx_patient_plans_patient ON public.patient_plans(patient_id);
-CREATE INDEX idx_patient_plans_practitioner ON public.patient_plans(practitioner_id);
-CREATE INDEX idx_patient_plans_status ON public.patient_plans(status);
+-- Consultant plans
+CREATE INDEX idx_consultant_plans_consultant ON public.consultant_plans(consultant_id);
+CREATE INDEX idx_consultant_plans_practitioner ON public.consultant_plans(practitioner_id);
+CREATE INDEX idx_consultant_plans_status ON public.consultant_plans(status);
 
 -- Journal entries
-CREATE INDEX idx_journal_entries_patient ON public.journal_entries(patient_id);
+CREATE INDEX idx_journal_entries_consultant ON public.journal_entries(consultant_id);
 CREATE INDEX idx_journal_entries_date ON public.journal_entries(date);
 
 -- Wearables
-CREATE INDEX idx_wearable_summaries_patient ON public.wearable_summaries(patient_id);
+CREATE INDEX idx_wearable_summaries_consultant ON public.wearable_summaries(consultant_id);
 CREATE INDEX idx_wearable_summaries_date ON public.wearable_summaries(date);
-CREATE INDEX idx_wearable_insights_patient ON public.wearable_insights(patient_id);
+CREATE INDEX idx_wearable_insights_consultant ON public.wearable_insights(consultant_id);
 
 -- Subscriptions
 CREATE INDEX idx_subscriptions_practitioner ON public.subscriptions(practitioner_id);
@@ -765,29 +765,29 @@ CREATE INDEX idx_invoices_status ON public.invoices(status);
 
 -- Activer RLS sur toutes les tables
 ALTER TABLE public.practitioners ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_memberships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_invitations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_invites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_memberships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_invitations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_invites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.otp_codes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_questionnaire_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_questionnaire_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.case_files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consultations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anamneses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anamnese_instances ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_anamnesis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_anamnesis ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.preliminary_questionnaires ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anamnesis_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.practitioner_notes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_analysis_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_analysis_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.plan_versions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.plan_sections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.patient_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultant_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.care_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.journal_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_journals ENABLE ROW LEVEL SECURITY;
@@ -809,18 +809,18 @@ ALTER TABLE public.billing_history ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "practitioners_own" ON public.practitioners
     FOR ALL USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
--- Patients: acces aux patients de son praticien
-CREATE POLICY "patients_practitioner" ON public.patients
+-- Consultants: acces aux consultants de son praticien
+CREATE POLICY "consultants_practitioner" ON public.consultants
     FOR ALL USING (practitioner_id = auth.uid()) WITH CHECK (practitioner_id = auth.uid());
 
 -- Invitations: acces aux invitations de son praticien
-CREATE POLICY "invitations_practitioner" ON public.patient_invitations
+CREATE POLICY "invitations_practitioner" ON public.consultant_invitations
     FOR ALL USING (practitioner_id = auth.uid()) WITH CHECK (practitioner_id = auth.uid());
 
--- Messages: acces aux messages de ses patients
+-- Messages: acces aux messages de ses consultants
 CREATE POLICY "messages_practitioner" ON public.messages
     FOR ALL USING (
-        patient_id IN (SELECT id FROM public.patients WHERE practitioner_id = auth.uid())
+        consultant_id IN (SELECT id FROM public.consultants WHERE practitioner_id = auth.uid())
     );
 
 -- Notifications: acces a ses notifications
@@ -863,10 +863,10 @@ CREATE POLICY "preliminary_questionnaires_update" ON public.preliminary_question
 -- ====================================================================
 
 -- Plans d'abonnement par defaut
-INSERT INTO public.subscription_plans (name, display_name, description, price_monthly, price_yearly, features, max_patients, circular_integration, is_active)
+INSERT INTO public.subscription_plans (name, display_name, description, price_monthly, price_yearly, features, max_consultants, circular_integration, is_active)
 VALUES
-    ('free', 'Gratuit', 'Plan gratuit pour demarrer', 0, 0, '["Jusqu''a 5 patients", "Anamnese de base", "Messagerie"]', 5, false, true),
-    ('premium', 'Premium', 'Plan premium avec toutes les fonctionnalites', 29.90, 299, '["Patients illimites", "Integration Circular", "Analyses avancees", "Support prioritaire"]', null, true, true);
+    ('free', 'Gratuit', 'Plan gratuit pour demarrer', 0, 0, '["Jusqu''a 5 consultants", "Anamnese de base", "Messagerie"]', 5, false, true),
+    ('premium', 'Premium', 'Plan premium avec toutes les fonctionnalites', 29.90, 299, '["Consultants illimites", "Integration Circular", "Analyses avancees", "Support prioritaire"]', null, true, true);
 
 
 COMMIT;

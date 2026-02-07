@@ -116,13 +116,13 @@ export default function BillingSuccessPage() {
                       <svg className="h-5 w-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Ajouter des patients sans limite
+                      Ajouter des consultants sans limite
                     </li>
                     <li className="flex items-center gap-2 text-sm text-marine">
                       <svg className="h-5 w-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Consulter les données Circular de vos patients
+                      Consulter les données Circular de vos consultants
                     </li>
                     <li className="flex items-center gap-2 text-sm text-marine">
                       <svg className="h-5 w-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">

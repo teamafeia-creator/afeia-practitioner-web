@@ -1,16 +1,16 @@
 const apiBaseUrl = process.env.API_BASE_URL ?? 'http://localhost:3000';
 const authToken = process.env.AUTH_TOKEN;
-const patientId = process.env.PATIENT_ID;
-const patientEmail = process.env.PATIENT_EMAIL;
+const consultantId = process.env.CONSULTANT_ID;
+const consultantEmail = process.env.CONSULTANT_EMAIL;
 const code = process.env.CODE;
 
-if (!authToken || !patientId || !patientEmail) {
-  console.error('Missing env vars. Required: AUTH_TOKEN, PATIENT_ID, PATIENT_EMAIL.');
+if (!authToken || !consultantId || !consultantEmail) {
+  console.error('Missing env vars. Required: AUTH_TOKEN, CONSULTANT_ID, CONSULTANT_EMAIL.');
   process.exit(1);
 }
 
 const sendResponse = await fetch(
-  `${apiBaseUrl}/api/patients/${patientId}/questionnaire/send-code`,
+  `${apiBaseUrl}/api/consultants/${consultantId}/questionnaire/send-code`,
   {
     method: 'POST',
     headers: {
@@ -38,7 +38,7 @@ const verifyResponse = await fetch(`${apiBaseUrl}/api/questionnaire/verify-code`
   headers: {
     'Content-Type': 'application/json'
   },
-  body: JSON.stringify({ email: patientEmail, code })
+  body: JSON.stringify({ email: consultantEmail, code })
 });
 
 if (!verifyResponse.ok) {

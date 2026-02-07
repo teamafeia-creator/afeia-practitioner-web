@@ -11,10 +11,10 @@ import { Toast } from '@/components/ui/Toast';
 import { ANAMNESIS_SECTIONS } from '@/lib/anamnesis';
 import {
   getPreliminaryQuestionnaireById,
-  createPatientFromQuestionnaire,
+  createConsultantFromQuestionnaire,
   archivePreliminaryQuestionnaire
 } from '@/services/preliminary-questionnaire';
-import type { PreliminaryQuestionnaireWithPatient } from '@/lib/types';
+import type { PreliminaryQuestionnaireWithConsultant } from '@/lib/types';
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -32,7 +32,7 @@ export default function QuestionnaireDetailPage() {
   const router = useRouter();
   const questionnaireId = params.id as string;
 
-  const [questionnaire, setQuestionnaire] = useState<PreliminaryQuestionnaireWithPatient | null>(
+  const [questionnaire, setQuestionnaire] = useState<PreliminaryQuestionnaireWithConsultant | null>(
     null
   );
   const [loading, setLoading] = useState(true);
@@ -62,24 +62,24 @@ export default function QuestionnaireDetailPage() {
     load();
   }, [questionnaireId]);
 
-  const handleCreatePatient = async () => {
+  const handleCreateConsultant = async () => {
     if (!questionnaire) return;
     setActionLoading(true);
     try {
-      const patientId = await createPatientFromQuestionnaire(questionnaire.id);
+      const consultantId = await createConsultantFromQuestionnaire(questionnaire.id);
       setToast({
-        title: 'Patient créé',
-        description: 'Le patient a été créé et le questionnaire associé.',
+        title: 'Consultant créé',
+        description: 'Le consultant a été créé et le questionnaire associé.',
         variant: 'success'
       });
       setTimeout(() => {
-        router.push(`/patients/${patientId}`);
+        router.push(`/consultants/${consultantId}`);
       }, 1000);
     } catch (err) {
-      console.error('Error creating patient:', err);
+      console.error('Error creating consultant:', err);
       setToast({
         title: 'Erreur',
-        description: err instanceof Error ? err.message : 'Impossible de créer le patient.',
+        description: err instanceof Error ? err.message : 'Impossible de créer le consultant.',
         variant: 'error'
       });
       setActionLoading(false);
@@ -113,7 +113,7 @@ export default function QuestionnaireDetailPage() {
     switch (status) {
       case 'pending':
         return <Badge variant="standard">En attente</Badge>;
-      case 'linked_to_patient':
+      case 'linked_to_consultant':
         return <Badge variant="premium">Associé</Badge>;
       case 'archived':
         return <Badge variant="standard">Archivé</Badge>;
@@ -158,14 +158,14 @@ export default function QuestionnaireDetailPage() {
                 <Button variant="secondary" onClick={handleArchive} disabled={actionLoading}>
                   Archiver
                 </Button>
-                <Button variant="primary" onClick={handleCreatePatient} loading={actionLoading}>
-                  Créer le dossier patient
+                <Button variant="primary" onClick={handleCreateConsultant} loading={actionLoading}>
+                  Créer le dossier consultant
                 </Button>
               </>
             )}
-            {questionnaire.status === 'linked_to_patient' && questionnaire.linked_patient_id && (
-              <Link href={`/patients/${questionnaire.linked_patient_id}`}>
-                <Button variant="primary">Voir le dossier patient</Button>
+            {questionnaire.status === 'linked_to_consultant' && questionnaire.linked_consultant_id && (
+              <Link href={`/consultants/${questionnaire.linked_consultant_id}`}>
+                <Button variant="primary">Voir le dossier consultant</Button>
               </Link>
             )}
           </div>
@@ -204,9 +204,9 @@ export default function QuestionnaireDetailPage() {
           </div>
         </div>
 
-        {questionnaire.status === 'linked_to_patient' && questionnaire.linked_at && (
+        {questionnaire.status === 'linked_to_consultant' && questionnaire.linked_at && (
           <div className="mt-4 pt-4 border-t border-black/5">
-            <div className="text-xs text-warmgray">Associé au patient le</div>
+            <div className="text-xs text-warmgray">Associé au consultant le</div>
             <div className="text-sm font-medium text-teal">
               {formatDate(questionnaire.linked_at)}
             </div>

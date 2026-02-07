@@ -1,17 +1,17 @@
 import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
-import { AuthState, AuthTokens, PatientProfile } from '../types';
-import { getTokens, setTokens, clearTokens, setStoredPatient } from '../utils/storage';
+import { AuthState, AuthTokens, ConsultantProfile } from '../types';
+import { getTokens, setTokens, clearTokens, setStoredConsultant } from '../utils/storage';
 import { api } from '../services/api';
 
 type AuthAction =
   | { type: 'LOADING' }
-  | { type: 'AUTHENTICATED'; patient: PatientProfile; tokens: AuthTokens }
+  | { type: 'AUTHENTICATED'; consultant: ConsultantProfile; tokens: AuthTokens }
   | { type: 'UNAUTHENTICATED' };
 
 const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: true,
-  patient: null,
+  consultant: null,
   tokens: null,
 };
 
@@ -23,7 +23,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return {
         isAuthenticated: true,
         isLoading: false,
-        patient: action.patient,
+        consultant: action.consultant,
         tokens: action.tokens,
       };
     case 'UNAUTHENTICATED':
@@ -36,7 +36,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (params: {
-    patientId: string;
+    consultantId: string;
     email: string;
     password: string;
     tempToken: string;
@@ -63,10 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const data = await api.get<{ patient: PatientProfile }>('/api/mobile/patient/profile');
-      if (data.patient) {
-        await setStoredPatient(data.patient as unknown as Record<string, unknown>);
-        dispatch({ type: 'AUTHENTICATED', patient: data.patient, tokens });
+      const data = await api.get<{ consultant: ConsultantProfile }>('/api/mobile/consultant/profile');
+      if (data.consultant) {
+        await setStoredConsultant(data.consultant as unknown as Record<string, unknown>);
+        dispatch({ type: 'AUTHENTICATED', consultant: data.consultant, tokens });
       } else {
         await clearTokens();
         dispatch({ type: 'UNAUTHENTICATED' });
@@ -76,9 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (message === 'TOKEN_REFRESHED') {
         try {
           const newTokens = await getTokens();
-          const data = await api.get<{ patient: PatientProfile }>('/api/mobile/patient/profile');
-          if (data.patient && newTokens) {
-            dispatch({ type: 'AUTHENTICATED', patient: data.patient, tokens: newTokens });
+          const data = await api.get<{ consultant: ConsultantProfile }>('/api/mobile/consultant/profile');
+          if (data.consultant && newTokens) {
+            dispatch({ type: 'AUTHENTICATED', consultant: data.consultant, tokens: newTokens });
             return;
           }
         } catch {
@@ -95,13 +95,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await api.post<{
         accessToken: string;
         refreshToken: string;
-        patient: PatientProfile;
+        consultant: ConsultantProfile;
       }>('/api/mobile/auth/login', { email, password }, false);
 
       const tokens = { accessToken: data.accessToken, refreshToken: data.refreshToken };
       await setTokens(tokens);
-      await setStoredPatient(data.patient as unknown as Record<string, unknown>);
-      dispatch({ type: 'AUTHENTICATED', patient: data.patient, tokens });
+      await setStoredConsultant(data.consultant as unknown as Record<string, unknown>);
+      dispatch({ type: 'AUTHENTICATED', consultant: data.consultant, tokens });
       return { success: true };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Erreur de connexion';
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function handleRegister(params: {
-    patientId: string;
+    consultantId: string;
     email: string;
     password: string;
     tempToken: string;
@@ -119,13 +119,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await api.post<{
         accessToken: string;
         refreshToken: string;
-        patient: PatientProfile;
+        consultant: ConsultantProfile;
       }>('/api/mobile/auth/register', params as unknown as Record<string, unknown>, false);
 
       const tokens = { accessToken: data.accessToken, refreshToken: data.refreshToken };
       await setTokens(tokens);
-      await setStoredPatient(data.patient as unknown as Record<string, unknown>);
-      dispatch({ type: 'AUTHENTICATED', patient: data.patient, tokens });
+      await setStoredConsultant(data.consultant as unknown as Record<string, unknown>);
+      dispatch({ type: 'AUTHENTICATED', consultant: data.consultant, tokens });
       return { success: true };
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Erreur lors de l'inscription";
@@ -145,12 +145,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function refreshProfile() {
     try {
-      const data = await api.get<{ patient: PatientProfile }>('/api/mobile/patient/profile');
-      if (data.patient) {
-        await setStoredPatient(data.patient as unknown as Record<string, unknown>);
+      const data = await api.get<{ consultant: ConsultantProfile }>('/api/mobile/consultant/profile');
+      if (data.consultant) {
+        await setStoredConsultant(data.consultant as unknown as Record<string, unknown>);
         const tokens = await getTokens();
         if (tokens) {
-          dispatch({ type: 'AUTHENTICATED', patient: data.patient, tokens });
+          dispatch({ type: 'AUTHENTICATED', consultant: data.consultant, tokens });
         }
       }
     } catch {

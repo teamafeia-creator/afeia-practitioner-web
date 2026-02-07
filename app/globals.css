@@ -127,13 +127,13 @@ body {
   color: white;
 }
 
-/* Patient card styles */
-.patient-card {
+/* Consultant card styles */
+.consultant-card {
   @apply glass-card p-5 cursor-pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.patient-card:hover {
+.consultant-card:hover {
   transform: translateX(6px);
   border-color: rgba(26, 108, 108, 0.3);
   box-shadow: 0 6px 24px rgba(26, 108, 108, 0.12);

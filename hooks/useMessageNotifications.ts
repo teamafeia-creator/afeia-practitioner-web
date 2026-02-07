@@ -26,31 +26,31 @@ export function useMessageNotifications() {
         return;
       }
 
-      // Recuperer les IDs des patients de ce praticien
-      const { data: patients, error: patientsError } = await supabase
-        .from('patients')
+      // Recuperer les IDs des consultants de ce praticien
+      const { data: consultants, error: consultantsError } = await supabase
+        .from('consultants')
         .select('id')
         .eq('practitioner_id', user.id);
 
-      if (patientsError) {
-        console.error('Erreur recuperation patients:', patientsError);
-        setState(prev => ({ ...prev, error: patientsError, loading: false }));
+      if (consultantsError) {
+        console.error('Erreur recuperation consultants:', consultantsError);
+        setState(prev => ({ ...prev, error: consultantsError, loading: false }));
         return;
       }
 
-      if (!patients || patients.length === 0) {
+      if (!consultants || consultants.length === 0) {
         setState({ unreadCount: 0, loading: false, error: null });
         return;
       }
 
-      const patientIds = patients.map(p => p.id);
+      const consultantIds = consultants.map(p => p.id);
 
-      // Compter les messages non lus envoyes par les patients
+      // Compter les messages non lus envoyes par les consultants
       const { count, error: messagesError } = await supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
-        .in('patient_id', patientIds)
-        .eq('sender_role', 'patient')
+        .in('consultant_id', consultantIds)
+        .eq('sender_role', 'consultant')
         .eq('read', false);
 
       if (messagesError) {

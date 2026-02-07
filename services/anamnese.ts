@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { PatientAnamnesis } from '../lib/types';
+import type { ConsultantAnamnesis } from '../lib/types';
 
 // Structure: { "section_id": { "question_key": "answer_value" } }
 export type AnamneseAnswers = Record<string, Record<string, string>>;
@@ -9,17 +9,17 @@ export type AnamneseAnswersFlat = Record<string, string>;
 
 /**
  * Create a new anamnese instance (legacy support)
- * @deprecated Use patient_anamnesis directly
+ * @deprecated Use consultant_anamnesis directly
  */
-export async function createAnamneseInstance(patientId: string) {
+export async function createAnamneseInstance(consultantId: string) {
   const { error } = await supabase.from('anamnese_instances').upsert(
     {
-      patient_id: patientId,
+      consultant_id: consultantId,
       status: 'PENDING',
       updated_at: new Date().toISOString()
     },
     {
-      onConflict: 'patient_id'
+      onConflict: 'consultant_id'
     }
   );
 
@@ -32,7 +32,7 @@ export async function createAnamneseInstance(patientId: string) {
  * Submit complete anamnese (legacy + new table)
  */
 export async function submitAnamnese(
-  patientId: string,
+  consultantId: string,
   answers: AnamneseAnswers | AnamneseAnswersFlat,
   naturopathId?: string
 ) {
@@ -43,26 +43,26 @@ export async function submitAnamnese(
       status: 'COMPLETED',
       answers
     })
-    .eq('patient_id', patientId);
+    .eq('consultant_id', consultantId);
 
   if (error) {
     console.warn('Legacy anamnese_instances update failed:', error);
   }
 
-  // Update new patient_anamnesis table
-  const { error: patientAnamnesisError } = await supabase.from('patient_anamnesis').upsert(
+  // Update new consultant_anamnesis table
+  const { error: consultantAnamnesisError } = await supabase.from('consultant_anamnesis').upsert(
     {
-      patient_id: patientId,
+      consultant_id: consultantId,
       naturopath_id: naturopathId,
       answers,
       source: 'manual',
       updated_at: new Date().toISOString()
     },
-    { onConflict: 'patient_id' }
+    { onConflict: 'consultant_id' }
   );
 
-  if (patientAnamnesisError) {
-    throw new Error(patientAnamnesisError.message ?? "Impossible d'enregistrer l'anamnèse.");
+  if (consultantAnamnesisError) {
+    throw new Error(consultantAnamnesisError.message ?? "Impossible d'enregistrer l'anamnèse.");
   }
 }
 
@@ -70,15 +70,15 @@ export async function submitAnamnese(
  * Update a specific section of the anamnesis
  */
 export async function updateAnamnesisSection(
-  patientId: string,
+  consultantId: string,
   sectionId: string,
   sectionData: Record<string, string>
 ): Promise<void> {
   // First get current anamnesis
   const { data: current, error: fetchError } = await supabase
-    .from('patient_anamnesis')
+    .from('consultant_anamnesis')
     .select('answers')
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .maybeSingle();
 
   if (fetchError) {
@@ -94,12 +94,12 @@ export async function updateAnamnesisSection(
 
   // Update with merged data (trigger will handle history)
   const { error: updateError } = await supabase
-    .from('patient_anamnesis')
+    .from('consultant_anamnesis')
     .update({
       answers: updatedAnswers,
       updated_at: new Date().toISOString()
     })
-    .eq('patient_id', patientId);
+    .eq('consultant_id', consultantId);
 
   if (updateError) {
     throw new Error(updateError.message ?? "Impossible de mettre à jour l'anamnèse.");
@@ -107,33 +107,33 @@ export async function updateAnamnesisSection(
 }
 
 /**
- * Get full anamnesis for a patient
+ * Get full anamnesis for a consultant
  */
-export async function getPatientAnamnesis(patientId: string): Promise<PatientAnamnesis | null> {
+export async function getConsultantAnamnesis(consultantId: string): Promise<ConsultantAnamnesis | null> {
   const { data, error } = await supabase
-    .from('patient_anamnesis')
+    .from('consultant_anamnesis')
     .select('*')
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .maybeSingle();
 
   if (error) {
     throw new Error(error.message ?? "Impossible de charger l'anamnèse.");
   }
 
-  return data as PatientAnamnesis | null;
+  return data as ConsultantAnamnesis | null;
 }
 
 /**
  * Get a specific section of anamnesis
  */
 export async function getAnamnesisSection(
-  patientId: string,
+  consultantId: string,
   sectionId: string
 ): Promise<Record<string, string> | null> {
   const { data, error } = await supabase
-    .from('patient_anamnesis')
+    .from('consultant_anamnesis')
     .select('answers')
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .maybeSingle();
 
   if (error) {
@@ -149,13 +149,13 @@ export async function getAnamnesisSection(
 }
 
 /**
- * Check if patient has completed anamnesis
+ * Check if consultant has completed anamnesis
  */
-export async function hasCompletedAnamnesis(patientId: string): Promise<boolean> {
+export async function hasCompletedAnamnesis(consultantId: string): Promise<boolean> {
   const { data, error } = await supabase
-    .from('patient_anamnesis')
+    .from('consultant_anamnesis')
     .select('answers')
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .maybeSingle();
 
   if (error || !data) {
@@ -169,13 +169,13 @@ export async function hasCompletedAnamnesis(patientId: string): Promise<boolean>
 
 /**
  * Fetch anamnese status (legacy support)
- * @deprecated Use getPatientAnamnesis instead
+ * @deprecated Use getConsultantAnamnesis instead
  */
-export async function fetchAnamneseStatus(patientId: string) {
+export async function fetchAnamneseStatus(consultantId: string) {
   const { data, error } = await supabase
     .from('anamnese_instances')
     .select('status')
-    .eq('patient_id', patientId)
+    .eq('consultant_id', consultantId)
     .maybeSingle();
 
   if (error) {
@@ -186,23 +186,23 @@ export async function fetchAnamneseStatus(patientId: string) {
 }
 
 /**
- * Initialize empty anamnesis for a new patient
+ * Initialize empty anamnesis for a new consultant
  */
-export async function initializePatientAnamnesis(
-  patientId: string,
+export async function initializeConsultantAnamnesis(
+  consultantId: string,
   naturopathId: string,
   source: 'manual' | 'preliminary_questionnaire' | 'mobile_app' = 'manual'
 ): Promise<void> {
-  const { error } = await supabase.from('patient_anamnesis').upsert(
+  const { error } = await supabase.from('consultant_anamnesis').upsert(
     {
-      patient_id: patientId,
+      consultant_id: consultantId,
       naturopath_id: naturopathId,
       answers: {},
       source,
       version: 1,
       updated_at: new Date().toISOString()
     },
-    { onConflict: 'patient_id', ignoreDuplicates: true }
+    { onConflict: 'consultant_id', ignoreDuplicates: true }
   );
 
   if (error) {

@@ -2,8 +2,8 @@
  * Shared authentication helper for mobile API routes.
  *
  * Supports two auth strategies:
- *  1. Custom JWT (patientId embedded in token)
- *  2. Supabase access token (resolved via patient_memberships)
+ *  1. Custom JWT (consultantId embedded in token)
+ *  2. Supabase access token (resolved via consultant_memberships)
  */
 
 import { NextRequest } from 'next/server';
@@ -12,14 +12,14 @@ import { getBearerToken } from '@/lib/auth';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 /**
- * Resolve patient ID from a Bearer token.
+ * Resolve consultant ID from a Bearer token.
  *
  * Strategy:
- *  1. Try custom JWT verification (token contains patientId directly).
- *  2. Fall back to Supabase auth (getUser) + patient_memberships lookup,
- *     auto-creating the membership if a patient with matching email exists.
+ *  1. Try custom JWT verification (token contains consultantId directly).
+ *  2. Fall back to Supabase auth (getUser) + consultant_memberships lookup,
+ *     auto-creating the membership if a consultant with matching email exists.
  */
-export async function resolvePatientId(
+export async function resolveConsultantId(
   request: NextRequest
 ): Promise<string | null> {
   const authHeader = request.headers.get('authorization');
@@ -35,8 +35,8 @@ export async function resolvePatientId(
       token,
       new TextEncoder().encode(process.env.JWT_SECRET)
     );
-    if (payload.patientId) {
-      return payload.patientId as string;
+    if (payload.consultantId) {
+      return payload.consultantId as string;
     }
   } catch {
     // Not a custom JWT, try Supabase auth
@@ -56,30 +56,30 @@ export async function resolvePatientId(
 
     // Look up membership
     const { data: membership } = await supabase
-      .from('patient_memberships')
-      .select('patient_id')
-      .eq('patient_user_id', user.id)
+      .from('consultant_memberships')
+      .select('consultant_id')
+      .eq('consultant_user_id', user.id)
       .maybeSingle();
 
-    if (membership?.patient_id) {
-      return membership.patient_id;
+    if (membership?.consultant_id) {
+      return membership.consultant_id;
     }
 
-    // Auto-fix: create membership when a patient with matching email exists
+    // Auto-fix: create membership when a consultant with matching email exists
     if (user.email) {
-      const { data: patientByEmail } = await supabase
-        .from('patients')
+      const { data: consultantByEmail } = await supabase
+        .from('consultants')
         .select('id')
         .eq('email', user.email)
         .maybeSingle();
 
-      if (patientByEmail) {
+      if (consultantByEmail) {
         const { error: createError } = await supabase
-          .from('patient_memberships')
-          .insert({ patient_id: patientByEmail.id, patient_user_id: user.id });
+          .from('consultant_memberships')
+          .insert({ consultant_id: consultantByEmail.id, consultant_user_id: user.id });
 
         if (!createError) {
-          return patientByEmail.id;
+          return consultantByEmail.id;
         }
       }
     }
