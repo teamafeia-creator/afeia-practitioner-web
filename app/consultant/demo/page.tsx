@@ -123,10 +123,10 @@ export default function ConsultantDemoPage() {
           </div>
         </div>
 
-        {/* Plan de compléments */}
+        {/* Conseillancier */}
         {plan ? (
           <div className="bg-white rounded-xl p-6 shadow">
-            <h2 className="text-xl font-bold mb-4">💊 Mon plan de compléments</h2>
+            <h2 className="text-xl font-bold mb-4">💊 Mon conseillancier</h2>
             <p className="text-gray-600 mb-4">{plan.plan_name}</p>
 
             {plan.supplement_items && plan.supplement_items.length > 0 ? (
@@ -164,14 +164,14 @@ export default function ConsultantDemoPage() {
           </div>
         ) : (
           <div className="bg-white rounded-xl p-6 shadow">
-            <h2 className="text-xl font-bold mb-4">💊 Mon plan de compléments</h2>
+            <h2 className="text-xl font-bold mb-4">💊 Mon conseillancier</h2>
             <div className="bg-gray-50 p-4 rounded-lg text-center">
-              <p className="text-gray-600 mb-3">Aucun plan actif pour le moment</p>
+              <p className="text-gray-600 mb-3">Aucun conseillancier pour le moment</p>
               <Link
                 href="/consultant/demo/create-plan"
                 className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
               >
-                Créer un plan de test
+                Créer un conseillancier de test
               </Link>
             </div>
           </div>

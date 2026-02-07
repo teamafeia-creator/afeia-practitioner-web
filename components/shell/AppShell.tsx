@@ -67,7 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       messages: 'Messages',
       questionnaires: 'Questionnaires',
       settings: 'Parametres',
-      plans: 'Plans',
+      plans: 'Conseillanciers',
       consultations: 'Consultations',
       billing: 'Facturation',
       new: 'Nouveau consultant',

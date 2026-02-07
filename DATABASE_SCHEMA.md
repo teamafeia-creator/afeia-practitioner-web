@@ -44,7 +44,7 @@
    - [consultant_analysis_results](#consultant_analysis_results)
 7. [Sante des consultants](#7-sante-des-consultants)
    - [consultants_health](#consultants_health)
-8. [Plans de soins](#8-plans-de-soins)
+8. [Conseillanciers (Plans de soins)](#8-plans-de-soins)
    - [plans](#plans)
    - [plan_versions](#plan_versions)
    - [plan_sections](#plan_sections)
@@ -776,7 +776,7 @@ status IN ('scheduled', 'cancelled', 'completed', 'done')
 
 ### consultant_plans
 
-**Role :** Plans assignes aux consultants avec gestion de version et partage.
+**Role :** Conseillanciers (Programme d'Hygiene Vitale) assignes aux consultants avec gestion de version et partage. Le champ `content` (JSONB) contient la structure enrichie du conseillancier.
 
 | Colonne | Type | Contraintes | Description |
 |---------|------|-------------|-------------|
@@ -784,9 +784,9 @@ status IN ('scheduled', 'cancelled', 'completed', 'done')
 | `consultant_id` | uuid | NOT NULL, FK -> consultants(id) | Consultant |
 | `practitioner_id` | uuid | NOT NULL, FK -> practitioners(id) | Praticien |
 | `version` | integer | DEFAULT 1 | Numero de version |
-| `status` | text | DEFAULT 'draft', CHECK | Statut du plan |
-| `content` | jsonb | | Contenu du plan (JSON) |
-| `shared_at` | timestamptz | | Date de partage |
+| `status` | text | DEFAULT 'draft', CHECK | Statut du conseillancier |
+| `content` | jsonb | | Contenu enrichi du conseillancier (voir structure ci-dessous) |
+| `shared_at` | timestamptz | | Date de partage au consultant |
 | `created_at` | timestamptz | NOT NULL, DEFAULT now() | Date de creation |
 | `updated_at` | timestamptz | NOT NULL, DEFAULT now() | Derniere modification |
 
@@ -794,6 +794,31 @@ status IN ('scheduled', 'cancelled', 'completed', 'done')
 ```sql
 status IN ('draft', 'shared')
 ```
+
+**Structure du champ `content` (JSONB) — definie dans `lib/conseillancier.ts` :**
+
+Le conseillancier contient 16 sections, chacune composee de champs texte :
+
+| Section | Cles JSONB | Description |
+|---------|-----------|-------------|
+| Message d'accueil | `message_accueil`, `duree_programme`, `date_debut_conseille` | Mot personnalise, cadre temporel |
+| Objectifs | `objectifs_principaux`, `actions_prioritaires_semaine_1` | Axes de travail et quick wins |
+| Alimentation | `principes_alimentaires`, `aliments_a_privilegier`, `aliments_a_limiter`, `rythme_repas`, `objectif_hydratation`, `type_eau`, `moments_hydratation` | Recommandations alimentaires et hydratation |
+| Phytotherapie | `phytotherapie_plantes`, `phytotherapie_posologie`, `phytotherapie_precautions` | Plantes medicinales |
+| Micronutrition | `complements`, `precautions_complements` | Complements alimentaires |
+| Aromatologie | `huiles_essentielles`, `precautions_he` | Huiles essentielles |
+| Hydrologie | `hydrologie` | Techniques d'hydrotherapie |
+| Activite physique | `activite_type`, `activite_frequence`, `activite_conseils` | Exercice et mouvement |
+| Equilibre psycho-emotionnel | `equilibre_psycho`, `gestion_charge_mentale` | Gestion du stress |
+| Techniques respiratoires | `techniques_respiratoires` | Exercices de respiration |
+| Techniques manuelles | `automassages`, `points_reflexes`, `seances_recommandees` | Auto-massages et reflexes |
+| Sommeil | `sommeil_routine`, `sommeil_environnement`, `sommeil_conseils` | Routine et environnement |
+| Environnement | `environnement_air`, `environnement_produits`, `environnement_perturbateurs` | Hygiene de vie |
+| Suivi | `suivi_indicateurs`, `suivi_prochain_rdv`, `suivi_entre_temps` | Indicateurs et prochain RDV |
+| Message de cloture | `message_cloture` | Mot d'encouragement |
+| Notes libres | `notes_libres` | Notes additionnelles |
+
+> **Retrocompatibilite :** Les anciens plans (format plat avec cles `objectifs`, `alimentation_recommandations`, etc.) sont migres automatiquement via `migrateOldPlanContent()` dans `lib/conseillancier.ts`.
 
 ---
 

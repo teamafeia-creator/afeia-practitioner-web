@@ -26,6 +26,15 @@ import {
   upsertPractitionerNote
 } from '../../lib/queries';
 import { ANAMNESIS_SECTIONS } from '../../lib/anamnesis';
+import { T } from '../../lib/terminology';
+import {
+  CONSEILLANCIER_SECTIONS,
+  DEFAULT_CONSEILLANCIER_CONTENT,
+  migrateOldPlanContent,
+  sectionHasContent,
+  type ConseillancierContent,
+} from '../../lib/conseillancier';
+import { supabase } from '../../lib/supabase';
 import type {
   AnamnesisAnswers,
   Appointment,
@@ -65,56 +74,29 @@ function flattenAnamnesisAnswers(answers: AnamnesisAnswers | null | undefined): 
 }
 
 const TABS = [
-  'Profil',
-  'Rendez-vous',
-  'Anamnèse',
-  'Circular',
-  'Journal',
-  'Notes consultation',
-  'Plan de naturopathie',
-  'Résultats d\'analyses',
-  'Messages'
+  T.tabProfil,
+  T.tabRendezVous,
+  T.tabAnamnese,
+  T.tabCircular,
+  T.tabJournal,
+  T.tabNotesSeance,
+  T.tabConseillancier,
+  T.tabDocuments,
+  T.tabMessages,
 ] as const;
 
 type Tab = (typeof TABS)[number];
 
 const TAB_META: Record<Tab, { title: string; description: string }> = {
-  Profil: {
-    title: 'Profil consultant',
-    description: 'Coordonnées clés et informations administratives.'
-  },
-  'Rendez-vous': {
-    title: 'Rendez-vous',
-    description: 'Historique et planification des consultations.'
-  },
-  Anamnèse: {
-    title: 'Anamnèse',
-    description: 'Questionnaire santé et habitudes de vie.'
-  },
-  Circular: {
-    title: 'Circular',
-    description: 'Synthèse sommeil, HRV et activité.'
-  },
-  Journal: {
-    title: 'Journal',
-    description: 'Suivi quotidien du ressenti du consultant.'
-  },
-  'Notes consultation': {
-    title: 'Notes consultation',
-    description: 'Notes internes réservées au praticien.'
-  },
-  'Plan de naturopathie': {
-    title: 'Plan de naturopathie',
-    description: 'Versions du plan partagé au consultant.'
-  },
-  'Résultats d\'analyses': {
-    title: 'Résultats d\'analyses',
-    description: 'Documents et résultats d\'examens médicaux.'
-  },
-  Messages: {
-    title: 'Messages',
-    description: 'Conversation directe avec le consultant.'
-  }
+  [T.tabProfil]: { title: T.tabProfil, description: T.descProfil },
+  [T.tabRendezVous]: { title: T.tabRendezVous, description: T.descRendezVous },
+  [T.tabAnamnese]: { title: T.tabAnamnese, description: T.descAnamnese },
+  [T.tabCircular]: { title: T.tabCircular, description: T.descCircular },
+  [T.tabJournal]: { title: T.tabJournal, description: T.descJournal },
+  [T.tabNotesSeance]: { title: T.tabNotesSeance, description: T.descNotesSeance },
+  [T.tabConseillancier]: { title: T.tabConseillancier, description: T.descConseillancier },
+  [T.tabDocuments]: { title: T.tabDocuments, description: T.descDocuments },
+  [T.tabMessages]: { title: T.tabMessages, description: T.descMessages },
 };
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
@@ -148,102 +130,8 @@ function renderAnswer(value?: string | null) {
   return renderValue(value);
 }
 
-const DEFAULT_PLAN_CONTENT = {
-  objectifs: '',
-  alimentation_recommandations: '',
-  alimentation_eviter: '',
-  alimentation_hydratation: '',
-  phytotherapie_plantes: '',
-  phytotherapie_posologie: '',
-  phytotherapie_precautions: '',
-  complements: '',
-  sommeil: '',
-  activite: '',
-  gestion_stress: '',
-  suivi: '',
-  notes_libres: ''
-};
-
-const PLAN_SECTIONS: Array<{
-  title: string;
-  description?: string;
-  fields: Array<{ key: keyof typeof DEFAULT_PLAN_CONTENT; label: string; placeholder?: string }>;
-}> = [
-  {
-    title: 'Objectifs',
-    fields: [{ key: 'objectifs', label: 'Objectifs', placeholder: 'Objectifs prioritaires du consultant.' }]
-  },
-  {
-    title: 'Alimentation',
-    fields: [
-      {
-        key: 'alimentation_recommandations',
-        label: 'Recommandations',
-        placeholder: 'Aliments conseillés, rythme des repas, etc.'
-      },
-      {
-        key: 'alimentation_eviter',
-        label: 'À éviter',
-        placeholder: 'Aliments ou habitudes à limiter.'
-      },
-      {
-        key: 'alimentation_hydratation',
-        label: 'Hydratation',
-        placeholder: 'Objectif hydratation, conseils.'
-      }
-    ]
-  },
-  {
-    title: 'Plantes / phytothérapie',
-    fields: [
-      { key: 'phytotherapie_plantes', label: 'Plantes', placeholder: 'Plantes recommandées.' },
-      { key: 'phytotherapie_posologie', label: 'Posologie', placeholder: 'Dosage, durée.' },
-      { key: 'phytotherapie_precautions', label: 'Précautions', placeholder: 'Contre-indications, avertissements.' }
-    ]
-  },
-  {
-    title: 'Compléments',
-    fields: [
-      {
-        key: 'complements',
-        label: 'Compléments',
-        placeholder: 'Nom, dose, fréquence, durée.'
-      }
-    ]
-  },
-  {
-    title: 'Sommeil',
-    fields: [{ key: 'sommeil', label: 'Sommeil', placeholder: 'Routine, horaires, conseils.' }]
-  },
-  {
-    title: 'Activité / exercices',
-    fields: [{ key: 'activite', label: 'Activité', placeholder: 'Type, fréquence, intensité.' }]
-  },
-  {
-    title: 'Gestion du stress',
-    fields: [
-      {
-        key: 'gestion_stress',
-        label: 'Gestion du stress / respiration / méditation',
-        placeholder: 'Techniques recommandées.'
-      }
-    ]
-  },
-  {
-    title: 'Suivi',
-    fields: [
-      {
-        key: 'suivi',
-        label: 'Suivi',
-        placeholder: 'Indicateurs, prochain rendez-vous, notes.'
-      }
-    ]
-  },
-  {
-    title: 'Notes libres',
-    fields: [{ key: 'notes_libres', label: 'Notes libres', placeholder: 'Notes additionnelles.' }]
-  }
-];
+// The old DEFAULT_PLAN_CONTENT and PLAN_SECTIONS have been replaced by
+// CONSEILLANCIER_SECTIONS and DEFAULT_CONSEILLANCIER_CONTENT from lib/conseillancier.ts
 
 function getInitials(name?: string | null) {
   if (!name) return '?';
@@ -262,8 +150,8 @@ function normalizeProfileValue(value: string) {
   return value.trim();
 }
 
-function buildPlanContent(content?: Record<string, string> | null) {
-  return { ...DEFAULT_PLAN_CONTENT, ...(content ?? {}) };
+function buildPlanContent(content?: Record<string, string> | null): ConseillancierContent {
+  return migrateOldPlanContent(content);
 }
 
 function areRecordsEqual(
@@ -407,7 +295,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   const [activePlanId, setActivePlanId] = useState<string | null>(
     consultant.consultant_plans?.[0]?.id ?? null
   );
-  const [planForm, setPlanForm] = useState<Record<string, string>>(buildPlanContent(null));
+  const [planForm, setPlanForm] = useState<ConseillancierContent>(buildPlanContent(null));
+  const [pdfDownloading, setPdfDownloading] = useState(false);
   const [planSaving, setPlanSaving] = useState(false);
   const [planSharing, setPlanSharing] = useState(false);
   const [planCreating, setPlanCreating] = useState(false);
@@ -830,6 +719,56 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       });
     } finally {
       setPlanSharing(false);
+    }
+  }
+
+  async function handleDownloadPdf() {
+    if (!activePlan) return;
+    setPdfDownloading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        throw new Error('Session expirée. Veuillez vous reconnecter.');
+      }
+
+      const response = await fetch(
+        `/api/consultants/${consultant.id}/plans/${activePlan.id}/pdf`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Erreur lors de la génération du PDF.');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const disposition = response.headers.get('content-disposition');
+      const filenameMatch = disposition?.match(/filename="(.+?)"/);
+      link.download = filenameMatch?.[1] || `conseillancier-v${activePlan.version}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setToast({
+        title: 'PDF téléchargé',
+        description: 'Le conseillancier a été exporté en PDF.',
+        variant: 'success',
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur d\'export',
+        description: error instanceof Error ? error.message : 'Impossible de générer le PDF.',
+        variant: 'error',
+      });
+    } finally {
+      setPdfDownloading(false);
     }
   }
 
@@ -1586,7 +1525,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </Card>
       )}
 
-      {tab === 'Notes consultation' && (
+      {tab === T.tabNotesSeance && (
         <Card className={cn(noteEditing ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1651,15 +1590,15 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </Card>
       )}
 
-      {tab === 'Plan de naturopathie' && (
+      {tab === T.tabConseillancier && (
         <div className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold">Versions du plan</h2>
+                  <h2 className="text-sm font-semibold">Versions du {T.conseillancierLower}</h2>
                   <p className="text-xs text-warmgray">
-                    Suivi des versions partagées avec le consultant.
+                    {T.descConseillancier}
                   </p>
                 </div>
                 <Button
@@ -1667,7 +1606,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                   onClick={() => handleCreatePlan(activePlan)}
                   loading={planCreating}
                 >
-                  Créer un plan
+                  {T.conseillancierCreer}
                 </Button>
               </div>
             </CardHeader>
@@ -1675,8 +1614,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               {plans.length === 0 ? (
                 <EmptyState
                   icon="documents"
-                  title="Aucun plan cree"
-                  description="Creez la premiere version du plan de naturopathie."
+                  title={T.conseillancierAucun}
+                  description="Créez votre premier conseillancier en quelques minutes. Le consultant le recevra directement dans son app."
                 />
               ) : (
                 <div className="grid gap-3 md:grid-cols-2">
@@ -1719,7 +1658,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <h2 className="text-sm font-semibold">
-                      Plan v{activePlan.version}
+                      {T.conseillancier} v{activePlan.version}
                     </h2>
                     <p className="text-xs text-warmgray">
                       {canEditPlan
@@ -1752,54 +1691,75 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         loading={planSharing}
                         disabled={planSharing || planSaving || isPlanDirty}
                       >
-                        Partager au consultant
+                        {T.partagerConsultant}
                       </Button>
                     ) : null}
+                    <Button
+                      variant="outline"
+                      onClick={handleDownloadPdf}
+                      loading={pdfDownloading}
+                      disabled={pdfDownloading}
+                    >
+                      {T.conseillancierExporter}
+                    </Button>
                   </div>
                 </div>
                 {canEditPlan ? (
-                  <EditBanner label="Complétez le plan avant de le partager." />
+                  <EditBanner label="Complétez le conseillancier avant de le partager." />
                 ) : null}
               </CardHeader>
               <CardContent className="space-y-6">
-                {PLAN_SECTIONS.map((section) => (
-                  <div key={section.title} className="space-y-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-charcoal">{section.title}</h3>
-                      {section.description ? (
-                        <p className="text-xs text-warmgray">{section.description}</p>
-                      ) : null}
+                {CONSEILLANCIER_SECTIONS.map((section) => {
+                  // In read-only mode, skip sections with no content
+                  if (!canEditPlan && !sectionHasContent(section, planForm)) return null;
+                  return (
+                    <div key={section.id} className="space-y-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-charcoal">
+                          {section.icon ? `${section.icon} ` : ''}{section.title}
+                          {section.optional ? (
+                            <span className="ml-2 text-xs font-normal text-warmgray">(optionnel)</span>
+                          ) : null}
+                        </h3>
+                        {section.description ? (
+                          <p className="text-xs text-warmgray">{section.description}</p>
+                        ) : null}
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {section.fields.map((field) => {
+                          // In read-only mode, skip empty fields
+                          if (!canEditPlan && !planForm[field.key]?.trim()) return null;
+                          return (
+                            <div
+                              key={field.key}
+                              className="rounded-lg bg-white/60 p-4 border border-teal/10"
+                            >
+                              <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
+                              {canEditPlan ? (
+                                <Textarea
+                                  className="mt-2"
+                                  value={planForm[field.key]}
+                                  onChange={(event) =>
+                                    setPlanForm((prev) => ({
+                                      ...prev,
+                                      [field.key]: event.target.value
+                                    }))
+                                  }
+                                  placeholder={field.placeholder}
+                                  rows={field.multiline ? 4 : 2}
+                                />
+                              ) : (
+                                <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
+                                  {renderAnswer(planForm[field.key])}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      {section.fields.map((field) => (
-                        <div
-                          key={field.key}
-                          className="rounded-lg bg-white/60 p-4 border border-teal/10"
-                        >
-                          <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
-                          {canEditPlan ? (
-                            <Textarea
-                              className="mt-2"
-                              value={planForm[field.key]}
-                              onChange={(event) =>
-                                setPlanForm((prev) => ({
-                                  ...prev,
-                                  [field.key]: event.target.value
-                                }))
-                              }
-                              placeholder={field.placeholder}
-                              rows={3}
-                            />
-                          ) : (
-                            <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
-                              {renderAnswer(planForm[field.key])}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {canEditPlan ? (
                   <div className="flex flex-wrap gap-2">
                     <Button
@@ -1825,11 +1785,11 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </div>
       )}
 
-      {tab === 'Résultats d\'analyses' && (
+      {tab === T.tabDocuments && (
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold">Résultats d&apos;analyses</h2>
-            <p className="text-xs text-warmgray">Documents et résultats d&apos;examens médicaux du consultant.</p>
+            <h2 className="text-sm font-semibold">{T.tabDocuments}</h2>
+            <p className="text-xs text-warmgray">{T.descDocuments}</p>
           </CardHeader>
           <CardContent>
             {!consultant.analysis_results || consultant.analysis_results.length === 0 ? (

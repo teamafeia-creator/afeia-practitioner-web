@@ -22,7 +22,7 @@ export function PlanCard({ plan }: PlanCardProps) {
       <TouchableOpacity onPress={() => setExpanded(!expanded)} activeOpacity={0.7}>
         <View style={styles.header}>
           <View style={styles.headerInfo}>
-            <Text style={styles.title}>Plan de soins</Text>
+            <Text style={styles.title}>Conseillancier</Text>
             {plan.sharedAt && (
               <Text style={styles.date}>{formatDate(plan.sharedAt)}</Text>
             )}

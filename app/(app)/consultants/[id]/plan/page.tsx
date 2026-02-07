@@ -39,7 +39,7 @@ export default function CreatePlanPage() {
   } | null>(null);
 
   // Plan content
-  const [title, setTitle] = useState('Plan de soin personnalise');
+  const [title, setTitle] = useState('Conseillancier personnalisé');
   const [description, setDescription] = useState('');
   const [objectives, setObjectives] = useState<string[]>(['']);
   const [recommendations, setRecommendations] = useState<Section[]>([
@@ -237,7 +237,7 @@ export default function CreatePlanPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-charcoal">Creer un plan de soin</h1>
+          <h1 className="text-2xl font-semibold text-charcoal">Créer un conseillancier</h1>
           <p className="text-sm text-warmgray">
             Pour{' '}
             <Link href={`/consultants/${consultantId}`} className="text-teal hover:underline">
@@ -274,7 +274,7 @@ export default function CreatePlanPage() {
             label="Titre du plan"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Plan de soin personnalise"
+            placeholder="Conseillancier personnalisé"
             required
           />
           <div>

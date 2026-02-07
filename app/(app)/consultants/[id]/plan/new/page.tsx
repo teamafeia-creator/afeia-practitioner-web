@@ -88,9 +88,9 @@ export default function NewPlanPage({ params }: { params: Promise<{ id: string }
             <ArrowLeft className="h-4 w-4" />
             Retour au consultant
           </Link>
-          <h1 className="text-2xl font-semibold text-charcoal">Nouveau plan de soins</h1>
+          <h1 className="text-2xl font-semibold text-charcoal">Nouveau conseillancier</h1>
           <p className="text-sm text-warmgray mt-1">
-            Creez un plan personnalise pour votre consultant
+            Créez un conseillancier personnalisé pour votre consultant
           </p>
         </div>
       </div>

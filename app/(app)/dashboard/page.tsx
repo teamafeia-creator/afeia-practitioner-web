@@ -361,14 +361,14 @@ export default function DashboardPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-aubergine/15">
                   <FileText className="h-5 w-5 text-aubergine" />
                 </div>
-                <span className="font-semibold text-charcoal">Bilans en attente</span>
+                <span className="font-semibold text-charcoal">Conseillanciers en attente</span>
               </div>
               <span className="badge-info px-2.5 py-1 rounded-md text-xs font-semibold">
                 {pendingPlans.length}
               </span>
             </div>
             <p className="text-sm text-warmgray mb-4">
-              Plans en brouillon a finaliser et valider
+              Conseillanciers en brouillon à finaliser et partager
             </p>
             <button
               onClick={() => router.push('/consultants')}

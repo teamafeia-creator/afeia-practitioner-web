@@ -190,11 +190,11 @@ export default function HomeScreen() {
             padding="lg"
             onPress={() => router.push('/(tabs)/plans')}
           >
-            <Text style={styles.sectionTitle}>Dernier plan de soins</Text>
+            <Text style={styles.sectionTitle}>Dernier conseillancier</Text>
             <Text style={styles.planDate}>
               {data.latestPlan.sharedAt
                 ? `Partagé le ${format(new Date(data.latestPlan.sharedAt), 'd MMM yyyy', { locale: fr })}`
-                : 'Plan disponible'}
+                : 'Conseillancier disponible'}
             </Text>
           </Card>
         )}
