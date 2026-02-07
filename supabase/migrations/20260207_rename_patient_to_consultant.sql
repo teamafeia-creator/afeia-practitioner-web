@@ -8,6 +8,62 @@
 BEGIN;
 
 -- ============================================
+-- 0. SUPPRIMER TOUTES LES CONTRAINTES CHECK CONTENANT 'patient'
+--    (DOIT être fait AVANT de modifier les données)
+-- ============================================
+
+-- Suppression dynamique de TOUTES les contraintes CHECK sur les colonnes affectées
+-- Cela gère les noms auto-générés par PostgreSQL
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  -- Trouver et supprimer toutes les contraintes CHECK sur messages (sender, sender_role, sender_type)
+  FOR r IN
+    SELECT con.conname, rel.relname
+    FROM pg_constraint con
+    JOIN pg_class rel ON con.conrelid = rel.oid
+    JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
+    WHERE nsp.nspname = 'public'
+      AND con.contype = 'c'  -- CHECK constraint
+      AND rel.relname = 'messages'
+  LOOP
+    EXECUTE format('ALTER TABLE public.messages DROP CONSTRAINT IF EXISTS %I', r.conname);
+    RAISE NOTICE 'Dropped CHECK constraint % on messages', r.conname;
+  END LOOP;
+
+  -- Trouver et supprimer toutes les contraintes CHECK sur preliminary_questionnaires
+  FOR r IN
+    SELECT con.conname, rel.relname
+    FROM pg_constraint con
+    JOIN pg_class rel ON con.conrelid = rel.oid
+    JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
+    WHERE nsp.nspname = 'public'
+      AND con.contype = 'c'
+      AND rel.relname = 'preliminary_questionnaires'
+  LOOP
+    EXECUTE format('ALTER TABLE public.preliminary_questionnaires DROP CONSTRAINT IF EXISTS %I', r.conname);
+    RAISE NOTICE 'Dropped CHECK constraint % on preliminary_questionnaires', r.conname;
+  END LOOP;
+
+  -- Trouver et supprimer toutes les contraintes CHECK sur anamnesis_history
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'anamnesis_history' AND table_schema = 'public') THEN
+    FOR r IN
+      SELECT con.conname, rel.relname
+      FROM pg_constraint con
+      JOIN pg_class rel ON con.conrelid = rel.oid
+      JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
+      WHERE nsp.nspname = 'public'
+        AND con.contype = 'c'
+        AND rel.relname = 'anamnesis_history'
+    LOOP
+      EXECUTE format('ALTER TABLE public.anamnesis_history DROP CONSTRAINT IF EXISTS %I', r.conname);
+      RAISE NOTICE 'Dropped CHECK constraint % on anamnesis_history', r.conname;
+    END LOOP;
+  END IF;
+END $$;
+
+-- ============================================
 -- 1. RENOMMER LES TABLES PRINCIPALES
 -- ============================================
 
@@ -26,141 +82,97 @@ ALTER TABLE IF EXISTS patients_health RENAME TO consultants_health;
 -- 2. RENOMMER LES COLONNES patient_id → consultant_id
 -- ============================================
 
--- Table consultants (anciennement patients)
--- (pas de patient_id dans cette table)
-
--- Table anamneses
-ALTER TABLE anamneses RENAME COLUMN patient_id TO consultant_id;
-
--- Table consultations
-ALTER TABLE consultations RENAME COLUMN patient_id TO consultant_id;
-
--- Table plans
-ALTER TABLE plans RENAME COLUMN patient_id TO consultant_id;
-
--- Table journal_entries
-ALTER TABLE journal_entries RENAME COLUMN patient_id TO consultant_id;
-
--- Table messages
-ALTER TABLE messages RENAME COLUMN patient_id TO consultant_id;
-
--- Table wearable_summaries
-ALTER TABLE wearable_summaries RENAME COLUMN patient_id TO consultant_id;
-
--- Table wearable_insights
-ALTER TABLE wearable_insights RENAME COLUMN patient_id TO consultant_id;
-
--- Table notifications
-ALTER TABLE notifications RENAME COLUMN patient_id TO consultant_id;
-
--- Table appointments
-ALTER TABLE appointments RENAME COLUMN patient_id TO consultant_id;
-
--- Table consultant_memberships (anciennement patient_memberships)
-ALTER TABLE consultant_memberships RENAME COLUMN patient_user_id TO consultant_user_id;
-
--- Table consultant_invitations (anciennement patient_invitations)
-ALTER TABLE consultant_invitations RENAME COLUMN patient_id TO consultant_id;
-
--- Table consultant_questionnaire_codes (anciennement patient_questionnaire_codes)
-ALTER TABLE consultant_questionnaire_codes RENAME COLUMN patient_id TO consultant_id;
-
--- Table consultant_anamnesis (anciennement patient_anamnesis)
-ALTER TABLE consultant_anamnesis RENAME COLUMN patient_id TO consultant_id;
-
--- Table consultant_plans (anciennement patient_plans)
-ALTER TABLE consultant_plans RENAME COLUMN patient_id TO consultant_id;
-
--- Table consultant_analysis_results (anciennement patient_analysis_results)
-ALTER TABLE consultant_analysis_results RENAME COLUMN patient_id TO consultant_id;
-
--- Table otp_codes
-ALTER TABLE IF EXISTS otp_codes RENAME COLUMN patient_id TO consultant_id;
+-- Tables principales
+DO $$
+DECLARE
+  tbl TEXT;
+  col TEXT;
+BEGIN
+  -- Liste des (table, colonne) à renommer
+  FOR tbl, col IN VALUES
+    ('anamneses', 'patient_id'),
+    ('consultations', 'patient_id'),
+    ('plans', 'patient_id'),
+    ('journal_entries', 'patient_id'),
+    ('messages', 'patient_id'),
+    ('wearable_summaries', 'patient_id'),
+    ('wearable_insights', 'patient_id'),
+    ('notifications', 'patient_id'),
+    ('appointments', 'patient_id'),
+    ('consultant_memberships', 'patient_user_id'),
+    ('consultant_invitations', 'patient_id'),
+    ('consultant_questionnaire_codes', 'patient_id'),
+    ('consultant_anamnesis', 'patient_id'),
+    ('consultant_plans', 'patient_id'),
+    ('consultant_analysis_results', 'patient_id'),
+    ('otp_codes', 'patient_id'),
+    ('preliminary_questionnaires', 'linked_patient_id'),
+    ('anamnesis_history', 'patient_id'),
+    ('practitioner_notes', 'patient_id'),
+    ('consultants_identity', 'patient_id'),
+    ('consultants_health', 'patient_id'),
+    ('anamnese_instances', 'patient_id'),
+    ('anamnese_drafts', 'patient_id'),
+    ('conseils', 'patient_id'),
+    ('prescriptions', 'patient_id'),
+    ('complement_tracking', 'patient_id'),
+    ('wearable_data', 'patient_id')
+  LOOP
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = tbl AND column_name = col
+    ) THEN
+      -- Calculer le nouveau nom de colonne
+      IF col = 'patient_user_id' THEN
+        EXECUTE format('ALTER TABLE public.%I RENAME COLUMN %I TO consultant_user_id', tbl, col);
+      ELSIF col = 'linked_patient_id' THEN
+        EXECUTE format('ALTER TABLE public.%I RENAME COLUMN %I TO linked_consultant_id', tbl, col);
+      ELSE
+        EXECUTE format('ALTER TABLE public.%I RENAME COLUMN %I TO consultant_id', tbl, col);
+      END IF;
+      RAISE NOTICE 'Renamed %.% → consultant', tbl, col;
+    END IF;
+  END LOOP;
+END $$;
 
 -- Colonnes patient_* dans otp_codes
 DO $$
+DECLARE
+  old_col TEXT;
+  new_col TEXT;
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'otp_codes' AND column_name = 'patient_first_name') THEN
-    ALTER TABLE otp_codes RENAME COLUMN patient_first_name TO consultant_first_name;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'otp_codes' AND column_name = 'patient_last_name') THEN
-    ALTER TABLE otp_codes RENAME COLUMN patient_last_name TO consultant_last_name;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'otp_codes' AND column_name = 'patient_phone') THEN
-    ALTER TABLE otp_codes RENAME COLUMN patient_phone TO consultant_phone;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'otp_codes' AND column_name = 'patient_phone_number') THEN
-    ALTER TABLE otp_codes RENAME COLUMN patient_phone_number TO consultant_phone_number;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'otp_codes' AND column_name = 'patient_city') THEN
-    ALTER TABLE otp_codes RENAME COLUMN patient_city TO consultant_city;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'otp_codes' AND column_name = 'patient_date_of_birth') THEN
-    ALTER TABLE otp_codes RENAME COLUMN patient_date_of_birth TO consultant_date_of_birth;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'otp_codes' AND column_name = 'patient_is_premium') THEN
-    ALTER TABLE otp_codes RENAME COLUMN patient_is_premium TO consultant_is_premium;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'otp_codes' AND column_name = 'patient_circular_enabled') THEN
-    ALTER TABLE otp_codes RENAME COLUMN patient_circular_enabled TO consultant_circular_enabled;
-  END IF;
-END $$;
-
--- Table preliminary_questionnaires
-ALTER TABLE IF EXISTS preliminary_questionnaires RENAME COLUMN linked_patient_id TO linked_consultant_id;
-
--- Table anamnesis_history
-ALTER TABLE IF EXISTS anamnesis_history RENAME COLUMN patient_id TO consultant_id;
-
--- Table practitioner_notes
-ALTER TABLE IF EXISTS practitioner_notes RENAME COLUMN patient_id TO consultant_id;
-
--- Tables admin (consultants_identity, consultants_health)
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'consultants_identity' AND column_name = 'patient_id') THEN
-    ALTER TABLE consultants_identity RENAME COLUMN patient_id TO consultant_id;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'consultants_health' AND column_name = 'patient_id') THEN
-    ALTER TABLE consultants_health RENAME COLUMN patient_id TO consultant_id;
-  END IF;
-END $$;
-
--- Tables additionnelles si elles existent
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'anamnese_instances' AND column_name = 'patient_id') THEN
-    ALTER TABLE anamnese_instances RENAME COLUMN patient_id TO consultant_id;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'anamnese_drafts' AND column_name = 'patient_id') THEN
-    ALTER TABLE anamnese_drafts RENAME COLUMN patient_id TO consultant_id;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'conseils' AND column_name = 'patient_id') THEN
-    ALTER TABLE conseils RENAME COLUMN patient_id TO consultant_id;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'prescriptions' AND column_name = 'patient_id') THEN
-    ALTER TABLE prescriptions RENAME COLUMN patient_id TO consultant_id;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'complement_tracking' AND column_name = 'patient_id') THEN
-    ALTER TABLE complement_tracking RENAME COLUMN patient_id TO consultant_id;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'wearable_data' AND column_name = 'patient_id') THEN
-    ALTER TABLE wearable_data RENAME COLUMN patient_id TO consultant_id;
-  END IF;
+  FOR old_col, new_col IN VALUES
+    ('patient_first_name', 'consultant_first_name'),
+    ('patient_last_name', 'consultant_last_name'),
+    ('patient_phone', 'consultant_phone'),
+    ('patient_phone_number', 'consultant_phone_number'),
+    ('patient_city', 'consultant_city'),
+    ('patient_date_of_birth', 'consultant_date_of_birth'),
+    ('patient_is_premium', 'consultant_is_premium'),
+    ('patient_circular_enabled', 'consultant_circular_enabled')
+  LOOP
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'otp_codes' AND column_name = old_col) THEN
+      EXECUTE format('ALTER TABLE otp_codes RENAME COLUMN %I TO %I', old_col, new_col);
+    END IF;
+  END LOOP;
 END $$;
 
 -- ============================================
--- 3. METTRE À JOUR LES DONNÉES (valeurs de sender/role)
+-- 3. METTRE À JOUR LES DONNÉES (valeurs contenant 'patient')
+--    Les contraintes CHECK ont déjà été supprimées en étape 0
 -- ============================================
 
 -- Messages: sender 'patient' → 'consultant'
 UPDATE messages SET sender = 'consultant' WHERE sender = 'patient';
 
--- Messages: sender_role 'patient' → 'consultant' (si la colonne existe)
+-- Messages: sender_role 'patient' → 'consultant'
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'messages' AND column_name = 'sender_role') THEN
     UPDATE messages SET sender_role = 'consultant' WHERE sender_role = 'patient';
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'messages' AND column_name = 'sender_type') THEN
+    UPDATE messages SET sender_type = 'consultant' WHERE sender_type = 'patient';
   END IF;
 END $$;
 
@@ -173,63 +185,50 @@ BEGIN
 END $$;
 
 -- Preliminary questionnaires: status 'linked_to_patient' → 'linked_to_consultant'
-UPDATE preliminary_questionnaires SET status = 'linked_to_consultant' WHERE status = 'linked_to_patient';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'preliminary_questionnaires') THEN
+    UPDATE preliminary_questionnaires SET status = 'linked_to_consultant' WHERE status = 'linked_to_patient';
+  END IF;
+END $$;
 
 -- ============================================
--- 4. METTRE À JOUR LES CONTRAINTES CHECK
+-- 4. RECRÉER LES CONTRAINTES CHECK AVEC NOUVELLES VALEURS
 -- ============================================
 
--- Messages sender CHECK
+-- Messages: sender CHECK
+ALTER TABLE messages ADD CONSTRAINT messages_sender_check
+  CHECK (sender IN ('consultant', 'praticien'));
+
+-- Messages: sender_role CHECK (si la colonne existe)
 DO $$
 BEGIN
-  -- Drop old constraint if exists and create new one
-  BEGIN
-    ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_sender_check;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER TABLE messages ADD CONSTRAINT messages_sender_check CHECK (sender IN ('consultant', 'praticien'));
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'messages' AND column_name = 'sender_role') THEN
+    ALTER TABLE messages ADD CONSTRAINT messages_sender_role_check
+      CHECK (sender_role IN ('consultant', 'practitioner'));
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'messages' AND column_name = 'sender_type') THEN
+    ALTER TABLE messages ADD CONSTRAINT messages_sender_type_check
+      CHECK (sender_type IN ('consultant', 'practitioner'));
+  END IF;
 END $$;
 
--- Messages sender_role CHECK
+-- Anamnesis history: modified_by_type CHECK
 DO $$
 BEGIN
-  BEGIN
-    ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_sender_role_check;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER TABLE messages ADD CONSTRAINT messages_sender_role_check CHECK (sender_role IN ('consultant', 'practitioner'));
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'anamnesis_history') THEN
+    ALTER TABLE anamnesis_history ADD CONSTRAINT anamnesis_history_modified_by_type_check
+      CHECK (modified_by_type IN ('consultant', 'practitioner', 'system'));
+  END IF;
 END $$;
 
--- Anamnesis history modified_by_type CHECK
+-- Preliminary questionnaires: status CHECK
 DO $$
 BEGIN
-  BEGIN
-    ALTER TABLE anamnesis_history DROP CONSTRAINT IF EXISTS anamnesis_history_modified_by_type_check;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER TABLE anamnesis_history ADD CONSTRAINT anamnesis_history_modified_by_type_check CHECK (modified_by_type IN ('consultant', 'practitioner', 'system'));
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-END $$;
-
--- Preliminary questionnaires status CHECK
-DO $$
-BEGIN
-  BEGIN
-    ALTER TABLE preliminary_questionnaires DROP CONSTRAINT IF EXISTS preliminary_questionnaires_status_check;
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
-  BEGIN
-    ALTER TABLE preliminary_questionnaires ADD CONSTRAINT preliminary_questionnaires_status_check CHECK (status IN ('pending', 'linked_to_consultant', 'archived'));
-  EXCEPTION WHEN OTHERS THEN NULL;
-  END;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'preliminary_questionnaires') THEN
+    ALTER TABLE preliminary_questionnaires ADD CONSTRAINT preliminary_questionnaires_status_check
+      CHECK (status IN ('pending', 'linked_to_consultant', 'archived'));
+  END IF;
 END $$;
 
 -- ============================================
@@ -335,8 +334,15 @@ DROP INDEX IF EXISTS patients_identity_created_at_idx;
 DROP INDEX IF EXISTS patients_identity_status_idx;
 DROP INDEX IF EXISTS patients_health_practitioner_id_idx;
 
-CREATE INDEX IF NOT EXISTS consultants_identity_practitioner_id_idx ON consultants_identity(practitioner_id);
-CREATE INDEX IF NOT EXISTS consultants_health_practitioner_id_idx ON consultants_health(practitioner_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'consultants_identity') THEN
+    CREATE INDEX IF NOT EXISTS consultants_identity_practitioner_id_idx ON consultants_identity(practitioner_id);
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'consultants_health') THEN
+    CREATE INDEX IF NOT EXISTS consultants_health_practitioner_id_idx ON consultants_health(practitioner_id);
+  END IF;
+END $$;
 
 -- Index sur otp_codes
 DROP INDEX IF EXISTS idx_otp_codes_patient_id;
@@ -368,7 +374,7 @@ CREATE POLICY "Practitioners can update own consultants" ON consultants
 CREATE POLICY "Practitioners can delete own consultants" ON consultants
   FOR DELETE USING (practitioner_id = auth.uid());
 
--- Politiques sur les tables liées (remplacer les références à patients par consultants)
+-- Politiques sur les tables liées
 DROP POLICY IF EXISTS "Access own patient anamneses" ON anamneses;
 DROP POLICY IF EXISTS "Access own patient consultations" ON consultations;
 DROP POLICY IF EXISTS "Access own patient plans" ON plans;
@@ -442,19 +448,17 @@ DROP POLICY IF EXISTS "Practitioners view patient anamnesis_history" ON anamnesi
 DROP POLICY IF EXISTS "Patients view own anamnesis_history" ON anamnesis_history;
 
 -- Admin platform policies
-DROP POLICY IF EXISTS "Admin access patients identity" ON consultants_identity;
-DROP POLICY IF EXISTS "Practitioner access patients identity" ON consultants_identity;
-DROP POLICY IF EXISTS "Practitioner access patients health" ON consultants_health;
-
 DO $$
 BEGIN
-  -- Recreate admin policies if tables exist
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'consultants_identity') THEN
+    DROP POLICY IF EXISTS "Admin access patients identity" ON consultants_identity;
+    DROP POLICY IF EXISTS "Practitioner access patients identity" ON consultants_identity;
     CREATE POLICY "Admin access consultants identity" ON consultants_identity FOR ALL USING (true);
     CREATE POLICY "Practitioner access consultants identity" ON consultants_identity
       FOR ALL USING (practitioner_id = auth.uid());
   END IF;
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'consultants_health') THEN
+    DROP POLICY IF EXISTS "Practitioner access patients health" ON consultants_health;
     CREATE POLICY "Practitioner access consultants health" ON consultants_health
       FOR ALL USING (practitioner_id = auth.uid());
   END IF;
@@ -464,7 +468,6 @@ END $$;
 -- 7. RENOMMER LA FONCTION TRIGGER
 -- ============================================
 
--- Remplacer la fonction trigger pour consultant_plans
 CREATE OR REPLACE FUNCTION public.set_consultant_plans_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -475,13 +478,11 @@ BEGIN
 END;
 $$;
 
--- Recréer le trigger
 DROP TRIGGER IF EXISTS set_patient_plans_updated_at ON consultant_plans;
 CREATE TRIGGER set_consultant_plans_updated_at
   BEFORE UPDATE ON consultant_plans
   FOR EACH ROW EXECUTE FUNCTION public.set_consultant_plans_updated_at();
 
--- Supprimer l'ancienne fonction
 DROP FUNCTION IF EXISTS public.set_patient_plans_updated_at();
 
 COMMIT;
