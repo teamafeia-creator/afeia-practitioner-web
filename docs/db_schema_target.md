@@ -81,6 +81,19 @@ Ce schéma est **le minimum nécessaire** pour faire tourner les flux applicatif
 
 **RLS**: accès restreint via jointure `plan_versions -> plans -> consultants`.
 
+### public.consultant_plans (Conseillanciers / PHV)
+- `id` UUID **PK** DEFAULT gen_random_uuid().
+- `consultant_id` UUID NOT NULL **FK** -> `public.consultants(id)`.
+- `practitioner_id` UUID NOT NULL **FK** -> `public.practitioners(id)`.
+- `version` INTEGER NOT NULL DEFAULT 1.
+- `status` TEXT NOT NULL DEFAULT 'draft' (valeurs: `draft|shared`).
+- `content` JSONB NULL — contenu enrichi du conseillancier (40+ champs). Structure définie dans `lib/conseillancier.ts`.
+- `shared_at` TIMESTAMPTZ NULL — date de partage au consultant.
+- `created_at` TIMESTAMPTZ NOT NULL DEFAULT now().
+- `updated_at` TIMESTAMPTZ NOT NULL DEFAULT now().
+
+**RLS**: accès restreint aux consultants du praticien (`practitioner_id = auth.uid()`).
+
 ### public.journal_entries
 - `id` UUID **PK** DEFAULT gen_random_uuid().
 - `consultant_id` UUID NOT NULL **FK** -> `public.consultants(id)`.

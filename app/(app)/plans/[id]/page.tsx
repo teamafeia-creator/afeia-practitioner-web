@@ -226,7 +226,7 @@ export default function PlanPage() {
         <h1 className="text-2xl font-semibold">Plan introuvable</h1>
         <p className="text-sm text-warmgray">
           Ce plan n&apos;existe pas ou n&apos;a pas de versions.
-          Vous pouvez créer un plan depuis la fiche consultant.
+          Vous pouvez créer un conseillancier depuis le dossier consultant.
         </p>
         <Button variant="secondary" onClick={() => router.push('/consultants')}>
           Retour aux consultants

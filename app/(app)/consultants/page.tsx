@@ -618,9 +618,9 @@ export default function ConsultantsPage() {
                         : 'Aucun RDV';
                       const planLabel = meta.planStatus
                         ? meta.planStatus === 'shared'
-                          ? 'Programme partage'
-                          : 'Bilan en brouillon'
-                        : 'Programme non defini';
+                          ? 'Conseillancier partagé'
+                          : 'Conseillancier en brouillon'
+                        : 'Aucun conseillancier';
                       const progress = meta.progress ?? 0;
 
                       return (

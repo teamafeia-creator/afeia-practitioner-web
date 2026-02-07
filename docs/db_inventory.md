@@ -75,6 +75,22 @@
   - `plan_version_id` (UUID) — `.eq('plan_version_id', ...)`.
   - `title` (TEXT), `body` (TEXT, nullable), `sort_order` (INTEGER) — ordering and UI.
 
+### consultant_plans (Conseillanciers)
+- **Where referenced**: `lib/queries.ts`, `app/api/consultants/[consultantId]/plans/`, `app/api/consultants/[consultantId]/plans/[planId]/pdf/`.
+- **Columns used**
+  - `id` (UUID) — `.eq('id', ...)`.
+  - `consultant_id` (UUID) — `.eq('consultant_id', ...)`.
+  - `practitioner_id` (UUID) — inserted when creating, used in PDF API.
+  - `version` (INTEGER) — ordering, displayed in UI.
+  - `status` (TEXT: `'draft' | 'shared'`) — filtering and UI badge.
+  - `content` (JSONB) — enriched conseillancier content. See `lib/conseillancier.ts` for the full structure with 40+ fields covering: message d'accueil, objectifs, alimentation, phytothérapie, micronutrition, aromatologie, hydrologie, activité physique, équilibre psycho-émotionnel, techniques respiratoires, techniques manuelles, sommeil, environnement, suivi, message de clôture, notes libres.
+  - `shared_at` (TIMESTAMPTZ, nullable) — when the plan was shared.
+  - `created_at`, `updated_at` (TIMESTAMPTZ).
+- **Relations inferred**
+  - `consultant_plans.consultant_id -> consultants.id`.
+  - `consultant_plans.practitioner_id -> practitioners.id`.
+- **Routes/pages/actions**: consultant detail (Conseillancier tab), PDF export API, mobile plans.
+
 ### journal_entries
 - **Where referenced**: `lib/queries.ts`.
 - **Columns used**

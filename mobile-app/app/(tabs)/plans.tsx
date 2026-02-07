@@ -58,8 +58,8 @@ export default function PlansScreen() {
 
       {plans.length === 0 ? (
         <EmptyState
-          message="Aucun plan de soins"
-          description="Votre naturopathe n'a pas encore partagé de plan avec vous"
+          message="Aucun conseillancier"
+          description="Votre naturopathe n'a pas encore partagé de conseillancier avec vous"
         />
       ) : (
         <FlatList
