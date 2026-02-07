@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
 import { verifyApiJwt, getBearerToken } from '@/lib/auth';
-import { sendEmail } from '@/lib/server/email';
 import { InvoicePDFDocument } from '@/lib/invoicing/pdf-generator';
 import { buildInvoiceEmailText } from '@/lib/invoicing/email-templates';
 import type { ConsultationInvoice, InvoiceDocumentType } from '@/lib/invoicing/types';
@@ -45,12 +44,11 @@ export async function POST(request: NextRequest) {
     const documentType = (settings?.libelle_document || 'facture') as InvoiceDocumentType;
 
     // Generer le PDF
-    const pdfBuffer = await renderToBuffer(
-      React.createElement(InvoicePDFDocument, {
-        invoice: typedInvoice,
-        documentType,
-      })
-    );
+    const pdfElement = React.createElement(InvoicePDFDocument, {
+      invoice: typedInvoice,
+      documentType,
+    });
+    const pdfBuffer = await renderToBuffer(pdfElement as Parameters<typeof renderToBuffer>[0]);
 
     // Construire l'email
     const { subject, text, html } = buildInvoiceEmailText(typedInvoice, documentType);

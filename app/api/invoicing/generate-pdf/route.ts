@@ -40,12 +40,11 @@ export async function POST(request: NextRequest) {
 
     const documentType = (settings?.libelle_document || 'facture') as InvoiceDocumentType;
 
-    const pdfBuffer = await renderToBuffer(
-      React.createElement(InvoicePDFDocument, {
-        invoice: invoice as ConsultationInvoice,
-        documentType,
-      })
-    );
+    const pdfElement = React.createElement(InvoicePDFDocument, {
+      invoice: invoice as ConsultationInvoice,
+      documentType,
+    });
+    const pdfBuffer = await renderToBuffer(pdfElement as Parameters<typeof renderToBuffer>[0]);
 
     const filename = `${documentType}_${invoice.numero || 'brouillon'}.pdf`;
 
