@@ -21,6 +21,7 @@ export default function InvoiceDetailPage() {
   const [history, setHistory] = useState<InvoiceHistory[]>([]);
   const [authToken, setAuthToken] = useState('');
   const [loading, setLoading] = useState(true);
+  const [stripeConnected, setStripeConnected] = useState(false);
 
   const fetchInvoice = useCallback(async () => {
     setLoading(true);
@@ -30,15 +31,25 @@ export default function InvoiceDetailPage() {
       if (!token) return;
       setAuthToken(token);
 
-      const response = await fetch(`/api/invoicing/${invoiceId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const [invoiceRes, stripeRes] = await Promise.all([
+        fetch(`/api/invoicing/${invoiceId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch('/api/stripe/connect/account-status', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-      if (!response.ok) throw new Error('Facture introuvable');
+      if (!invoiceRes.ok) throw new Error('Facture introuvable');
 
-      const data = await response.json();
+      const data = await invoiceRes.json();
       setInvoice(data.invoice);
       setHistory(data.history);
+
+      if (stripeRes.ok) {
+        const stripeData = await stripeRes.json();
+        setStripeConnected(stripeData.connected && stripeData.charges_enabled);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -95,6 +106,7 @@ export default function InvoiceDetailPage() {
         invoice={invoice}
         authToken={authToken}
         onRefresh={fetchInvoice}
+        stripeConnected={stripeConnected}
       />
 
       <InvoiceDetail invoice={invoice} />

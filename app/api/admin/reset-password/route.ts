@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/server/adminGuard';
+import { requireAdminAuth } from '@/lib/admin/auth';
+import { logAdminAction, getClientIp } from '@/lib/admin/audit-log';
 
 export async function POST(request: NextRequest) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }
@@ -26,6 +27,15 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await logAdminAction({
+    adminUserId: guard.user.id || undefined,
+    adminEmail: guard.user.email,
+    action: 'practitioner.password_reset',
+    targetType: 'practitioner',
+    details: { email },
+    ipAddress: getClientIp(request) ?? undefined,
+  });
 
   return NextResponse.json({ success: true });
 }

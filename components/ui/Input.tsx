@@ -13,7 +13,7 @@ export function Input({ className, label, hint, id, ...props }: Props) {
     <input
       id={inputId}
       className={cn(
-        'w-full rounded-sm border border-teal/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal placeholder:text-warmgray/80 transition duration-200 focus:border-teal focus:outline-none focus:ring-[3px] focus:ring-teal/10',
+        'w-full rounded-[10px] border border-divider bg-white px-3.5 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-150 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20',
         className
       )}
       {...props}
@@ -24,9 +24,9 @@ export function Input({ className, label, hint, id, ...props }: Props) {
 
   return (
     <label className="block">
-      <span className="text-[13px] font-medium text-warmgray">{label}</span>
+      <span className="text-xs font-medium text-stone">{label}</span>
       <div className="mt-1">{field}</div>
-      {hint ? <div className="mt-1 text-xs text-warmgray">{hint}</div> : null}
+      {hint ? <div className="mt-1 text-xs text-stone">{hint}</div> : null}
     </label>
   );
 }

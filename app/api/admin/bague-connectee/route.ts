@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/server/adminGuard';
+import { requireAdminAuth } from '@/lib/admin/auth';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -11,7 +11,7 @@ function getNumber(value: string | null, fallback: number) {
 }
 
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }

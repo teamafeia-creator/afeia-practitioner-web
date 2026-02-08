@@ -12,22 +12,22 @@ interface CardProps extends Omit<HTMLMotionProps<'div'>, 'ref'> {
 const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', interactive = false, children, ...props }, ref) => {
     const variants = {
-      default: 'glass-card',
-      hover: 'glass-card hover:shadow-teal-hover hover:border-teal/20',
-      selected: 'glass-card ring-2 ring-teal',
-      gradient: 'bg-gradient-to-br from-white/70 to-sable/40 backdrop-blur-md shadow-md ring-1 ring-white/50'
+      default: 'bg-white border border-divider shadow-card',
+      hover: 'bg-white border border-divider shadow-card hover:shadow-card-hover',
+      selected: 'bg-white border-2 border-sage shadow-card',
+      gradient: 'bg-white border border-divider shadow-card'
     };
 
     if (interactive) {
       return (
         <motion.div
           ref={ref}
-          whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(26, 108, 108, 0.12)' }}
           whileTap={{ scale: 0.98 }}
           transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           className={cn(
-            'rounded-lg p-5 transition-all duration-200 cursor-pointer',
+            'rounded-xl p-5 transition-shadow duration-200 cursor-pointer',
             variants[variant],
+            'hover:shadow-card-hover',
             className
           )}
           {...props}
@@ -40,11 +40,11 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
         className={cn(
-          'rounded-lg transition-all duration-200',
+          'rounded-xl transition-shadow duration-200',
           variants[variant],
           className
         )}
@@ -67,7 +67,7 @@ function CardHeader({ className, gradient, ...props }: CardHeaderProps) {
     <div
       className={cn(
         'p-5 pb-0',
-        gradient && 'bg-gradient-to-r from-teal/5 to-teal-light rounded-t-lg p-5',
+        gradient && 'bg-sage-light/50 rounded-t-xl p-5',
         className
       )}
       {...props}
@@ -78,7 +78,7 @@ function CardHeader({ className, gradient, ...props }: CardHeaderProps) {
 function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={cn('text-lg font-semibold text-charcoal tracking-tight', className)}
+      className={cn('text-base font-semibold text-charcoal tracking-tight', className)}
       {...props}
     />
   );
@@ -87,7 +87,7 @@ function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElem
 function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn('text-sm text-warmgray mt-1', className)}
+      className={cn('text-[13px] text-stone mt-1', className)}
       {...props}
     />
   );

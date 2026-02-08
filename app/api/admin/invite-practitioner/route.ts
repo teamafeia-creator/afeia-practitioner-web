@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/server/adminGuard';
+import { requireAdminAuth } from '@/lib/admin/auth';
+import { logAdminAction, getClientIp } from '@/lib/admin/audit-log';
 
 export async function POST(request: NextRequest) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }
@@ -45,6 +46,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: upsertError.message }, { status: 500 });
     }
   }
+
+  await logAdminAction({
+    adminUserId: guard.user.id || undefined,
+    adminEmail: guard.user.email,
+    action: 'practitioner.invite',
+    targetType: 'practitioner',
+    targetId: userId ?? undefined,
+    details: { email, full_name: fullName },
+    ipAddress: getClientIp(request) ?? undefined,
+  });
 
   return NextResponse.json({ success: true, userId });
 }

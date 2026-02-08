@@ -63,3 +63,36 @@ export const markPaidSchema = z.object({
 });
 
 export type MarkPaidInput = z.infer<typeof markPaidSchema>;
+
+// V2 schemas
+
+export const createAvoirSchema = z.object({
+  facture_origine_id: z.string().uuid(),
+  motif_remboursement: z.enum([
+    'consultation_annulee',
+    'erreur_facturation',
+    'geste_commercial',
+    'autre',
+  ]),
+  motif_detail: z.string().optional(),
+});
+
+export type CreateAvoirInput = z.infer<typeof createAvoirSchema>;
+
+export const reminderSettingsSchema = z.object({
+  relances_auto: z.boolean(),
+  delai_relance_j7: z.boolean(),
+  delai_relance_j15: z.boolean(),
+  delai_relance_j30: z.boolean(),
+  email_template_relance_j7: z.string().nullable().optional(),
+  email_template_relance_j15: z.string().nullable().optional(),
+  email_template_relance_j30: z.string().nullable().optional(),
+});
+
+export type ReminderSettingsInput = z.infer<typeof reminderSettingsSchema>;
+
+export const exportQuerySchema = z.object({
+  period: z.enum(['month', 'quarter', 'year']).default('month'),
+  year: z.coerce.number().optional(),
+  month: z.coerce.number().optional(),
+});

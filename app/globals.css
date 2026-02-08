@@ -4,18 +4,34 @@
 
 :root {
   color-scheme: light;
-  --teal-dark: #1A6C6C;
-  --teal-medium: #2A8080;
-  --teal-light: #E8F0F0;
-  --aubergine: #85004F;
-  --gold: #FF9A3D;
-  --sage: #89A889;
-  --charcoal: #3D3D3D;
-  --warmgray: #8C8680;
-  --warmgray-light: #C4C0BC;
-  --sable: #F5EFE7;
-  --sable-light: #FFF8F0;
-  --sable-dark: #EDE5D8;
+  --sage: #5B8C6E;
+  --sage-light: #E8F0EB;
+  --sage-dark: #4A7A5D;
+  --terracotta: #C4856C;
+  --terracotta-light: #F5E0D5;
+  --terracotta-dark: #A8705A;
+  --charcoal: #2D3436;
+  --stone: #6B7280;
+  --mist: #9CA3AF;
+  --cream: #FBF7F2;
+  --divider: #E5E1DB;
+  --gold: #D4A060;
+  --rose: #D4738B;
+  --sky: #7EB0D4;
+  --success: #7BAE7F;
+  --sidebar-bg: #2D3436;
+  --sidebar-text: #E8E6E1;
+
+  /* Legacy aliases */
+  --teal-dark: #5B8C6E;
+  --teal-medium: #5B8C6E;
+  --teal-light: #E8F0EB;
+  --aubergine: #C4856C;
+  --warmgray: #6B7280;
+  --warmgray-light: #E5E1DB;
+  --sable: #FBF7F2;
+  --sable-light: #FBF7F2;
+  --sable-dark: #E5E1DB;
 }
 
 html {
@@ -28,147 +44,143 @@ html, body {
 
 body {
   @apply text-charcoal;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-  background: linear-gradient(135deg, #EDE5D8 0%, #F5EFE7 25%, #FFF8F0 50%, #F5F4F0 75%, #EDE5D8 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  background: linear-gradient(180deg, #FBF7F2 0%, #FFFFFF 60%, #FFFFFF 100%);
   background-attachment: fixed;
 }
 
-/* Glassmorphism utilities - Enhanced visibility */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px) saturate(1.3);
-  -webkit-backdrop-filter: blur(20px) saturate(1.3);
-  border: 1px solid rgba(26, 108, 108, 0.1);
-  box-shadow: 0 4px 20px rgba(26, 108, 108, 0.06);
-}
+/* ============================================
+   CARD & PANEL STYLES — Soft Opaque
+   ============================================ */
 
+/* Standard card - white, opaque, warm shadow */
 .glass-card {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-  border: 1px solid rgba(26, 108, 108, 0.12);
-  box-shadow: 0 4px 20px rgba(26, 108, 108, 0.06);
-  border-radius: 10px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #FFFFFF;
+  border: 1px solid #E5E1DB;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
+              0 4px 12px rgba(45, 52, 54, 0.02);
+  transition: box-shadow 200ms ease;
 }
 
 .glass-card:hover {
-  box-shadow: 0 8px 24px rgba(26, 108, 108, 0.12);
-  border-color: rgba(26, 108, 108, 0.2);
+  box-shadow: 0 2px 8px rgba(45, 52, 54, 0.05),
+              0 8px 24px rgba(45, 52, 54, 0.04);
 }
 
+/* Panel - same as card but for wider containers */
+.glass-panel {
+  background: #FFFFFF;
+  border: 1px solid #E5E1DB;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
+              0 4px 12px rgba(45, 52, 54, 0.02);
+}
+
+/* Sidebar — opaque charcoal */
 .glass-sidebar {
-  background: rgba(255, 248, 240, 0.7);
-  backdrop-filter: blur(20px) saturate(1.3);
-  -webkit-backdrop-filter: blur(20px) saturate(1.3);
-  border-right: 1px solid rgba(26, 108, 108, 0.1);
+  background: #2D3436;
 }
 
+/* Header — opaque white */
 .glass-header {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px) saturate(1.2);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  border-bottom: 1px solid rgba(26, 108, 108, 0.1);
+  background: #FFFFFF;
+  border-bottom: 1px solid #E5E1DB;
 }
 
-/* Fallback for browsers without backdrop-filter support */
-@supports not (backdrop-filter: blur(12px)) {
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.92);
-  }
-  .glass-card {
-    background: rgba(255, 255, 255, 0.92);
-  }
-  .glass-sidebar {
-    background: rgba(255, 248, 240, 0.95);
-  }
-  .glass-header {
-    background: rgba(255, 255, 255, 0.92);
-  }
-}
-
-.background-texture {
-  background-image: url('/background-nature.svg');
-  background-repeat: no-repeat;
-  background-position: center top;
-  background-size: cover;
-}
-
-/* Focus ring utility for non-inputs */
+/* Focus ring */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-teal/30 focus:ring-offset-2;
+  @apply focus:outline-none focus:ring-2 focus:ring-sage/30 focus:ring-offset-2;
 }
 
-/* Alert card styles */
+/* ============================================
+   ALERT & ACTION CARD STYLES
+   ============================================ */
+
 .alert-card {
-  @apply glass-card p-5;
+  background: #FFFFFF;
+  border: 1px solid #E5E1DB;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
+              0 4px 12px rgba(45, 52, 54, 0.02);
 }
 
 .alert-card:hover {
-  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(45, 52, 54, 0.05),
+              0 8px 24px rgba(45, 52, 54, 0.04);
 }
 
-/* Action card styles */
 .action-card {
-  @apply glass-card p-5 cursor-pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #FFFFFF;
+  border: 1px solid #E5E1DB;
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
+              0 4px 12px rgba(45, 52, 54, 0.02);
+  transition: box-shadow 200ms ease;
 }
 
 .action-card:hover {
-  background: linear-gradient(135deg, #1A6C6C 0%, #155858 100%);
-  border-color: #1A6C6C;
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(26, 108, 108, 0.25);
+  box-shadow: 0 2px 8px rgba(45, 52, 54, 0.05),
+              0 8px 24px rgba(45, 52, 54, 0.04);
 }
 
-.action-card:hover .action-icon,
-.action-card:hover .action-title,
-.action-card:hover .action-desc {
-  color: white;
-}
-
-/* Consultant card styles */
+/* Consultant card */
 .consultant-card {
-  @apply glass-card p-5 cursor-pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #FFFFFF;
+  border: 1px solid #E5E1DB;
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
+              0 4px 12px rgba(45, 52, 54, 0.02);
+  transition: box-shadow 200ms ease;
 }
 
 .consultant-card:hover {
-  transform: translateX(6px);
-  border-color: rgba(26, 108, 108, 0.3);
-  box-shadow: 0 6px 24px rgba(26, 108, 108, 0.12);
+  box-shadow: 0 2px 8px rgba(45, 52, 54, 0.05),
+              0 8px 24px rgba(45, 52, 54, 0.04);
+  border-color: #5B8C6E40;
 }
 
-/* Badge styles */
+/* ============================================
+   BADGE STYLES — 5 variants
+   ============================================ */
+
 .badge-urgent {
-  background: rgba(255, 154, 61, 0.15);
-  color: #FF9A3D;
-  border: 1px solid rgba(255, 154, 61, 0.3);
+  background: rgba(212, 115, 139, 0.12);
+  color: #D4738B;
+  border: 1px solid rgba(212, 115, 139, 0.25);
 }
 
 .badge-info {
-  background: rgba(133, 0, 79, 0.15);
-  color: #85004F;
-  border: 1px solid rgba(133, 0, 79, 0.2);
+  background: rgba(107, 114, 128, 0.1);
+  color: #6B7280;
+  border: 1px solid rgba(107, 114, 128, 0.2);
 }
 
 .badge-premium {
-  background: rgba(133, 0, 79, 0.12);
-  color: #85004F;
-  border: 1px solid rgba(133, 0, 79, 0.2);
+  background: rgba(196, 133, 108, 0.12);
+  color: #A8705A;
+  border: 1px solid rgba(196, 133, 108, 0.25);
 }
 
 .badge-standard {
-  background: rgba(26, 108, 108, 0.08);
-  color: #1A6C6C;
-  border: 1px solid rgba(26, 108, 108, 0.15);
+  background: rgba(91, 140, 110, 0.1);
+  color: #5B8C6E;
+  border: 1px solid rgba(91, 140, 110, 0.2);
 }
 
-/* Toggle group styles */
+/* ============================================
+   TOGGLE / CHIP STYLES
+   ============================================ */
+
 .toggle-group {
   display: flex;
-  background: rgba(26, 108, 108, 0.08);
-  border-radius: 6px;
+  background: rgba(91, 140, 110, 0.06);
+  border-radius: 10px;
   padding: 2px;
   gap: 2px;
 }
@@ -177,153 +189,132 @@ body {
   padding: 6px 14px;
   border: none;
   background: transparent;
-  color: #8C8680;
+  color: #6B7280;
   font-size: 13px;
   font-weight: 500;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .toggle-btn.active {
-  background: #1A6C6C;
+  background: #5B8C6E;
   color: white;
-  box-shadow: 0 2px 8px rgba(26, 108, 108, 0.2);
+  box-shadow: 0 2px 8px rgba(91, 140, 110, 0.2);
 }
 
-/* Chip styles */
 .chip {
   padding: 6px 14px;
-  border: 1px solid rgba(26, 108, 108, 0.2);
+  border: 1px solid #E5E1DB;
   background: transparent;
-  color: #3D3D3D;
+  color: #2D3436;
   font-size: 13px;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: 20px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .chip.active {
-  background: #85004F;
-  border-color: #85004F;
+  background: #5B8C6E;
+  border-color: #5B8C6E;
   color: white;
 }
 
-/* Progress bar styles */
+/* ============================================
+   PROGRESS BAR
+   ============================================ */
+
 .progress-bar {
   width: 120px;
   height: 6px;
-  background: rgba(26, 108, 108, 0.1);
+  background: rgba(91, 140, 110, 0.1);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #1A6C6C 0%, #2A8080 100%);
+  background: linear-gradient(90deg, #5B8C6E 0%, #7BAE7F 100%);
   transition: width 0.3s ease;
 }
 
-/* Alphabet index styles */
-.alphabet-index {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
-  border-radius: 20px;
-}
+/* ============================================
+   STATUS DOT
+   ============================================ */
 
-.alphabet-letter {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  color: #1A6C6C;
-  text-decoration: none;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-}
-
-.alphabet-letter:hover {
-  background: rgba(26, 108, 108, 0.1);
-  transform: scale(1.1);
-}
-
-.alphabet-letter.active {
-  background: #1A6C6C;
-  color: white;
-  box-shadow: 0 2px 8px rgba(26, 108, 108, 0.3);
-}
-
-.alphabet-letter.disabled {
-  opacity: 0.2;
-  cursor: default;
-  pointer-events: none;
-}
-
-/* Section letter (giant transparent) */
-.section-letter {
-  font-size: 64px;
-  font-weight: 700;
-  color: rgba(26, 108, 108, 0.12);
-  margin-bottom: 20px;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
-/* Message badge */
-.message-badge {
-  padding: 4px 10px;
-  background: rgba(255, 154, 61, 0.15);
-  color: #FF9A3D;
-  border: 1px solid rgba(255, 154, 61, 0.3);
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/* Status dot */
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #89A889;
+  background: #7BAE7F;
 }
 
 .status-dot.inactive {
-  background: #8C8680;
+  background: #9CA3AF;
 }
 
-/* Alert action button */
+.status-dot.warning {
+  background: #D4A060;
+}
+
+.status-dot.urgent {
+  background: #D4738B;
+}
+
+/* ============================================
+   MESSAGE BADGE
+   ============================================ */
+
+.message-badge {
+  padding: 4px 10px;
+  background: rgba(196, 133, 108, 0.12);
+  color: #A8705A;
+  border: 1px solid rgba(196, 133, 108, 0.25);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ============================================
+   ALERT ACTION BUTTON
+   ============================================ */
+
 .alert-action {
   padding: 8px 16px;
-  background: linear-gradient(135deg, #1A6C6C 0%, #155858 100%);
+  background: #5B8C6E;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 150ms ease;
 }
 
 .alert-action:hover {
-  transform: translateX(2px);
-  box-shadow: 0 4px 12px rgba(26, 108, 108, 0.3);
+  background: #4A7A5D;
 }
 
-/* Typography helpers */
+/* ============================================
+   TYPOGRAPHY — Section titles (sentence case)
+   ============================================ */
+
 .section-title {
-  font-size: 14px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #8C8680;
+  font-size: 20px;
+  font-weight: 600;
+  font-family: 'Source Serif 4', 'Lora', Georgia, serif;
+  color: #2D3436;
+  letter-spacing: -0.02em;
+}
+
+/* ============================================
+   RECESSED ZONE (cream background)
+   ============================================ */
+
+.recessed {
+  background: #FBF7F2;
+  border-radius: 12px;
 }
 
 /* ============================================
@@ -332,7 +323,7 @@ body {
    ============================================ */
 .agenda-calendar-wrapper .rbc-calendar {
   font-family: inherit;
-  color: #3D3D3D;
+  color: #2D3436;
 }
 
 .agenda-calendar-wrapper .rbc-toolbar {
@@ -346,80 +337,80 @@ body {
   font-size: 13px;
   font-weight: 500;
   padding: 6px 14px;
-  border: 1px solid rgba(26, 108, 108, 0.2);
-  border-radius: 6px;
-  color: #3D3D3D;
+  border: 1px solid #E5E1DB;
+  border-radius: 10px;
+  color: #2D3436;
   background: transparent;
   transition: all 0.15s ease;
 }
 
 .agenda-calendar-wrapper .rbc-toolbar button:hover {
-  background: rgba(26, 108, 108, 0.05);
-  border-color: rgba(26, 108, 108, 0.4);
+  background: rgba(91, 140, 110, 0.05);
+  border-color: rgba(91, 140, 110, 0.3);
 }
 
 .agenda-calendar-wrapper .rbc-toolbar button.rbc-active {
-  background: #1A6C6C;
+  background: #5B8C6E;
   color: white;
-  border-color: #1A6C6C;
-  box-shadow: 0 2px 8px rgba(26, 108, 108, 0.2);
+  border-color: #5B8C6E;
+  box-shadow: 0 2px 8px rgba(91, 140, 110, 0.2);
 }
 
 .agenda-calendar-wrapper .rbc-toolbar-label {
   font-weight: 600;
-  color: #3D3D3D;
+  color: #2D3436;
   text-transform: capitalize;
 }
 
 .agenda-calendar-wrapper .rbc-header {
   font-size: 13px;
   font-weight: 600;
-  color: #8C8680;
+  color: #6B7280;
   text-transform: capitalize;
   padding: 8px 4px;
-  border-bottom: 1px solid rgba(26, 108, 108, 0.1);
+  border-bottom: 1px solid #E5E1DB;
 }
 
 .agenda-calendar-wrapper .rbc-time-view,
 .agenda-calendar-wrapper .rbc-month-view {
-  border: 1px solid rgba(26, 108, 108, 0.1);
-  border-radius: 8px;
+  border: 1px solid #E5E1DB;
+  border-radius: 12px;
   overflow: hidden;
 }
 
 .agenda-calendar-wrapper .rbc-time-header-content {
-  border-left: 1px solid rgba(26, 108, 108, 0.08);
+  border-left: 1px solid rgba(229, 225, 219, 0.6);
 }
 
 .agenda-calendar-wrapper .rbc-time-content {
-  border-top: 1px solid rgba(26, 108, 108, 0.1);
+  border-top: 1px solid #E5E1DB;
 }
 
 .agenda-calendar-wrapper .rbc-time-slot {
-  border-top: 1px solid rgba(26, 108, 108, 0.05);
+  border-top: 1px solid rgba(229, 225, 219, 0.4);
 }
 
 .agenda-calendar-wrapper .rbc-timeslot-group {
-  border-bottom: 1px solid rgba(26, 108, 108, 0.08);
+  border-bottom: 1px solid rgba(229, 225, 219, 0.5);
   min-height: 50px;
 }
 
 .agenda-calendar-wrapper .rbc-time-gutter .rbc-label {
   font-size: 11px;
-  color: #8C8680;
+  color: #6B7280;
   padding: 0 8px;
 }
 
 .agenda-calendar-wrapper .rbc-day-slot .rbc-time-slot {
-  border-top: 1px solid rgba(26, 108, 108, 0.04);
+  border-top: 1px solid rgba(229, 225, 219, 0.3);
 }
 
 .agenda-calendar-wrapper .rbc-today {
-  background-color: rgba(26, 108, 108, 0.03);
+  background-color: rgba(91, 140, 110, 0.03);
 }
 
 .agenda-calendar-wrapper .rbc-current-time-indicator {
-  background-color: #E91E63;
+  background-color: #D4738B;
   height: 2px;
 }
 
@@ -431,7 +422,7 @@ body {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background-color: #E91E63;
+  background-color: #D4738B;
 }
 
 .agenda-calendar-wrapper .rbc-event {
@@ -452,12 +443,12 @@ body {
 
 .agenda-calendar-wrapper .rbc-show-more {
   font-size: 12px;
-  color: #1A6C6C;
+  color: #5B8C6E;
   font-weight: 500;
 }
 
 .agenda-calendar-wrapper .rbc-off-range-bg {
-  background-color: rgba(140, 134, 128, 0.05);
+  background-color: rgba(107, 114, 128, 0.03);
 }
 
 .agenda-calendar-wrapper .rbc-agenda-view table {
@@ -468,24 +459,24 @@ body {
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-table td,
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-table th {
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(26, 108, 108, 0.08);
+  border-bottom: 1px solid #E5E1DB;
   font-size: 13px;
 }
 
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-date-cell {
   font-weight: 600;
-  color: #3D3D3D;
+  color: #2D3436;
   text-transform: capitalize;
   white-space: nowrap;
 }
 
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-time-cell {
-  color: #8C8680;
+  color: #6B7280;
   white-space: nowrap;
 }
 
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-event-cell {
-  color: #3D3D3D;
+  color: #2D3436;
 }
 
 /* Responsive */

@@ -29,22 +29,22 @@ export function AdminDataTable<T>({
 }: AdminDataTableProps<T>) {
   return (
     <div className={cn('space-y-4', className)}>
-      <div className="overflow-hidden rounded-2xl border border-white/20 bg-white/80 shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-sm">
-          <thead className="bg-sand">
-            <tr className="text-left text-xs uppercase tracking-wide text-warmgray">
+          <thead className="bg-slate-50">
+            <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
               {columns.map((column) => (
-                <th key={column.key} className={cn('px-4 py-3', column.className)}>
+                <th key={column.key} className={cn('px-3 py-2', column.className)}>
                   {column.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
+          <tbody className="divide-y divide-slate-100">
             {isLoading ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-8">
-                  <div className="flex items-center justify-center gap-2 text-sm text-warmgray">
+                <td colSpan={columns.length} className="px-3 py-8">
+                  <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
                     <Spinner size="sm" />
                     Chargement...
                   </div>
@@ -52,15 +52,15 @@ export function AdminDataTable<T>({
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-warmgray">
+                <td colSpan={columns.length} className="px-3 py-8 text-center text-sm text-slate-500">
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
               rows.map((row, index) => (
-                <tr key={index} className="text-charcoal">
+                <tr key={index} className="text-slate-800 hover:bg-slate-50">
                   {columns.map((column) => (
-                    <td key={column.key} className={cn('px-4 py-3', column.className)}>
+                    <td key={column.key} className={cn('px-3 py-2', column.className)}>
                       {column.render ? column.render(row) : (row as Record<string, React.ReactNode>)[column.key]}
                     </td>
                   ))}
