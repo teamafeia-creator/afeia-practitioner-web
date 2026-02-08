@@ -261,23 +261,40 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold">Abonnement</h2>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-charcoal">Plan</div>
-              <Badge variant="premium">Premium</Badge>
-            </div>
-            <div className="rounded-lg bg-white/60 p-3 text-sm text-charcoal border border-teal/10">
-              Circular (sommeil, HRV, activite) active pour les consultants Premium.
-            </div>
-            <Button variant="secondary" onClick={() => router.push('/billing')}>
-              Gérer la facturation
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Agenda</h2>
+              <p className="text-xs text-warmgray">Configurez vos types de seances et disponibilites.</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/consultation-types')}>
+                Types de seance
+              </Button>
+              <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/availability')}>
+                Disponibilites
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Abonnement</h2>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-charcoal">Plan</div>
+                <Badge variant="premium">Premium</Badge>
+              </div>
+              <div className="rounded-lg bg-white/60 p-3 text-sm text-charcoal border border-teal/10">
+                Circular (sommeil, HRV, activite) active pour les consultants Premium.
+              </div>
+              <Button variant="secondary" onClick={() => router.push('/billing')}>
+                Gérer la facturation
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
       {toast ? (
         <Toast

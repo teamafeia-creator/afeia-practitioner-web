@@ -206,16 +206,22 @@ function buildJournalForm(entry?: JournalEntry): Partial<JournalEntry> {
   };
 }
 
-const APPOINTMENT_STATUS_LABEL: Record<Appointment['status'], string> = {
-  scheduled: 'Planifié',
-  cancelled: 'Annulé',
-  completed: 'Terminé'
+const APPOINTMENT_STATUS_LABEL: Record<string, string> = {
+  scheduled: 'Planifie',
+  confirmed: 'Confirme',
+  in_progress: 'En cours',
+  cancelled: 'Annule',
+  completed: 'Termine',
+  rescheduled: 'Reporte',
 };
 
-const APPOINTMENT_STATUS_VARIANT: Record<Appointment['status'], 'info' | 'attention' | 'success'> = {
+const APPOINTMENT_STATUS_VARIANT: Record<string, 'info' | 'attention' | 'success'> = {
   scheduled: 'info',
+  confirmed: 'info',
+  in_progress: 'info',
   cancelled: 'attention',
-  completed: 'success'
+  completed: 'success',
+  rescheduled: 'attention',
 };
 
 function renderAdherence(entry: JournalEntry) {
@@ -396,7 +402,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   const upcomingAppointment = useMemo(() => {
     const now = new Date();
     return sortedAppointments
-      .filter((appointment) => appointment.status === 'scheduled')
+      .filter((appointment) => ['scheduled', 'confirmed', 'in_progress'].includes(appointment.status))
       .map((appointment) => ({
         ...appointment,
         starts: new Date(appointment.starts_at)
@@ -1059,89 +1065,129 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
 
       {tab === 'Rendez-vous' && (
         <div className="space-y-4">
+          <div className="flex justify-end">
+            <Button
+              variant="primary"
+              onClick={() => router.push(`/agenda`)}
+              icon={<span className="text-sm">+</span>}
+            >
+              Planifier une seance
+            </Button>
+          </div>
           <div className="grid gap-4 lg:grid-cols-2">
+            {/* Upcoming appointments */}
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold">Prochain rendez-vous</h2>
+                <h2 className="text-sm font-semibold">Prochaines seances</h2>
               </CardHeader>
               <CardContent>
-                {upcomingAppointment ? (
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-warmgray">Date</p>
-                      <p className="mt-1 text-sm text-marine">
-                        {formatDate(upcomingAppointment.starts_at, true)}
-                      </p>
+                {(() => {
+                  const now = new Date();
+                  const upcoming = sortedAppointments
+                    .filter((a) => ['scheduled', 'confirmed', 'in_progress'].includes(a.status) && new Date(a.starts_at) > now)
+                    .reverse();
+                  if (upcoming.length === 0) {
+                    return (
+                      <EmptyState
+                        icon="calendar"
+                        title="A planifier"
+                        description="Aucune seance programmee pour le moment."
+                        action={
+                          <Button variant="primary" onClick={() => router.push('/agenda')}>
+                            Ouvrir l&apos;agenda
+                          </Button>
+                        }
+                      />
+                    );
+                  }
+                  return (
+                    <div className="space-y-3">
+                      {upcoming.map((appointment) => (
+                        <div
+                          key={appointment.id}
+                          className="rounded-lg bg-white/60 p-4 border border-teal/10"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-medium text-charcoal">
+                                {formatDate(appointment.starts_at, true)}
+                              </p>
+                              {appointment.ends_at ? (
+                                <p className="text-xs text-warmgray">
+                                  {formatDate(appointment.starts_at, true)} - {formatDate(appointment.ends_at, true)}
+                                </p>
+                              ) : null}
+                            </div>
+                            <Badge variant={APPOINTMENT_STATUS_VARIANT[appointment.status] || 'info'}>
+                              {APPOINTMENT_STATUS_LABEL[appointment.status] || appointment.status}
+                            </Badge>
+                          </div>
+                          {(appointment.notes_internal || appointment.notes) ? (
+                            <p className="mt-2 text-sm text-marine">{appointment.notes_internal || appointment.notes}</p>
+                          ) : null}
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={APPOINTMENT_STATUS_VARIANT[upcomingAppointment.status]}>
-                        {APPOINTMENT_STATUS_LABEL[upcomingAppointment.status]}
-                      </Badge>
-                      {upcomingAppointment.ends_at ? (
-                        <span className="text-xs text-warmgray">
-                          Fin prévue {formatDate(upcomingAppointment.ends_at, true)}
-                        </span>
-                      ) : null}
-                    </div>
-                    {upcomingAppointment.notes ? (
-                      <p className="text-sm text-marine">{upcomingAppointment.notes}</p>
-                    ) : null}
-                  </div>
-                ) : (
-                  <EmptyState
-                    icon="calendar"
-                    title="A planifier"
-                    description="Aucune consultation programmee pour le moment."
-                    action={
-                      <Button variant="primary" onClick={openAppointmentModal}>
-                        Planifier un rendez-vous
-                      </Button>
-                    }
-                  />
-                )}
+                  );
+                })()}
               </CardContent>
             </Card>
 
+            {/* History */}
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold">Historique</h2>
+                <h2 className="text-sm font-semibold">Historique des seances</h2>
               </CardHeader>
               <CardContent>
-                {sortedAppointments.length === 0 ? (
-                  <EmptyState
-                    icon="appointments"
-                    title="Aucun rendez-vous enregistre"
-                    description="L'historique des consultations apparaitra ici."
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    {sortedAppointments.map((appointment) => (
-                      <div
-                        key={appointment.id}
-                        className="rounded-lg bg-white/60 p-4 border border-teal/10"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-medium text-charcoal">
-                              {formatDate(appointment.starts_at, true)}
-                            </p>
-                            {appointment.ends_at ? (
-                              <p className="text-xs text-warmgray">
-                                Fin : {formatDate(appointment.ends_at, true)}
+                {(() => {
+                  const history = sortedAppointments.filter((a) =>
+                    ['completed', 'cancelled', 'rescheduled'].includes(a.status)
+                  );
+                  if (history.length === 0) {
+                    return (
+                      <EmptyState
+                        icon="appointments"
+                        title="Aucune seance passee"
+                        description="L'historique des seances apparaitra ici."
+                      />
+                    );
+                  }
+                  return (
+                    <div className="space-y-3">
+                      {history.map((appointment) => (
+                        <div
+                          key={appointment.id}
+                          className={cn(
+                            'rounded-lg bg-white/60 p-4 border border-teal/10',
+                            appointment.status === 'cancelled' && 'opacity-60'
+                          )}
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <p className={cn(
+                                'text-sm font-medium text-charcoal',
+                                appointment.status === 'cancelled' && 'line-through'
+                              )}>
+                                {formatDate(appointment.starts_at, true)}
                               </p>
-                            ) : null}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={APPOINTMENT_STATUS_VARIANT[appointment.status] || 'info'}>
+                                {APPOINTMENT_STATUS_LABEL[appointment.status] || appointment.status}
+                              </Badge>
+                              {appointment.status === 'completed' && !appointment.notes_internal && !appointment.notes && (
+                                <span className="text-xs text-amber-600">Notes a rediger</span>
+                              )}
+                            </div>
                           </div>
-                          <Badge variant={APPOINTMENT_STATUS_VARIANT[appointment.status]}>
-                            {APPOINTMENT_STATUS_LABEL[appointment.status]}
-                          </Badge>
+                          {(appointment.notes_internal || appointment.notes) ? (
+                            <p className="mt-2 text-sm text-marine">{appointment.notes_internal || appointment.notes}</p>
+                          ) : null}
                         </div>
-                        {appointment.notes ? (
-                          <p className="mt-2 text-sm text-marine">{appointment.notes}</p>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>

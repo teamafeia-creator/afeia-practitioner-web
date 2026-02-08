@@ -10,6 +10,7 @@ import { NotificationDropdown } from '../notifications/NotificationDropdown';
 import { supabase } from '../../lib/supabase';
 import { Avatar } from '../ui/Avatar';
 import {
+  Calendar,
   ChevronDown,
   LayoutDashboard,
   Users,
@@ -80,7 +81,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       admin: 'Admin',
       admins: 'Admins',
       practitioners: 'Praticiens',
-      circular: 'Circular'
+      circular: 'Circular',
+      'consultation-types': 'Types de seance',
+      availability: 'Disponibilites'
     };
 
     const lastSegment = segments[segments.length - 1];
