@@ -7,7 +7,6 @@ import {
   Calendar,
   ClipboardList,
   Send,
-  AlertCircle,
   Users,
   FileText,
   ChevronRight,
@@ -18,8 +17,6 @@ import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { SkeletonDashboard } from '@/components/ui/Skeleton';
-import { StatCard } from '@/components/ui/StatCard';
-import { getCalendlyUrlForCurrentPractitioner } from '@/lib/calendly';
 import { getTodayAppointments, getRecentCompletedWithoutNotes } from '@/lib/queries/appointments';
 import { supabase } from '@/lib/supabase';
 import { useRequireAuth } from '@/hooks/useAuth';
@@ -28,7 +25,7 @@ import type { Appointment } from '@/lib/types';
 
 type ConsultantRow = {
   id: string;
-  full_name?: string | null;
+  name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   is_premium?: boolean | null;
@@ -67,7 +64,7 @@ const timeFormatter = new Intl.DateTimeFormat('fr-FR', {
 const RECONTACT_DAYS = 30;
 
 function getConsultantName(consultant: ConsultantRow): string {
-  if (consultant.full_name) return consultant.full_name;
+  if (consultant.name) return consultant.name;
   const parts = [consultant.first_name, consultant.last_name].filter(Boolean);
   return parts.length > 0 ? parts.join(' ') : 'Consultant';
 }
@@ -87,8 +84,6 @@ export default function DashboardPage() {
   const [recontactConsultants, setRecontactConsultants] = useState<AlertConsultant[]>([]);
   const [pendingPlans, setPendingPlans] = useState<AlertConsultant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
-  const [calendlyLoading, setCalendlyLoading] = useState(true);
   const [greeting, setGreeting] = useState('Bonjour');
   const [practitionerName, setPractitionerName] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -127,7 +122,7 @@ export default function DashboardPage() {
       // Load consultants for recontact
       const { data: consultants, error: consultantsError } = await supabase
         .from('consultants')
-        .select('id, full_name, first_name, last_name, is_premium, status, activated')
+        .select('id, name, first_name, last_name, is_premium, status, activated')
         .eq('practitioner_id', userId)
         .is('deleted_at', null);
 
@@ -143,16 +138,16 @@ export default function DashboardPage() {
         // Use appointments table for last contact instead of consultations
         const { data: appointmentsHistory } = await supabase
           .from('appointments')
-          .select('patient_id, starts_at')
-          .in('patient_id', consultantIds)
+          .select('consultant_id, starts_at')
+          .in('consultant_id', consultantIds)
           .eq('status', 'completed');
 
         const lastContactMap = new Map<string, string>();
-        (appointmentsHistory ?? []).forEach((a: { patient_id: string; starts_at: string }) => {
-          if (!a.patient_id || !a.starts_at) return;
-          const current = lastContactMap.get(a.patient_id);
+        (appointmentsHistory ?? []).forEach((a: { consultant_id: string; starts_at: string }) => {
+          if (!a.consultant_id || !a.starts_at) return;
+          const current = lastContactMap.get(a.consultant_id);
           if (!current || new Date(a.starts_at) > new Date(current)) {
-            lastContactMap.set(a.patient_id, a.starts_at);
+            lastContactMap.set(a.consultant_id, a.starts_at);
           }
         });
 
@@ -213,20 +208,6 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
-
-  useEffect(() => {
-    async function loadCalendly() {
-      try {
-        const url = await getCalendlyUrlForCurrentPractitioner();
-        setCalendlyUrl(url);
-      } catch {
-        setCalendlyUrl(null);
-      } finally {
-        setCalendlyLoading(false);
-      }
-    }
-    if (isAuthenticated) loadCalendly();
-  }, [isAuthenticated]);
 
   const todayLabel = useMemo(() => dateFormatter.format(new Date()), []);
 
@@ -290,72 +271,6 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Activity Stats Grid */}
-      {!statsLoading && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 lg:grid-cols-3 gap-4"
-        >
-          <StatCard
-            icon="📅"
-            value={stats.sessionsCount}
-            label="Seances ce mois"
-            color="#2A8080"
-          />
-          <StatCard
-            icon="👥"
-            value={stats.newConsultants}
-            label="Nouveaux consultants"
-            color="#2A8080"
-          />
-          <StatCard
-            icon="🟢"
-            value={`${stats.activeConsultants}/${stats.totalConsultants}`}
-            label="Actifs cette semaine"
-            color="#2A8080"
-          />
-          <StatCard
-            icon="🔄"
-            value={`${stats.retentionRate}%`}
-            label="Fidelisation"
-            color={stats.retentionRate >= 70 ? '#10B981' : stats.retentionRate >= 50 ? '#F59E0B' : '#EF4444'}
-          />
-          <StatCard
-            icon="💰"
-            value={stats.revenue > 0 ? `${(stats.revenue / 100).toFixed(0)} €` : '—'}
-            label="CA mensuel"
-            color="#2A8080"
-          />
-          <StatCard
-            icon="📓"
-            value={`${stats.avgJournalFillRate}%`}
-            label="Remplissage journal"
-            color={stats.avgJournalFillRate >= 60 ? '#10B981' : stats.avgJournalFillRate >= 30 ? '#F59E0B' : '#EF4444'}
-          />
-        </motion.div>
-      )}
-
-      {/* Calendly migration banner */}
-      {!calendlyLoading && calendlyUrl && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="glass-card p-4 border-l-4 border-teal"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-sm text-charcoal">
-              <Calendar className="h-5 w-5 text-teal flex-shrink-0" />
-              Vous utilisez encore Calendly ? Essayez le nouvel agenda integre dans AFEIA.
-            </div>
-            <Button variant="primary" size="sm" onClick={() => router.push('/agenda')}>
-              Ouvrir l&apos;agenda
-            </Button>
-          </div>
-        </motion.div>
-      )}
-
       {/* Today's Appointments */}
       <section>
         <div className="flex items-center justify-between mb-4">
@@ -372,7 +287,7 @@ export default function DashboardPage() {
                 <div
                   key={appointment.id}
                   className="flex items-center justify-between p-4 hover:bg-white/30 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/consultants/${appointment.patient_id || ''}`)}
+                  onClick={() => router.push(`/consultants/${appointment.consultant_id || ''}`)}
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-center min-w-[50px]">
@@ -452,7 +367,7 @@ export default function DashboardPage() {
                 <button
                   key={apt.id}
                   onClick={() => {
-                    if (apt.patient_id) router.push(`/consultants/${apt.patient_id}?tab=Notes+de+séance`);
+                    if (apt.consultant_id) router.push(`/consultants/${apt.consultant_id}?tab=Notes+de+séance`);
                   }}
                   className="w-full text-left flex items-center justify-between p-2 rounded-lg hover:bg-white/50 transition-colors"
                 >

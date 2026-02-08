@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyApiJwt, getBearerToken } from '@/lib/auth';
+import { createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
 import { getInvoiceStats } from '@/lib/invoicing/queries';
 import { getCurrentFiscalYear } from '@/lib/invoicing/utils';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = getBearerToken(request.headers.get('authorization'));
+    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
       return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
     }
 
-    const payload = await verifyApiJwt(token);
-    const userId = payload.sub;
+    const supabaseAuth = createSupabaseAuthClient();
+    const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !authData.user) {
+      return NextResponse.json({ message: 'Session invalide' }, { status: 401 });
+    }
+    const userId = authData.user.id;
 
     const { searchParams } = new URL(request.url);
     const year = searchParams.get('year')

@@ -7,7 +7,12 @@ export type Practitioner = {
   full_name: string;
   phone?: string | null;
   default_consultation_reason?: string | null;
+  /** @deprecated Use booking_slug instead */
   calendly_url?: string | null;
+  booking_slug?: string | null;
+  booking_enabled?: boolean;
+  booking_address?: string | null;
+  booking_phone?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -148,7 +153,7 @@ export type Consultation = {
 
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rescheduled';
 export type LocationType = 'in_person' | 'video' | 'phone' | 'home_visit';
-export type AppointmentSource = 'manual' | 'online_booking' | 'calendly_import' | 'google_sync' | 'legacy_migration';
+export type AppointmentSource = 'manual' | 'online_booking' | 'google_sync' | 'legacy_migration';
 
 export interface ConsultationType {
   id: string;
@@ -189,8 +194,7 @@ export interface AvailabilityOverride {
 
 export type Appointment = {
   id: string;
-  patient_id: string | null;
-  consultant_id?: string;
+  consultant_id: string | null;
   practitioner_id: string;
   consultation_type_id: string | null;
   starts_at: string;
@@ -215,10 +219,10 @@ export type Appointment = {
   // Relations (when joined)
   patient?: {
     id: string;
-    name: string;
-    first_name?: string;
-    last_name?: string;
-    email?: string;
+    name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
     is_premium?: boolean;
   };
   consultation_type?: ConsultationType;
@@ -254,6 +258,10 @@ export type ConsultantPlan = {
   status: 'draft' | 'shared';
   content: Record<string, string> | null;
   shared_at?: string | null;
+  ai_generated?: boolean;
+  ai_model?: string | null;
+  ai_generation_date?: string | null;
+  ai_feedback?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 };
@@ -392,4 +400,43 @@ export type ConsultantWithDetails = Consultant & {
   wearable_insights?: WearableInsight[];
   consultant_plans?: ConsultantPlan[];
   analysis_results?: ConsultantAnalysisResult[];
+};
+
+// ============================================
+// AI ASSISTANCE
+// ============================================
+
+export type PractitionerAIProfile = {
+  id: string;
+  practitioner_id: string;
+  formation: string | null;
+  formation_detail: string | null;
+  longueur_preferee: 'concis' | 'detaille' | 'tres_detaille';
+  ton: 'professionnel' | 'chaleureux' | 'coach';
+  approches: string[];
+  plantes_favorites: string | null;
+  complements_favoris: string | null;
+  exemples_formulations: string | null;
+  total_generations: number;
+  generations_this_month: number;
+  month_reset_date: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AIGenerationLog = {
+  id: string;
+  practitioner_id: string;
+  consultant_id: string;
+  plan_id: string | null;
+  generation_type: 'full' | 'section' | 'regenerate';
+  section_name: string | null;
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+  latency_ms: number;
+  status: 'success' | 'error' | 'filtered';
+  error_message: string | null;
+  created_at: string;
 };

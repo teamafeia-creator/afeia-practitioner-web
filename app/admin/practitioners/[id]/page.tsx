@@ -23,7 +23,7 @@ export default async function AdminPractitionerDetailPage({ params }: PageProps)
   try {
     const { data: practitioner, error } = await supabase
       .from('practitioners_public')
-      .select('id, email, full_name, status, calendly_url, subscription_status, created_at')
+      .select('id, email, full_name, status, subscription_status, created_at')
       .eq('id', params.id)
       .maybeSingle();
 
