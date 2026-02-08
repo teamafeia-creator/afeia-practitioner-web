@@ -91,7 +91,12 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_overrides_practitioner_date ON availability_overrides(practitioner_id, date);
 
--- 1.4 Evolve appointments table - add new columns
+-- 1.4 Update status CHECK constraint to support new statuses
+ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_status_check;
+ALTER TABLE appointments ADD CONSTRAINT appointments_status_check
+  CHECK (status IN ('scheduled', 'confirmed', 'in_progress', 'completed', 'done', 'cancelled', 'rescheduled', 'no_show'));
+
+-- 1.5 Evolve appointments table - add new columns
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS consultation_type_id UUID REFERENCES consultation_types(id) ON DELETE SET NULL;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS location_type TEXT DEFAULT 'in_person';
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS video_link TEXT;
