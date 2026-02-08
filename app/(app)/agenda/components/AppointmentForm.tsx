@@ -15,6 +15,7 @@ import {
   updateNativeAppointment,
   checkAppointmentConflict,
 } from '@/lib/queries/appointments';
+import { syncAppointmentToGoogle } from '@/lib/google/sync-client';
 import type { Appointment, ConsultationType, LocationType } from '@/lib/types';
 
 type ConsultantOption = {
@@ -215,6 +216,7 @@ export function AppointmentForm({
           video_link: form.video_link || null,
           notes_internal: form.notes_internal || null,
         });
+        syncAppointmentToGoogle(result.id, 'update');
         showToast.success('Seance modifiee');
       } else {
         result = await createNativeAppointment({
@@ -226,6 +228,7 @@ export function AppointmentForm({
           video_link: form.video_link || null,
           notes_internal: form.notes_internal || null,
         });
+        syncAppointmentToGoogle(result.id, 'create');
         const consultantName = selectedConsultant ? getConsultantDisplayName(selectedConsultant) : 'le consultant';
         showToast.success(`Seance creee avec ${consultantName}`);
       }

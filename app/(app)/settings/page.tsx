@@ -250,6 +250,21 @@ export default function SettingsPage() {
 
           <Card>
             <CardHeader>
+              <h2 className="text-sm font-semibold">Integrations & Rappels</h2>
+              <p className="text-xs text-warmgray">Google Agenda et rappels automatiques.</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/integrations')}>
+                Google Agenda
+              </Button>
+              <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/reminders')}>
+                Rappels email
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <h2 className="text-sm font-semibold">Abonnement</h2>
             </CardHeader>
             <CardContent className="space-y-3">

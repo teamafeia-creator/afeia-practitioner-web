@@ -47,5 +47,11 @@
       "destination": "/welcome"
     }
   ],
-  "redirects": []
+  "redirects": [],
+  "crons": [
+    {
+      "path": "/api/cron/send-reminders",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

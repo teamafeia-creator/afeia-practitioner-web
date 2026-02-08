@@ -9,6 +9,7 @@ import { AgendaView } from './components/AgendaView';
 import { AppointmentForm } from './components/AppointmentForm';
 import { AppointmentDetail } from './components/AppointmentDetail';
 import { rescheduleAppointment } from '@/lib/queries/appointments';
+import { syncAppointmentToGoogle } from '@/lib/google/sync-client';
 import { showToast } from '@/components/ui/Toaster';
 import type { Appointment, LocationType } from '@/lib/types';
 
@@ -62,7 +63,7 @@ export default function AgendaPage() {
   async function handleFormSaved(appointment: Appointment) {
     if (isRescheduling && editAppointment) {
       try {
-        await rescheduleAppointment(editAppointment.id, {
+        const newApt = await rescheduleAppointment(editAppointment.id, {
           starts_at: appointment.starts_at,
           ends_at: appointment.ends_at,
           consultant_id: appointment.consultant_id,
@@ -71,6 +72,9 @@ export default function AgendaPage() {
           video_link: appointment.video_link,
           notes_internal: appointment.notes_internal,
         });
+        // Cancel old event in Google, create new one
+        syncAppointmentToGoogle(editAppointment.id, 'cancel');
+        syncAppointmentToGoogle(newApt.id, 'create');
         showToast.success('Seance reportee');
       } catch {
         // The appointment was already created, just refresh

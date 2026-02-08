@@ -4,6 +4,8 @@ import { getPractitionerBySlug } from '@/lib/queries/booking';
 import { sendEmail } from '@/lib/server/email';
 import { buildConfirmationEmail, buildPractitionerNotificationEmail } from '@/lib/emails/booking-confirmation';
 import { generateICS } from '@/lib/utils/generate-ics';
+import { createGoogleEvent } from '@/lib/google/calendar-sync';
+import { scheduleReminders } from '@/lib/reminders/schedule-reminders';
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'AFEIA <contact@afeia.fr>';
 
@@ -187,6 +189,45 @@ export async function POST(
     } catch (emailError) {
       console.error('Failed to send practitioner notification:', emailError);
     }
+
+    // Sync to Google Calendar (background, non-blocking)
+    const googleSyncPromise = (async () => {
+      try {
+        const { data: fullAppointment } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            patient:consultants(id, name, first_name, last_name, email, is_premium),
+            consultation_type:consultation_types(id, name, color, duration_minutes, price_cents)
+          `)
+          .eq('id', appointmentId)
+          .single();
+
+        if (fullAppointment) {
+          await createGoogleEvent(practitioner.id, fullAppointment);
+        }
+      } catch (err) {
+        console.error('[Booking] Google sync failed:', err);
+      }
+    })();
+
+    // Schedule email reminders (background, non-blocking)
+    const remindersPromise = (async () => {
+      try {
+        await scheduleReminders({
+          appointmentId,
+          practitionerId: practitioner.id,
+          startsAt: starts_at,
+          endsAt,
+          recipientEmail: email,
+        });
+      } catch (err) {
+        console.error('[Booking] Reminder scheduling failed:', err);
+      }
+    })();
+
+    // Don't wait for sync/reminders to complete
+    Promise.all([googleSyncPromise, remindersPromise]).catch(() => {});
 
     return NextResponse.json({
       appointment_id: appointmentId,

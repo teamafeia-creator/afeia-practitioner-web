@@ -6,6 +6,7 @@ import moment from 'moment';
 import 'moment/locale/fr';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { getAppointmentsForRange, getAvailabilitySchedules, getAvailabilityOverrides } from '@/lib/queries/appointments';
+import { supabase } from '@/lib/supabase';
 import type { Appointment, AvailabilitySchedule, AvailabilityOverride } from '@/lib/types';
 
 moment.locale('fr');
@@ -55,6 +56,23 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<string>(Views.WEEK);
   const [isMobile, setIsMobile] = useState(false);
+  const [hasGoogleConnected, setHasGoogleConnected] = useState(false);
+
+  // Check if practitioner has Google Calendar connected
+  useEffect(() => {
+    async function checkGoogle() {
+      try {
+        const { data } = await supabase
+          .from('google_calendar_connections')
+          .select('id, sync_enabled')
+          .single();
+        setHasGoogleConnected(!!data?.sync_enabled);
+      } catch {
+        setHasGoogleConnected(false);
+      }
+    }
+    checkGoogle();
+  }, []);
 
   // Detect mobile
   useEffect(() => {
@@ -139,10 +157,20 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
       const apt = event.resource;
       const typeName = apt.consultation_type?.name || '';
       const isVideo = apt.location_type === 'video';
+      const isSynced = !!apt.google_event_id;
+      const showSyncWarning = hasGoogleConnected && !isSynced && !event.isCancelled;
 
       return (
         <div className="leading-tight">
-          <div className="font-medium truncate">{event.title}</div>
+          <div className="font-medium truncate flex items-center gap-1">
+            {event.title}
+            {hasGoogleConnected && isSynced && (
+              <span title="Synchronise avec Google" className="opacity-70 text-[10px]">&#9729;</span>
+            )}
+            {showSyncWarning && (
+              <span title="Non synchronise avec Google" className="text-[10px]">&#9888;</span>
+            )}
+          </div>
           <div className="text-[10px] opacity-80 truncate">
             {typeName}
             {isVideo && ' · Visio'}
@@ -151,7 +179,7 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
         </div>
       );
     },
-    []
+    [hasGoogleConnected]
   );
 
   const availableViews = isMobile ? [Views.DAY, Views.AGENDA] : [Views.WEEK, Views.DAY, Views.AGENDA];

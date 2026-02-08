@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   X, MapPin, Video, Phone, Home, Clock, User,
-  CheckCircle, XCircle, CalendarClock, FileText, AlertTriangle
+  CheckCircle, XCircle, CalendarClock, FileText, AlertTriangle, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
@@ -16,7 +16,18 @@ import {
   cancelAppointment,
   completeAppointment,
 } from '@/lib/queries/appointments';
+import { syncAppointmentToGoogle } from '@/lib/google/sync-client';
+import { supabase } from '@/lib/supabase';
 import type { Appointment } from '@/lib/types';
+
+interface AppointmentReminder {
+  id: string;
+  trigger_type: string;
+  status: string;
+  scheduled_for: string;
+  sent_at: string | null;
+  error_message: string | null;
+}
 
 interface AppointmentDetailProps {
   appointment: Appointment | null;
@@ -87,6 +98,24 @@ export function AppointmentDetail({
   const [cancelReason, setCancelReason] = useState('');
   const [cancelledBy, setCancelledBy] = useState<'practitioner' | 'consultant'>('practitioner');
   const [processing, setProcessing] = useState(false);
+  const [reminders, setReminders] = useState<AppointmentReminder[]>([]);
+
+  // Load reminders for this appointment
+  useEffect(() => {
+    if (!appointment?.id || !isOpen) {
+      setReminders([]);
+      return;
+    }
+
+    supabase
+      .from('appointment_reminders')
+      .select('id, trigger_type, status, scheduled_for, sent_at, error_message')
+      .eq('appointment_id', appointment.id)
+      .order('scheduled_for', { ascending: true })
+      .then(({ data }) => {
+        setReminders((data || []) as AppointmentReminder[]);
+      });
+  }, [appointment?.id, isOpen]);
 
   if (!appointment) return null;
 
@@ -116,6 +145,7 @@ export function AppointmentDetail({
     setProcessing(true);
     try {
       await cancelAppointment(appointment!.id, cancelReason || null, cancelledBy);
+      syncAppointmentToGoogle(appointment!.id, 'cancel');
       showToast.success('Seance annulee');
       setShowCancelModal(false);
       onUpdated();
@@ -250,6 +280,56 @@ export function AppointmentDetail({
                     </div>
                     <div className="text-sm text-charcoal bg-neutral-50 p-3 rounded-lg whitespace-pre-wrap">
                       {appointment.notes_internal}
+                    </div>
+                  </div>
+                )}
+
+                {/* Google Sync Status */}
+                {appointment.google_event_id && (
+                  <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2">
+                    <span>&#9729;</span>
+                    <span>Synchronise avec Google Agenda</span>
+                  </div>
+                )}
+
+                {/* Reminders */}
+                {reminders.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 text-xs font-medium text-warmgray uppercase tracking-wide mb-2">
+                      <Mail className="h-3 w-3" />
+                      Rappels
+                    </div>
+                    <div className="space-y-1">
+                      {reminders.map((r) => {
+                        const triggerLabel =
+                          r.trigger_type === 'before_24h' ? 'Rappel 24h avant' :
+                          r.trigger_type === 'before_2h' ? 'Rappel 2h avant' :
+                          r.trigger_type === 'post_session' ? 'Rappel post-seance' :
+                          r.trigger_type;
+
+                        const statusIcon =
+                          r.status === 'sent' ? '\u2705' :
+                          r.status === 'pending' ? '\u23F3' :
+                          r.status === 'failed' ? '\u274C' :
+                          r.status === 'cancelled' ? '\uD83D\uDEAB' : '';
+
+                        const statusText =
+                          r.status === 'sent'
+                            ? `Envoye le ${new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(r.sent_at!))}`
+                          : r.status === 'pending'
+                            ? `Prevu le ${new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(r.scheduled_for))}`
+                          : r.status === 'failed'
+                            ? `Echoue${r.error_message ? ` : ${r.error_message}` : ''}`
+                          : 'Annule';
+
+                        return (
+                          <div key={r.id} className="flex items-center gap-2 text-xs text-charcoal bg-neutral-50 rounded px-2 py-1.5">
+                            <span>{statusIcon}</span>
+                            <span className="font-medium">{triggerLabel}</span>
+                            <span className="text-warmgray">{statusText}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

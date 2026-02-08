@@ -440,3 +440,55 @@ export type AIGenerationLog = {
   error_message: string | null;
   created_at: string;
 };
+
+// ============================================
+// V3: GOOGLE CALENDAR & REMINDERS
+// ============================================
+
+export interface GoogleCalendarConnection {
+  id: string;
+  practitioner_id: string;
+  access_token: string;
+  refresh_token: string;
+  token_expires_at: string;
+  google_email: string | null;
+  calendar_id: string | null;
+  sync_enabled: boolean;
+  last_sync_at: string | null;
+  last_sync_error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ReminderTriggerType = 'before_24h' | 'before_2h' | 'post_session';
+export type ReminderStatus = 'pending' | 'sent' | 'failed' | 'cancelled';
+
+export interface AppointmentReminder {
+  id: string;
+  appointment_id: string;
+  type: 'email';
+  trigger_type: ReminderTriggerType;
+  recipient_email: string;
+  scheduled_for: string;
+  sent_at: string | null;
+  status: ReminderStatus;
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface ReminderUnsubscribe {
+  id: string;
+  practitioner_id: string;
+  email: string;
+  created_at: string;
+}
+
+export interface PractitionerReminderSettings {
+  reminder_24h_enabled: boolean;
+  reminder_2h_enabled: boolean;
+  reminder_post_enabled: boolean;
+  reminder_24h_template: string | null;
+  reminder_2h_template: string | null;
+  reminder_post_template: string | null;
+  reminder_post_delay_hours: number;
+}
