@@ -35,6 +35,10 @@ import {
   type ConseillancierContent,
 } from '../../lib/conseillancier';
 import { supabase } from '../../lib/supabase';
+import { BlockInsertButton } from '../blocks/BlockInsertButton';
+import { SaveAsBlockButton } from '../blocks/SaveAsBlockButton';
+import { TemplateSelector } from '../blocks/TemplateSelector';
+import type { BlockSection } from '../../lib/blocks-types';
 import type {
   AnamnesisAnswers,
   Appointment,
@@ -1698,6 +1702,24 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             </CardContent>
           </Card>
 
+          {activePlan && canEditPlan ? (
+            <div className="flex items-center gap-3">
+              <TemplateSelector
+                onApplyTemplate={(sections) => {
+                  setPlanForm((prev) => {
+                    const updated = { ...prev };
+                    for (const [key, value] of Object.entries(sections)) {
+                      if (key in updated) {
+                        (updated as Record<string, string>)[key] = value;
+                      }
+                    }
+                    return updated;
+                  });
+                }}
+              />
+            </div>
+          ) : null}
+
           {activePlan ? (
             <Card className={cn(canEditPlan ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
               <CardHeader>
@@ -1780,20 +1802,45 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                               key={field.key}
                               className="rounded-lg bg-white/60 p-4 border border-teal/10"
                             >
-                              <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
+                                {canEditPlan && (
+                                  <BlockInsertButton
+                                    section={section.id as BlockSection}
+                                    sectionLabel={`${section.title} — ${field.label}`}
+                                    consultationMotif={consultantState.consultation_reason}
+                                    onInsert={(content) => {
+                                      setPlanForm((prev) => ({
+                                        ...prev,
+                                        [field.key]: prev[field.key]
+                                          ? prev[field.key] + '\n\n' + content
+                                          : content,
+                                      }));
+                                    }}
+                                  />
+                                )}
+                              </div>
                               {canEditPlan ? (
-                                <Textarea
-                                  className="mt-2"
-                                  value={planForm[field.key]}
-                                  onChange={(event) =>
-                                    setPlanForm((prev) => ({
-                                      ...prev,
-                                      [field.key]: event.target.value
-                                    }))
-                                  }
-                                  placeholder={field.placeholder}
-                                  rows={field.multiline ? 4 : 2}
-                                />
+                                <>
+                                  <Textarea
+                                    className="mt-2"
+                                    value={planForm[field.key]}
+                                    onChange={(event) =>
+                                      setPlanForm((prev) => ({
+                                        ...prev,
+                                        [field.key]: event.target.value
+                                      }))
+                                    }
+                                    placeholder={field.placeholder}
+                                    rows={field.multiline ? 4 : 2}
+                                  />
+                                  <div className="mt-1">
+                                    <SaveAsBlockButton
+                                      selectedText={planForm[field.key]}
+                                      section={section.id as BlockSection}
+                                    />
+                                  </div>
+                                </>
                               ) : (
                                 <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
                                   {renderAnswer(planForm[field.key])}
