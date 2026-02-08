@@ -38,9 +38,10 @@ import { supabase } from '../../lib/supabase';
 import { BlockInsertButton } from '../blocks/BlockInsertButton';
 import { SaveAsBlockButton } from '../blocks/SaveAsBlockButton';
 import { TemplateSelector } from '../blocks/TemplateSelector';
+import { GenerateButton } from '../ai/GenerateButton';
+import { SectionSuggestButton } from '../ai/SectionSuggestButton';
 import { MedicalAlertBanner } from '../ai/MedicalAlertBanner';
 import { AIStatusBar } from '../ai/AIStatusBar';
-import { GenerateButton } from '../ai/GenerateButton';
 import type { BlockSection } from '../../lib/blocks-types';
 import type {
   AnamnesisAnswers,
@@ -1922,19 +1923,31 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                               <div className="flex items-center justify-between">
                                 <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
                                 {canEditPlan && (
-                                  <BlockInsertButton
-                                    section={section.id as BlockSection}
-                                    sectionLabel={`${section.title} — ${field.label}`}
-                                    consultationMotif={consultantState.consultation_reason}
-                                    onInsert={(content) => {
-                                      setPlanForm((prev) => ({
-                                        ...prev,
-                                        [field.key]: prev[field.key]
-                                          ? prev[field.key] + '\n\n' + content
-                                          : content,
-                                      }));
-                                    }}
-                                  />
+                                  <div className="flex items-center gap-1">
+                                    <SectionSuggestButton
+                                      consultantId={consultant.id}
+                                      fieldKey={field.key}
+                                      onAccept={(text) =>
+                                        setPlanForm((prev) => ({
+                                          ...prev,
+                                          [field.key]: text,
+                                        }))
+                                      }
+                                    />
+                                    <BlockInsertButton
+                                      section={section.id as BlockSection}
+                                      sectionLabel={`${section.title} — ${field.label}`}
+                                      consultationMotif={consultantState.consultation_reason}
+                                      onInsert={(content) => {
+                                        setPlanForm((prev) => ({
+                                          ...prev,
+                                          [field.key]: prev[field.key]
+                                            ? prev[field.key] + '\n\n' + content
+                                            : content,
+                                        }));
+                                      }}
+                                    />
+                                  </div>
                                 )}
                               </div>
                               {canEditPlan ? (
