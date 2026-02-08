@@ -80,6 +80,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       bibliotheque: 'Ma bibliothèque',
       billing: 'Facturation',
       facturation: 'Facturation',
+      statistics: 'Statistiques',
       new: 'Nouveau consultant',
       admin: 'Admin',
       admins: 'Admins',
