@@ -38,6 +38,9 @@ import { supabase } from '../../lib/supabase';
 import { BlockInsertButton } from '../blocks/BlockInsertButton';
 import { SaveAsBlockButton } from '../blocks/SaveAsBlockButton';
 import { TemplateSelector } from '../blocks/TemplateSelector';
+import { MedicalAlertBanner } from '../ai/MedicalAlertBanner';
+import { AIStatusBar } from '../ai/AIStatusBar';
+import { GenerateButton } from '../ai/GenerateButton';
 import type { BlockSection } from '../../lib/blocks-types';
 import type {
   AnamnesisAnswers,
