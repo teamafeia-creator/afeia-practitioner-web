@@ -340,7 +340,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
 
   // Extract substance names from plan content for contraindication checking
   const substanceNamesFromPlan = useMemo(() => {
-    const substanceKeys = [
+    const substanceKeys: (keyof ConseillancierContent)[] = [
       'phytotherapie_plantes', 'phytotherapie_posologie',
       'complements', 'huiles_essentielles'
     ];
@@ -348,7 +348,6 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     for (const key of substanceKeys) {
       const val = planForm[key];
       if (val && val.trim()) {
-        // Split by common delimiters
         const words = val.split(/[,;\n\-•·]+/).map((w: string) => w.trim()).filter(Boolean);
         names.push(...words);
       }
