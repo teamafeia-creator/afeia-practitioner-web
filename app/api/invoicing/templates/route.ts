@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
-import { verifyApiJwt, getBearerToken } from '@/lib/auth';
+import { createSupabaseAdminClient, createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
 import { invoiceTemplateSchema } from '@/lib/invoicing/schemas';
 import { DEFAULT_TEMPLATES } from '@/lib/invoicing/templates';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = getBearerToken(request.headers.get('authorization'));
+    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
       return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
     }
 
-    const payload = await verifyApiJwt(token);
-    const userId = payload.sub;
+    const supabaseAuth = createSupabaseAuthClient();
+    const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !authData.user) {
+      return NextResponse.json({ message: 'Session invalide' }, { status: 401 });
+    }
+    const userId = authData.user.id;
 
     const supabase = createSupabaseAdminClient();
 
@@ -36,13 +39,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = getBearerToken(request.headers.get('authorization'));
+    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
       return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
     }
 
-    const payload = await verifyApiJwt(token);
-    const userId = payload.sub;
+    const supabaseAuth = createSupabaseAuthClient();
+    const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !authData.user) {
+      return NextResponse.json({ message: 'Session invalide' }, { status: 401 });
+    }
+    const userId = authData.user.id;
 
     const body = await request.json();
 
