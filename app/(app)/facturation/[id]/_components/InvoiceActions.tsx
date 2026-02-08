@@ -8,19 +8,23 @@ import { Textarea } from '@/components/ui/Textarea';
 import { ConfirmModal } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toaster';
 import type { ConsultationInvoice } from '@/lib/invoicing/types';
-import { Check, X, Download, Send } from 'lucide-react';
+import { Check, X, Download, Send, RotateCcw, Link2, Copy } from 'lucide-react';
 
 interface Props {
   invoice: ConsultationInvoice;
   authToken: string;
   onRefresh: () => void;
+  stripeConnected?: boolean;
 }
 
-export function InvoiceActions({ invoice, authToken, onRefresh }: Props) {
+export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected }: Props) {
   const [showMarkPaidModal, setShowMarkPaidModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('especes');
   const [paymentNotes, setPaymentNotes] = useState('');
+  const [refundMotif, setRefundMotif] = useState('consultation_annulee');
+  const [refundDetail, setRefundDetail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const headers = {
@@ -83,6 +87,82 @@ export function InvoiceActions({ invoice, authToken, onRefresh }: Props) {
     }
   }
 
+  async function handleRefund() {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/invoicing/${invoice.id}/refund`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          facture_origine_id: invoice.id,
+          motif_remboursement: refundMotif,
+          motif_detail: refundMotif === 'autre' ? refundDetail : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message);
+      }
+
+      const { avoir } = await response.json();
+      showToast.success(`Avoir ${avoir.numero} cree et envoye`);
+      setShowRefundModal(false);
+      onRefresh();
+    } catch (error) {
+      showToast.error(
+        error instanceof Error ? error.message : 'Erreur'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCreatePaymentLink() {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/invoicing/${invoice.id}/payment-link`, {
+        method: 'POST',
+        headers,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message);
+      }
+
+      const { payment_link_url } = await response.json();
+      showToast.success('Lien de paiement cree');
+
+      // Copier dans le presse-papiers
+      try {
+        await navigator.clipboard.writeText(payment_link_url);
+        showToast.success('Lien copie dans le presse-papiers');
+      } catch {
+        // Fallback si clipboard non disponible
+      }
+
+      onRefresh();
+    } catch (error) {
+      showToast.error(
+        error instanceof Error ? error.message : 'Erreur'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCopyPaymentLink() {
+    if (invoice.stripe_payment_link_url) {
+      try {
+        await navigator.clipboard.writeText(invoice.stripe_payment_link_url);
+        showToast.success('Lien copie dans le presse-papiers');
+      } catch {
+        showToast.error('Impossible de copier le lien');
+      }
+    }
+  }
+
   async function handleDownloadPdf() {
     try {
       const response = await fetch('/api/invoicing/generate-pdf', {
@@ -97,7 +177,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh }: Props) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `facture_${invoice.numero || 'brouillon'}.pdf`;
+      a.download = `${invoice.is_avoir ? 'avoir' : 'facture'}_${invoice.numero || 'brouillon'}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
@@ -143,7 +223,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh }: Props) {
           Telecharger PDF
         </Button>
 
-        {invoice.status === 'paid' && (
+        {(invoice.status === 'paid' || invoice.status === 'refunded') && (
           <Button
             variant="ghost"
             size="sm"
@@ -163,6 +243,42 @@ export function InvoiceActions({ invoice, authToken, onRefresh }: Props) {
             onClick={() => setShowMarkPaidModal(true)}
           >
             Marquer comme payee
+          </Button>
+        )}
+
+        {/* V2: Lien de paiement Stripe */}
+        {invoice.status === 'issued' && stripeConnected && !invoice.stripe_payment_link_url && (
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<Link2 className="h-4 w-4" />}
+            onClick={handleCreatePaymentLink}
+            loading={loading}
+          >
+            Creer lien de paiement
+          </Button>
+        )}
+
+        {invoice.stripe_payment_link_url && invoice.status === 'issued' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Copy className="h-4 w-4" />}
+            onClick={handleCopyPaymentLink}
+          >
+            Copier lien paiement
+          </Button>
+        )}
+
+        {/* V2: Rembourser */}
+        {invoice.status === 'paid' && !invoice.is_avoir && (
+          <Button
+            variant="destructive"
+            size="sm"
+            icon={<RotateCcw className="h-4 w-4" />}
+            onClick={() => setShowRefundModal(true)}
+          >
+            Rembourser
           </Button>
         )}
 
@@ -220,6 +336,53 @@ export function InvoiceActions({ invoice, authToken, onRefresh }: Props) {
             loading={loading}
           >
             Confirmer le paiement
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Modal Rembourser (V2) */}
+      <Modal
+        isOpen={showRefundModal}
+        onClose={() => setShowRefundModal(false)}
+        title="Rembourser cette facture"
+        description="Un avoir sera cree et la facture sera marquee comme remboursee."
+        size="sm"
+      >
+        <div className="space-y-4">
+          <Select
+            label="Motif du remboursement"
+            value={refundMotif}
+            onChange={(e) => setRefundMotif(e.target.value)}
+          >
+            <option value="consultation_annulee">Consultation annulee</option>
+            <option value="erreur_facturation">Erreur de facturation</option>
+            <option value="geste_commercial">Geste commercial</option>
+            <option value="autre">Autre</option>
+          </Select>
+
+          {refundMotif === 'autre' && (
+            <Textarea
+              placeholder="Preciser le motif..."
+              value={refundDetail}
+              onChange={(e) => setRefundDetail(e.target.value)}
+              className="min-h-[60px]"
+            />
+          )}
+        </div>
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setShowRefundModal(false)}
+            disabled={loading}
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleRefund}
+            loading={loading}
+          >
+            Creer l&apos;avoir
           </Button>
         </ModalFooter>
       </Modal>

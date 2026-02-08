@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Toaster } from '@/components/ui/Toaster';
 import { supabase } from '@/lib/supabase';
 import type { PractitionerBillingSettings, InvoiceTemplate } from '@/lib/invoicing/types';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CreditCard, Bell } from 'lucide-react';
 import Link from 'next/link';
 
 export default function FacturationSettingsPage() {
@@ -92,6 +92,44 @@ export default function FacturationSettingsPage() {
           authToken={authToken}
           onRefresh={fetchData}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/settings/facturation/stripe" className="block">
+          <div className="glass-card rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-teal/10">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-teal/10 p-2">
+                <CreditCard className="h-5 w-5 text-teal" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-charcoal">
+                  Paiement en ligne
+                </h3>
+                <p className="text-xs text-warmgray">
+                  Connecter Stripe pour recevoir des paiements
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/settings/facturation/relances" className="block">
+          <div className="glass-card rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-teal/10">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-teal/10 p-2">
+                <Bell className="h-5 w-5 text-teal" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-charcoal">
+                  Relances automatiques
+                </h3>
+                <p className="text-xs text-warmgray">
+                  Configurer les rappels pour les factures impayees
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   );

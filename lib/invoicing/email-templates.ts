@@ -45,3 +45,57 @@ export function buildInvoiceEmailText(
 
   return { subject, text, html };
 }
+
+/**
+ * Construit l'email pour un avoir (remboursement)
+ */
+export function buildAvoirEmailText(
+  avoir: ConsultationInvoice,
+  factureOrigineNumero: string
+): { subject: string; text: string; html: string } {
+  const { consultant_snapshot, practitioner_snapshot } = avoir;
+  const dateStr = avoir.date_emission
+    ? new Date(avoir.date_emission).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : new Date().toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+
+  const subject = `Avoir relatif a votre facture ${factureOrigineNumero}`;
+
+  const text = [
+    `Bonjour ${consultant_snapshot.prenom},`,
+    '',
+    `Suite a votre consultation, un avoir a ete emis le ${dateStr} relatif a la facture ${factureOrigineNumero}.`,
+    '',
+    avoir.motif_remboursement
+      ? `Motif : ${avoir.motif_remboursement}.`
+      : '',
+    '',
+    `Vous trouverez ci-joint le document d'avoir. Un remboursement sera effectue selon les modalites convenues.`,
+    '',
+    `Cordialement,`,
+    `${practitioner_snapshot.prenom} ${practitioner_snapshot.nom}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <p>Bonjour ${consultant_snapshot.prenom},</p>
+      <p>Suite a votre consultation, un avoir a ete emis le <strong>${dateStr}</strong> relatif a la facture <strong>${factureOrigineNumero}</strong>.</p>
+      ${avoir.motif_remboursement ? `<p>Motif : ${avoir.motif_remboursement}.</p>` : ''}
+      <p>Vous trouverez ci-joint le document d'avoir. Un remboursement sera effectue selon les modalites convenues.</p>
+      <p>Cordialement,<br/><strong>${practitioner_snapshot.prenom} ${practitioner_snapshot.nom}</strong></p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+      <p style="font-size: 12px; color: #999;">Ce message a ete envoye automatiquement depuis AFEIA.</p>
+    </div>
+  `.trim();
+
+  return { subject, text, html };
+}
