@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient, createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
 import { billingSettingsSchema } from '@/lib/invoicing/schemas';
+import { ZodError } from 'zod';
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,6 +74,10 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ settings: data });
   } catch (error) {
+    if (error instanceof ZodError) {
+      const messages = error.errors.map((e) => e.message).join(', ');
+      return NextResponse.json({ message: messages }, { status: 400 });
+    }
     console.error('Erreur sauvegarde parametres:', error);
     return NextResponse.json(
       { message: 'Erreur lors de la sauvegarde des parametres' },

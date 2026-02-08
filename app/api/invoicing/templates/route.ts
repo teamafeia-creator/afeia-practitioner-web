@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient, createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
 import { invoiceTemplateSchema } from '@/lib/invoicing/schemas';
 import { DEFAULT_TEMPLATES } from '@/lib/invoicing/templates';
+import { ZodError } from 'zod';
 
 export async function GET(request: NextRequest) {
   try {
@@ -92,6 +93,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ template }, { status: 201 });
   } catch (error) {
+    if (error instanceof ZodError) {
+      const messages = error.errors.map((e) => e.message).join(', ');
+      return NextResponse.json({ message: messages }, { status: 400 });
+    }
     console.error('Erreur creation template:', error);
     return NextResponse.json(
       { message: 'Erreur lors de la creation du template' },

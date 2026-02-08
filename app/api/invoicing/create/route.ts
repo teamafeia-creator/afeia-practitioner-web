@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient, createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
 import { createInvoiceSchema } from '@/lib/invoicing/schemas';
 import { getCurrentFiscalYear } from '@/lib/invoicing/utils';
+import { ZodError } from 'zod';
 
 export async function POST(request: NextRequest) {
   try {
@@ -110,6 +111,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {
+    if (error instanceof ZodError) {
+      const messages = error.errors.map((e) => e.message).join(', ');
+      return NextResponse.json({ message: messages }, { status: 400 });
+    }
     console.error('Erreur creation facture:', error);
     return NextResponse.json(
       { message: 'Erreur lors de la creation de la facture' },
