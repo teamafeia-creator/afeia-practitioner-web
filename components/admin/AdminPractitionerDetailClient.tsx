@@ -16,7 +16,6 @@ export type PractitionerDetail = {
   email: string | null;
   full_name: string | null;
   status: string | null;
-  calendly_url: string | null;
   subscription_status: string | null;
   created_at: string | null;
 };
@@ -48,7 +47,6 @@ export function AdminPractitionerDetailClient({
           email: practitioner.email,
           full_name: practitioner.full_name,
           status: practitioner.status,
-          calendly_url: practitioner.calendly_url,
           subscription_status: practitioner.subscription_status
         })
       });
@@ -104,8 +102,7 @@ export function AdminPractitionerDetailClient({
         credentials: 'include',
         body: JSON.stringify({
           email: practitioner.email,
-          full_name: practitioner.full_name ?? '',
-          calendly_url: practitioner.calendly_url ?? ''
+          full_name: practitioner.full_name ?? ''
         })
       });
 
@@ -169,18 +166,6 @@ export function AdminPractitionerDetailClient({
                   setPractitioner({
                     ...practitioner,
                     full_name: event.target.value
-                  })
-                }
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-xs font-medium text-warmgray">Calendly</label>
-              <Input
-                value={practitioner.calendly_url ?? ''}
-                onChange={(event) =>
-                  setPractitioner({
-                    ...practitioner,
-                    calendly_url: event.target.value
                   })
                 }
               />

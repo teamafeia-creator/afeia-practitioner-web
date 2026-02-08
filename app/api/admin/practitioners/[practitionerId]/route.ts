@@ -57,7 +57,6 @@ export async function PATCH(
       email: payload.email,
       full_name: payload.full_name,
       status: payload.status,
-      calendly_url: payload.calendly_url,
       subscription_status: payload.subscription_status,
       updated_at: new Date().toISOString()
     };

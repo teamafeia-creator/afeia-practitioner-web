@@ -7,7 +7,6 @@ import {
   Calendar,
   ClipboardList,
   Send,
-  AlertCircle,
   Users,
   FileText,
   ChevronRight,
@@ -18,7 +17,6 @@ import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { SkeletonDashboard } from '@/components/ui/Skeleton';
-import { getCalendlyUrlForCurrentPractitioner } from '@/lib/calendly';
 import { getTodayAppointments, getRecentCompletedWithoutNotes } from '@/lib/queries/appointments';
 import { supabase } from '@/lib/supabase';
 import { useRequireAuth } from '@/hooks/useAuth';
@@ -84,8 +82,6 @@ export default function DashboardPage() {
   const [recontactConsultants, setRecontactConsultants] = useState<AlertConsultant[]>([]);
   const [pendingPlans, setPendingPlans] = useState<AlertConsultant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
-  const [calendlyLoading, setCalendlyLoading] = useState(true);
   const [greeting, setGreeting] = useState('Bonjour');
   const [practitionerName, setPractitionerName] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -211,20 +207,6 @@ export default function DashboardPage() {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  useEffect(() => {
-    async function loadCalendly() {
-      try {
-        const url = await getCalendlyUrlForCurrentPractitioner();
-        setCalendlyUrl(url);
-      } catch {
-        setCalendlyUrl(null);
-      } finally {
-        setCalendlyLoading(false);
-      }
-    }
-    if (isAuthenticated) loadCalendly();
-  }, [isAuthenticated]);
-
   const todayLabel = useMemo(() => dateFormatter.format(new Date()), []);
 
   if (authLoading || loading) {
@@ -286,25 +268,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </motion.div>
-
-      {/* Calendly migration banner */}
-      {!calendlyLoading && calendlyUrl && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="glass-card p-4 border-l-4 border-teal"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3 text-sm text-charcoal">
-              <Calendar className="h-5 w-5 text-teal flex-shrink-0" />
-              Vous utilisez encore Calendly ? Essayez le nouvel agenda integre dans AFEIA.
-            </div>
-            <Button variant="primary" size="sm" onClick={() => router.push('/agenda')}>
-              Ouvrir l&apos;agenda
-            </Button>
-          </div>
-        </motion.div>
-      )}
 
       {/* Today's Appointments */}
       <section>

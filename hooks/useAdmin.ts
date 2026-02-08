@@ -7,7 +7,6 @@ export type AdminPractitioner = {
   email: string;
   full_name: string;
   phone?: string | null;
-  calendly_url?: string | null;
   created_at: string;
   updated_at: string;
 };
