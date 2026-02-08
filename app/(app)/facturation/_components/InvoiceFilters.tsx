@@ -13,6 +13,7 @@ const FILTERS = [
   { value: 'issued', label: 'En attente' },
   { value: 'draft', label: 'Brouillons' },
   { value: 'cancelled', label: 'Annulees' },
+  { value: 'refunded', label: 'Remboursees' },
 ];
 
 export function InvoiceFilters({ currentFilter, onFilterChange }: Props) {

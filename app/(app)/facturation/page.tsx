@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { InvoiceStatsDisplay } from './_components/InvoiceStats';
@@ -10,8 +10,8 @@ import { InvoiceModal } from '@/components/invoicing/InvoiceModal';
 import { useInvoiceStats } from '@/hooks/use-invoice-stats';
 import { supabase } from '@/lib/supabase';
 import type { ConsultationInvoice, InvoiceTemplate, PractitionerBillingSettings } from '@/lib/invoicing/types';
-import { Toaster } from '@/components/ui/Toaster';
-import { Plus, Settings } from 'lucide-react';
+import { Toaster, showToast } from '@/components/ui/Toaster';
+import { Plus, Settings, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
 
 export default function FacturationPage() {
@@ -22,6 +22,8 @@ export default function FacturationPage() {
   const [templates, setTemplates] = useState<InvoiceTemplate[]>([]);
   const [authToken, setAuthToken] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
   const { stats, loading: statsLoading, refetch: refetchStats } = useInvoiceStats();
 
   const fetchData = useCallback(async () => {
@@ -69,9 +71,58 @@ export default function FacturationPage() {
     fetchData();
   }, [fetchData]);
 
+  // Fermer le menu export quand on clique en dehors
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   function handleRefresh() {
     fetchData();
     refetchStats();
+  }
+
+  async function handleExportCSV(period: string) {
+    setShowExportMenu(false);
+    try {
+      const response = await fetch(`/api/invoicing/export/csv?period=${period}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok) throw new Error('Erreur export');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `factures_${period}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      showToast.error("Erreur lors de l'export CSV");
+    }
+  }
+
+  async function handleExportPDF(period: string) {
+    setShowExportMenu(false);
+    try {
+      const response = await fetch(`/api/invoicing/export/pdf-summary?period=${period}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok) throw new Error('Erreur export');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `recapitulatif_${period}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      showToast.error("Erreur lors de l'export PDF");
+    }
   }
 
   const settingsConfigured = !!settings;
@@ -84,6 +135,71 @@ export default function FacturationPage() {
         subtitle="Gerez vos factures et suivez votre chiffre d'affaires"
         actions={
           <div className="flex gap-2">
+            {settingsConfigured && (
+              <div className="relative" ref={exportMenuRef}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<Download className="h-4 w-4" />}
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                >
+                  Exporter
+                </Button>
+                {showExportMenu && (
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-teal/10 py-1 z-50">
+                    <div className="px-3 py-1.5 text-xs font-medium text-warmgray uppercase tracking-wider">
+                      CSV
+                    </div>
+                    <button
+                      onClick={() => handleExportCSV('month')}
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-warmgray" />
+                      Mois en cours
+                    </button>
+                    <button
+                      onClick={() => handleExportCSV('quarter')}
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-warmgray" />
+                      Trimestre
+                    </button>
+                    <button
+                      onClick={() => handleExportCSV('year')}
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-warmgray" />
+                      Annee
+                    </button>
+                    <div className="border-t border-teal/10 my-1" />
+                    <div className="px-3 py-1.5 text-xs font-medium text-warmgray uppercase tracking-wider">
+                      Recapitulatif PDF
+                    </div>
+                    <button
+                      onClick={() => handleExportPDF('month')}
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-warmgray" />
+                      Mensuel
+                    </button>
+                    <button
+                      onClick={() => handleExportPDF('quarter')}
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-warmgray" />
+                      Trimestriel
+                    </button>
+                    <button
+                      onClick={() => handleExportPDF('year')}
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-warmgray" />
+                      Annuel
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             <Link href="/settings/facturation">
               <Button
                 variant="ghost"

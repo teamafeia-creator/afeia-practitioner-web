@@ -156,8 +156,9 @@ export function InvoicePDFDocument({
 }: InvoicePDFDocumentProps) {
   const { practitioner_snapshot, consultant_snapshot } = invoice;
 
-  const documentTitle =
-    documentType === 'recu'
+  const documentTitle = invoice.is_avoir
+    ? 'AVOIR'
+    : documentType === 'recu'
       ? 'RECU'
       : documentType === 'facture-recu'
         ? 'FACTURE-RECU'
@@ -276,12 +277,27 @@ export function InvoicePDFDocument({
           </Text>
         </View>
 
+        {/* Avoir info */}
+        {invoice.is_avoir && (
+          <View style={[styles.section, { marginTop: 10 }]}>
+            <Text style={styles.smallText}>
+              Cet avoir annule la facture d&apos;origine.
+              {invoice.motif_remboursement &&
+                ` Motif : ${invoice.motif_remboursement}.`}
+            </Text>
+            <Text style={[styles.smallText, { marginTop: 3 }]}>
+              Un remboursement sera effectue selon les modalites convenues.
+            </Text>
+          </View>
+        )}
+
         {/* Footer */}
         <View style={styles.footer}>
           <Text>Document genere par AFEIA</Text>
           <Text style={{ marginTop: 3 }}>
-            Cette facture peut etre transmise a votre mutuelle pour un
-            eventuel remboursement partiel.
+            {invoice.is_avoir
+              ? 'Cet avoir peut etre transmis a votre mutuelle.'
+              : 'Cette facture peut etre transmise a votre mutuelle pour un eventuel remboursement partiel.'}
           </Text>
         </View>
       </Page>

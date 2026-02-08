@@ -32,6 +32,12 @@ const mockInvoice: ConsultationInvoice = {
     prenom: 'Jean',
     email: 'jean.martin@test.com',
   },
+  is_avoir: false,
+  facture_origine_id: null,
+  motif_remboursement: null,
+  stripe_payment_link_url: null,
+  stripe_payment_link_expires_at: null,
+  stripe_payment_intent_id: null,
   created_at: '2026-02-07T10:00:00Z',
   updated_at: '2026-02-07T10:00:00Z',
 };
