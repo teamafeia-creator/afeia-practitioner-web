@@ -85,26 +85,23 @@ export function EmptyState({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.2 }}
       className={cn(
-        'flex flex-col items-center gap-4 rounded-2xl bg-gradient-to-br from-white to-sable/30 text-center shadow-sm ring-1 ring-black/5',
+        'flex flex-col items-center gap-4 rounded-xl bg-white border border-divider text-center shadow-card',
         sizeStyles[size].container,
         className
       )}
     >
-      {/* Icon or illustration */}
-      <motion.div
-        initial={{ scale: 0.8 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+      {/* Icon */}
+      <div
         className={cn(
-          'flex items-center justify-center rounded-2xl bg-gradient-to-br from-teal/10 to-emerald-50',
+          'flex items-center justify-center rounded-2xl bg-sage-light',
           sizeStyles[size].iconWrapper
         )}
       >
         {IconComponent ? (
           <IconComponent
-            className={cn('text-teal', sizeStyles[size].icon)}
+            className={cn('text-sage', sizeStyles[size].icon)}
             strokeWidth={1.5}
           />
         ) : typeof icon === 'string' ? (
@@ -112,7 +109,7 @@ export function EmptyState({
         ) : (
           icon
         )}
-      </motion.div>
+      </div>
 
       {/* Text content */}
       <div className="space-y-1">
@@ -127,7 +124,7 @@ export function EmptyState({
         {description && (
           <p
             className={cn(
-              'text-warmgray max-w-sm mx-auto',
+              'text-stone max-w-sm mx-auto',
               sizeStyles[size].description
             )}
           >
@@ -141,7 +138,7 @@ export function EmptyState({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.1 }}
         >
           {action}
         </motion.div>
@@ -156,7 +153,7 @@ export function NoConsultants({ action }: { action?: React.ReactNode }) {
     <EmptyState
       icon="consultants"
       title="Aucun consultant"
-      description="Commencez par ajouter votre premier consultant pour suivre son parcours de soins."
+      description="Commencez par ajouter votre premier consultant pour suivre son parcours."
       action={action}
       size="lg"
     />
@@ -168,7 +165,7 @@ export function NoAppointments({ action }: { action?: React.ReactNode }) {
     <EmptyState
       icon="appointments"
       title="Aucun rendez-vous"
-      description="Vous n'avez aucun rendez-vous programmé. Planifiez votre premier rendez-vous."
+      description="Vous n'avez aucun rendez-vous programme. Planifiez votre premiere seance."
       action={action}
     />
   );
@@ -179,7 +176,7 @@ export function NoMessages({ action }: { action?: React.ReactNode }) {
     <EmptyState
       icon="messages"
       title="Aucun message"
-      description="Vous n'avez pas encore de conversations. Les messages de vos consultants apparaîtront ici."
+      description="Vous n'avez pas encore de conversations. Les messages de vos consultants apparaitront ici."
       action={action}
     />
   );
@@ -190,7 +187,7 @@ export function NoNotifications() {
     <EmptyState
       icon="notifications"
       title="Aucune notification"
-      description="Vous êtes à jour ! Les nouvelles notifications apparaîtront ici."
+      description="Vous etes a jour ! Les nouvelles notifications apparaitront ici."
       size="sm"
     />
   );
@@ -200,11 +197,11 @@ export function NoSearchResults({ query }: { query?: string }) {
   return (
     <EmptyState
       icon="search"
-      title="Aucun résultat"
+      title="Aucun resultat"
       description={
         query
-          ? `Aucun résultat trouvé pour "${query}". Essayez avec d'autres termes.`
-          : "Aucun résultat trouvé. Essayez avec d'autres critères de recherche."
+          ? `Aucun resultat trouve pour "${query}". Essayez avec d'autres termes.`
+          : "Aucun resultat trouve. Essayez avec d'autres criteres de recherche."
       }
     />
   );

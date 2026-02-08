@@ -16,7 +16,7 @@ export function StatCard({ icon, value, label, trend, color, className }: StatCa
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow',
+        'bg-white rounded-xl border border-divider p-5 shadow-card hover:shadow-card-hover transition-shadow duration-200',
         className
       )}
     >
@@ -28,9 +28,9 @@ export function StatCard({ icon, value, label, trend, color, className }: StatCa
           <div
             className={cn(
               'flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5',
-              trend.direction === 'up' && 'bg-emerald-50 text-emerald-600',
-              trend.direction === 'down' && 'bg-red-50 text-red-600',
-              trend.direction === 'flat' && 'bg-gray-50 text-gray-500'
+              trend.direction === 'up' && 'bg-sage-light text-sage-dark',
+              trend.direction === 'down' && 'bg-rose/10 text-rose',
+              trend.direction === 'flat' && 'bg-stone/10 text-stone'
             )}
           >
             {trend.direction === 'up' && <TrendingUp className="h-3 w-3" />}
@@ -41,12 +41,12 @@ export function StatCard({ icon, value, label, trend, color, className }: StatCa
         )}
       </div>
       <div
-        className="text-2xl font-bold mb-1"
+        className="text-2xl font-bold text-charcoal mb-1"
         style={color ? { color } : undefined}
       >
         {value}
       </div>
-      <div className="text-sm text-warmgray">{label}</div>
+      <div className="text-[13px] text-stone">{label}</div>
     </div>
   );
 }

@@ -23,13 +23,13 @@ function getInitials(name: string): string {
 
 function getColorFromName(name: string): string {
   const colors = [
-    'bg-teal',
-    'bg-emerald-500',
-    'bg-primary-500',
-    'bg-accent-orange',
-    'bg-accent-pink',
     'bg-sage',
-    'bg-aubergine'
+    'bg-terracotta',
+    'bg-sky',
+    'bg-gold',
+    'bg-rose',
+    'bg-sage-dark',
+    'bg-terracotta-dark'
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -54,10 +54,10 @@ export function Avatar({
   };
 
   const statusColors = {
-    online: 'bg-accent-success',
-    offline: 'bg-neutral-400',
-    busy: 'bg-accent-danger',
-    away: 'bg-accent-warning'
+    online: 'bg-success',
+    offline: 'bg-mist',
+    busy: 'bg-rose',
+    away: 'bg-gold'
   };
 
   const statusSizes = {
@@ -69,7 +69,7 @@ export function Avatar({
 
   const showFallback = !src;
   const initials = name ? getInitials(name) : null;
-  const bgColor = name ? getColorFromName(name) : 'bg-neutral-200';
+  const bgColor = name ? getColorFromName(name) : 'bg-stone/20';
 
   return (
     <div className={cn('relative inline-flex', className)}>
@@ -90,7 +90,7 @@ export function Avatar({
         ) : initials ? (
           <span className="font-semibold text-white">{initials}</span>
         ) : (
-          <User className="h-1/2 w-1/2 text-neutral-500" />
+          <User className="h-1/2 w-1/2 text-stone" />
         )}
       </div>
       {status && (
@@ -136,7 +136,7 @@ export function AvatarGroup({ avatars, max = 4, size = 'md' }: AvatarGroupProps)
       {remaining > 0 && (
         <div
           className={cn(
-            'flex items-center justify-center rounded-full bg-neutral-100 ring-2 ring-white font-medium text-neutral-600',
+            'flex items-center justify-center rounded-full bg-cream ring-2 ring-white font-medium text-stone',
             size === 'sm' && 'h-8 w-8 text-xs -ml-2',
             size === 'md' && 'h-10 w-10 text-sm -ml-3',
             size === 'lg' && 'h-12 w-12 text-base -ml-4'
