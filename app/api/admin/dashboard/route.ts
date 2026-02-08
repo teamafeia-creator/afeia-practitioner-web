@@ -36,9 +36,10 @@ export async function GET(request: NextRequest) {
 }
 
 async function fetchPractitionersForAlerts(supabase: ReturnType<typeof createAdminClient>) {
+  // Query practitioners (real table) for reliable data
   const { data: practitioners, error } = await supabase
-    .from('practitioners_public')
-    .select('id, full_name, email, last_login_at, created_at, subscription_status, status');
+    .from('practitioners')
+    .select('id, full_name, email, created_at, updated_at');
 
   if (error || !practitioners) {
     console.error('[admin] alert practitioners fetch error:', error);
@@ -46,17 +47,33 @@ async function fetchPractitionersForAlerts(supabase: ReturnType<typeof createAdm
   }
 
   const practitionerIds = practitioners.map((p) => p.id);
+  if (practitionerIds.length === 0) return [];
 
-  const [consultantCountsResult, failedSubsResult] = await Promise.all([
+  // Get additional data from practitioners_public (last_login_at, status, subscription_status)
+  const [publicDataResult, consultantCountsResult, failedSubsResult] = await Promise.all([
     supabase
-      .from('consultants_identity')
+      .from('practitioners_public')
+      .select('id, last_login_at, status, subscription_status')
+      .in('id', practitionerIds),
+    supabase
+      .from('consultants')
       .select('practitioner_id')
-      .in('practitioner_id', practitionerIds.length > 0 ? practitionerIds : ['__none__']),
+      .in('practitioner_id', practitionerIds)
+      .is('deleted_at', null),
     supabase
       .from('stripe_subscriptions')
       .select('practitioner_id, payment_failed, updated_at')
       .eq('payment_failed', true),
   ]);
+
+  const publicMap = new Map<string, { last_login_at: string | null; status: string | null; subscription_status: string | null }>();
+  for (const p of publicDataResult.data ?? []) {
+    publicMap.set(p.id, {
+      last_login_at: p.last_login_at,
+      status: p.status,
+      subscription_status: p.subscription_status,
+    });
+  }
 
   const countMap = new Map<string, number>();
   for (const c of consultantCountsResult.data ?? []) {
@@ -68,15 +85,18 @@ async function fetchPractitionersForAlerts(supabase: ReturnType<typeof createAdm
     failedMap.set(s.practitioner_id, s.updated_at);
   }
 
-  return practitioners.map((p) => ({
-    id: p.id,
-    full_name: p.full_name,
-    email: p.email,
-    last_login_at: p.last_login_at,
-    created_at: p.created_at,
-    subscription_status: p.subscription_status,
-    consultants_count: countMap.get(p.id) ?? 0,
-    payment_failed: failedMap.has(p.id),
-    payment_failed_since: failedMap.get(p.id) ?? null,
-  }));
+  return practitioners.map((p) => {
+    const pub = publicMap.get(p.id);
+    return {
+      id: p.id,
+      full_name: p.full_name,
+      email: p.email,
+      last_login_at: pub?.last_login_at ?? null,
+      created_at: p.created_at,
+      subscription_status: pub?.subscription_status ?? null,
+      consultants_count: countMap.get(p.id) ?? 0,
+      payment_failed: failedMap.has(p.id),
+      payment_failed_since: failedMap.get(p.id) ?? null,
+    };
+  });
 }
