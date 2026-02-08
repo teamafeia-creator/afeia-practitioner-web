@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/server/adminGuard';
+import { requireAdminAuth } from '@/lib/admin/auth';
 
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }

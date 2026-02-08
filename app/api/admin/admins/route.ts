@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/server/adminGuard';
+import { requireAdminAuth } from '@/lib/admin/auth';
+import { logAdminAction, getClientIp } from '@/lib/admin/audit-log';
 
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }
@@ -48,6 +49,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Erreur lors de l'ajout de l'admin." }, { status: 500 });
     }
 
+    await logAdminAction({
+      adminUserId: guard.user.id || undefined,
+      adminEmail: guard.user.email,
+      action: 'admin.create',
+      targetType: 'admin',
+      targetId: email,
+      details: { email },
+      ipAddress: getClientIp(request) ?? undefined,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[admin] allowlist insert exception:', error);
@@ -56,7 +67,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }
@@ -75,6 +86,16 @@ export async function DELETE(request: NextRequest) {
       console.error('[admin] allowlist delete error:', error);
       return NextResponse.json({ error: "Erreur lors de la suppression de l'admin." }, { status: 500 });
     }
+
+    await logAdminAction({
+      adminUserId: guard.user.id || undefined,
+      adminEmail: guard.user.email,
+      action: 'admin.delete',
+      targetType: 'admin',
+      targetId: email,
+      details: { email },
+      ipAddress: getClientIp(request) ?? undefined,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

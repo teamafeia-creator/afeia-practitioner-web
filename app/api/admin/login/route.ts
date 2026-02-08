@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminEmail, setAdminCookie } from '@/lib/server/adminAuth';
+import { logAdminAction, getClientIp } from '@/lib/admin/audit-log';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
     const allowed = await isAdminEmail(normalizedEmail);
 
     if (!allowed) {
-      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
+      return NextResponse.json({ error: 'Acces refuse.' }, { status: 403 });
     }
 
     const requiredPassword = process.env.ADMIN_PASSWORD;
@@ -23,6 +24,14 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ success: true });
     setAdminCookie(response, normalizedEmail);
+
+    await logAdminAction({
+      adminEmail: normalizedEmail,
+      action: 'admin.login',
+      details: { method: 'cookie' },
+      ipAddress: getClientIp(request),
+    });
+
     return response;
   } catch (error) {
     console.error('[admin] login error:', error);

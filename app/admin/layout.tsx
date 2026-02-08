@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 const ADMIN_LOGIN_PATH = '/admin/login';
 
@@ -12,6 +11,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminEmail, setAdminEmail] = useState<string | null>(null);
 
   const isLoginRoute = useMemo(() => pathname === ADMIN_LOGIN_PATH, [pathname]);
 
@@ -29,7 +29,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (!isMounted) return;
 
         if (response.ok) {
+          const data = await response.json();
           setIsAdmin(true);
+          setAdminEmail(data.email ?? null);
         } else {
           setIsAdmin(false);
           router.replace(ADMIN_LOGIN_PATH);
@@ -66,8 +68,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-200">
-        <div>Chargement de l&apos;espace admin...</div>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-500">
+        <div className="text-sm">Chargement de l&apos;espace admin...</div>
       </div>
     );
   }
@@ -81,27 +83,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-teal-200/70">AFEIA Admin</p>
-            <p className="text-lg font-semibold">Administration</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm text-slate-200/80 transition hover:text-white"
-            >
-              Retour à l&apos;espace praticien
-            </Link>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              Déconnexion
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
+    <div className="min-h-screen bg-slate-50">
+      <AdminSidebar adminEmail={adminEmail} onLogout={handleLogout} />
+      <main className="ml-64 p-6">{children}</main>
     </div>
   );
 }

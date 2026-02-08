@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/server/adminGuard';
+import { requireAdminAuth } from '@/lib/admin/auth';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -10,14 +10,10 @@ function getNumber(value: string | null, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const SORT_FIELDS = new Set(['created_at', 'full_name', 'status']);
+const SORT_FIELDS = new Set(['created_at', 'full_name', 'status', 'last_login_at']);
 
-/**
- * GET /api/admin/practitioners
- * Liste tous les praticiens (admin seulement)
- */
 export async function GET(request: NextRequest) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }
@@ -28,6 +24,7 @@ export async function GET(request: NextRequest) {
     const pageSize = getNumber(searchParams.get('pageSize'), DEFAULT_PAGE_SIZE);
     const search = searchParams.get('search')?.trim() ?? '';
     const status = searchParams.get('status')?.trim() ?? '';
+    const plan = searchParams.get('plan')?.trim() ?? '';
     const sortField = SORT_FIELDS.has(searchParams.get('sortField') ?? '')
       ? (searchParams.get('sortField') as string)
       : 'created_at';
@@ -40,10 +37,14 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('practitioners_public')
-      .select('id, email, full_name, status, subscription_status, created_at', { count: 'exact' });
+      .select('id, email, full_name, status, subscription_status, created_at, last_login_at', { count: 'exact' });
 
     if (status) {
       query = query.eq('status', status);
+    }
+
+    if (plan) {
+      query = query.eq('subscription_status', plan);
     }
 
     if (search) {
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Erreur liste praticiens:', error);
-      return NextResponse.json({ error: 'Erreur lors de la récupération des praticiens.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur lors de la recuperation des praticiens.' }, { status: 500 });
     }
 
     return NextResponse.json({ practitioners: data || [], total: count ?? 0 });
