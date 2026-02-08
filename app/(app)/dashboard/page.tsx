@@ -18,10 +18,12 @@ import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { SkeletonDashboard } from '@/components/ui/Skeleton';
+import { StatCard } from '@/components/ui/StatCard';
 import { getCalendlyUrlForCurrentPractitioner } from '@/lib/calendly';
 import { getTodayAppointments, getRecentCompletedWithoutNotes } from '@/lib/queries/appointments';
 import { supabase } from '@/lib/supabase';
 import { useRequireAuth } from '@/hooks/useAuth';
+import { usePractitionerStats } from '@/hooks/usePractitionerStats';
 import type { Appointment } from '@/lib/types';
 
 type ConsultantRow = {
@@ -79,6 +81,7 @@ function getAppointmentName(appointment: Appointment): string {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useRequireAuth('/login');
+  const { stats, loading: statsLoading } = usePractitionerStats('this_month');
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
   const [recentWithoutNotes, setRecentWithoutNotes] = useState<Appointment[]>([]);
   const [recontactConsultants, setRecontactConsultants] = useState<AlertConsultant[]>([]);
@@ -286,6 +289,53 @@ export default function DashboardPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Activity Stats Grid */}
+      {!statsLoading && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          <StatCard
+            icon="📅"
+            value={stats.sessionsCount}
+            label="Seances ce mois"
+            color="#2A8080"
+          />
+          <StatCard
+            icon="👥"
+            value={stats.newConsultants}
+            label="Nouveaux consultants"
+            color="#2A8080"
+          />
+          <StatCard
+            icon="🟢"
+            value={`${stats.activeConsultants}/${stats.totalConsultants}`}
+            label="Actifs cette semaine"
+            color="#2A8080"
+          />
+          <StatCard
+            icon="🔄"
+            value={`${stats.retentionRate}%`}
+            label="Fidelisation"
+            color={stats.retentionRate >= 70 ? '#10B981' : stats.retentionRate >= 50 ? '#F59E0B' : '#EF4444'}
+          />
+          <StatCard
+            icon="💰"
+            value={stats.revenue > 0 ? `${(stats.revenue / 100).toFixed(0)} €` : '—'}
+            label="CA mensuel"
+            color="#2A8080"
+          />
+          <StatCard
+            icon="📓"
+            value={`${stats.avgJournalFillRate}%`}
+            label="Remplissage journal"
+            color={stats.avgJournalFillRate >= 60 ? '#10B981' : stats.avgJournalFillRate >= 30 ? '#F59E0B' : '#EF4444'}
+          />
+        </motion.div>
+      )}
 
       {/* Calendly migration banner */}
       {!calendlyLoading && calendlyUrl && (

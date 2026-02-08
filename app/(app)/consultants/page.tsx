@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Toast } from '@/components/ui/Toast';
 import { Avatar } from '@/components/ui/Avatar';
+import { ConsultantFilterBar } from '@/components/consultants/ConsultantFilterBar';
+import { SavedViewsTabs } from '@/components/consultants/SavedViewsTabs';
+import { useConsultantFilters } from '@/hooks/useConsultantFilters';
 import { getMyConsultantsAndInvitations } from '@/services/practitioner.service';
 import { invitationService } from '@/services/invitation.service';
 import { supabase } from '@/lib/supabase';
@@ -24,6 +27,8 @@ import {
   Users
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import type { ConsultantFilters } from '@/lib/types/filters';
+import { DEFAULT_FILTERS } from '@/lib/types/filters';
 
 type ConsultantRow = {
   id: string;
@@ -409,6 +414,9 @@ export default function ConsultantsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Advanced filters (V1+V2)
+  const advancedFilters = useConsultantFilters();
+
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -498,6 +506,33 @@ export default function ConsultantsPage() {
               </Button>
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Advanced Filter Bar (V1+V2) */}
+      <div className="glass-panel rounded-lg p-4 mb-4">
+        <ConsultantFilterBar
+          filters={advancedFilters.filters}
+          setFilter={advancedFilters.setFilter}
+          clearFilters={advancedFilters.clearFilters}
+          activeFilterCount={advancedFilters.activeFilterCount}
+          search={advancedFilters.search}
+          setSearch={advancedFilters.setSearch}
+          sortOption={advancedFilters.sortOption}
+          setSortOption={advancedFilters.setSortOption}
+          resultCount={advancedFilters.consultants.length}
+          availableConcerns={advancedFilters.availableConcerns}
+        />
+        <div className="mt-2">
+          <SavedViewsTabs
+            filters={advancedFilters.filters}
+            activeFilterCount={advancedFilters.activeFilterCount}
+            onApplyView={(newFilters: ConsultantFilters) => {
+              Object.entries(newFilters).forEach(([key, value]) => {
+                advancedFilters.setFilter(key as keyof ConsultantFilters, value as ConsultantFilters[keyof ConsultantFilters]);
+              });
+            }}
+          />
         </div>
       </div>
 

@@ -44,6 +44,9 @@ import type {
   ConsultantWithDetails,
   WearableInsight
 } from '../../lib/types';
+import { useContraindications } from '../../hooks/useContraindications';
+import { ContraindicationBanner } from '../care-plan/ContraindicationBanner';
+import { ContraindicationValidationModal } from '../care-plan/ContraindicationValidationModal';
 
 /**
  * Helper to flatten nested anamnesis answers to flat format.
@@ -322,6 +325,35 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     description?: string;
     variant?: 'success' | 'error' | 'info';
   } | null>(null);
+
+  const [showContraindicationModal, setShowContraindicationModal] = useState(false);
+
+  // Extract substance names from plan content for contraindication checking
+  const substanceNamesFromPlan = useMemo(() => {
+    const substanceKeys = [
+      'phytotherapie_plantes', 'phytotherapie_posologie',
+      'complements', 'huiles_essentielles'
+    ];
+    const names: string[] = [];
+    for (const key of substanceKeys) {
+      const val = planForm[key];
+      if (val && val.trim()) {
+        // Split by common delimiters
+        const words = val.split(/[,;\n\-•·]+/).map((w: string) => w.trim()).filter(Boolean);
+        names.push(...words);
+      }
+    }
+    return names;
+  }, [planForm]);
+
+  const {
+    alerts: contraindicationAlerts,
+    loading: contraindicationsLoading,
+    acknowledgeAlert: acknowledgeContraindication,
+    criticalCount: contraindicationCriticalCount,
+    warningCount: contraindicationWarningCount,
+    infoCount: contraindicationInfoCount,
+  } = useContraindications(consultant.id, substanceNamesFromPlan);
 
   const isPremium = consultantState.is_premium;
   const wearableSummaries = useMemo(
@@ -705,11 +737,29 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     }
   }
 
+  function handleSharePlanClick() {
+    if (!activePlan || !canEditPlan) return;
+    // If unacknowledged critical alerts exist, show validation modal
+    const unacknowledgedCritical = contraindicationAlerts.filter(
+      (a) => a.severity === 'critical' && !a.acknowledged
+    );
+    if (unacknowledgedCritical.length > 0) {
+      setShowContraindicationModal(true);
+      return;
+    }
+    handleSharePlan();
+  }
+
   async function handleSharePlan() {
     if (!activePlan) return;
     if (!canEditPlan) return;
+    setShowContraindicationModal(false);
     setPlanSharing(true);
     try {
+      // Acknowledge all remaining alerts when sharing
+      for (const alert of contraindicationAlerts.filter((a) => !a.acknowledged)) {
+        await acknowledgeContraindication(alert.ruleId);
+      }
       const shared = await shareConsultantPlanVersion(activePlan.id);
       setPlans((prev) => prev.map((item) => (item.id === shared.id ? shared : item)));
       setToast({
@@ -1733,7 +1783,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     {canEditPlan ? (
                       <Button
                         variant="primary"
-                        onClick={handleSharePlan}
+                        onClick={handleSharePlanClick}
                         loading={planSharing}
                         disabled={planSharing || planSaving || isPlanDirty}
                       >
@@ -1753,6 +1803,17 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 {canEditPlan ? (
                   <EditBanner label="Complétez le conseillancier avant de le partager." />
                 ) : null}
+                {canEditPlan && contraindicationAlerts.length > 0 && (
+                  <div className="mt-3">
+                    <ContraindicationBanner
+                      alerts={contraindicationAlerts}
+                      onAcknowledge={acknowledgeContraindication}
+                      criticalCount={contraindicationCriticalCount}
+                      warningCount={contraindicationWarningCount}
+                      infoCount={contraindicationInfoCount}
+                    />
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="space-y-6">
                 {CONSEILLANCIER_SECTIONS.map((section) => {
@@ -1828,6 +1889,15 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               </CardContent>
             </Card>
           ) : null}
+
+          {/* Contraindication Validation Modal */}
+          <ContraindicationValidationModal
+            open={showContraindicationModal}
+            onClose={() => setShowContraindicationModal(false)}
+            onConfirm={handleSharePlan}
+            alerts={contraindicationAlerts}
+            loading={planSharing}
+          />
         </div>
       )}
 
