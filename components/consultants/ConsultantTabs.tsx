@@ -310,6 +310,9 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   const [planSaving, setPlanSaving] = useState(false);
   const [planSharing, setPlanSharing] = useState(false);
   const [planCreating, setPlanCreating] = useState(false);
+  const [medicalAlerts, setMedicalAlerts] = useState<string[]>([]);
+  const [aiQuotaUsed, setAiQuotaUsed] = useState(0);
+  const [aiQuotaMax, setAiQuotaMax] = useState(30);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [premiumLoading, setPremiumLoading] = useState(false);
@@ -780,6 +783,39 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     } finally {
       setPdfDownloading(false);
     }
+  }
+
+  function handleAIGenerated(content: Record<string, string>, plan: Record<string, unknown> | null) {
+    // Merge AI content into the plan form
+    const merged = buildPlanContent({ ...planForm, ...content });
+    setPlanForm(merged);
+
+    // If a new plan was created by the API, add it to the plans list
+    if (plan && plan.id) {
+      const newPlan = plan as unknown as ConsultantPlan;
+      setPlans((prev) => {
+        const exists = prev.some((p) => p.id === newPlan.id);
+        if (exists) {
+          return prev.map((p) => (p.id === newPlan.id ? newPlan : p));
+        }
+        return [newPlan, ...prev];
+      });
+      setActivePlanId(newPlan.id);
+    }
+
+    setToast({
+      title: 'Conseillancier généré par IA',
+      description: 'Relisez et ajustez les sections avant de partager.',
+      variant: 'success',
+    });
+  }
+
+  function handleAIError(error: string) {
+    setToast({
+      title: 'Erreur IA',
+      description: error,
+      variant: 'error',
+    });
   }
 
   async function handleDeleteConsultant() {
@@ -1642,6 +1678,14 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
 
       {tab === T.tabConseillancier && (
         <div className="space-y-4">
+          {medicalAlerts.length > 0 && (
+            <MedicalAlertBanner alerts={medicalAlerts} />
+          )}
+          <AIStatusBar
+            aiGenerated={activePlan?.ai_generated === true}
+            quotaUsed={aiQuotaUsed}
+            quotaMax={aiQuotaMax}
+          />
           <Card>
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1651,13 +1695,23 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     {T.descConseillancier}
                   </p>
                 </div>
-                <Button
-                  variant="primary"
-                  onClick={() => handleCreatePlan(activePlan)}
-                  loading={planCreating}
-                >
-                  {T.conseillancierCreer}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <GenerateButton
+                    consultantId={consultant.id}
+                    planId={canEditPlan ? activePlan?.id : null}
+                    onGenerated={handleAIGenerated}
+                    onError={handleAIError}
+                    onMedicalAlerts={setMedicalAlerts}
+                    disabled={false}
+                  />
+                  <Button
+                    variant="primary"
+                    onClick={() => handleCreatePlan(activePlan)}
+                    loading={planCreating}
+                  >
+                    {T.conseillancierCreer}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>

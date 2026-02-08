@@ -238,6 +238,18 @@ export default function SettingsPage() {
 
           <Card>
             <CardHeader>
+              <h2 className="text-sm font-semibold">Assistance IA</h2>
+              <p className="text-xs text-warmgray">Personnalisez le style de l'IA pour vos conseillanciers.</p>
+            </CardHeader>
+            <CardContent>
+              <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/ai')}>
+                Configurer le profil IA
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <h2 className="text-sm font-semibold">Abonnement</h2>
             </CardHeader>
             <CardContent className="space-y-3">
