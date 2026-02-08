@@ -365,7 +365,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-divider shadow-lg overflow-hidden">
+                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white/95 backdrop-blur-md border border-divider shadow-lg overflow-hidden">
                   <div className="px-4 py-3 border-b border-divider">
                     <div className="text-xs text-stone">Compte praticien</div>
                     <div className="text-sm font-medium text-charcoal truncate">
@@ -427,7 +427,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </button>
 
         {helpMenuOpen && (
-          <div className="absolute bottom-14 right-0 w-56 rounded-xl bg-white border border-divider shadow-lg overflow-hidden">
+          <div className="absolute bottom-14 right-0 w-56 rounded-xl bg-white/95 backdrop-blur-md border border-divider shadow-lg overflow-hidden">
             <a
               href="#"
               className="block px-4 py-3 text-sm text-charcoal hover:bg-cream transition-colors"

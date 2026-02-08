@@ -5,14 +5,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Debug: Log configuration status (partial keys for security)
 if (typeof window !== 'undefined') {
-  console.log('🔧 Supabase config:', {
+  console.log('[supabase] config:', {
     url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'MISSING',
     key: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'MISSING'
   });
 }
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Variables Supabase manquantes!');
+  console.error('[supabase] Variables Supabase manquantes!');
   throw new Error('Missing Supabase environment variables. Check your .env.local file.');
 }
 

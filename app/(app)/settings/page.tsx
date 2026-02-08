@@ -257,11 +257,35 @@ export default function SettingsPage() {
                 <div className="text-sm text-charcoal">Plan</div>
                 <Badge variant="premium">Premium</Badge>
               </div>
-              <div className="rounded-lg bg-white/60 p-3 text-sm text-charcoal border border-teal/10">
+              <div className="rounded-lg bg-white/60 p-3 text-sm text-charcoal border border-divider">
                 Bague connectée (sommeil, HRV, activité) activée pour les consultants Premium.
               </div>
-              <Button variant="secondary" onClick={() => router.push('/billing')}>
-                Gérer la facturation
+              <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/abonnement')}>
+                Voir mon abonnement
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Notifications</h2>
+              <p className="text-xs text-warmgray">Preferences de communication.</p>
+            </CardHeader>
+            <CardContent>
+              <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/facturation/relances')}>
+                Configurer les relances
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Donnees et RGPD</h2>
+              <p className="text-xs text-warmgray">Vie privee et protection des donnees.</p>
+            </CardHeader>
+            <CardContent>
+              <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/rgpd')}>
+                Gerer mes donnees
               </Button>
             </CardContent>
           </Card>

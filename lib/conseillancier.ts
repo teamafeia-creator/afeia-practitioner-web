@@ -116,7 +116,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'en_tete',
     title: 'Message d\'accueil',
     description: 'Un mot personnalisé pour le consultant.',
-    icon: '💬',
+    icon: '',
     optional: true,
     fields: [
       {
@@ -141,7 +141,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'objectifs',
     title: 'Objectifs prioritaires',
     description: 'Les axes de travail et les premières actions.',
-    icon: '🎯',
+    icon: '',
     fields: [
       {
         key: 'objectifs_principaux',
@@ -161,7 +161,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'alimentation',
     title: 'Alimentation & Hydratation',
     description: 'Recommandations alimentaires et hydratation.',
-    icon: '🥗',
+    icon: '',
     fields: [
       {
         key: 'principes_alimentaires',
@@ -208,7 +208,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'phytotherapie',
     title: 'Phytothérapie',
     description: 'Plantes médicinales recommandées.',
-    icon: '🌿',
+    icon: '',
     optional: true,
     fields: [
       {
@@ -235,7 +235,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'micronutrition',
     title: 'Micronutrition',
     description: 'Compléments alimentaires et micronutriments.',
-    icon: '💊',
+    icon: '',
     optional: true,
     fields: [
       {
@@ -256,7 +256,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'aromatologie',
     title: 'Aromatologie',
     description: 'Huiles essentielles recommandées.',
-    icon: '🫧',
+    icon: '',
     optional: true,
     fields: [
       {
@@ -277,7 +277,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'hydrologie',
     title: 'Hydrologie',
     description: 'Techniques d\'hydrothérapie recommandées.',
-    icon: '💧',
+    icon: '',
     optional: true,
     fields: [
       {
@@ -292,7 +292,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'activite',
     title: 'Activité physique',
     description: 'Recommandations d\'exercice et mouvement.',
-    icon: '🏃',
+    icon: '',
     fields: [
       {
         key: 'activite_type',
@@ -316,7 +316,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'equilibre_psycho',
     title: 'Équilibre psycho-émotionnel',
     description: 'Gestion du stress et du bien-être mental.',
-    icon: '🧘',
+    icon: '',
     fields: [
       {
         key: 'equilibre_psycho',
@@ -336,7 +336,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'respiration',
     title: 'Techniques respiratoires',
     description: 'Exercices de respiration et protocoles.',
-    icon: '🌬️',
+    icon: '',
     optional: true,
     fields: [
       {
@@ -351,7 +351,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'techniques_manuelles',
     title: 'Techniques manuelles & réflexes',
     description: 'Auto-massages et points réflexes.',
-    icon: '🤲',
+    icon: '',
     optional: true,
     fields: [
       {
@@ -378,7 +378,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'sommeil',
     title: 'Sommeil',
     description: 'Routine et environnement de sommeil.',
-    icon: '🌙',
+    icon: '',
     fields: [
       {
         key: 'sommeil_routine',
@@ -404,7 +404,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'environnement',
     title: 'Environnement & hygiène de vie',
     description: 'Qualité de l\'air, produits du quotidien.',
-    icon: '🌱',
+    icon: '',
     optional: true,
     fields: [
       {
@@ -431,7 +431,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'suivi',
     title: 'Suivi & ajustements',
     description: 'Indicateurs à observer et prochain rendez-vous.',
-    icon: '📋',
+    icon: '',
     fields: [
       {
         key: 'suivi_indicateurs',
@@ -456,7 +456,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'cloture',
     title: 'Message de clôture',
     description: 'Un mot d\'encouragement pour terminer.',
-    icon: '🌟',
+    icon: '',
     optional: true,
     fields: [
       {
@@ -471,7 +471,7 @@ export const CONSEILLANCIER_SECTIONS: ConseillancierSection[] = [
     id: 'notes_libres',
     title: 'Notes libres',
     description: 'Notes additionnelles.',
-    icon: '📝',
+    icon: '',
     optional: true,
     fields: [
       {

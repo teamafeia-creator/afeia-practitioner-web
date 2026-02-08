@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Users,
   CreditCard,
   UserPlus,
   AlertCircle,
   Activity,
+  UserCheck,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AdminMetricCard } from '@/components/admin/AdminMetricCard';
 import { AdminAlertItem } from '@/components/admin/AdminAlertItem';
 import { AdminActivityItem } from '@/components/admin/AdminActivityItem';
+import { FreshDatabaseButton } from '@/components/admin/FreshDatabaseButton';
 
 type DashboardMetrics = {
   activePractitioners: number;
@@ -24,6 +29,8 @@ type DashboardMetrics = {
   newSignupsTrend: number;
   failedPayments: number;
   activityRate: number;
+  totalPatients: number;
+  patientsAwaitingActivation: number;
 };
 
 type AdminAlert = {
@@ -53,13 +60,16 @@ type DashboardData = {
 };
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadDashboard() {
+      setLoading(true);
       try {
         const response = await fetch('/api/admin/dashboard', {
           credentials: 'include',
@@ -86,7 +96,7 @@ export default function AdminDashboardPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refreshKey]);
 
   const metrics = data?.metrics;
   const alerts = data?.alerts ?? [];
@@ -161,6 +171,59 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
+        {/* Patient metrics row */}
+        {!loading && metrics && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <button
+              onClick={() => router.push('/admin/patients')}
+              className="text-left"
+            >
+              <AdminMetricCard
+                icon={UserCheck}
+                label="Patients total"
+                value={metrics.totalPatients}
+                accentColor="teal"
+              />
+            </button>
+            {metrics.patientsAwaitingActivation > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => router.push('/admin/patients?activation=pending')}
+                  className="w-full text-left"
+                >
+                  <AdminMetricCard
+                    icon={Clock}
+                    label="Patients en attente d'activation"
+                    value={metrics.patientsAwaitingActivation}
+                    accentColor="red"
+                  />
+                </button>
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                  {metrics.patientsAwaitingActivation}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Patient activation warning */}
+        {!loading && metrics && metrics.patientsAwaitingActivation > 0 && (
+          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                {metrics.patientsAwaitingActivation} patient(s) en attente d&apos;activation
+              </p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                Ces patients ont un code d&apos;activation non utilise.{' '}
+                <Link href="/admin/patients?activation=pending" className="underline hover:text-amber-800">
+                  Voir les details
+                </Link>
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Alerts section */}
         {!loading && alerts.length > 0 && (
           <div className="rounded-lg border border-slate-200 bg-white p-5">
@@ -198,6 +261,13 @@ export default function AdminDashboardPage() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Danger zone - Reset Database */}
+        {!loading && (
+          <FreshDatabaseButton
+            onSuccess={() => setRefreshKey((v) => v + 1)}
+          />
         )}
     </div>
   );

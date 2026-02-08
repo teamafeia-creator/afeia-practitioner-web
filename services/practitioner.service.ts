@@ -57,7 +57,7 @@ async function sendActivationCodeViaAPI(params: {
 
     return { ok: true, code: data.code };
   } catch (err) {
-    console.error('❌ Erreur appel API send-activation-code:', err);
+    console.error('[practitioner] Erreur appel API send-activation-code:', err);
     return { ok: false, error: String(err) };
   }
 }
@@ -77,20 +77,19 @@ export async function createConsultantActivationCode(
   let tempConsultantId: string | null = null;
 
   try {
-    console.log('═══════════════════════════════════════');
-    console.log('👤 CRÉATION CONSULTANT + CODE D\'ACTIVATION');
+    console.log('[practitioner] CREATION CONSULTANT + CODE D\'ACTIVATION');
     console.log('Email:', consultantData.email);
 
     // 1. Vérifier que le naturopathe est connecté
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error('❌ Non authentifié');
+      console.error('[practitioner] Non authentifie');
       return { success: false, error: 'Vous devez être connecté' };
     }
 
     const practitionerId = user.id;
-    console.log('✅ Naturopathe ID:', practitionerId);
+    console.log('[practitioner] Naturopathe ID:', practitionerId);
 
     const normalizedEmail = consultantData.email.toLowerCase().trim();
 
@@ -110,7 +109,7 @@ export async function createConsultantActivationCode(
         };
       }
       // Si le consultant existe mais pas activé, on retourne son ID et on peut régénérer un code
-      console.log('⚠️ Consultant non-activé existant trouvé:', existingConsultant.id);
+      console.log('[practitioner] Consultant non-active existant trouve:', existingConsultant.id);
       tempConsultantId = existingConsultant.id;
     }
 
@@ -125,7 +124,7 @@ export async function createConsultantActivationCode(
       .single();
 
     if (existingCode && tempConsultantId) {
-      console.log('⚠️ Code existant trouvé:', existingCode.code);
+      console.log('[practitioner] Code existant trouve:', existingCode.code);
       return {
         success: true,
         code: existingCode.code,
@@ -136,7 +135,7 @@ export async function createConsultantActivationCode(
 
     // 4. Générer un code à 6 chiffres
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('🔐 Code généré:', code);
+    console.log('[practitioner] Code genere:', code);
 
     // Préparer les données du consultant
     const firstName = consultantData.firstName || consultantData.name?.split(' ')[0] || '';
@@ -145,7 +144,7 @@ export async function createConsultantActivationCode(
 
     // 5. CRÉER LE CONSULTANT IMMÉDIATEMENT (si n'existe pas déjà)
     if (!tempConsultantId) {
-      console.log('📝 Création du consultant dans la table consultants...');
+      console.log('[practitioner] Creation du consultant dans la table consultants...');
 
       const { data: newConsultant, error: consultantError } = await supabase
         .from('consultants')
@@ -163,15 +162,15 @@ export async function createConsultantActivationCode(
         .single();
 
       if (consultantError) {
-        console.error('❌ Erreur création consultant:', consultantError);
+        console.error('[practitioner] Erreur creation consultant:', consultantError);
         return { success: false, error: consultantError.message };
       }
 
       tempConsultantId = newConsultant.id;
-      console.log('✅ Consultant créé (pending):', tempConsultantId);
+      console.log('[practitioner] Consultant cree (pending):', tempConsultantId);
     } else {
       // Mettre à jour les infos si le consultant existe déjà
-      console.log('📝 Mise à jour du consultant existant:', tempConsultantId);
+      console.log('[practitioner] Mise a jour du consultant existant:', tempConsultantId);
 
       await supabase
         .from('consultants')
@@ -199,10 +198,8 @@ export async function createConsultantActivationCode(
       used: false
     };
 
-    console.log('═══════════════════════════════════════');
-    console.log('📝 INSERTION OTP_CODES');
+    console.log('[practitioner] INSERTION OTP_CODES');
     console.log('Payload:', JSON.stringify(otpPayload, null, 2));
-    console.log('═══════════════════════════════════════');
 
     const { data: insertedOtp, error: otpError } = await supabase
       .from('otp_codes')
@@ -211,16 +208,16 @@ export async function createConsultantActivationCode(
       .single();
 
     if (otpError) {
-      console.error('❌ Erreur stockage code:', otpError);
+      console.error('[practitioner] Erreur stockage code:', otpError);
       // Rollback: supprimer le consultant créé
       if (tempConsultantId && !existingConsultant) {
-        console.log('🔄 Rollback: suppression du consultant créé');
+        console.log('[practitioner] Rollback: suppression du consultant cree');
         await supabase.from('consultants').delete().eq('id', tempConsultantId);
       }
       return { success: false, error: otpError.message };
     }
 
-    console.log('✅ Code OTP créé:', insertedOtp?.id);
+    console.log('[practitioner] Code OTP cree:', insertedOtp?.id);
 
     // 7. Envoyer l'email d'activation via API route
     // Récupérer le token de session pour l'API
@@ -238,23 +235,21 @@ export async function createConsultantActivationCode(
       });
 
       if (emailResult.ok) {
-        console.log('✅ Email envoyé via API route');
+        console.log('[practitioner] Email envoye via API route');
         emailCode = emailResult.code || code;
       } else {
-        console.error('⚠️ Erreur email (API route):', emailResult.error);
+        console.error('[practitioner] Erreur email (API route):', emailResult.error);
       }
     } else {
-      console.error('⚠️ Pas de token de session pour envoyer l\'email');
+      console.error('[practitioner] Pas de token de session pour envoyer l\'email');
     }
 
-    console.log('═══════════════════════════════════════');
-    console.log('✅ CONSULTANT CRÉÉ + CODE GÉNÉRÉ');
+    console.log('[practitioner] CONSULTANT CREE + CODE GENERE');
     console.log('Email:', normalizedEmail);
     console.log('Code:', emailCode);
     console.log('Consultant ID:', tempConsultantId);
     console.log('Praticien ID:', practitionerId);
     console.log('Statut: En attente d\'activation');
-    console.log('═══════════════════════════════════════');
 
     return {
       success: true,
@@ -263,7 +258,7 @@ export async function createConsultantActivationCode(
     };
 
   } catch (err) {
-    console.error('❌ Exception createConsultantActivationCode:', err);
+    console.error('[practitioner] Exception createConsultantActivationCode:', err);
     return { success: false, error: String(err) };
   }
 }
@@ -273,7 +268,7 @@ export async function createConsultantActivationCode(
  */
 export async function resendActivationCode(email: string): Promise<CreateConsultantResult> {
   try {
-    console.log('🔄 Renvoi code activation pour:', email);
+    console.log('[practitioner] Renvoi code activation pour:', email);
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -314,13 +309,13 @@ export async function resendActivationCode(email: string): Promise<CreateConsult
         });
 
         if (emailResult.ok) {
-          console.log('✅ Email renvoyé via API route');
+          console.log('[practitioner] Email renvoye via API route');
           return {
             success: true,
             code: emailResult.code || existingCode.code
           };
         } else {
-          console.error('⚠️ Erreur email (API route):', emailResult.error);
+          console.error('[practitioner] Erreur email (API route):', emailResult.error);
         }
       }
 
@@ -338,7 +333,7 @@ export async function resendActivationCode(email: string): Promise<CreateConsult
     };
 
   } catch (err) {
-    console.error('❌ Exception resendActivationCode:', err);
+    console.error('[practitioner] Exception resendActivationCode:', err);
     return { success: false, error: String(err) };
   }
 }
@@ -383,16 +378,15 @@ export async function getMyConsultantsAndInvitations(): Promise<{
   error?: string;
 }> {
   try {
-    console.log('═══════════════════════════════════════');
-    console.log('📋 RÉCUPÉRATION CONSULTANTS + INVITATIONS');
+    console.log('[practitioner] RECUPERATION CONSULTANTS + INVITATIONS');
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error('❌ Non authentifié');
+      console.error('[practitioner] Non authentifie');
       throw new Error('Non authentifié');
     }
 
-    console.log('✅ Praticien ID:', user.id);
+    console.log('[practitioner] Praticien ID:', user.id);
 
     // Récupérer les consultants activés
     const { data: consultants, error: consultantsError } = await supabase
@@ -403,7 +397,7 @@ export async function getMyConsultantsAndInvitations(): Promise<{
       .order('created_at', { ascending: false });
 
     if (consultantsError) {
-      console.error('❌ Erreur récupération consultants:', consultantsError);
+      console.error('[practitioner] Erreur recuperation consultants:', consultantsError);
       throw consultantsError;
     }
 
@@ -416,14 +410,12 @@ export async function getMyConsultantsAndInvitations(): Promise<{
       .order('invited_at', { ascending: false });
 
     if (invitationsError) {
-      console.error('❌ Erreur récupération invitations:', invitationsError);
+      console.error('[practitioner] Erreur recuperation invitations:', invitationsError);
       throw invitationsError;
     }
 
-    console.log('═══════════════════════════════════════');
-    console.log(`✅ ${consultants?.length || 0} consultants actifs`);
-    console.log(`✅ ${invitations?.length || 0} invitations en attente`);
-    console.log('═══════════════════════════════════════');
+    console.log(`[practitioner] ${consultants?.length || 0} consultants actifs`);
+    console.log(`[practitioner] ${invitations?.length || 0} invitations en attente`);
 
     return {
       success: true,
@@ -432,7 +424,7 @@ export async function getMyConsultantsAndInvitations(): Promise<{
     };
 
   } catch (err) {
-    console.error('❌ Exception getMyConsultantsAndInvitations:', err);
+    console.error('[practitioner] Exception getMyConsultantsAndInvitations:', err);
     return {
       success: false,
       error: String(err)

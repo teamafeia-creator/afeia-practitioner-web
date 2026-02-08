@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
     const { data: otpRecord, error: otpError } = await otpQuery.maybeSingle();
 
     if (otpError || !otpRecord) {
-      console.error('❌ finalize-auth: OTP introuvable ou invalide', otpError);
+      console.error('[auth] finalize-auth: OTP introuvable ou invalide', otpError);
       return NextResponse.json(
         { ok: false, message: 'Code OTP invalide ou expiré' },
         { status: 400 }
@@ -217,8 +217,7 @@ export async function POST(request: NextRequest) {
     const invitation = await resolveInvitation(otpRecord, email);
     const consultantId = await resolveConsultantId(otpRecord, invitation, email);
 
-    console.log('═══════════════════════════════════════');
-    console.log('🔐 FINALIZE AUTH');
+    console.log('[auth] FINALIZE AUTH');
     console.log('   Email:', email);
     console.log('   OTP ID:', otpRecord.id);
     console.log('   Consultant ID:', consultantId);
@@ -228,7 +227,7 @@ export async function POST(request: NextRequest) {
     // A membership may reference a consultant_id that was never inserted (or was deleted).
     // Consultant creation is MANDATORY – we must never leave an orphan membership.
     if (consultantId) {
-      console.log('🔍 finalize-auth: checking consultant row...');
+      console.log('[auth] finalize-auth: checking consultant row...');
 
       const { data: existingConsultant } = await supabaseAdmin
         .from('consultants')
@@ -237,7 +236,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle();
 
       if (!existingConsultant) {
-        console.warn('⚠️ finalize-auth: consultant row missing for', consultantId, '– creating it');
+        console.warn('[auth] finalize-auth: consultant row missing for', consultantId, '- creating it');
 
         const consultantName =
           invitation?.full_name ||
@@ -249,7 +248,7 @@ export async function POST(request: NextRequest) {
           invitation?.practitioner_id || otpRecord.practitioner_id || null;
 
         if (!practitionerId) {
-          console.warn('⚠️ finalize-auth: no practitioner_id in invitation/OTP, looking up first practitioner...');
+          console.warn('[auth] finalize-auth: no practitioner_id in invitation/OTP, looking up first practitioner...');
           const { data: practitioners } = await supabaseAdmin
             .from('practitioners')
             .select('id')
@@ -259,14 +258,14 @@ export async function POST(request: NextRequest) {
           practitionerId = practitioners?.[0]?.id || null;
 
           if (!practitionerId) {
-            console.error('❌ finalize-auth: no practitioner exists in database');
+            console.error('[auth] finalize-auth: no practitioner exists in database');
             return NextResponse.json(
               { ok: false, message: 'Configuration invalide : aucun praticien disponible' },
               { status: 500 }
             );
           }
 
-          console.log('✅ finalize-auth: default practitioner assigned:', practitionerId);
+          console.log('[auth] finalize-auth: default practitioner assigned:', practitionerId);
         }
 
         const { data: newConsultant, error: createConsultantError } = await supabaseAdmin
@@ -285,35 +284,35 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (createConsultantError) {
-          console.error('❌ finalize-auth: failed to create consultant row', createConsultantError);
+          console.error('[auth] finalize-auth: failed to create consultant row', createConsultantError);
           return NextResponse.json(
             { ok: false, message: 'Erreur lors de la création du profil consultant' },
             { status: 500 }
           );
         }
 
-        console.log('✅ finalize-auth: consultant created and activated:', newConsultant.name, newConsultant.email);
+        console.log('[auth] finalize-auth: consultant created and activated:', newConsultant.name, newConsultant.email);
       } else {
-        console.log('✅ finalize-auth: consultant already exists:', existingConsultant.id);
+        console.log('[auth] finalize-auth: consultant already exists:', existingConsultant.id);
 
         // Auto-fix: activate consultant if not activated
         if (!existingConsultant.activated) {
-          console.log('⚠️ finalize-auth: consultant not activated, activating...');
+          console.log('[auth] finalize-auth: consultant not activated, activating...');
           await supabaseAdmin
             .from('consultants')
             .update({ activated: true, activated_at: now })
             .eq('id', consultantId);
-          console.log('✅ finalize-auth: consultant activated');
+          console.log('[auth] finalize-auth: consultant activated');
         }
 
         // Auto-fix: assign practitioner if missing
         if (!existingConsultant.practitioner_id) {
-          console.log('⚠️ finalize-auth: no practitioner assigned, assigning...');
+          console.log('[auth] finalize-auth: no practitioner assigned, assigning...');
           let fallbackPractitionerId = invitation?.practitioner_id || otpRecord.practitioner_id || null;
 
           // FALLBACK: first practitioner in DB
           if (!fallbackPractitionerId) {
-            console.warn('⚠️ finalize-auth: no practitioner in invitation/OTP for existing consultant, using fallback...');
+            console.warn('[auth] finalize-auth: no practitioner in invitation/OTP for existing consultant, using fallback...');
             const { data: fallbackPractitioners } = await supabaseAdmin
               .from('practitioners')
               .select('id')
@@ -328,9 +327,9 @@ export async function POST(request: NextRequest) {
               .from('consultants')
               .update({ practitioner_id: fallbackPractitionerId })
               .eq('id', consultantId);
-            console.log('✅ finalize-auth: practitioner assigned:', fallbackPractitionerId);
+            console.log('[auth] finalize-auth: practitioner assigned:', fallbackPractitionerId);
           } else {
-            console.error('❌ finalize-auth: CRITICAL - No practitioner available for existing consultant');
+            console.error('[auth] finalize-auth: CRITICAL - No practitioner available for existing consultant');
           }
         }
       }
@@ -340,7 +339,7 @@ export async function POST(request: NextRequest) {
       await findUserByEmail(email);
 
     if (userLookupError) {
-      console.error('❌ finalize-auth: user lookup error', userLookupError);
+      console.error('[auth] finalize-auth: user lookup error', userLookupError);
       return NextResponse.json(
         { ok: false, message: 'Erreur lors de la recherche utilisateur' },
         { status: 500 }
@@ -350,7 +349,7 @@ export async function POST(request: NextRequest) {
     let userId = userLookup?.id ?? null;
 
     if (!userId) {
-      console.warn('⚠️ finalize-auth: aucun user trouvé, création optionnelle');
+      console.warn('[auth] finalize-auth: aucun user trouve, creation optionnelle');
       const { data: createdUser, error: createError } =
         await supabaseAdmin.auth.admin.createUser({
           email,
@@ -359,7 +358,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (createError) {
-        console.error('❌ finalize-auth: create user error', createError);
+        console.error('[auth] finalize-auth: create user error', createError);
         return NextResponse.json(
           { ok: false, message: 'Erreur lors de la création du compte' },
           { status: 500 }
@@ -368,21 +367,21 @@ export async function POST(request: NextRequest) {
 
       userId = createdUser.user?.id ?? null;
     } else {
-      console.log('✅ finalize-auth: user trouvé', userId);
+      console.log('[auth] finalize-auth: user trouve', userId);
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         userId,
         { password: newPassword }
       );
 
       if (updateError) {
-        console.error('❌ finalize-auth: update password error', updateError);
+        console.error('[auth] finalize-auth: update password error', updateError);
         return NextResponse.json(
           { ok: false, message: 'Erreur lors de la mise à jour du mot de passe' },
           { status: 500 }
         );
       }
 
-      console.log('✅ finalize-auth: mot de passe mis à jour');
+      console.log('[auth] finalize-auth: mot de passe mis a jour');
     }
 
     if (!userId) {
@@ -408,14 +407,14 @@ export async function POST(request: NextRequest) {
           });
 
         if (membershipError) {
-          console.error('❌ finalize-auth: create membership error', membershipError);
+          console.error('[auth] finalize-auth: create membership error', membershipError);
           return NextResponse.json(
             { ok: false, message: 'Erreur lors de la création du lien consultant' },
             { status: 500 }
           );
         }
 
-        console.log('✅ finalize-auth: membership créé');
+        console.log('[auth] finalize-auth: membership cree');
       } else if (membership.consultant_user_id !== userId) {
         const { error: membershipUpdateError } = await supabaseAdmin
           .from('consultant_memberships')
@@ -423,16 +422,16 @@ export async function POST(request: NextRequest) {
           .eq('id', membership.id);
 
         if (membershipUpdateError) {
-          console.error('❌ finalize-auth: update membership error', membershipUpdateError);
+          console.error('[auth] finalize-auth: update membership error', membershipUpdateError);
           return NextResponse.json(
             { ok: false, message: 'Erreur lors de la mise à jour du lien consultant' },
             { status: 500 }
           );
         }
 
-        console.log('✅ finalize-auth: membership mis à jour');
+        console.log('[auth] finalize-auth: membership mis a jour');
       } else {
-        console.log('✅ finalize-auth: membership déjà correct');
+        console.log('[auth] finalize-auth: membership deja correct');
       }
     }
 
@@ -443,7 +442,7 @@ export async function POST(request: NextRequest) {
         .eq('id', invitation.id);
 
       if (inviteUpdateError) {
-        console.warn('⚠️ finalize-auth: invitation update error', inviteUpdateError);
+        console.warn('[auth] finalize-auth: invitation update error', inviteUpdateError);
       }
     }
 
@@ -454,12 +453,11 @@ export async function POST(request: NextRequest) {
         .eq('id', otpRecord.id);
 
       if (otpUpdateError) {
-        console.warn('⚠️ finalize-auth: otp update error', otpUpdateError);
+        console.warn('[auth] finalize-auth: otp update error', otpUpdateError);
       }
     }
 
-    console.log('✅ finalize-auth: terminé pour', email, userId);
-    console.log('═══════════════════════════════════════');
+    console.log('[auth] finalize-auth: termine pour', email, userId);
 
     return NextResponse.json({
       ok: true,
@@ -469,7 +467,7 @@ export async function POST(request: NextRequest) {
       otpId: otpRecord.id,
     });
   } catch (error) {
-    console.error('❌ finalize-auth: exception', error);
+    console.error('[auth] finalize-auth: exception', error);
     return NextResponse.json(
       { ok: false, message: 'Erreur serveur' },
       { status: 500 }

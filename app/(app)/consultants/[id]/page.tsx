@@ -217,18 +217,12 @@ export default function ConsultantDetailPage() {
     };
   }, [consultantId]);
 
-  // ✅ Écouter les changements en temps réel via Supabase Realtime
+  // Ecouter les changements en temps reel via Supabase Realtime
   useEffect(() => {
     if (!consultantId || !consultant) return;
 
-    // Ne pas écouter si le consultant est déjà activé
+    // Ne pas ecouter si le consultant est deja active
     if (consultant.activated) return;
-
-    console.log('═══════════════════════════════════════');
-    console.log('👂 ÉCOUTE REALTIME ACTIVÉE');
-    console.log('Consultant ID:', consultantId);
-    console.log('Statut actuel:', consultant.activated ? 'Activé' : 'En attente');
-    console.log('═══════════════════════════════════════');
 
     const channel = supabase
       .channel(`consultant-${consultantId}`)
@@ -241,18 +235,9 @@ export default function ConsultantDetailPage() {
           filter: `id=eq.${consultantId}`
         },
         (payload) => {
-          console.log('═══════════════════════════════════════');
-          console.log('🔔 CHANGEMENT DÉTECTÉ VIA REALTIME');
-          console.log('Payload:', payload);
-          console.log('═══════════════════════════════════════');
-
           const newData = payload.new as { activated?: boolean };
 
-          // Si le consultant vient d'être activé
           if (newData.activated === true) {
-            console.log('═══════════════════════════════════════');
-            console.log('🎉 CONSULTANT ACTIVÉ ! Rechargement...');
-            console.log('═══════════════════════════════════════');
 
             // Recharger toutes les données du consultant
             getConsultantById(consultantId).then((updatedConsultant) => {
@@ -268,42 +253,21 @@ export default function ConsultantDetailPage() {
           }
         }
       )
-      .subscribe((status) => {
-        console.log('📡 Status Supabase Realtime:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Abonnement Realtime réussi');
-        }
-        if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Erreur Realtime');
-        }
-      });
+      .subscribe();
 
     return () => {
-      console.log('👋 Désinscription Realtime');
       supabase.removeChannel(channel);
     };
   }, [consultantId, consultant?.activated]);
 
-  // ✅ Polling de secours (si Realtime ne fonctionne pas)
-  // Vérifie toutes les 5 secondes si le consultant non activé a été activé
+  // Polling de secours (si Realtime ne fonctionne pas)
   useEffect(() => {
     if (!consultant || consultant.activated) return;
 
-    console.log('═══════════════════════════════════════');
-    console.log('⏱️ DÉMARRAGE POLLING (secours)');
-    console.log('Vérification toutes les 5 secondes');
-    console.log('═══════════════════════════════════════');
-
     const interval = setInterval(async () => {
-      console.log('🔄 Vérification du statut...');
-
       const updatedConsultant = await getConsultantById(consultantId);
 
       if (updatedConsultant?.activated) {
-        console.log('═══════════════════════════════════════');
-        console.log('🎉 CONSULTANT ACTIVÉ ! (via polling)');
-        console.log('═══════════════════════════════════════');
-
         setConsultant(updatedConsultant);
         setToast({
           title: 'Consultant activé !',
@@ -315,7 +279,6 @@ export default function ConsultantDetailPage() {
     }, 5000); // 5 secondes
 
     return () => {
-      console.log('🛑 Arrêt du polling');
       clearInterval(interval);
     };
   }, [consultant?.activated, consultantId]);

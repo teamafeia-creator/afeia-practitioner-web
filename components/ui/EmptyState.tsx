@@ -10,6 +10,7 @@ import {
   Inbox,
   Bell,
   Clock,
+  ClipboardList,
   type LucideIcon
 } from 'lucide-react';
 import { cn } from '../../lib/cn';
@@ -22,7 +23,8 @@ type PresetIcon =
   | 'search'
   | 'inbox'
   | 'notifications'
-  | 'appointments';
+  | 'appointments'
+  | 'clipboard';
 
 interface EmptyStateProps {
   title: string;
@@ -41,7 +43,8 @@ const presetIcons: Record<PresetIcon, LucideIcon> = {
   search: Search,
   inbox: Inbox,
   notifications: Bell,
-  appointments: Clock
+  appointments: Clock,
+  clipboard: ClipboardList
 };
 
 export function EmptyState({

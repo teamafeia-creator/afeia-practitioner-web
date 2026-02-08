@@ -23,7 +23,7 @@ function fakeAiSummary(notes: string) {
     'Résumé (proposition IA — à valider) :',
     ...keyPoints,
     '',
-    '⚠️ Note : aucune interprétation médicale, uniquement un résumé des éléments saisis.'
+    'Note : aucune interpretation medicale, uniquement un resume des elements saisis.'
   ].join('\n');
 }
 

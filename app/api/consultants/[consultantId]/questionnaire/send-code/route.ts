@@ -94,8 +94,8 @@ export async function POST(
   const code = generateNumericOTP();
   const codeHash = hashQuestionnaireCode(code);
 
-  console.log('✅ Code OTP généré:', code);
-  console.log('📧 Email:', consultant.email);
+  console.log('[questionnaire] Code OTP genere:', code);
+  console.log('[questionnaire] Email:', consultant.email);
 
   const { error: revokeError } = await supabase
     .from('consultant_questionnaire_codes')
@@ -122,43 +122,35 @@ export async function POST(
     return NextResponse.json({ error: 'Impossible de générer le code.' }, { status: 500 });
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // ✅ ALSO store the code in otp_codes table for mobile app activation
+  // Also store the code in otp_codes table for mobile app activation
   // The mobile app's consultant-auth.service.ts looks for codes in otp_codes,
   // not in consultant_questionnaire_codes. This ensures the activation flow works.
-  // ═══════════════════════════════════════════════════════════════
   const { error: otpInsertError } = await supabase.from('otp_codes').insert({
     email: consultant.email.toLowerCase().trim(),
     code: code, // Plain code for mobile activation
     type: 'activation',
     expires_at: expiresAt.toISOString(),
-    // ✅ CRITICAL: Include practitioner_id and consultant_id for proper linking
+    // CRITICAL: Include practitioner_id and consultant_id for proper linking
     practitioner_id: authData.user.id,
     consultant_id: consultantId
   });
 
   if (otpInsertError) {
-    console.error('═══════════════════════════════════════');
-    console.error('❌ ERREUR: Impossible de stocker le code dans otp_codes');
+    console.error('[questionnaire] ERREUR: Impossible de stocker le code dans otp_codes');
     console.error('Email:', consultant.email);
     console.error('Code:', code);
     console.error('Erreur:', otpInsertError);
-    console.error('═══════════════════════════════════════');
     // Don't fail the request - continue with email sending
     // The practitioner web flow will still work via consultant_questionnaire_codes
   } else {
-    console.log('═══════════════════════════════════════');
-    console.log('✅ Code stocké dans otp_codes avec succès');
-    console.log('📧 Email:', consultant.email.toLowerCase().trim());
-    console.log('🔑 Code:', code);
-    console.log('⏰ Expire:', expiresAt.toISOString());
-    console.log('═══════════════════════════════════════');
+    console.log('[questionnaire] Code stocke dans otp_codes avec succes');
+    console.log('[questionnaire] Email:', consultant.email.toLowerCase().trim());
+    console.log('[questionnaire] Code:', code);
+    console.log('[questionnaire] Expire:', expiresAt.toISOString());
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // ✅ ALSO store the code in consultant_invitations for mobile app
+  // Also store the code in consultant_invitations for mobile app
   // The mobile app looks in both otp_codes AND consultant_invitations
-  // ═══════════════════════════════════════════════════════════════
   const normalizedEmail = consultant.email.toLowerCase().trim();
 
   // Check if invitation exists
@@ -179,7 +171,7 @@ export async function POST(
         code_expires_at: expiresAt.toISOString()
       })
       .eq('id', existingInvitation.id);
-    console.log('✅ Invitation mise à jour dans consultant_invitations');
+    console.log('[questionnaire] Invitation mise a jour dans consultant_invitations');
   } else {
     // Create new invitation
     const { error: invitationError } = await supabase
@@ -196,13 +188,13 @@ export async function POST(
       });
 
     if (invitationError) {
-      console.error('⚠️ Erreur création invitation:', invitationError);
+      console.error('[questionnaire] Erreur creation invitation:', invitationError);
     } else {
-      console.log('✅ Invitation créée dans consultant_invitations');
+      console.log('[questionnaire] Invitation creee dans consultant_invitations');
     }
   }
 
-  // ✅ TOUJOURS envoyer l'email (dev + prod)
+  // TOUJOURS envoyer l'email (dev + prod)
   const emailPayload = buildQuestionnaireCodeEmail({
     to: consultant.email,
     consultantName: consultant.name,
@@ -212,7 +204,7 @@ export async function POST(
 
   try {
     await sendEmail(emailPayload);
-    console.log(`✅✅✅ EMAIL ENVOYÉ AVEC SUCCÈS à ${consultant.email}`);
+    console.log(`[questionnaire] EMAIL ENVOYE AVEC SUCCES a ${consultant.email}`);
     console.log(`Code OTP: ${code}`);
 
     // TOUJOURS retourner le code au naturopathe pour faciliter le support
@@ -226,8 +218,8 @@ export async function POST(
   } catch (emailError: unknown) {
     const errorMessage = emailError instanceof Error ? emailError.message : 'Inconnue';
     const errorStack = emailError instanceof Error ? emailError.stack : undefined;
-    console.error('❌❌❌ ERREUR ENVOI EMAIL:', emailError);
-    console.error('Détails:', errorMessage, errorStack);
+    console.error('[questionnaire] ERREUR ENVOI EMAIL:', emailError);
+    console.error('Details:', errorMessage, errorStack);
 
     return NextResponse.json({
       error: `Impossible d'envoyer l'email. Erreur: ${errorMessage}. Vérifiez la configuration Resend.`,

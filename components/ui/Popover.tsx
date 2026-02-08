@@ -48,7 +48,7 @@ export function Popover({ trigger, children, open: controlledOpen, onOpenChange,
       {isOpen && (
         <div
           className={cn(
-            'absolute z-50 mt-2 rounded-xl bg-white shadow-lg border border-gray-200/60 min-w-[280px]',
+            'absolute z-50 mt-2 rounded-xl bg-white/95 backdrop-blur-md shadow-lg border border-divider min-w-[280px]',
             align === 'end' ? 'right-0' : 'left-0',
             className
           )}
