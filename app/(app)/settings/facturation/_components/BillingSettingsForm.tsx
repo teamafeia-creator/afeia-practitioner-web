@@ -42,6 +42,21 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Client-side validation
+    if (!/^\d{14}$/.test(siret)) {
+      showToast.error('Le SIRET doit contenir exactement 14 chiffres');
+      return;
+    }
+    if (adresse.length < 10) {
+      showToast.error('L\'adresse de facturation est requise (minimum 10 caracteres)');
+      return;
+    }
+    if (mentionTva.length < 5) {
+      showToast.error('La mention TVA est requise');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -88,9 +103,10 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
           <Input
             label="SIRET (14 chiffres)"
             value={siret}
-            onChange={(e) => setSiret(e.target.value)}
+            onChange={(e) => setSiret(e.target.value.replace(/\D/g, ''))}
             placeholder="12345678901234"
             maxLength={14}
+            pattern="\d{14}"
             required
           />
 

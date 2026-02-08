@@ -10,6 +10,7 @@ import { InvoiceActions } from './_components/InvoiceActions';
 import { InvoiceHistoryTimeline } from './_components/InvoiceHistoryTimeline';
 import { supabase } from '@/lib/supabase';
 import type { ConsultationInvoice, InvoiceHistory } from '@/lib/invoicing/types';
+import { Toaster } from '@/components/ui/Toaster';
 import { ArrowLeft } from 'lucide-react';
 
 export default function InvoiceDetailPage() {
@@ -73,6 +74,7 @@ export default function InvoiceDetailPage() {
 
   return (
     <div className="space-y-6">
+      <Toaster />
       <PageHeader
         title={`Facture ${invoice.numero || 'Brouillon'}`}
         subtitle={`${invoice.consultant_snapshot.prenom} ${invoice.consultant_snapshot.nom}`}
