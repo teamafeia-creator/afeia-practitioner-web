@@ -65,7 +65,7 @@ export default function AgendaPage() {
         await rescheduleAppointment(editAppointment.id, {
           starts_at: appointment.starts_at,
           ends_at: appointment.ends_at,
-          patient_id: appointment.patient_id,
+          consultant_id: appointment.consultant_id,
           consultation_type_id: appointment.consultation_type_id,
           location_type: appointment.location_type as LocationType,
           video_link: appointment.video_link,
@@ -135,7 +135,7 @@ export default function AgendaPage() {
         onSaved={handleFormSaved}
         editAppointment={isRescheduling ? null : editAppointment}
         defaultDate={defaultDate}
-        defaultConsultantId={isRescheduling && editAppointment ? editAppointment.patient_id : null}
+        defaultConsultantId={isRescheduling && editAppointment ? editAppointment.consultant_id : null}
       />
 
       <AppointmentDetail

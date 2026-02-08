@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { PageHeader } from '../../../components/ui/PageHeader';
 import { Toast } from '../../../components/ui/Toast';
-import { normalizeCalendlyUrl } from '../../../lib/calendly';
 import { getPractitionerProfile, updatePractitionerProfile } from '../../../lib/queries';
 
 export default function SettingsPage() {
@@ -17,12 +16,10 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<{
     full_name: string;
     email: string;
-    calendly_url: string | null;
   } | null>(null);
   const [formState, setFormState] = useState({
     full_name: '',
     email: '',
-    calendly_url: ''
   });
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -34,7 +31,6 @@ export default function SettingsPage() {
   } | null>(null);
   const profileName = loadingProfile ? 'Chargement...' : profile?.full_name || 'Non renseigné';
   const profileEmail = loadingProfile ? 'Chargement...' : profile?.email || 'Non renseigné';
-  const profileCalendly = loadingProfile ? 'Chargement...' : profile?.calendly_url || 'Non renseigné';
 
   useEffect(() => {
     let active = true;
@@ -47,13 +43,11 @@ export default function SettingsPage() {
         const safeProfile = {
           full_name: data?.full_name ?? '',
           email: data?.email ?? '',
-          calendly_url: data?.calendly_url ?? null
         };
         setProfile(safeProfile);
         setFormState({
           full_name: safeProfile.full_name,
           email: safeProfile.email,
-          calendly_url: safeProfile.calendly_url ?? ''
         });
       } catch (error) {
         if (!active) return;
@@ -78,29 +72,17 @@ export default function SettingsPage() {
   const hasChanges =
     profile &&
     (formState.full_name.trim() !== profile.full_name ||
-      formState.email.trim() !== profile.email ||
-      formState.calendly_url.trim() !== (profile.calendly_url ?? ''));
+      formState.email.trim() !== profile.email);
 
   async function handleSaveProfile() {
     setToast(null);
     const trimmedName = formState.full_name.trim();
     const trimmedEmail = formState.email.trim();
-    const trimmedCalendly = formState.calendly_url.trim();
 
     if (!trimmedName) {
       setToast({
         title: 'Nom requis',
         description: 'Veuillez renseigner votre nom complet.',
-        variant: 'error'
-      });
-      return;
-    }
-
-    const normalized = trimmedCalendly ? normalizeCalendlyUrl(trimmedCalendly) : null;
-    if (trimmedCalendly && !normalized) {
-      setToast({
-        title: 'Lien Calendly invalide',
-        description: 'Utilisez une URL complète ou un slug Calendly valide.',
         variant: 'error'
       });
       return;
@@ -112,18 +94,15 @@ export default function SettingsPage() {
       await updatePractitionerProfile({
         full_name: trimmedName,
         email: trimmedEmail || null,
-        calendly_url: normalized,
       });
       const updatedProfile = {
         full_name: trimmedName,
         email: trimmedEmail,
-        calendly_url: normalized
       };
       setProfile(updatedProfile);
       setFormState({
         full_name: updatedProfile.full_name,
         email: updatedProfile.email,
-        calendly_url: updatedProfile.calendly_url ?? ''
       });
       setIsEditing(false);
       setToast({
@@ -134,7 +113,7 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Failed to save practitioner profile', error);
       setToast({
-        title: 'Impossible d’enregistrer',
+        title: 'Impossible d\'enregistrer',
         description: error instanceof Error ? error.message : 'Erreur inconnue.',
         variant: 'error'
       });
@@ -204,28 +183,6 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
-            <div>
-              {isEditing ? (
-                <Input
-                  label="Lien Calendly"
-                  placeholder="https://calendly.com/mon-profil ou mon-profil"
-                  value={formState.calendly_url}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, calendly_url: event.target.value }))
-                  }
-                  disabled={loadingProfile}
-                  hint="Ajoutez une URL complète ou un slug Calendly. Exemple : https://calendly.com/mon-profil."
-                />
-              ) : (
-                <div>
-                  <p className="text-xs font-medium text-warmgray uppercase tracking-wide">Lien Calendly</p>
-                  <div className="mt-2 text-sm text-charcoal">{profileCalendly}</div>
-                  <p className="mt-1 text-xs text-warmgray">
-                    Ajoutez une URL complete ou un slug Calendly. Exemple : https://calendly.com/mon-profil.
-                  </p>
-                </div>
-              )}
-            </div>
             <div className="flex flex-wrap gap-2">
               {isEditing ? (
                 <>
@@ -244,7 +201,6 @@ export default function SettingsPage() {
                       setFormState({
                         full_name: profile.full_name,
                         email: profile.email,
-                        calendly_url: profile.calendly_url ?? ''
                       });
                       setIsEditing(false);
                     }}
@@ -273,6 +229,9 @@ export default function SettingsPage() {
               </Button>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/availability')}>
                 Disponibilites
+              </Button>
+              <Button variant="primary" className="w-full" onClick={() => router.push('/settings/booking')}>
+                Prise de RDV en ligne
               </Button>
             </CardContent>
           </Card>

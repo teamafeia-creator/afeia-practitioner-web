@@ -22,7 +22,8 @@ import {
   LogOut,
   Shield,
   Receipt,
-  Sunrise
+  Sunrise,
+  Library
 } from 'lucide-react';
 import { useMessageNotifications } from '@/hooks/useMessageNotifications';
 
@@ -32,6 +33,7 @@ const NAV = [
   { href: '/consultants', label: 'Consultants', icon: Users },
   { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
   { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
+  { href: '/bibliotheque', label: 'Ma bibliothèque', icon: Library },
   { href: '/facturation', label: 'Facturation', icon: Receipt },
   { href: '/settings', label: 'Parametres', icon: Settings }
 ];
@@ -75,6 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       settings: 'Parametres',
       plans: 'Conseillanciers',
       consultations: 'Consultations',
+      bibliotheque: 'Ma bibliothèque',
       billing: 'Facturation',
       facturation: 'Facturation',
       new: 'Nouveau consultant',

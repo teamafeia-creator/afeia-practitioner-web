@@ -229,7 +229,7 @@ export async function getAppointmentsForPatient(patientId: string): Promise<Appo
       *,
       consultation_type:consultation_types(id, name, color, duration_minutes, price_cents)
     `)
-    .or(`patient_id.eq.${patientId},consultant_id.eq.${patientId}`)
+    .eq('consultant_id', patientId)
     .order('starts_at', { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -265,7 +265,7 @@ export async function getRecentCompletedWithoutNotes(): Promise<Appointment[]> {
 }
 
 export async function createNativeAppointment(appointment: {
-  patient_id: string | null;
+  consultant_id: string | null;
   consultation_type_id: string | null;
   starts_at: string;
   ends_at: string;
@@ -301,7 +301,7 @@ export async function createNativeAppointment(appointment: {
 export async function updateNativeAppointment(
   id: string,
   updates: {
-    patient_id?: string | null;
+    consultant_id?: string | null;
     consultation_type_id?: string | null;
     starts_at?: string;
     ends_at?: string;
@@ -366,7 +366,7 @@ export async function rescheduleAppointment(
   newData: {
     starts_at: string;
     ends_at: string;
-    patient_id: string | null;
+    consultant_id: string | null;
     consultation_type_id: string | null;
     location_type: LocationType;
     video_link?: string | null;
@@ -427,11 +427,7 @@ export async function checkAppointmentConflict(
   return (data?.length ?? 0) > 0;
 }
 
-// Helper to normalize field names (patient_id vs consultant_id)
+// Helper to normalize appointment data
 function normalizeAppointment(raw: Record<string, unknown>): Appointment {
-  const a = raw as Appointment & { consultant_id?: string };
-  if (!a.patient_id && a.consultant_id) {
-    a.patient_id = a.consultant_id;
-  }
-  return a as Appointment;
+  return raw as Appointment;
 }

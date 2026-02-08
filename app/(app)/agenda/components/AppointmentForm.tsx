@@ -19,9 +19,17 @@ import type { Appointment, ConsultationType, LocationType } from '@/lib/types';
 
 type ConsultantOption = {
   id: string;
-  name: string;
+  name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   email?: string | null;
 };
+
+function getConsultantDisplayName(c: ConsultantOption): string {
+  if (c.name) return c.name;
+  const parts = [c.first_name, c.last_name].filter(Boolean);
+  return parts.length > 0 ? parts.join(' ') : 'Consultant';
+}
 
 interface AppointmentFormProps {
   isOpen: boolean;
@@ -85,7 +93,7 @@ export function AppointmentForm({
   const [conflictWarning, setConflictWarning] = useState(false);
 
   const [form, setForm] = useState({
-    patient_id: '' as string,
+    consultant_id: '' as string,
     consultation_type_id: '' as string,
     date: formatDateInput(new Date()),
     start_time: '09:00',
@@ -104,7 +112,7 @@ export function AppointmentForm({
         getConsultationTypes(),
         supabase
           .from('consultants')
-          .select('id, name, email')
+          .select('id, name, first_name, last_name, email')
           .is('deleted_at', null)
           .order('name'),
       ]);
@@ -124,7 +132,7 @@ export function AppointmentForm({
       const start = new Date(editAppointment.starts_at);
       const end = new Date(editAppointment.ends_at);
       setForm({
-        patient_id: editAppointment.patient_id || '',
+        consultant_id: editAppointment.consultant_id || '',
         consultation_type_id: editAppointment.consultation_type_id || '',
         date: formatDateInput(start),
         start_time: formatTimeFromDate(start),
@@ -137,7 +145,7 @@ export function AppointmentForm({
       const date = defaultDate || new Date();
       const startTime = defaultDate ? formatTimeFromDate(date) : '09:00';
       setForm({
-        patient_id: defaultConsultantId || '',
+        consultant_id: defaultConsultantId || '',
         consultation_type_id: '',
         date: formatDateInput(date),
         start_time: startTime,
@@ -174,15 +182,15 @@ export function AppointmentForm({
   const filteredConsultants = searchQuery
     ? consultants.filter(
         (c) =>
-          c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getConsultantDisplayName(c).toLowerCase().includes(searchQuery.toLowerCase()) ||
           c.email?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : consultants;
 
-  const selectedConsultant = consultants.find((c) => c.id === form.patient_id);
+  const selectedConsultant = consultants.find((c) => c.id === form.consultant_id);
 
   async function handleSave() {
-    if (!form.patient_id) {
+    if (!form.consultant_id) {
       showToast.error('Veuillez selectionner un consultant');
       return;
     }
@@ -199,7 +207,7 @@ export function AppointmentForm({
       let result: Appointment;
       if (editAppointment) {
         result = await updateNativeAppointment(editAppointment.id, {
-          patient_id: form.patient_id,
+          consultant_id: form.consultant_id,
           consultation_type_id: form.consultation_type_id,
           starts_at: startsAt,
           ends_at: endsAt,
@@ -210,7 +218,7 @@ export function AppointmentForm({
         showToast.success('Seance modifiee');
       } else {
         result = await createNativeAppointment({
-          patient_id: form.patient_id,
+          consultant_id: form.consultant_id,
           consultation_type_id: form.consultation_type_id,
           starts_at: startsAt,
           ends_at: endsAt,
@@ -218,7 +226,7 @@ export function AppointmentForm({
           video_link: form.video_link || null,
           notes_internal: form.notes_internal || null,
         });
-        const consultantName = selectedConsultant?.name || 'le consultant';
+        const consultantName = selectedConsultant ? getConsultantDisplayName(selectedConsultant) : 'le consultant';
         showToast.success(`Seance creee avec ${consultantName}`);
       }
 
@@ -243,17 +251,17 @@ export function AppointmentForm({
         <div>
           <span className="text-[13px] font-medium text-warmgray">Consultant *</span>
           <div className="mt-1">
-            {form.patient_id && selectedConsultant ? (
+            {form.consultant_id && selectedConsultant ? (
               <div className="flex items-center justify-between p-3 bg-teal/5 rounded-lg ring-1 ring-teal/20">
                 <div>
-                  <div className="text-sm font-medium text-charcoal">{selectedConsultant.name}</div>
+                  <div className="text-sm font-medium text-charcoal">{getConsultantDisplayName(selectedConsultant)}</div>
                   {selectedConsultant.email && (
                     <div className="text-xs text-warmgray">{selectedConsultant.email}</div>
                   )}
                 </div>
                 <button
                   onClick={() => {
-                    setForm((f) => ({ ...f, patient_id: '' }));
+                    setForm((f) => ({ ...f, consultant_id: '' }));
                     setShowSearch(true);
                   }}
                   className="text-xs text-teal hover:underline"
@@ -286,13 +294,13 @@ export function AppointmentForm({
                         <button
                           key={c.id}
                           onClick={() => {
-                            setForm((f) => ({ ...f, patient_id: c.id }));
+                            setForm((f) => ({ ...f, consultant_id: c.id }));
                             setSearchQuery('');
                             setShowSearch(false);
                           }}
                           className="w-full text-left px-3 py-2 hover:bg-teal/5 transition-colors"
                         >
-                          <div className="text-sm font-medium text-charcoal">{c.name}</div>
+                          <div className="text-sm font-medium text-charcoal">{getConsultantDisplayName(c)}</div>
                           {c.email && <div className="text-xs text-warmgray">{c.email}</div>}
                         </button>
                       ))

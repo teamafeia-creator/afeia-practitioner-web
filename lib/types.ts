@@ -7,7 +7,12 @@ export type Practitioner = {
   full_name: string;
   phone?: string | null;
   default_consultation_reason?: string | null;
+  /** @deprecated Use booking_slug instead */
   calendly_url?: string | null;
+  booking_slug?: string | null;
+  booking_enabled?: boolean;
+  booking_address?: string | null;
+  booking_phone?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -148,7 +153,7 @@ export type Consultation = {
 
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rescheduled';
 export type LocationType = 'in_person' | 'video' | 'phone' | 'home_visit';
-export type AppointmentSource = 'manual' | 'online_booking' | 'calendly_import' | 'google_sync' | 'legacy_migration';
+export type AppointmentSource = 'manual' | 'online_booking' | 'google_sync' | 'legacy_migration';
 
 export interface ConsultationType {
   id: string;
@@ -189,8 +194,7 @@ export interface AvailabilityOverride {
 
 export type Appointment = {
   id: string;
-  patient_id: string | null;
-  consultant_id?: string;
+  consultant_id: string | null;
   practitioner_id: string;
   consultation_type_id: string | null;
   starts_at: string;
@@ -215,10 +219,10 @@ export type Appointment = {
   // Relations (when joined)
   patient?: {
     id: string;
-    name: string;
-    first_name?: string;
-    last_name?: string;
-    email?: string;
+    name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
     is_premium?: boolean;
   };
   consultation_type?: ConsultationType;
