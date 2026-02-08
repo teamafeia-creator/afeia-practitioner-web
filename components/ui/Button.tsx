@@ -32,21 +32,21 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseClasses =
-      'inline-flex items-center justify-center gap-2 rounded-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+      'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/30 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants: Record<Variant, string> = {
       primary:
-        'bg-gradient-to-br from-teal to-teal-deep text-white hover:shadow-teal-glow focus-visible:ring-teal/50',
+        'bg-sage text-white hover:bg-sage-dark',
       secondary:
-        'bg-transparent border border-teal text-teal hover:bg-teal hover:text-white focus-visible:ring-teal/30',
+        'bg-transparent border border-sage text-sage hover:bg-sage-light',
       ghost:
-        'bg-transparent text-charcoal hover:bg-sable/70 focus-visible:ring-teal/30',
+        'bg-transparent text-charcoal hover:bg-cream',
       destructive:
-        'bg-gradient-to-br from-accent-danger to-red-600 text-white hover:shadow-lg hover:shadow-red-500/30 focus-visible:ring-red-500/50',
+        'bg-rose text-white hover:bg-rose/90',
       success:
-        'bg-gradient-to-br from-sage to-green-600 text-white hover:shadow-lg hover:shadow-green-500/30 focus-visible:ring-green-500/50',
+        'bg-success text-white hover:bg-success/90',
       outline:
-        'border border-teal/30 bg-white text-teal hover:border-teal hover:bg-teal/5 focus-visible:ring-teal/30'
+        'border border-divider bg-white text-charcoal hover:border-sage hover:text-sage'
     };
 
     const sizes: Record<Size, string> = {
@@ -58,8 +58,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <motion.button
         ref={ref}
-        whileHover={{ y: disabled || loading ? 0 : -1 }}
-        whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
+        whileTap={{ scale: disabled || loading ? 1 : 0.97 }}
         transition={{ type: 'spring', stiffness: 400, damping: 17 }}
         className={cn(baseClasses, variants[variant], sizes[size], className)}
         disabled={disabled || loading}

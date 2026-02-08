@@ -22,21 +22,38 @@ import {
   LogOut,
   Shield,
   Receipt,
-  Sunrise,
+  BarChart3,
+  HelpCircle,
   Library
 } from 'lucide-react';
 import { useMessageNotifications } from '@/hooks/useMessageNotifications';
 
-const NAV = [
-  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/morning-review', label: 'Revue matinale', icon: Sunrise },
-  { href: '/consultants', label: 'Consultants', icon: Users },
-  { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
-  { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
-  { href: '/bibliotheque', label: 'Ma bibliothèque', icon: Library },
-  { href: '/facturation', label: 'Facturation', icon: Receipt },
-  { href: '/settings', label: 'Parametres', icon: Settings }
+const NAV_GROUPS = [
+  {
+    label: 'Suivi',
+    items: [
+      { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+      { href: '/consultants', label: 'Consultants', icon: Users },
+      { href: '/agenda', label: 'Agenda', icon: Calendar },
+    ]
+  },
+  {
+    label: 'Outils',
+    items: [
+      { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
+      { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
+    ]
+  },
+  {
+    label: 'Gestion',
+    items: [
+      { href: '/facturation', label: 'Facturation', icon: Receipt },
+      { href: '/statistics', label: 'Statistiques', icon: BarChart3 },
+    ]
+  }
 ];
+
+const ALL_NAV = NAV_GROUPS.flatMap(g => g.items);
 
 const ADMIN_NAV = [
   { href: '/admin', label: 'Dashboard admin', icon: Shield },
@@ -55,43 +72,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [helpMenuOpen, setHelpMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const helpMenuRef = useRef<HTMLDivElement>(null);
   const { unreadCount: unreadMessages } = useMessageNotifications();
 
   const active = useMemo(() => {
-    const match = [...NAV, ...ADMIN_NAV].find((n) => pathname.startsWith(n.href));
+    const match = [...ALL_NAV, ...ADMIN_NAV, { href: '/settings' }].find((n) => pathname.startsWith(n.href));
     return match?.href ?? '/dashboard';
-  }, [pathname]);
-
-  const pageTitle = useMemo(() => {
-    const segments = pathname.split('/').filter(Boolean);
-    if (segments.length === 0) return 'Tableau de bord';
-
-    const labelMap: Record<string, string> = {
-      dashboard: 'Tableau de bord',
-      'morning-review': 'Revue matinale',
-      consultants: 'Consultants',
-      messages: 'Messages',
-      questionnaires: 'Questionnaires',
-      settings: 'Parametres',
-      plans: 'Conseillanciers',
-      consultations: 'Consultations',
-      bibliotheque: 'Ma bibliothèque',
-      billing: 'Facturation',
-      facturation: 'Facturation',
-      statistics: 'Statistiques',
-      new: 'Nouveau consultant',
-      admin: 'Admin',
-      admins: 'Admins',
-      practitioners: 'Praticiens',
-      circular: 'Circular',
-      'consultation-types': 'Types de seance',
-      availability: 'Disponibilites'
-    };
-
-    const lastSegment = segments[segments.length - 1];
-    return labelMap[lastSegment] || lastSegment.replace(/-/g, ' ');
   }, [pathname]);
 
   useEffect(() => {
@@ -110,7 +99,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       const email = data.session.user.email ?? null;
       setUserEmail(email);
 
-      // Load practitioner name
       const { data: practitioner } = await supabase
         .from('practitioners')
         .select('name')
@@ -175,14 +163,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false);
       }
+      if (helpMenuRef.current && !helpMenuRef.current.contains(event.target as Node)) {
+        setHelpMenuOpen(false);
+      }
     }
 
-    if (userMenuOpen) {
+    if (userMenuOpen || helpMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [userMenuOpen]);
+  }, [userMenuOpen, helpMenuOpen]);
 
   async function logout() {
     await supabase.auth.signOut();
@@ -194,242 +185,196 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-warmgray">Chargement...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-cream">
+        <div className="text-stone animate-pulse">Chargement...</div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen text-charcoal">
-      {/* Fixed Sidebar - Desktop */}
-      <aside className="hidden lg:flex lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-[240px] lg:flex-col glass-sidebar z-50">
-        {/* Logo */}
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-3 px-5 py-5 border-b border-white/10"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal">
-            <Image src="/afeia_symbol_white.svg" alt="Afeia" width={24} height={24} />
-          </div>
-          <div>
-            <div className="text-base font-semibold text-charcoal">Afeia</div>
-            <div className="text-xs text-warmgray">Espace praticien</div>
-          </div>
-        </Link>
+  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean }, onClick?: () => void) => {
+    const isActive = active === item.href;
+    const Icon = item.icon;
+    const showBadge = item.showBadge && unreadMessages > 0;
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-4">
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={onClick}
+        className={cn(
+          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative',
+          isActive
+            ? 'bg-sidebar-active text-white'
+            : 'text-sidebar-text hover:bg-sidebar-hover'
+        )}
+      >
+        <div className="relative">
+          <Icon className="h-5 w-5" />
+          {showBadge && (
+            <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-terracotta text-[10px] font-bold text-white px-1">
+              {unreadMessages > 9 ? '9+' : unreadMessages}
+            </span>
+          )}
+        </div>
+        <span>{item.label}</span>
+      </Link>
+    );
+  };
+
+  const renderSidebarContent = (onNavigate?: () => void) => (
+    <>
+      {/* Logo */}
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-3 px-5 py-5 border-b border-white/10"
+        onClick={onNavigate}
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+          <Image src="/afeia_symbol_white.svg" alt="Afeia" width={24} height={24} />
+        </div>
+        <div>
+          <div className="text-base font-semibold text-white">Afeia</div>
+          <div className="text-xs text-sidebar-text/60">Espace praticien</div>
+        </div>
+      </Link>
+
+      {/* Navigation groups */}
+      <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.label} className="space-y-1">
+            <div className="px-3 text-[11px] font-medium tracking-wider text-mist/70" style={{ fontVariant: 'small-caps' }}>
+              {group.label}
+            </div>
+            {group.items.map((item) => renderNavItem(item, onNavigate))}
+          </div>
+        ))}
+
+        {isAdmin && (
           <div className="space-y-1">
-            {NAV.map((item) => {
+            <div className="px-3 text-[11px] font-medium tracking-wider text-mist/70" style={{ fontVariant: 'small-caps' }}>
+              Admin
+            </div>
+            {ADMIN_NAV.map((item) => {
               const isActive = active === item.href;
               const Icon = item.icon;
-              const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={onNavigate}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 relative',
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150',
                     isActive
-                      ? 'bg-teal text-white shadow-teal-glow'
-                      : 'text-charcoal hover:bg-teal/10 hover:text-teal'
+                      ? 'bg-terracotta text-white'
+                      : 'text-sidebar-text hover:bg-sidebar-hover'
                   )}
                 >
-                  <div className="relative">
-                    <Icon className="h-5 w-5" />
-                    {showBadge && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                        {unreadMessages > 9 ? '9+' : unreadMessages}
-                      </span>
-                    )}
-                  </div>
+                  <Icon className="h-5 w-5" />
                   <span>{item.label}</span>
                 </Link>
               );
             })}
           </div>
-          {isAdmin ? (
-            <div className="space-y-1">
-              <div className="px-3 text-xs font-semibold uppercase tracking-wide text-warmgray">
-                Admin
-              </div>
-              {ADMIN_NAV.map((item) => {
-                const isActive = active === item.href;
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                      isActive
-                        ? 'bg-aubergine text-white shadow-teal-glow'
-                        : 'text-charcoal hover:bg-aubergine/10 hover:text-aubergine'
-                    )}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : null}
-        </nav>
+        )}
 
-        {/* User section at bottom */}
-        <div className="border-t border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-charcoal truncate">
-                {userName || 'Naturopathe'}
-              </div>
-              <div className="text-xs text-warmgray truncate">{userEmail}</div>
-            </div>
-            <button
-              onClick={logout}
-              className="p-2 rounded-lg text-warmgray hover:text-charcoal hover:bg-white/50 transition-colors"
-              title="Deconnexion"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
+        {/* Settings - separated */}
+        <div className="pt-2 border-t border-white/10">
+          <Link
+            href="/settings"
+            onClick={onNavigate}
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150',
+              active === '/settings'
+                ? 'bg-sidebar-active text-white'
+                : 'text-sidebar-text hover:bg-sidebar-hover'
+            )}
+          >
+            <Settings className="h-5 w-5" />
+            <span>Parametres</span>
+          </Link>
         </div>
-      </aside>
+      </nav>
 
-      {/* Tablet Sidebar - Collapsed */}
-      <aside className="hidden md:flex lg:hidden fixed left-0 top-0 h-screen w-20 flex-col glass-sidebar z-50">
-        {/* Logo */}
-        <Link
-          href="/dashboard"
-          className="flex items-center justify-center py-5 border-b border-white/10"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal">
-            <Image src="/afeia_symbol_white.svg" alt="Afeia" width={24} height={24} />
-          </div>
-        </Link>
-
-        {/* Navigation */}
-        <nav className="flex-1 px-2 py-4 space-y-3">
-          <div className="space-y-1">
-            {NAV.map((item) => {
-              const isActive = active === item.href;
-              const Icon = item.icon;
-              const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center justify-center rounded-lg p-3 transition-all duration-200 relative',
-                    isActive
-                      ? 'bg-teal text-white shadow-teal-glow'
-                      : 'text-charcoal hover:bg-teal/10 hover:text-teal'
-                  )}
-                  title={item.label}
-                >
-                  <div className="relative">
-                    <Icon className="h-5 w-5" />
-                    {showBadge && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                        {unreadMessages > 9 ? '9+' : unreadMessages}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-          {isAdmin ? (
-            <div className="space-y-1">
-              {ADMIN_NAV.map((item) => {
-                const isActive = active === item.href;
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center justify-center rounded-lg p-3 transition-all duration-200',
-                      isActive
-                        ? 'bg-aubergine text-white shadow-teal-glow'
-                        : 'text-charcoal hover:bg-aubergine/10 hover:text-aubergine'
-                    )}
-                    title={item.label}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </Link>
-                );
-              })}
+      {/* User section at bottom */}
+      <div className="border-t border-white/10 p-4">
+        <div className="flex items-center gap-3">
+          <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-white truncate">
+              {userName || 'Naturopathe'}
             </div>
-          ) : null}
-        </nav>
-
-        {/* User section */}
-        <div className="border-t border-white/10 p-3">
+            <div className="text-xs text-sidebar-text/60 truncate">{userEmail}</div>
+          </div>
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center p-3 rounded-lg text-warmgray hover:text-charcoal hover:bg-white/50 transition-colors"
+            className="p-2 rounded-lg text-sidebar-text/60 hover:text-white hover:bg-white/10 transition-colors"
             title="Deconnexion"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen text-charcoal">
+      {/* Desktop Sidebar — 240px, charcoal */}
+      <aside className="hidden lg:flex lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-[240px] lg:flex-col glass-sidebar z-50">
+        {renderSidebarContent()}
       </aside>
 
-      {/* Fixed Header */}
-      <header className="fixed top-0 right-0 left-0 lg:left-[240px] md:left-20 h-16 glass-header z-40 px-4 lg:px-6">
+      {/* Tablet/Mobile Header with hamburger */}
+      <header className="fixed top-0 right-0 left-0 lg:left-[240px] h-16 glass-header z-40 px-4 lg:px-6">
         <div className="h-full flex items-center justify-between">
-          {/* Mobile menu button */}
+          {/* Hamburger — always visible on tablet and mobile */}
           <button
             onClick={() => setMobileOpen(true)}
-            className="md:hidden p-2 rounded-lg text-charcoal hover:bg-white/50 transition-colors"
+            className="lg:hidden p-2 rounded-lg text-charcoal hover:bg-cream transition-colors"
+            aria-label="Ouvrir le menu"
           >
             <Menu className="h-6 w-6" />
           </button>
 
           {/* Mobile logo */}
-          <Link href="/dashboard" className="md:hidden flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal">
+          <Link href="/dashboard" className="lg:hidden flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage">
               <Image src="/afeia_symbol_white.svg" alt="Afeia" width={18} height={18} />
             </div>
             <span className="font-semibold text-charcoal">Afeia</span>
           </Link>
 
-          {/* Page title - desktop/tablet */}
-          <h1 className="hidden md:block text-xl font-semibold text-charcoal tracking-tight">
-            {pageTitle}
-          </h1>
+          {/* Spacer for desktop */}
+          <div className="hidden lg:block" />
 
           {/* Header actions */}
           <div className="flex items-center gap-3">
             <NotificationDropdown />
 
             {/* User menu - desktop only */}
-            <div className="hidden md:block relative" ref={userMenuRef}>
+            <div className="hidden lg:block relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen((open) => !open)}
-                className="flex items-center gap-2 rounded-lg glass-card px-3 py-2 text-sm font-medium text-charcoal transition-all hover:shadow-md"
+                className="flex items-center gap-2 rounded-xl border border-divider bg-white px-3 py-2 text-sm font-medium text-charcoal transition-shadow hover:shadow-sm"
               >
                 <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
-                <span className="hidden lg:inline max-w-[120px] truncate">
+                <span className="max-w-[120px] truncate">
                   {userName || userEmail || 'Mon compte'}
                 </span>
-                <ChevronDown className="h-4 w-4 text-warmgray" />
+                <ChevronDown className="h-4 w-4 text-stone" />
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-lg glass-panel shadow-lg overflow-hidden">
-                  <div className="px-4 py-3 border-b border-white/10">
-                    <div className="text-xs text-warmgray">Compte praticien</div>
+                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-divider shadow-lg overflow-hidden">
+                  <div className="px-4 py-3 border-b border-divider">
+                    <div className="text-xs text-stone">Compte praticien</div>
                     <div className="text-sm font-medium text-charcoal truncate">
                       {userEmail}
                     </div>
                   </div>
                   <button
                     onClick={logout}
-                    className="w-full px-4 py-3 text-left text-sm font-medium text-charcoal transition hover:bg-teal/10 flex items-center gap-2"
+                    className="w-full px-4 py-3 text-left text-sm font-medium text-charcoal transition-colors hover:bg-cream flex items-center gap-2"
                   >
                     <LogOut className="h-4 w-4" />
                     Se deconnecter
@@ -442,127 +387,71 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="pt-16 lg:pl-[240px] md:pl-20 min-h-screen">
+      <main className="pt-16 lg:pl-[240px] min-h-screen">
         <div className="p-4 md:p-6 lg:p-8">
           {children}
         </div>
       </main>
 
-      {/* Mobile Drawer */}
+      {/* Mobile/Tablet Drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[200] md:hidden" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-[200] lg:hidden" role="dialog" aria-modal="true">
           <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-charcoal/30 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-[280px] glass-sidebar shadow-xl">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-3"
-                onClick={() => setMobileOpen(false)}
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal">
-                  <Image src="/afeia_symbol_white.svg" alt="Afeia" width={24} height={24} />
-                </div>
-                <div>
-                  <div className="font-semibold text-charcoal">Afeia</div>
-                  <div className="text-xs text-warmgray">Espace praticien</div>
-                </div>
-              </Link>
+          <div className="absolute left-0 top-0 h-full w-[280px] bg-sidebar-bg shadow-xl flex flex-col">
+            {/* Close button */}
+            <div className="absolute top-4 right-4 z-10">
               <button
                 onClick={() => setMobileOpen(false)}
-                className="p-2 rounded-lg text-charcoal hover:bg-white/50 transition-colors"
+                className="p-2 rounded-lg text-sidebar-text/60 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Navigation */}
-            <nav className="px-3 py-4 space-y-4">
-              <div className="space-y-1">
-                {NAV.map((item) => {
-                  const isActive = active === item.href;
-                  const Icon = item.icon;
-                  const showBadge = 'showBadge' in item && item.showBadge && unreadMessages > 0;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200',
-                        isActive
-                          ? 'bg-teal text-white shadow-teal-glow'
-                          : 'text-charcoal hover:bg-teal/10 hover:text-teal'
-                      )}
-                    >
-                      <div className="relative">
-                        <Icon className="h-5 w-5" />
-                        {showBadge && (
-                          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                            {unreadMessages > 9 ? '9+' : unreadMessages}
-                          </span>
-                        )}
-                      </div>
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-              {isAdmin ? (
-                <div className="space-y-1">
-                  <div className="px-3 text-xs font-semibold uppercase tracking-wide text-warmgray">
-                    Admin
-                  </div>
-                  {ADMIN_NAV.map((item) => {
-                    const isActive = active === item.href;
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200',
-                          isActive
-                            ? 'bg-aubergine text-white shadow-teal-glow'
-                            : 'text-charcoal hover:bg-aubergine/10 hover:text-aubergine'
-                        )}
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </nav>
-
-            {/* User section */}
-            <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-charcoal truncate">
-                    {userName || 'Naturopathe'}
-                  </div>
-                  <div className="text-xs text-warmgray truncate">{userEmail}</div>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={logout}
-                icon={<LogOut className="h-4 w-4" />}
-              >
-                Deconnexion
-              </Button>
-            </div>
+            {renderSidebarContent(() => setMobileOpen(false))}
           </div>
         </div>
       )}
+
+      {/* Help button — floating bottom right */}
+      <div className="fixed bottom-6 right-6 z-50" ref={helpMenuRef}>
+        <button
+          onClick={() => setHelpMenuOpen(!helpMenuOpen)}
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-charcoal text-white shadow-lg hover:shadow-xl transition-shadow"
+          aria-label="Aide"
+        >
+          <HelpCircle className="h-5 w-5" />
+        </button>
+
+        {helpMenuOpen && (
+          <div className="absolute bottom-14 right-0 w-56 rounded-xl bg-white border border-divider shadow-lg overflow-hidden">
+            <a
+              href="#"
+              className="block px-4 py-3 text-sm text-charcoal hover:bg-cream transition-colors"
+              onClick={(e) => { e.preventDefault(); setHelpMenuOpen(false); }}
+            >
+              Centre d&apos;aide
+            </a>
+            <a
+              href="#"
+              className="block px-4 py-3 text-sm text-charcoal hover:bg-cream transition-colors border-t border-divider"
+              onClick={(e) => { e.preventDefault(); setHelpMenuOpen(false); }}
+            >
+              Contacter l&apos;assistance
+            </a>
+            <a
+              href="#"
+              className="block px-4 py-3 text-sm text-charcoal hover:bg-cream transition-colors border-t border-divider"
+              onClick={(e) => { e.preventDefault(); setHelpMenuOpen(false); }}
+            >
+              Signaler un abus
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

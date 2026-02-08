@@ -33,7 +33,7 @@ export function Skeleton({
   return (
     <div
       className={cn(
-        'bg-neutral-200',
+        'bg-divider/60',
         variants[variant],
         animations[animation],
         className
@@ -48,7 +48,7 @@ export function Skeleton({
 
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn('bg-white rounded-2xl p-5 shadow-card space-y-4', className)}>
+    <div className={cn('bg-white rounded-xl p-5 shadow-card space-y-4', className)}>
       <div className="flex items-center gap-3">
         <Skeleton variant="circular" width={48} height={48} />
         <div className="flex-1 space-y-2">
@@ -69,7 +69,7 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="flex gap-4 pb-3 border-b border-neutral-100">
+      <div className="flex gap-4 pb-3 border-b border-divider">
         <Skeleton width={40} height={16} />
         <Skeleton width="30%" height={16} />
         <Skeleton width="20%" height={16} />
@@ -96,7 +96,7 @@ export function SkeletonDashboard() {
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl p-5 shadow-card">
+          <div key={i} className="bg-white rounded-xl p-5 shadow-card">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <Skeleton width={100} height={12} />
@@ -110,11 +110,11 @@ export function SkeletonDashboard() {
 
       {/* Chart and list */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white rounded-2xl p-5 shadow-card">
+        <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-card">
           <Skeleton width={150} height={20} className="mb-4" />
           <Skeleton height={200} variant="rounded" />
         </div>
-        <div className="bg-white rounded-2xl p-5 shadow-card space-y-4">
+        <div className="bg-white rounded-xl p-5 shadow-card space-y-4">
           <Skeleton width={120} height={20} />
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3">

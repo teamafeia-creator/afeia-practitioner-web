@@ -1,9 +1,11 @@
 import { cn } from '../../lib/cn';
 
-type Variant = 'info' | 'premium' | 'standard' | 'active' | 'new' | 'success' | 'attention' | 'urgent' | 'pending' | 'completed' | 'archived';
+type Variant = 'default' | 'success' | 'warning' | 'urgent' | 'archived' |
+  // Legacy aliases for backwards compatibility
+  'info' | 'premium' | 'standard' | 'active' | 'new' | 'attention' | 'pending' | 'completed';
 
 export function Badge({
-  variant = 'info',
+  variant = 'default',
   className,
   children
 }: {
@@ -11,25 +13,30 @@ export function Badge({
   className?: string;
   children: React.ReactNode;
 }) {
-  const styles: Record<Variant, string> = {
-    info: 'bg-teal/8 text-teal border border-teal/15',
-    premium: 'bg-aubergine/12 text-aubergine border border-aubergine/20',
-    standard: 'bg-teal/8 text-teal border border-teal/15',
-    active: 'bg-teal/10 text-teal border border-teal/20',
-    new: 'bg-gold/15 text-gold border border-gold/30',
-    success: 'bg-sage/15 text-sage border border-sage/30',
-    attention: 'bg-gold/15 text-gold border border-gold/30',
-    urgent: 'bg-gold/15 text-gold border border-gold/30',
-    pending: 'bg-gold/15 text-gold border border-gold/30',
-    completed: 'bg-sage/15 text-sage border border-sage/30',
-    archived: 'bg-warmgray/15 text-warmgray border border-warmgray/25'
+  // Map legacy variants to new 5-variant system
+  const variantMap: Record<string, string> = {
+    // New 5 variants
+    default: 'bg-stone/10 text-stone border border-stone/20',
+    success: 'bg-sage-light text-sage-dark border border-sage/20',
+    warning: 'bg-gold/12 text-gold border border-gold/25',
+    urgent: 'bg-rose/12 text-rose border border-rose/25',
+    archived: 'bg-mist/15 text-mist border border-mist/25',
+    // Legacy mappings
+    info: 'bg-stone/10 text-stone border border-stone/20',
+    premium: 'bg-terracotta-light text-terracotta-dark border border-terracotta/25',
+    standard: 'bg-sage-light text-sage-dark border border-sage/20',
+    active: 'bg-sage-light text-sage-dark border border-sage/20',
+    new: 'bg-gold/12 text-gold border border-gold/25',
+    attention: 'bg-gold/12 text-gold border border-gold/25',
+    pending: 'bg-gold/12 text-gold border border-gold/25',
+    completed: 'bg-sage-light text-sage-dark border border-sage/20'
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-sm px-3 py-1 text-[11px] font-semibold uppercase tracking-wide',
-        styles[variant],
+        'inline-flex items-center rounded-2xl px-3 py-1 text-xs font-medium',
+        variantMap[variant] || variantMap.default,
         className
       )}
     >

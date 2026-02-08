@@ -64,13 +64,13 @@ export function Modal({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
+          {/* Backdrop — charcoal overlay with subtle blur */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-charcoal/30 backdrop-blur-[4px]"
             onClick={closeOnOverlayClick ? onClose : undefined}
           />
 
@@ -82,14 +82,14 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className={cn(
-              'relative w-full mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden',
+              'relative w-full mx-4 bg-white rounded-xl border border-divider shadow-lg overflow-hidden',
               sizes[size],
               className
             )}
           >
             {/* Header */}
             {(title || showCloseButton) && (
-              <div className="flex items-start justify-between p-5 border-b border-neutral-100">
+              <div className="flex items-start justify-between p-5 border-b border-divider">
                 <div>
                   {title && (
                     <h2 className="text-lg font-semibold text-charcoal">
@@ -97,13 +97,13 @@ export function Modal({
                     </h2>
                   )}
                   {description && (
-                    <p className="mt-1 text-sm text-warmgray">{description}</p>
+                    <p className="mt-1 text-sm text-stone">{description}</p>
                   )}
                 </div>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="p-1 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
+                    className="p-1 rounded-lg text-stone hover:text-charcoal hover:bg-cream transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -129,7 +129,7 @@ export function ModalFooter({ children, className }: ModalFooterProps) {
   return (
     <div
       className={cn(
-        'flex items-center justify-end gap-3 px-5 py-4 border-t border-neutral-100 bg-neutral-50/50',
+        'flex items-center justify-end gap-3 px-5 py-4 border-t border-divider bg-cream/50',
         className
       )}
     >
@@ -162,19 +162,19 @@ export function ConfirmModal({
   loading = false
 }: ConfirmModalProps) {
   const variantStyles = {
-    danger: 'bg-accent-danger hover:bg-red-600',
-    warning: 'bg-accent-warning hover:bg-yellow-600',
-    info: 'bg-teal hover:bg-teal-deep'
+    danger: 'bg-rose hover:bg-rose/90',
+    warning: 'bg-gold hover:bg-gold/90',
+    info: 'bg-sage hover:bg-sage-dark'
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
-      <p className="text-neutral-600 mb-6">{message}</p>
+      <p className="text-stone mb-6">{message}</p>
       <div className="flex items-center justify-end gap-3">
         <button
           onClick={onClose}
           disabled={loading}
-          className="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors"
+          className="px-4 py-2 text-sm font-medium text-charcoal hover:bg-cream rounded-lg transition-colors"
         >
           {cancelText}
         </button>
@@ -182,7 +182,7 @@ export function ConfirmModal({
           onClick={onConfirm}
           disabled={loading}
           className={cn(
-            'px-4 py-2 text-sm font-medium text-white rounded-xl transition-colors disabled:opacity-50',
+            'px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50',
             variantStyles[variant]
           )}
         >
