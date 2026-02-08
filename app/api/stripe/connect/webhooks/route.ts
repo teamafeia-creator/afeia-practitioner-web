@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         event_id: event.id,
         event_type: event.type,
         stripe_account_id: event.account || null,
-        payload: event.data.object as Record<string, unknown>,
+        payload: event.data.object as unknown as Record<string, unknown>,
       })
       .select()
       .single();
