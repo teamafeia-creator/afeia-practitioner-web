@@ -141,7 +141,7 @@ const SIDEBAR_GROUPS = [
   {
     label: 'Donnees',
     items: [
-      { tab: T.tabCircular as Tab, label: 'Bague connectee', icon: Watch },
+      { tab: T.tabBagueConnectee as Tab, label: 'Bague connectee', icon: Watch },
       { tab: T.tabDocuments as Tab, label: 'Documents', icon: FileUp },
     ],
   },
