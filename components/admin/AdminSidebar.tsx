@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
+  UserCheck,
   CreditCard,
   Radio,
   Settings,
@@ -24,6 +25,7 @@ type NavItem = {
 const mainNav: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Praticiens', href: '/admin/practitioners', icon: Users },
+  { label: 'Patients', href: '/admin/patients', icon: UserCheck },
   { label: 'Billing', href: '/admin/billing', icon: CreditCard },
   { label: 'Circular', href: '/admin/circular', icon: Radio },
 ];

@@ -17,41 +17,94 @@ export type ResetDatabaseResult = {
   timestamp: string;
 };
 
+// Tables to delete, ordered by foreign key dependencies (children first)
 const TABLES_TO_CLEAR = [
+  // Activity & audit logs
+  'practitioner_activity_log',
+  // Billing / invoicing
+  'invoice_history',
+  'reminder_queue',
+  'consultation_invoices',
+  'invoice_templates',
+  'practitioner_billing_settings',
+  'stripe_webhook_events',
   'billing_history',
   'invoices',
   'payment_methods',
   'subscriptions',
-  'complement_tracking',
-  'complements',
-  'journal_entries',
-  'daily_journals',
+  'stripe_subscriptions',
+  // Wearable data
   'wearable_insights',
   'wearable_summaries',
+  // Contraindication logs
+  'contraindication_logs',
+  // AI
+  'ai_generation_logs',
+  'practitioner_ai_profiles',
+  // Blocks & templates
+  'inserted_blocks',
+  'templates',
+  'blocks',
+  // Supplements
+  'complement_tracking',
+  'complements',
+  // Journal
+  'journal_entries',
+  'daily_journals',
+  // Plans
   'plan_sections',
   'plan_versions',
   'consultant_plans',
   'care_plans',
   'plans',
+  // Anamnesis
   'anamnesis_history',
   'consultant_anamnesis',
   'anamnese_instances',
+  'anamnese_drafts',
   'anamneses',
+  // Questionnaires
   'preliminary_questionnaires',
+  // Messages
   'messages',
+  // Notifications
   'notifications',
+  // Practitioner notes & analysis
   'practitioner_notes',
   'consultant_analysis_results',
+  // Appointments
   'appointments',
+  'consultation_types',
+  'availability_schedules',
+  'availability_overrides',
   'consultations',
+  // Patient/consultant related
   'case_files',
   'consultant_questionnaire_codes',
   'otp_codes',
   'consultant_memberships',
   'consultant_invites',
   'consultant_invitations',
-  'consultants'
+  'saved_views',
+  'conseils',
+  'prescriptions',
+  'wearable_data',
+  // Admin platform duplicates
+  'consultants_health',
+  'consultants_identity',
+  // Consultants themselves
+  'consultants',
+  // Practitioners public (admin copy)
+  'practitioners_public',
+  // Practitioners
+  'practitioners',
 ];
+
+// Tables to NOT delete
+// - admin_allowlist (admin access config)
+// - admin_profiles (admin user config)
+// - admin_audit_log (keep for compliance — we log the reset itself)
+// - substances, conditions, contraindication_rules, substance_interactions (reference data)
 
 export async function runAdminDatabaseReset(performedBy: string): Promise<ResetDatabaseResult> {
   const supabase = createAdminClient();
@@ -59,6 +112,18 @@ export async function runAdminDatabaseReset(performedBy: string): Promise<ResetD
   const deletedByTable: Record<string, number> = {};
   const remainingByTable: Record<string, number | null> = {};
   let ok = true;
+
+  // Log the reset initiation
+  try {
+    await supabase.from('admin_audit_log').insert({
+      admin_email: performedBy,
+      action: 'database.reset_initiated',
+      target_type: 'database',
+      details: { tables_to_clear: TABLES_TO_CLEAR.length },
+    });
+  } catch {
+    // Non-blocking
+  }
 
   for (const table of TABLES_TO_CLEAR) {
     try {
@@ -68,11 +133,19 @@ export async function runAdminDatabaseReset(performedBy: string): Promise<ResetD
 
       if (countBeforeError) {
         if (countBeforeError.code === '42P01') {
+          // Table doesn't exist, skip
           continue;
         }
         console.error(`Erreur comptage ${table}:`, countBeforeError);
         results.push({ table, deleted: 0, remaining: null, error: countBeforeError.message });
         ok = false;
+        continue;
+      }
+
+      if ((countBefore ?? 0) === 0) {
+        results.push({ table, deleted: 0, remaining: 0 });
+        deletedByTable[table] = 0;
+        remainingByTable[table] = 0;
         continue;
       }
 
@@ -124,6 +197,7 @@ export async function runAdminDatabaseReset(performedBy: string): Promise<ResetD
     }
   }
 
+  // Delete non-practitioner auth users
   try {
     const { data: practitioners } = await supabase.from('practitioners').select('id');
     const practitionerIds = new Set(practitioners?.map((row) => row.id) || []);
@@ -159,6 +233,22 @@ export async function runAdminDatabaseReset(performedBy: string): Promise<ResetD
 
   const totalDeleted = results.reduce((sum, row) => sum + row.deleted, 0);
   const timestamp = new Date().toISOString();
+
+  // Log the reset completion
+  try {
+    await supabase.from('admin_audit_log').insert({
+      admin_email: performedBy,
+      action: 'database.reset_completed',
+      target_type: 'database',
+      details: {
+        total_deleted: totalDeleted,
+        tables_cleared: Object.keys(deletedByTable).length,
+        ok,
+      },
+    });
+  } catch {
+    // Non-blocking
+  }
 
   console.log(`FRESH DATABASE TERMINEE : ${totalDeleted} lignes supprimees au total`);
   console.log(`   Effectuee par : ${performedBy}`);

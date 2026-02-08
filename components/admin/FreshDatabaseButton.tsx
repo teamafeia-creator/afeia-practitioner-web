@@ -6,8 +6,9 @@ import { useFreshDatabase } from '@/hooks/useAdmin';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { showToast } from '@/components/ui/Toaster';
+import { AlertTriangle, Trash2 } from 'lucide-react';
 
-const EXPECTED_CONFIRMATION = 'SUPPRIMER TOUTES LES DONNEES';
+const EXPECTED_CONFIRMATION = 'SUPPRIMER TOUT';
 const EXPECTED_CODE = 'FRESH_DATABASE_2026';
 
 type FreshDatabaseButtonProps = {
@@ -15,21 +16,19 @@ type FreshDatabaseButtonProps = {
 };
 
 export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
-  const [step, setStep] = useState(0); // 0: initial, 1: warning, 2: confirm, 3: code
+  const [step, setStep] = useState(0); // 0: initial, 1: first modal, 2: text confirm
   const [confirmationText, setConfirmationText] = useState('');
-  const [code, setCode] = useState('');
   const freshDatabaseMutation = useFreshDatabase();
   const router = useRouter();
 
   const handleReset = () => {
     setStep(0);
     setConfirmationText('');
-    setCode('');
   };
 
   const handleFreshDatabase = async () => {
     try {
-      const result = await freshDatabaseMutation.mutateAsync(code);
+      const result = await freshDatabaseMutation.mutateAsync(EXPECTED_CODE);
       showToast.success(
         `Reinitialisation terminee. ${result.totalDeleted} lignes supprimees.`
       );
@@ -41,57 +40,67 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
     }
   };
 
-  // Etape 0 : Bouton initial
+  // Step 0: Collapsed danger zone
   if (step === 0) {
     return (
-      <div className="border-2 border-red-600 rounded-lg p-4 bg-red-50">
-        <h3 className="text-lg font-bold text-red-600 mb-2">Zone Dangereuse</h3>
-        <p className="text-sm text-red-800 mb-4">
-          Cette action supprimera <strong>TOUTES les donnees</strong> de la base de donnees.
-          A utiliser uniquement en developpement.
-        </p>
-        <Button
-          variant="primary"
-          className="bg-red-600 hover:bg-red-700"
-          onClick={() => setStep(1)}
-        >
-          Reinitialiser la Base de Donnees
-        </Button>
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-red-800">Zone dangereuse</h3>
+            <p className="text-xs text-red-600 mt-1">
+              Supprime tous les praticiens, patients, et donnees associees. Irreversible.
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            className="bg-red-600 hover:bg-red-700 shrink-0"
+            onClick={() => setStep(1)}
+            icon={<Trash2 className="h-3.5 w-3.5" />}
+          >
+            Reinitialiser la base de donnees
+          </Button>
+        </div>
       </div>
     );
   }
 
-  // Etape 1 : Premier avertissement
+  // Step 1: First warning modal
   if (step === 1) {
     return (
-      <div className="border-2 border-red-600 rounded-lg p-6 bg-red-50 max-w-2xl">
-        <h3 className="text-xl font-bold text-red-600 mb-4">AVERTISSEMENT CRITIQUE</h3>
+      <div className="rounded-lg border-2 border-red-300 bg-red-50 p-6">
+        <h3 className="text-lg font-semibold text-red-800 mb-4">
+          Reinitialiser la base de donnees ?
+        </h3>
 
-        <div className="bg-white border border-red-300 rounded p-4 mb-4">
-          <p className="text-sm text-gray-800 mb-2">
-            Cette action va <strong>SUPPRIMER DEFINITIVEMENT</strong> :
+        <div className="rounded-lg bg-white border border-red-200 p-4 mb-4">
+          <p className="text-sm text-slate-700 mb-3">
+            Cette action va supprimer <strong className="text-red-700">definitivement</strong> toutes
+            les donnees :
           </p>
-          <ul className="text-sm text-gray-700 space-y-1 ml-4 list-disc">
-            <li>Tous les consultants</li>
-            <li>Tous les plans de soins</li>
-            <li>Tous les messages</li>
-            <li>Toutes les consultations</li>
-            <li>Tous les questionnaires</li>
-            <li>Toutes les notifications</li>
-            <li>Tous les journaux</li>
-            <li>Toutes les donnees wearables</li>
-            <li>Tous les paiements et factures</li>
+          <ul className="text-sm text-slate-600 space-y-1.5 ml-4 list-disc">
+            <li>Praticiens et leurs profils</li>
+            <li>Patients / consultants</li>
+            <li>Plans de soins et conseillanciers</li>
+            <li>Messages, consultations, rendez-vous</li>
+            <li>Questionnaires et anamneses</li>
+            <li>Journaux et donnees wearables</li>
+            <li>Notifications et logs d&apos;activite</li>
+            <li>Abonnements et donnees de facturation</li>
           </ul>
-          <p className="text-sm text-red-600 font-bold mt-3">
-            Cette action est IRREVERSIBLE !
+          <p className="text-sm text-red-700 font-semibold mt-3">
+            Cette action est irreversible.
           </p>
         </div>
 
-        <p className="text-sm text-gray-800 mb-4">
-          Les comptes praticiens seront preserves mais toutes leurs donnees seront perdues.
-        </p>
-
         <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={handleReset}
+          >
+            Annuler
+          </Button>
           <Button
             variant="primary"
             className="bg-red-600 hover:bg-red-700"
@@ -99,87 +108,33 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
           >
             Je comprends, continuer
           </Button>
-          <Button variant="ghost" onClick={handleReset}>
-            Annuler
-          </Button>
         </div>
       </div>
     );
   }
 
-  // Etape 2 : Confirmation par texte
+  // Step 2: Text confirmation
   if (step === 2) {
     return (
-      <div className="border-2 border-red-600 rounded-lg p-6 bg-red-50 max-w-2xl">
-        <h3 className="text-xl font-bold text-red-600 mb-4">Confirmation Requise</h3>
+      <div className="rounded-lg border-2 border-red-300 bg-red-50 p-6">
+        <h3 className="text-lg font-semibold text-red-800 mb-4">
+          Confirmation requise
+        </h3>
 
-        <p className="text-sm text-gray-800 mb-4">
-          Pour confirmer cette action destructive, veuillez taper exactement :
+        <p className="text-sm text-slate-700 mb-4">
+          Pour confirmer, tapez <strong className="font-mono text-red-700">{EXPECTED_CONFIRMATION}</strong> dans
+          le champ ci-dessous :
         </p>
-
-        <div className="bg-gray-800 text-white font-mono p-3 rounded mb-4 text-center">
-          {EXPECTED_CONFIRMATION}
-        </div>
 
         <Input
           value={confirmationText}
           onChange={(e) => setConfirmationText(e.target.value)}
-          placeholder="Tapez la phrase ci-dessus"
-          className="mb-4"
-          autoFocus
-        />
-
-        <div className="flex gap-2">
-          <Button
-            variant="primary"
-            className="bg-red-600 hover:bg-red-700"
-            onClick={() => setStep(3)}
-            disabled={confirmationText !== EXPECTED_CONFIRMATION}
-          >
-            Continuer
-          </Button>
-          <Button variant="ghost" onClick={handleReset}>
-            Annuler
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Etape 3 : Code de securite
-  if (step === 3) {
-    return (
-      <div className="border-2 border-red-600 rounded-lg p-6 bg-red-50 max-w-2xl">
-        <h3 className="text-xl font-bold text-red-600 mb-4">Code de Securite</h3>
-
-        <p className="text-sm text-gray-800 mb-4">
-          Derniere etape : entrez le code de securite pour confirmer.
-        </p>
-
-        <div className="bg-yellow-100 border border-yellow-400 rounded p-3 mb-4">
-          <p className="text-sm text-yellow-800">
-            <strong>Astuce :</strong> Le code suit le format FRESH_DATABASE_ANNEE
-          </p>
-        </div>
-
-        <Input
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Code de securite"
+          placeholder={EXPECTED_CONFIRMATION}
           className="mb-4 font-mono"
           autoFocus
         />
 
         <div className="flex gap-2">
-          <Button
-            variant="primary"
-            className="bg-red-600 hover:bg-red-700"
-            onClick={handleFreshDatabase}
-            disabled={code !== EXPECTED_CODE || freshDatabaseMutation.isPending}
-            loading={freshDatabaseMutation.isPending}
-          >
-            {freshDatabaseMutation.isPending ? 'Suppression en cours...' : 'SUPPRIMER TOUT'}
-          </Button>
           <Button
             variant="ghost"
             onClick={handleReset}
@@ -187,11 +142,20 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
           >
             Annuler
           </Button>
+          <Button
+            variant="primary"
+            className="bg-red-600 hover:bg-red-700"
+            onClick={handleFreshDatabase}
+            disabled={confirmationText !== EXPECTED_CONFIRMATION || freshDatabaseMutation.isPending}
+            loading={freshDatabaseMutation.isPending}
+          >
+            {freshDatabaseMutation.isPending ? 'Suppression en cours...' : 'Supprimer definitivement'}
+          </Button>
         </div>
 
         {freshDatabaseMutation.isPending && (
-          <div className="mt-4 p-3 bg-orange-100 border border-orange-400 rounded">
-            <p className="text-sm text-orange-800">
+          <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3">
+            <p className="text-sm text-amber-800">
               Suppression en cours... Ne fermez pas cette page.
             </p>
           </div>
