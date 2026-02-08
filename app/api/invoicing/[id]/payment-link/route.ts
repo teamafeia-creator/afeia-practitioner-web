@@ -70,10 +70,8 @@ export async function POST(
       successUrl: `${appUrl}/paiement/succes?invoice_id=${id}`,
     });
 
-    // Sauvegarder le lien dans la facture
-    const expiresAt = paymentLink.expires_at
-      ? new Date(paymentLink.expires_at * 1000).toISOString()
-      : null;
+    // Sauvegarder le lien dans la facture (expire dans 7 jours, comme defini dans createPaymentLink)
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     await supabase
       .from('consultation_invoices')
