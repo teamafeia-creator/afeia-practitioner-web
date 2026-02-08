@@ -144,16 +144,83 @@ export type Consultation = {
   updated_at: string;
 };
 
-export type Appointment = {
+// --- Agenda V1 types ---
+
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rescheduled';
+export type LocationType = 'in_person' | 'video' | 'phone' | 'home_visit';
+export type AppointmentSource = 'manual' | 'online_booking' | 'calendly_import' | 'google_sync' | 'legacy_migration';
+
+export interface ConsultationType {
   id: string;
-  consultant_id: string;
   practitioner_id: string;
-  starts_at: string;
-  ends_at?: string | null;
-  status: 'scheduled' | 'cancelled' | 'completed';
-  notes?: string | null;
+  name: string;
+  duration_minutes: number;
+  price_cents: number | null;
+  color: string;
+  buffer_minutes: number;
+  is_bookable_online: boolean;
+  description: string | null;
+  sort_order: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface AvailabilitySchedule {
+  id: string;
+  practitioner_id: string;
+  day_of_week: number; // 0=lundi ... 6=dimanche
+  start_time: string;  // "09:00"
+  end_time: string;    // "12:30"
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface AvailabilityOverride {
+  id: string;
+  practitioner_id: string;
+  date: string;        // "2025-05-15"
+  start_time: string | null;
+  end_time: string | null;
+  is_available: boolean;
+  reason: string | null;
+  created_at: string;
+}
+
+export type Appointment = {
+  id: string;
+  consultant_id: string | null;
+  practitioner_id: string;
+  consultation_type_id: string | null;
+  starts_at: string;
+  ends_at: string;
+  status: AppointmentStatus;
+  location_type: LocationType;
+  video_link: string | null;
+  notes_internal: string | null;
+  notes_public: string | null;
+  notes?: string | null; // legacy
+  cancellation_reason: string | null;
+  cancelled_by: 'practitioner' | 'consultant' | null;
+  cancelled_at: string | null;
+  rescheduled_from_id: string | null;
+  source: AppointmentSource;
+  booking_name: string | null;
+  booking_email: string | null;
+  booking_phone: string | null;
+  google_event_id: string | null;
+  created_at: string;
+  updated_at: string;
+  // Relations (when joined)
+  patient?: {
+    id: string;
+    name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+    is_premium?: boolean;
+  };
+  consultation_type?: ConsultationType;
 };
 
 export type Plan = {

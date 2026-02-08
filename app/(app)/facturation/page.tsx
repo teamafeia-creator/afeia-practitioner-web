@@ -10,6 +10,7 @@ import { InvoiceModal } from '@/components/invoicing/InvoiceModal';
 import { useInvoiceStats } from '@/hooks/use-invoice-stats';
 import { supabase } from '@/lib/supabase';
 import type { ConsultationInvoice, InvoiceTemplate, PractitionerBillingSettings } from '@/lib/invoicing/types';
+import { Toaster } from '@/components/ui/Toaster';
 import { Plus, Settings } from 'lucide-react';
 import Link from 'next/link';
 
@@ -77,6 +78,7 @@ export default function FacturationPage() {
 
   return (
     <div className="space-y-6">
+      <Toaster />
       <PageHeader
         title="Facturation"
         subtitle="Gerez vos factures et suivez votre chiffre d'affaires"

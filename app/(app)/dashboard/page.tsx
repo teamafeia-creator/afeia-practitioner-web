@@ -11,34 +11,27 @@ import {
   Users,
   FileText,
   ChevronRight,
-  Clock
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { SkeletonDashboard } from '@/components/ui/Skeleton';
 import { getCalendlyUrlForCurrentPractitioner } from '@/lib/calendly';
+import { getTodayAppointments, getRecentCompletedWithoutNotes } from '@/lib/queries/appointments';
 import { supabase } from '@/lib/supabase';
 import { useRequireAuth } from '@/hooks/useAuth';
+import type { Appointment } from '@/lib/types';
 
 type ConsultantRow = {
   id: string;
-  full_name?: string | null;
+  name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   is_premium?: boolean | null;
   status?: string | null;
   activated?: boolean | null;
-};
-
-type ConsultationRow = {
-  id: string;
-  date: string;
-  consultants?: {
-    name?: string | null;
-    is_premium?: boolean | null;
-    status?: string | null;
-  } | null;
 };
 
 type AlertConsultant = {
@@ -64,9 +57,7 @@ const shortDateFormatter = new Intl.DateTimeFormat('fr-FR', {
   month: 'short'
 });
 
-const dateTimeFormatter = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: 'short',
+const timeFormatter = new Intl.DateTimeFormat('fr-FR', {
   hour: '2-digit',
   minute: '2-digit'
 });
@@ -74,15 +65,22 @@ const dateTimeFormatter = new Intl.DateTimeFormat('fr-FR', {
 const RECONTACT_DAYS = 30;
 
 function getConsultantName(consultant: ConsultantRow): string {
-  if (consultant.full_name) return consultant.full_name;
+  if (consultant.name) return consultant.name;
   const parts = [consultant.first_name, consultant.last_name].filter(Boolean);
   return parts.length > 0 ? parts.join(' ') : 'Consultant';
+}
+
+function getAppointmentName(appointment: Appointment): string {
+  const p = appointment.patient;
+  if (!p) return appointment.booking_name || 'Consultant';
+  return p.name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Consultant';
 }
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useRequireAuth('/login');
-  const [upcomingAppointments, setUpcomingAppointments] = useState<ConsultationRow[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
+  const [recentWithoutNotes, setRecentWithoutNotes] = useState<Appointment[]>([]);
   const [recontactConsultants, setRecontactConsultants] = useState<AlertConsultant[]>([]);
   const [pendingPlans, setPendingPlans] = useState<AlertConsultant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,11 +97,8 @@ export default function DashboardPage() {
     else setGreeting('Bonsoir');
   }, []);
 
-
   const loadDashboardData = useCallback(async () => {
-    if (authLoading || !isAuthenticated || !user) {
-      return;
-    }
+    if (authLoading || !isAuthenticated || !user) return;
 
     try {
       const userId = user.id;
@@ -118,9 +113,18 @@ export default function DashboardPage() {
         setPractitionerName(practitioner.name.split(' ')[0]);
       }
 
+      // Load today's appointments from native table
+      const [todayApts, noNotes] = await Promise.all([
+        getTodayAppointments().catch(() => []),
+        getRecentCompletedWithoutNotes().catch(() => []),
+      ]);
+      setTodayAppointments(todayApts);
+      setRecentWithoutNotes(noNotes);
+
+      // Load consultants for recontact
       const { data: consultants, error: consultantsError } = await supabase
         .from('consultants')
-        .select('id, full_name, first_name, last_name, is_premium, status, activated')
+        .select('id, name, first_name, last_name, is_premium, status, activated')
         .eq('practitioner_id', userId)
         .is('deleted_at', null);
 
@@ -129,31 +133,37 @@ export default function DashboardPage() {
       }
 
       const consultantList = (consultants ?? []) as ConsultantRow[];
-      const consultantIds = consultantList.map((consultant) => consultant.id);
-      const consultantNameMap = new Map(consultantList.map((consultant) => [consultant.id, getConsultantName(consultant)]));
-
-      const { data: consultations } = await supabase
-        .from('consultations')
-        .select('id, date, consultants(name, is_premium, status)')
-        .eq('practitioner_id', userId)
-        .gte('date', new Date().toISOString())
-        .order('date', { ascending: true })
-        .limit(5);
-
-      setUpcomingAppointments((consultations ?? []) as ConsultationRow[]);
+      const consultantIds = consultantList.map((c) => c.id);
+      const consultantNameMap = new Map(consultantList.map((c) => [c.id, getConsultantName(c)]));
 
       if (consultantIds.length > 0) {
+        // Use appointments table for last contact instead of consultations
+        const { data: appointmentsHistory } = await supabase
+          .from('appointments')
+          .select('consultant_id, starts_at')
+          .in('consultant_id', consultantIds)
+          .eq('status', 'completed');
+
+        const lastContactMap = new Map<string, string>();
+        (appointmentsHistory ?? []).forEach((a: { consultant_id: string; starts_at: string }) => {
+          if (!a.consultant_id || !a.starts_at) return;
+          const current = lastContactMap.get(a.consultant_id);
+          if (!current || new Date(a.starts_at) > new Date(current)) {
+            lastContactMap.set(a.consultant_id, a.starts_at);
+          }
+        });
+
+        // Also check consultations table for legacy data
         const { data: consultationsHistory } = await supabase
           .from('consultations')
           .select('consultant_id, date')
           .in('consultant_id', consultantIds);
 
-        const lastContactMap = new Map<string, string>();
-        (consultationsHistory ?? []).forEach((consultation) => {
-          if (!consultation.consultant_id || !consultation.date) return;
-          const current = lastContactMap.get(consultation.consultant_id);
-          if (!current || new Date(consultation.date) > new Date(current)) {
-            lastContactMap.set(consultation.consultant_id, consultation.date);
+        (consultationsHistory ?? []).forEach((c: { consultant_id: string; date: string }) => {
+          if (!c.consultant_id || !c.date) return;
+          const current = lastContactMap.get(c.consultant_id);
+          if (!current || new Date(c.date) > new Date(current)) {
+            lastContactMap.set(c.consultant_id, c.date);
           }
         });
 
@@ -161,17 +171,11 @@ export default function DashboardPage() {
         threshold.setDate(threshold.getDate() - RECONTACT_DAYS);
 
         const needsContact = consultantList
-          .filter((consultant) => consultant.activated !== false)
-          .map((consultant) => {
-            const lastContact = lastContactMap.get(consultant.id);
+          .filter((c) => c.activated !== false)
+          .map((c) => {
+            const lastContact = lastContactMap.get(c.id);
             const needs = !lastContact || new Date(lastContact) < threshold;
-            return needs
-              ? {
-                id: consultant.id,
-                name: getConsultantName(consultant),
-                lastContact
-              }
-              : null;
+            return needs ? { id: c.id, name: getConsultantName(c), lastContact } : null;
           })
           .filter(Boolean) as AlertConsultant[];
 
@@ -186,7 +190,7 @@ export default function DashboardPage() {
         const pending = (draftPlans ?? []).map((plan: DraftPlan) => ({
           id: plan.id,
           name: consultantNameMap.get(plan.consultant_id) ?? 'Consultant',
-          lastContact: plan.updated_at ?? null
+          lastContact: plan.updated_at ?? null,
         }));
 
         setPendingPlans(pending);
@@ -218,10 +222,7 @@ export default function DashboardPage() {
         setCalendlyLoading(false);
       }
     }
-
-    if (isAuthenticated) {
-      loadCalendly();
-    }
+    if (isAuthenticated) loadCalendly();
   }, [isAuthenticated]);
 
   const todayLabel = useMemo(() => dateFormatter.format(new Date()), []);
@@ -265,27 +266,17 @@ export default function DashboardPage() {
           <div className="flex flex-wrap gap-3">
             <Button
               variant="primary"
+              icon={<Calendar className="w-4 h-4" />}
+              onClick={() => router.push('/agenda')}
+            >
+              Nouvelle seance
+            </Button>
+            <Button
+              variant="outline"
               icon={<Users className="w-4 h-4" />}
               onClick={() => router.push('/consultants/new')}
             >
               Ajouter un consultant
-            </Button>
-            <Button
-              variant="outline"
-              icon={<Calendar className="w-4 h-4" />}
-              onClick={() => {
-                if (calendlyLoading) {
-                  showToast.info('Calendly en cours de chargement...');
-                  return;
-                }
-                if (!calendlyUrl) {
-                  showToast.warning('Configurez votre lien Calendly dans les parametres');
-                  return;
-                }
-                window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
-              }}
-            >
-              Creer consultation
             </Button>
             {isAdmin ? (
               <Button variant="ghost" onClick={() => router.push('/admin')}>
@@ -296,23 +287,140 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Calendly Warning */}
-      {!calendlyLoading && !calendlyUrl && (
+      {/* Calendly migration banner */}
+      {!calendlyLoading && calendlyUrl && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="glass-card p-4 border-l-4 border-gold"
+          className="glass-card p-4 border-l-4 border-teal"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3 text-sm text-charcoal">
-              <AlertCircle className="h-5 w-5 text-gold flex-shrink-0" />
-              Calendly non configure. Connectez votre calendrier pour faciliter les prises de RDV.
+              <Calendar className="h-5 w-5 text-teal flex-shrink-0" />
+              Vous utilisez encore Calendly ? Essayez le nouvel agenda integre dans AFEIA.
             </div>
-            <Button variant="ghost" size="sm" onClick={() => router.push('/settings')}>
-              Configurer
+            <Button variant="primary" size="sm" onClick={() => router.push('/agenda')}>
+              Ouvrir l&apos;agenda
             </Button>
           </div>
         </motion.div>
+      )}
+
+      {/* Today's Appointments */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="section-title">VOS SEANCES AUJOURD&apos;HUI</h3>
+          <Button variant="ghost" size="sm" onClick={() => router.push('/agenda')}>
+            Voir l&apos;agenda
+          </Button>
+        </div>
+
+        {todayAppointments.length > 0 ? (
+          <div className="glass-card overflow-hidden">
+            <div className="divide-y divide-white/10">
+              {todayAppointments.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className="flex items-center justify-between p-4 hover:bg-white/30 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/consultants/${appointment.consultant_id || ''}`)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-center min-w-[50px]">
+                      <div className="text-sm font-semibold text-teal">
+                        {timeFormatter.format(new Date(appointment.starts_at))}
+                      </div>
+                      <div className="text-[10px] text-warmgray">
+                        {timeFormatter.format(new Date(appointment.ends_at))}
+                      </div>
+                    </div>
+                    <Avatar name={getAppointmentName(appointment)} size="md" />
+                    <div>
+                      <p className="font-medium text-charcoal">
+                        {getAppointmentName(appointment)}
+                      </p>
+                      <p className="text-xs text-warmgray">
+                        {appointment.consultation_type?.name || 'Consultation'}
+                        {appointment.location_type === 'video' && ' · Visio'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {appointment.consultation_type?.color && (
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: appointment.consultation_type.color }}
+                      />
+                    )}
+                    {appointment.patient?.is_premium && (
+                      <span className="badge-premium px-2 py-0.5 rounded-md text-xs font-semibold">
+                        Premium
+                      </span>
+                    )}
+                    <ChevronRight className="h-4 w-4 text-warmgray" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="glass-card p-8 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-teal/10 mx-auto mb-4">
+              <Calendar className="h-8 w-8 text-teal" />
+            </div>
+            <h4 className="text-lg font-semibold text-charcoal mb-2">
+              Aucune seance prevue aujourd&apos;hui
+            </h4>
+            <p className="text-sm text-warmgray mb-4">
+              Planifiez votre prochaine seance en quelques clics.
+            </p>
+            <Button
+              variant="primary"
+              icon={<Calendar className="w-4 h-4" />}
+              onClick={() => router.push('/agenda')}
+            >
+              Ouvrir l&apos;agenda
+            </Button>
+          </div>
+        )}
+      </section>
+
+      {/* Recent sessions without notes */}
+      {recentWithoutNotes.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="section-title flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              SEANCES RECENTES SANS NOTES
+            </h3>
+          </div>
+          <div className="glass-card p-4 border-l-4 border-amber-400">
+            <p className="text-sm text-charcoal mb-3">
+              N&apos;oubliez pas de rediger vos notes pour ces seances :
+            </p>
+            <div className="space-y-2">
+              {recentWithoutNotes.slice(0, 5).map((apt) => (
+                <button
+                  key={apt.id}
+                  onClick={() => {
+                    if (apt.consultant_id) router.push(`/consultants/${apt.consultant_id}?tab=Notes+de+séance`);
+                  }}
+                  className="w-full text-left flex items-center justify-between p-2 rounded-lg hover:bg-white/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar name={getAppointmentName(apt)} size="sm" />
+                    <div>
+                      <span className="text-sm font-medium text-charcoal">{getAppointmentName(apt)}</span>
+                      <span className="text-xs text-warmgray ml-2">
+                        {shortDateFormatter.format(new Date(apt.starts_at))}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-warmgray" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
       )}
 
       {/* Alerts & Notifications Section */}
@@ -368,7 +476,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <p className="text-sm text-warmgray mb-4">
-              Conseillanciers en brouillon à finaliser et partager
+              Conseillanciers en brouillon a finaliser et partager
             </p>
             <button
               onClick={() => router.push('/consultants')}
@@ -379,7 +487,7 @@ export default function DashboardPage() {
             </button>
           </motion.div>
 
-          {/* Upcoming appointments */}
+          {/* Upcoming appointments - now links to agenda */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -388,29 +496,23 @@ export default function DashboardPage() {
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-aubergine/15">
-                  <Calendar className="h-5 w-5 text-aubergine" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal/15">
+                  <Calendar className="h-5 w-5 text-teal" />
                 </div>
-                <span className="font-semibold text-charcoal">Consultations a venir</span>
+                <span className="font-semibold text-charcoal">Seances du jour</span>
               </div>
-              <span className="badge-info px-2.5 py-1 rounded-md text-xs font-semibold">
-                {upcomingAppointments.length}
+              <span className="badge-standard px-2.5 py-1 rounded-md text-xs font-semibold">
+                {todayAppointments.length}
               </span>
             </div>
             <p className="text-sm text-warmgray mb-4">
-              Prochains rendez-vous planifies
+              Vos seances prevues aujourd&apos;hui
             </p>
             <button
-              onClick={() => {
-                if (!calendlyUrl) {
-                  showToast.warning('Configurez Calendly dans les parametres');
-                  return;
-                }
-                window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
-              }}
+              onClick={() => router.push('/agenda')}
               className="alert-action w-full flex items-center justify-center gap-2"
             >
-              Ouvrir Calendly
+              Ouvrir l&apos;agenda
               <ChevronRight className="h-4 w-4" />
             </button>
           </motion.div>
@@ -421,28 +523,22 @@ export default function DashboardPage() {
       <section>
         <h3 className="section-title mb-4">ACTIONS RAPIDES</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* Create consultation */}
+          {/* Create consultation - now opens agenda */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="action-card"
-            onClick={() => {
-              if (!calendlyUrl) {
-                showToast.warning('Configurez Calendly dans les parametres');
-                return;
-              }
-              window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
-            }}
+            onClick={() => router.push('/agenda')}
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal/15 action-icon mb-4">
               <Calendar className="h-6 w-6 text-teal" />
             </div>
             <h4 className="text-base font-semibold text-charcoal action-title mb-1">
-              Creer consultation
+              Planifier une seance
             </h4>
             <p className="text-sm text-warmgray action-desc">
-              Planifier un rendez-vous ou un suivi consultant.
+              Ouvrir l&apos;agenda et creer un rendez-vous.
             </p>
           </motion.div>
 
@@ -540,85 +636,6 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
-          </div>
-        </section>
-      )}
-
-      {/* Upcoming Appointments */}
-      {upcomingAppointments.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="section-title">PROCHAINES CONSULTATIONS</h3>
-            <span className="badge-info px-2.5 py-1 rounded-md text-xs font-semibold">
-              {upcomingAppointments.length} a venir
-            </span>
-          </div>
-          <div className="glass-card overflow-hidden">
-            <div className="divide-y divide-white/10">
-              {upcomingAppointments.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="flex items-center justify-between p-4 hover:bg-white/30 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/consultations/${appointment.id}`)}
-                >
-                  <div className="flex items-center gap-4">
-                    <Avatar name={appointment.consultants?.name || 'Consultant'} size="md" />
-                    <div>
-                      <p className="font-medium text-charcoal">
-                        {appointment.consultants?.name ?? 'Consultant'}
-                      </p>
-                      <p className="text-sm text-warmgray">
-                        {dateTimeFormatter.format(new Date(appointment.date))}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {appointment.consultants?.is_premium ||
-                    appointment.consultants?.status === 'premium' ? (
-                      <span className="badge-premium px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wide">
-                        Premium
-                      </span>
-                    ) : (
-                      <span className="badge-standard px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wide">
-                        Standard
-                      </span>
-                    )}
-                    <ChevronRight className="h-4 w-4 text-warmgray" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Empty State for Appointments */}
-      {upcomingAppointments.length === 0 && (
-        <section>
-          <h3 className="section-title mb-4">PROCHAINES CONSULTATIONS</h3>
-          <div className="glass-card p-8 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-teal/10 mx-auto mb-4">
-              <Calendar className="h-8 w-8 text-teal" />
-            </div>
-            <h4 className="text-lg font-semibold text-charcoal mb-2">
-              Aucun rendez-vous planifie
-            </h4>
-            <p className="text-sm text-warmgray mb-4">
-              Planifiez votre prochaine consultation en quelques clics.
-            </p>
-            <Button
-              variant="primary"
-              icon={<Calendar className="w-4 h-4" />}
-              onClick={() => {
-                if (!calendlyUrl) {
-                  showToast.warning('Configurez Calendly dans les parametres');
-                  return;
-                }
-                window.open(calendlyUrl, '_blank', 'noopener,noreferrer');
-              }}
-            >
-              Planifier un RDV
-            </Button>
           </div>
         </section>
       )}

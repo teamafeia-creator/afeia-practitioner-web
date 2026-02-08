@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
-import { verifyApiJwt, getBearerToken } from '@/lib/auth';
+import { createSupabaseAdminClient, createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
 import { invoiceTemplateSchema } from '@/lib/invoicing/schemas';
 import { DEFAULT_TEMPLATES } from '@/lib/invoicing/templates';
+import { ZodError } from 'zod';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = getBearerToken(request.headers.get('authorization'));
+    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
       return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
     }
 
-    const payload = await verifyApiJwt(token);
-    const userId = payload.sub;
+    const supabaseAuth = createSupabaseAuthClient();
+    const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !authData.user) {
+      return NextResponse.json({ message: 'Session invalide' }, { status: 401 });
+    }
+    const userId = authData.user.id;
 
     const supabase = createSupabaseAdminClient();
 
@@ -36,13 +40,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = getBearerToken(request.headers.get('authorization'));
+    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
       return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
     }
 
-    const payload = await verifyApiJwt(token);
-    const userId = payload.sub;
+    const supabaseAuth = createSupabaseAuthClient();
+    const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !authData.user) {
+      return NextResponse.json({ message: 'Session invalide' }, { status: 401 });
+    }
+    const userId = authData.user.id;
 
     const body = await request.json();
 
@@ -85,6 +93,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ template }, { status: 201 });
   } catch (error) {
+    if (error instanceof ZodError) {
+      const messages = error.errors.map((e) => e.message).join(', ');
+      return NextResponse.json({ message: messages }, { status: 400 });
+    }
     console.error('Erreur creation template:', error);
     return NextResponse.json(
       { message: 'Erreur lors de la creation du template' },

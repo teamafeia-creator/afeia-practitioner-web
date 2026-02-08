@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { BillingSettingsForm } from './_components/BillingSettingsForm';
 import { InvoiceTemplatesManager } from './_components/InvoiceTemplatesManager';
 import { Button } from '@/components/ui/Button';
+import { Toaster } from '@/components/ui/Toaster';
 import { supabase } from '@/lib/supabase';
 import type { PractitionerBillingSettings, InvoiceTemplate } from '@/lib/invoicing/types';
 import { ArrowLeft } from 'lucide-react';
@@ -63,6 +64,7 @@ export default function FacturationSettingsPage() {
 
   return (
     <div className="space-y-6">
+      <Toaster />
       <PageHeader
         title="Parametres facturation"
         subtitle="Configurez vos informations legales et vos templates de facturation"
