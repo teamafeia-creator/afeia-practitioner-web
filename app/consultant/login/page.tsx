@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { Leaf } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -45,7 +46,7 @@ export default function LoginPage() {
       <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-[#6B8DC9] to-[#9B8DC9] rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">🌿</span>
+            <Leaf className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-[#2D3748]">
             Content de vous revoir

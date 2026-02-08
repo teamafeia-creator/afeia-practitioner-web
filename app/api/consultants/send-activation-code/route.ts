@@ -122,12 +122,10 @@ export async function POST(request: Request) {
     const normalizedEmail = email.toLowerCase().trim();
     const consultantName = name || 'Consultant';
 
-    console.log('═══════════════════════════════════════');
-    console.log('📧 ENVOI CODE ACTIVATION');
+    console.log('[activation] ENVOI CODE ACTIVATION');
     console.log('Email:', normalizedEmail);
     console.log('Nom:', consultantName);
     console.log('Praticien ID:', practitionerId);
-    console.log('═══════════════════════════════════════');
 
     const supabase = createSupabaseAdminClient();
 
@@ -156,9 +154,9 @@ export async function POST(request: Request) {
     const expiresInDays = 7;
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-    console.log('✅ Code OTP généré:', code);
-    console.log('📧 Email:', normalizedEmail);
-    console.log('⏰ Expire:', expiresAt.toISOString());
+    console.log('[activation] Code OTP genere:', code);
+    console.log('[activation] Email:', normalizedEmail);
+    console.log('[activation] Expire:', expiresAt.toISOString());
 
     // 4b. CRITIQUE: S'assurer d'avoir le consultant_id (requis pour l'app mobile)
     // Si consultantId n'est pas fourni, chercher le consultant par email
@@ -183,7 +181,7 @@ export async function POST(request: Request) {
     if (existingConsultant) {
       resolvedConsultantId = existingConsultant.id;
       consultantData = existingConsultant;
-      console.log('✅ Consultant trouvé par email:', resolvedConsultantId);
+      console.log('[activation] Consultant trouve par email:', resolvedConsultantId);
     } else if (consultantId) {
       // Si on a un consultantId mais pas trouvé par email, chercher par ID
       const { data: consultantById } = await supabase
@@ -195,12 +193,12 @@ export async function POST(request: Request) {
       if (consultantById) {
         resolvedConsultantId = consultantById.id;
         consultantData = consultantById;
-        console.log('✅ Consultant trouvé par ID:', resolvedConsultantId);
+        console.log('[activation] Consultant trouve par ID:', resolvedConsultantId);
       }
     }
 
     if (!resolvedConsultantId) {
-      console.warn('⚠️ Aucun consultant trouvé pour:', normalizedEmail);
+      console.warn('[activation] Aucun consultant trouve pour:', normalizedEmail);
     }
 
     // 5. Invalider les anciens codes non utilisés
@@ -227,14 +225,14 @@ export async function POST(request: Request) {
       .insert(otpPayload);
 
     if (otpInsertError) {
-      console.error('❌ Erreur stockage code OTP:', otpInsertError);
+      console.error('[activation] Erreur stockage code OTP:', otpInsertError);
       return NextResponse.json(
         { error: 'Impossible de générer le code.' },
         { status: 500 }
       );
     }
 
-    console.log('✅ Code OTP stocké dans otp_codes');
+    console.log('[activation] Code OTP stocke dans otp_codes');
 
     // 6b. CRITIQUE: Stocker aussi dans consultant_invitations pour la compatibilité app mobile
     // L'app mobile cherche dans les deux tables (otp_codes ET consultant_invitations)
@@ -260,9 +258,9 @@ export async function POST(request: Request) {
         .eq('id', existingInvitation.id);
 
       if (updateInvitationError) {
-        console.error('⚠️ Erreur mise à jour invitation:', updateInvitationError);
+        console.error('[activation] Erreur mise a jour invitation:', updateInvitationError);
       } else {
-        console.log('✅ Invitation mise à jour dans consultant_invitations');
+        console.log('[activation] Invitation mise a jour dans consultant_invitations');
       }
     } else {
       // Créer une nouvelle invitation
@@ -286,10 +284,10 @@ export async function POST(request: Request) {
         .insert(invitationPayload);
 
       if (invitationInsertError) {
-        console.error('⚠️ Erreur création invitation:', invitationInsertError);
+        console.error('[activation] Erreur creation invitation:', invitationInsertError);
         // Ne pas bloquer - continuer avec l'envoi d'email
       } else {
-        console.log('✅ Invitation créée dans consultant_invitations');
+        console.log('[activation] Invitation creee dans consultant_invitations');
       }
     }
 
@@ -303,7 +301,7 @@ export async function POST(request: Request) {
 
     try {
       await sendEmail(emailPayload);
-      console.log('✅ Email envoyé avec succès à', normalizedEmail);
+      console.log('[activation] Email envoye avec succes a', normalizedEmail);
 
       // TOUJOURS retourner le code au naturopathe
       return NextResponse.json({
@@ -315,7 +313,7 @@ export async function POST(request: Request) {
       });
     } catch (emailError: unknown) {
       const errorMessage = emailError instanceof Error ? emailError.message : 'Erreur inconnue';
-      console.error('❌ Erreur envoi email:', emailError);
+      console.error('[activation] Erreur envoi email:', emailError);
 
       // Même si l'email échoue, on retourne le code pour que le naturopathe puisse le donner manuellement
       return NextResponse.json({
@@ -328,7 +326,7 @@ export async function POST(request: Request) {
       });
     }
   } catch (err) {
-    console.error('❌ Exception send-activation-code:', err);
+    console.error('[activation] Exception send-activation-code:', err);
     return NextResponse.json(
       { error: 'Erreur serveur.' },
       { status: 500 }

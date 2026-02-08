@@ -121,7 +121,7 @@ export default function BibliotequePage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold text-charcoal">Ma bibliothèque</h1>
+          <h1 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>Ma bibliotheque</h1>
           <p className="text-sm text-warmgray">
             {blocks.length} bloc{blocks.length !== 1 ? 's' : ''}
           </p>

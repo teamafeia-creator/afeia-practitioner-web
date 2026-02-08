@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     let userPrompt = `Redige un conseillancier complet et personnalise pour ce consultant.\n\n${contextText}`;
     if (inputSafety.hasMedicalAlerts) {
-      userPrompt += `\n\n⚠️ ATTENTION : Des signaux d'alerte medicaux ont ete detectes dans le bilan : ${inputSafety.alerts.join(', ')}. Tu DOIS inclure un avertissement de consultation medicale dans les sections concernees.`;
+      userPrompt += `\n\nATTENTION : Des signaux d'alerte medicaux ont ete detectes dans le bilan : ${inputSafety.alerts.join(', ')}. Tu DOIS inclure un avertissement de consultation medicale dans les sections concernees.`;
     }
 
     // 8. Call Anthropic API

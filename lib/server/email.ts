@@ -23,15 +23,13 @@ export async function sendEmail(payload: EmailPayload) {
 
   // ⚠️ AVERTISSEMENT: Le domaine resend.dev ne peut envoyer qu'au propriétaire du compte Resend
   if (payload.from.includes('@resend.dev')) {
-    console.warn('═══════════════════════════════════════════════════════════════');
-    console.warn('⚠️ ATTENTION: Utilisation du domaine de test resend.dev');
-    console.warn('📧 Les emails ne seront livrés QU\'À l\'adresse du compte Resend!');
-    console.warn('Pour envoyer à n\'importe quelle adresse, configurez un domaine vérifié.');
-    console.warn('Voir: https://resend.com/docs/dashboard/domains/introduction');
-    console.warn('═══════════════════════════════════════════════════════════════');
+    console.warn('[email] ATTENTION: Utilisation du domaine de test resend.dev');
+    console.warn('[email] Les emails ne seront livres QU\'A l\'adresse du compte Resend!');
+    console.warn('[email] Pour envoyer a n\'importe quelle adresse, configurez un domaine verifie.');
+    console.warn('[email] Voir: https://resend.com/docs/dashboard/domains/introduction');
   }
 
-  console.log('📤 Tentative d\'envoi email via Resend...');
+  console.log('[email] Sending via Resend...');
   console.log('   From:', payload.from);
   console.log('   To:', payload.to);
   console.log('   Subject:', payload.subject);

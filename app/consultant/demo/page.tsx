@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { ClipboardList, Pill, User, Pencil, MessageSquare } from 'lucide-react'
 
 export default function ConsultantDemoPage() {
   const [consultant, setConsultant] = useState<any>(null)
@@ -72,7 +73,7 @@ export default function ConsultantDemoPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="bg-red-50 text-red-600 p-6 rounded-lg">
-          ❌ Consultant TEST01 introuvable. Vérifiez que le script SQL a bien été exécuté.
+          Consultant TEST01 introuvable. Verifiez que le script SQL a bien ete execute.
         </div>
       </div>
     )
@@ -86,12 +87,12 @@ export default function ConsultantDemoPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold">
-                Bonjour {consultant.name?.split(' ')[0] || 'Consultant'} 👋
+                Bonjour {consultant.name?.split(' ')[0] || 'Consultant'}
               </h1>
               <p className="text-blue-100 text-sm mt-1">Mode démo - Consultant TEST01</p>
               {consultant.is_premium && (
                 <span className="inline-block bg-yellow-400 text-yellow-900 text-xs px-2 py-1 rounded-full mt-2">
-                  ✨ Premium
+                  Premium
                 </span>
               )}
             </div>
@@ -102,7 +103,7 @@ export default function ConsultantDemoPage() {
       <div className="max-w-4xl mx-auto p-6 space-y-4">
         {/* Informations consultant */}
         <div className="bg-white rounded-xl p-6 shadow">
-          <h2 className="text-xl font-bold mb-4">📋 Mes informations</h2>
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><ClipboardList className="w-5 h-5" /> Mes informations</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-500">Nom</p>
@@ -126,7 +127,7 @@ export default function ConsultantDemoPage() {
         {/* Conseillancier */}
         {plan ? (
           <div className="bg-white rounded-xl p-6 shadow">
-            <h2 className="text-xl font-bold mb-4">💊 Mon conseillancier</h2>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Pill className="w-5 h-5" /> Mon conseillancier</h2>
             <p className="text-gray-600 mb-4">{plan.plan_name}</p>
 
             {plan.supplement_items && plan.supplement_items.length > 0 ? (
@@ -137,14 +138,14 @@ export default function ConsultantDemoPage() {
                     {item.brand && (
                       <p className="text-sm text-gray-500">{item.brand}</p>
                     )}
-                    <p className="text-sm text-gray-700 mt-1">📦 {item.dosage}</p>
-                    <p className="text-sm text-gray-700">⏰ {item.frequency}</p>
+                    <p className="text-sm text-gray-700 mt-1">{item.dosage}</p>
+                    <p className="text-sm text-gray-700">{item.frequency}</p>
                     {item.timing && (
                       <p className="text-xs text-gray-500 mt-1">{item.timing}</p>
                     )}
                     {item.notes && (
                       <p className="text-xs text-gray-600 mt-2 bg-blue-50 p-2 rounded">
-                        💡 {item.notes}
+                        {item.notes}
                       </p>
                     )}
                   </div>
@@ -164,7 +165,7 @@ export default function ConsultantDemoPage() {
           </div>
         ) : (
           <div className="bg-white rounded-xl p-6 shadow">
-            <h2 className="text-xl font-bold mb-4">💊 Mon conseillancier</h2>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Pill className="w-5 h-5" /> Mon conseillancier</h2>
             <div className="bg-gray-50 p-4 rounded-lg text-center">
               <p className="text-gray-600 mb-3">Aucun conseillancier pour le moment</p>
               <Link
@@ -180,16 +181,16 @@ export default function ConsultantDemoPage() {
         {/* Mon naturopathe */}
         {consultant.practitioners && (
           <div className="bg-white rounded-xl p-6 shadow">
-            <h2 className="text-xl font-bold mb-4">👨‍⚕️ Mon naturopathe</h2>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><User className="w-5 h-5" /> Mon naturopathe</h2>
             <div className="flex items-start space-x-4">
-              <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center text-2xl">
-                👤
+              <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center">
+                <User className="w-8 h-8 text-blue-600" />
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-lg">{consultant.practitioners.full_name}</p>
                 <p className="text-sm text-gray-600">{consultant.practitioners.email}</p>
                 {consultant.practitioners.phone && (
-                  <p className="text-sm text-gray-600">📞 {consultant.practitioners.phone}</p>
+                  <p className="text-sm text-gray-600">{consultant.practitioners.phone}</p>
                 )}
               </div>
             </div>
@@ -202,7 +203,7 @@ export default function ConsultantDemoPage() {
             href="/consultant/demo/daily-log"
             className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-6 rounded-xl shadow text-center hover:shadow-lg transition"
           >
-            <div className="text-3xl mb-2">📝</div>
+            <div className="mb-2 flex justify-center"><Pencil className="w-8 h-8" /></div>
             <h3 className="font-bold">Journal quotidien</h3>
             <p className="text-sm text-white/90 mt-1">Suivre mon état</p>
           </Link>
@@ -211,7 +212,7 @@ export default function ConsultantDemoPage() {
             href="/consultant/demo/messages"
             className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-6 rounded-xl shadow text-center hover:shadow-lg transition"
           >
-            <div className="text-3xl mb-2">💬</div>
+            <div className="mb-2 flex justify-center"><MessageSquare className="w-8 h-8" /></div>
             <h3 className="font-bold">Messages</h3>
             <p className="text-sm text-white/90 mt-1">Contacter mon naturo</p>
           </Link>
@@ -219,7 +220,7 @@ export default function ConsultantDemoPage() {
 
         {/* Infos debug */}
         <div className="bg-gray-100 p-4 rounded-lg text-xs">
-          <p className="font-semibold mb-2">🔧 Mode développement</p>
+          <p className="font-semibold mb-2">Mode developpement</p>
           <p>Consultant ID: {consultant.id}</p>
           <p>Practitioner ID: {consultant.practitioner_id}</p>
           <p>Plan actif: {plan ? 'Oui' : 'Non'}</p>

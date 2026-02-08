@@ -31,19 +31,19 @@ export function useAuth(options: UseAuthOptions = {}) {
 
   const checkSession = useCallback(async () => {
     try {
-      console.log('🔍 Vérification de la session...');
+      console.log('[auth] Verification de la session...');
 
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('❌ Erreur lors de la récupération de session:', error.message);
+        console.error('[auth] Erreur lors de la recuperation de session:', error.message);
         setState(prev => ({ ...prev, error, loading: false }));
         return;
       }
 
       if (session) {
-        console.log('✅ Session active pour:', session.user.email);
-        console.log('🔑 Token expires at:', new Date(session.expires_at! * 1000).toLocaleString());
+        console.log('[auth] Session active pour:', session.user.email);
+        console.log('[auth] Token expires at:', new Date(session.expires_at! * 1000).toLocaleString());
         setState({
           user: session.user,
           session,
@@ -51,7 +51,7 @@ export function useAuth(options: UseAuthOptions = {}) {
           error: null
         });
       } else {
-        console.log('⚠️ Pas de session active');
+        console.log('[auth] Pas de session active');
         setState({
           user: null,
           session: null,
@@ -60,7 +60,7 @@ export function useAuth(options: UseAuthOptions = {}) {
         });
       }
     } catch (err) {
-      console.error('❌ Exception lors de la vérification de session:', err);
+      console.error('[auth] Exception lors de la verification de session:', err);
       setState(prev => ({
         ...prev,
         error: err instanceof Error ? err : new Error('Unknown error'),
@@ -76,10 +76,10 @@ export function useAuth(options: UseAuthOptions = {}) {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
-        console.log('🔄 Auth state changed:', event);
+        console.log('[auth] Auth state changed:', event);
 
         if (session) {
-          console.log('✅ Nouvelle session pour:', session.user.email);
+          console.log('[auth] Nouvelle session pour:', session.user.email);
           setState({
             user: session.user,
             session,
@@ -87,7 +87,7 @@ export function useAuth(options: UseAuthOptions = {}) {
             error: null
           });
         } else {
-          console.log('⚠️ Session terminée');
+          console.log('[auth] Session terminee');
           setState({
             user: null,
             session: null,
@@ -98,12 +98,12 @@ export function useAuth(options: UseAuthOptions = {}) {
 
         // Handle token refresh
         if (event === 'TOKEN_REFRESHED') {
-          console.log('🔄 Token rafraîchi automatiquement');
+          console.log('[auth] Token rafraichi automatiquement');
         }
 
         // Handle sign out
         if (event === 'SIGNED_OUT') {
-          console.log('👋 Utilisateur déconnecté');
+          console.log('[auth] Utilisateur deconnecte');
         }
       }
     );
@@ -121,41 +121,41 @@ export function useAuth(options: UseAuthOptions = {}) {
 
     if (!state.session && !isAuthPage && !redirectIfFound) {
       // Not logged in, redirect to login
-      console.log('🔒 Non authentifié, redirection vers:', redirectTo);
+      console.log('[auth] Non authentifie, redirection vers:', redirectTo);
       router.replace(`${redirectTo}?from=${encodeURIComponent(pathname)}`);
     } else if (state.session && isAuthPage && redirectIfFound) {
       // Already logged in, redirect away from auth pages
-      console.log('✅ Déjà connecté, redirection vers /dashboard');
+      console.log('[auth] Deja connecte, redirection vers /dashboard');
       router.replace('/dashboard');
     }
   }, [state.loading, state.session, pathname, redirectTo, redirectIfFound, router]);
 
   const signOut = useCallback(async () => {
-    console.log('🚪 Déconnexion en cours...');
+    console.log('[auth] Deconnexion en cours...');
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('❌ Erreur lors de la déconnexion:', error.message);
+        console.error('[auth] Erreur lors de la deconnexion:', error.message);
         throw error;
       }
-      console.log('✅ Déconnexion réussie');
+      console.log('[auth] Deconnexion reussie');
       router.replace('/login');
     } catch (err) {
-      console.error('❌ Exception lors de la déconnexion:', err);
+      console.error('[auth] Exception lors de la deconnexion:', err);
       throw err;
     }
   }, [router]);
 
   const refreshSession = useCallback(async () => {
-    console.log('🔄 Rafraîchissement manuel de la session...');
+    console.log('[auth] Rafraichissement manuel de la session...');
     try {
       const { data: { session }, error } = await supabase.auth.refreshSession();
       if (error) {
-        console.error('❌ Erreur lors du rafraîchissement:', error.message);
+        console.error('[auth] Erreur lors du rafraichissement:', error.message);
         throw error;
       }
       if (session) {
-        console.log('✅ Session rafraîchie');
+        console.log('[auth] Session rafraichie');
         setState({
           user: session.user,
           session,
@@ -165,7 +165,7 @@ export function useAuth(options: UseAuthOptions = {}) {
       }
       return session;
     } catch (err) {
-      console.error('❌ Exception lors du rafraîchissement:', err);
+      console.error('[auth] Exception lors du rafraichissement:', err);
       throw err;
     }
   }, []);

@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { Lock, CheckCircle } from 'lucide-react'
 
 function RegisterForm() {
   const router = useRouter()
@@ -63,7 +64,7 @@ function RegisterForm() {
     try {
       const normalizedEmail = email.toLowerCase().trim()
       console.log('═══════════════════════════════════════')
-      console.log('🔐 ACTIVATION COMPTE CONSULTANT')
+      console.log('ACTIVATION COMPTE CONSULTANT')
       console.log('Email:', normalizedEmail)
       console.log('Praticien ID:', practitionerId)
       console.log('Invitation ID:', invitationId)
@@ -82,7 +83,7 @@ function RegisterForm() {
       }
 
       // 2. Créer le compte auth Supabase
-      console.log('📝 Création compte auth...')
+      console.log('Creation compte auth...')
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
@@ -99,10 +100,10 @@ function RegisterForm() {
       let userId: string | undefined
 
       if (authError) {
-        console.error('❌ Erreur auth:', authError)
+        console.error('Erreur auth:', authError)
         if (authError.message.includes('already registered')) {
           // Tenter la connexion si le compte existe déjà
-          console.log('🔄 Compte auth existe déjà, tentative de connexion...')
+          console.log('Compte auth existe deja, tentative de connexion...')
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: normalizedEmail,
             password
@@ -112,13 +113,13 @@ function RegisterForm() {
             return
           }
           userId = signInData.user?.id
-          console.log('✅ Connexion au compte existant:', userId)
+          console.log('Connexion au compte existant:', userId)
         } else {
           throw authError
         }
       } else {
         userId = authData.user?.id
-        console.log('✅ Compte auth créé:', userId)
+        console.log('Compte auth cree:', userId)
       }
 
       if (!userId) {
@@ -218,7 +219,7 @@ function RegisterForm() {
       console.log('Consultant active avec ID:', finalConsultantId || userId)
 
       // 5. Marquer l'invitation comme acceptée
-      console.log('📝 Mise à jour invitation:', invitationId)
+      console.log('Mise a jour invitation:', invitationId)
 
       const { error: invitError } = await supabase
         .from('consultant_invitations')
@@ -229,10 +230,10 @@ function RegisterForm() {
         .eq('id', invitationId)
 
       if (invitError) {
-        console.warn('⚠️ Erreur mise à jour invitation:', invitError)
+        console.warn('Erreur mise a jour invitation:', invitError)
         // Ne pas bloquer, le consultant est créé
       } else {
-        console.log('✅ Invitation marquée comme acceptée')
+        console.log('Invitation marquee comme acceptee')
       }
 
       // 6. Marquer le code OTP comme utilisé
@@ -246,29 +247,29 @@ function RegisterForm() {
           .eq('id', otpId)
 
         if (otpError) {
-          console.warn('⚠️ Erreur mise à jour OTP:', otpError)
+          console.warn('Erreur mise a jour OTP:', otpError)
         } else {
-          console.log('✅ Code OTP marqué comme utilisé')
+          console.log('Code OTP marque comme utilise')
         }
       }
 
       // 7. Connecter automatiquement l'utilisateur
       const { data: session } = await supabase.auth.getSession()
       if (!session?.session) {
-        console.log('🔐 Connexion automatique...')
+        console.log('Connexion automatique...')
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: normalizedEmail,
           password
         })
         if (signInError) {
-          console.warn('⚠️ Auto-login échoué:', signInError)
+          console.warn('Auto-login echoue:', signInError)
         } else {
-          console.log('✅ Connecté automatiquement')
+          console.log('Connecte automatiquement')
         }
       }
 
       console.log('═══════════════════════════════════════')
-      console.log('✅ ACTIVATION RÉUSSIE')
+      console.log('ACTIVATION REUSSIE')
       console.log('Email:', normalizedEmail)
       console.log('Consultant ID:', userId)
       console.log('Praticien ID:', practitionerId)
@@ -282,7 +283,7 @@ function RegisterForm() {
       }, 1500)
 
     } catch (err: unknown) {
-      console.error('❌ Erreur inscription:', err)
+      console.error('Erreur inscription:', err)
       setError(err instanceof Error ? err.message : 'Erreur lors de la création du compte')
     } finally {
       setLoading(false)
@@ -294,7 +295,7 @@ function RegisterForm() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6B8DC9] via-[#7B9DD9] to-[#9B8DC9] p-4">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md text-center">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-4xl">✅</span>
+            <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-[#2D3748] mb-2">
             Compte créé !
@@ -312,7 +313,7 @@ function RegisterForm() {
       <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-gradient-to-br from-[#7BA591] to-[#6B8DC9] rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">👋</span>
+            <span className="text-xl font-bold text-white">Bienvenue</span>
           </div>
           <h1 className="text-2xl font-bold text-[#2D3748]">
             Bonjour {consultantName.split(' ')[0] || 'vous'}
@@ -363,7 +364,7 @@ function RegisterForm() {
           </div>
 
           <div className="flex items-center gap-2 text-xs text-[#718096] bg-[#F7FAFC] p-3 rounded-xl">
-            <span>🔒</span>
+            <Lock className="w-4 h-4 text-[#718096] flex-shrink-0" />
             <span>Vos données sont sécurisées et confidentielles</span>
           </div>
 

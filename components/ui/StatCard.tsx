@@ -2,9 +2,10 @@
 
 import { cn } from '@/lib/cn';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface StatCardProps {
-  icon: string;
+  icon: ReactNode;
   value: string | number;
   label: string;
   trend?: { value: number; direction: 'up' | 'down' | 'flat' };
@@ -21,9 +22,13 @@ export function StatCard({ icon, value, label, trend, color, className }: StatCa
       )}
     >
       <div className="flex items-start justify-between mb-3">
-        <span className="text-2xl" role="img" aria-hidden="true">
-          {icon}
-        </span>
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: color ? `${color}15` : '#E8F0EB' }}>
+          {typeof icon === 'string' ? (
+            <span className="text-lg" style={{ color: color || '#5B8C6E' }}>{icon}</span>
+          ) : (
+            <span style={{ color: color || '#5B8C6E' }}>{icon}</span>
+          )}
+        </div>
         {trend && (
           <div
             className={cn(

@@ -97,7 +97,7 @@ export default function AgendaPage() {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-xl font-semibold text-charcoal tracking-tight">Agenda</h1>
+        <h1 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>Agenda</h1>
         <Button
           variant="primary"
           icon={<Plus className="w-4 h-4" />}

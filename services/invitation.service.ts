@@ -31,7 +31,7 @@ async function sendActivationCodeViaAPI(params: {
 
     return { ok: true, code: data.code };
   } catch (err) {
-    console.error('❌ Erreur appel API send-activation-code:', err);
+    console.error('[invitation] Erreur appel API send-activation-code:', err);
     return { ok: false, error: String(err) };
   }
 }
@@ -81,20 +81,19 @@ export const invitationService = {
    */
   async createInvitation(data: CreateInvitationInput): Promise<CreateInvitationResult> {
     try {
-      console.log('═══════════════════════════════════════');
-      console.log('📨 CRÉATION INVITATION CONSULTANT');
+      console.log('[invitation] CREATION INVITATION CONSULTANT');
       console.log('Email:', data.email);
 
       // 1. Récupérer le praticien connecté
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.error('❌ Non authentifié');
+        console.error('[invitation] Non authentifie');
         throw new Error('Non authentifié');
       }
 
       const practitionerId = user.id;
       const normalizedEmail = data.email.toLowerCase().trim();
-      console.log('✅ Praticien ID:', practitionerId);
+      console.log('[invitation] Praticien ID:', practitionerId);
 
       // 2. Vérifier si invitation existe déjà
       const { data: existing } = await supabase
@@ -106,7 +105,7 @@ export const invitationService = {
         .single();
 
       if (existing) {
-        console.log('⚠️ Invitation déjà existante, renvoi du code');
+        console.log('[invitation] Invitation deja existante, renvoi du code');
         // Renvoyer le code existant plutôt qu'échouer
         const resendResult = await this.resendInvitationCode(normalizedEmail);
         if (resendResult.success) {
@@ -129,13 +128,13 @@ export const invitationService = {
         .single();
 
       if (existingConsultant?.activated) {
-        console.error('❌ Consultant déjà activé');
+        console.error('[invitation] Consultant deja active');
         throw new Error('Ce consultant a déjà un compte activé');
       }
 
       // 4. Générer code unique
       const code = Math.floor(100000 + Math.random() * 900000).toString();
-      console.log('🔐 Code généré:', code);
+      console.log('[invitation] Code genere:', code);
 
       // Préparer les données
       const firstName = data.firstName || data.name?.split(' ')[0] || '';
@@ -148,9 +147,9 @@ export const invitationService = {
 
       if (existingConsultant) {
         consultantId = existingConsultant.id;
-        console.log('✅ Consultant existant non activé trouvé:', consultantId);
+        console.log('[invitation] Consultant existant non active trouve:', consultantId);
       } else {
-        console.log('📝 Création consultant avec activated=false...');
+        console.log('[invitation] Creation consultant avec activated=false...');
         const { data: newConsultant, error: consultantError } = await supabase
           .from('consultants')
           .insert({
@@ -171,16 +170,16 @@ export const invitationService = {
           .single();
 
         if (consultantError) {
-          console.error('❌ Erreur création consultant:', consultantError);
+          console.error('[invitation] Erreur creation consultant:', consultantError);
           throw consultantError;
         }
 
         consultantId = newConsultant.id;
-        console.log('✅ Consultant créé avec ID:', consultantId);
+        console.log('[invitation] Consultant cree avec ID:', consultantId);
       }
 
       // 6. Créer invitation avec lien vers le consultant
-      console.log('📝 Création invitation dans consultant_invitations...');
+      console.log('[invitation] Creation invitation dans consultant_invitations...');
 
       const { data: invitation, error: invitError } = await supabase
         .from('consultant_invitations')
@@ -203,7 +202,7 @@ export const invitationService = {
         .single();
 
       if (invitError) {
-        console.error('❌ Erreur création invitation:', invitError);
+        console.error('[invitation] Erreur creation invitation:', invitError);
         // Rollback consultant si nouvellement créé
         if (!existingConsultant) {
           await supabase.from('consultants').delete().eq('id', consultantId);
@@ -212,10 +211,10 @@ export const invitationService = {
       }
 
       const invitationId = invitation.id;
-      console.log('✅ Invitation créée avec ID:', invitationId);
+      console.log('[invitation] Invitation creee avec ID:', invitationId);
 
       // 7. Créer OTP code avec liens
-      console.log('📝 Création code OTP...');
+      console.log('[invitation] Creation code OTP...');
 
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
@@ -232,7 +231,7 @@ export const invitationService = {
         .single();
 
       if (otpError) {
-        console.error('❌ Erreur création OTP:', otpError);
+        console.error('[invitation] Erreur creation OTP:', otpError);
         // Rollback invitation et consultant
         await supabase.from('consultant_invitations').delete().eq('id', invitationId);
         if (!existingConsultant) {
@@ -241,7 +240,7 @@ export const invitationService = {
         throw otpError;
       }
 
-      console.log('✅ Code OTP créé avec ID:', otpData.id);
+      console.log('[invitation] Code OTP cree avec ID:', otpData.id);
 
       // 8. Envoyer email via API route (utilise le MEME code, pas de nouveau code)
       const { data: sessionData } = await supabase.auth.getSession();
@@ -265,7 +264,7 @@ export const invitationService = {
           });
 
           if (response.ok) {
-            console.log('✅ Email envoyé via API route');
+            console.log('[invitation] Email envoye via API route');
           } else {
             // Fallback: utiliser l'ancienne API qui crée un nouveau code
             const emailResult = await sendActivationCodeViaAPI({
@@ -276,7 +275,7 @@ export const invitationService = {
             });
 
             if (emailResult.ok) {
-              console.log('✅ Email envoyé via API fallback');
+              console.log('[invitation] Email envoye via API fallback');
               // Mettre à jour l'OTP avec le nouveau code si différent
               if (emailResult.code && emailResult.code !== code) {
                 await supabase
@@ -287,29 +286,27 @@ export const invitationService = {
                   .from('consultant_invitations')
                   .update({ invitation_code: emailResult.code })
                   .eq('id', invitationId);
-                console.log('✅ Code mis à jour:', emailResult.code);
+                console.log('[invitation] Code mis a jour:', emailResult.code);
               }
             } else {
-              console.warn('⚠️ Erreur email (API fallback):', emailResult.error);
+              console.warn('[invitation] Erreur email (API fallback):', emailResult.error);
             }
           }
         } catch (emailErr) {
-          console.warn('⚠️ Erreur envoi email:', emailErr);
+          console.warn('[invitation] Erreur envoi email:', emailErr);
           // Continuer sans bloquer - le code est créé
         }
       } else {
-        console.warn('⚠️ Pas de token de session pour envoyer l\'email');
+        console.warn('[invitation] Pas de token de session pour envoyer l\'email');
       }
 
-      console.log('═══════════════════════════════════════');
-      console.log('✅ INVITATION CRÉÉE AVEC SUCCÈS');
+      console.log('[invitation] INVITATION CREEE AVEC SUCCES');
       console.log('Email:', normalizedEmail);
       console.log('Code:', code);
       console.log('Consultant ID:', consultantId);
       console.log('Invitation ID:', invitationId);
       console.log('Praticien ID:', practitionerId);
       console.log('Statut: En attente d\'activation');
-      console.log('═══════════════════════════════════════');
 
       return {
         success: true,
@@ -319,7 +316,7 @@ export const invitationService = {
       };
 
     } catch (err: unknown) {
-      console.error('❌ Erreur createInvitation:', err);
+      console.error('[invitation] Erreur createInvitation:', err);
       return {
         success: false,
         error: err instanceof Error ? err.message : String(err)
@@ -348,12 +345,12 @@ export const invitationService = {
 
       if (error) throw error;
 
-      console.log(`✅ ${data?.length || 0} invitations en attente trouvées`);
+      console.log(`[invitation] ${data?.length || 0} invitations en attente trouvees`);
 
       return { success: true, invitations: (data || []) as InvitationRow[] };
 
     } catch (err: unknown) {
-      console.error('❌ Erreur getMyInvitations:', err);
+      console.error('[invitation] Erreur getMyInvitations:', err);
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   },
@@ -366,7 +363,7 @@ export const invitationService = {
     error?: string;
   }> {
     try {
-      console.log('🚫 Annulation invitation:', invitationId);
+      console.log('[invitation] Annulation invitation:', invitationId);
 
       const { error } = await supabase
         .from('consultant_invitations')
@@ -375,11 +372,11 @@ export const invitationService = {
 
       if (error) throw error;
 
-      console.log('✅ Invitation annulée');
+      console.log('[invitation] Invitation annulee');
       return { success: true };
 
     } catch (err: unknown) {
-      console.error('❌ Erreur cancelInvitation:', err);
+      console.error('[invitation] Erreur cancelInvitation:', err);
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   },
@@ -389,7 +386,7 @@ export const invitationService = {
    */
   async resendInvitationCode(email: string): Promise<CreateInvitationResult> {
     try {
-      console.log('🔄 Renvoi code invitation pour:', email);
+      console.log('[invitation] Renvoi code invitation pour:', email);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
@@ -409,7 +406,7 @@ export const invitationService = {
         throw new Error('Aucune invitation en attente trouvée pour cet email');
       }
 
-      console.log('✅ Invitation trouvée:', invitation.id);
+      console.log('[invitation] Invitation trouvee:', invitation.id);
 
       // Générer un nouveau code
       const newCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -464,20 +461,18 @@ export const invitationService = {
         });
 
         if (emailResult.ok) {
-          console.log('✅ Email renvoyé via API route');
+          console.log('[invitation] Email renvoye via API route');
           emailCode = emailResult.code || newCode;
         } else {
-          console.warn('⚠️ Erreur envoi email (API route):', emailResult.error);
+          console.warn('[invitation] Erreur envoi email (API route):', emailResult.error);
         }
       } else {
-        console.warn('⚠️ Pas de token de session pour envoyer l\'email');
+        console.warn('[invitation] Pas de token de session pour envoyer l\'email');
       }
 
-      console.log('═══════════════════════════════════════');
-      console.log('✅ CODE RENVOYÉ');
+      console.log('[invitation] CODE RENVOYE');
       console.log('Email:', normalizedEmail);
       console.log('Nouveau code:', emailCode);
-      console.log('═══════════════════════════════════════');
 
       return {
         success: true,
@@ -485,7 +480,7 @@ export const invitationService = {
       };
 
     } catch (err: unknown) {
-      console.error('❌ Erreur resendInvitationCode:', err);
+      console.error('[invitation] Erreur resendInvitationCode:', err);
       return {
         success: false,
         error: err instanceof Error ? err.message : String(err)

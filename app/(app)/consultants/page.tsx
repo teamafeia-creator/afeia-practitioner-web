@@ -459,9 +459,9 @@ export default function ConsultantsPage() {
         </div>
       )}
 
-      {/* Consultant List (flat, no alphabetical grouping) */}
+      {/* Consultant Grid (compact cards) */}
       {filteredConsultants.length > 0 && (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredConsultants.map((consultant) => {
             const meta = consultantMeta[consultant.id] ?? {};
             const isPremium = consultant.is_premium || consultant.status === 'premium';
@@ -477,57 +477,55 @@ export default function ConsultantsPage() {
               <Link
                 key={consultant.id}
                 href={`/consultants/${consultant.id}`}
-                className="block bg-white border border-divider rounded-xl p-4 shadow-card hover:shadow-card-hover transition-shadow duration-200"
+                className="block bg-white border border-divider rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-200 hover:border-sage/30"
               >
-                <div className="flex items-center gap-4">
-                  {/* Avatar */}
-                  <Avatar name={getDisplayName(consultant)} size="md" />
-
-                  {/* Main info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-base font-semibold text-charcoal truncate">
-                        {getDisplayName(consultant)}
-                      </span>
-                      <span className={cn(
-                        'px-2 py-0.5 rounded-2xl text-xs font-medium',
-                        isPremium ? 'badge-premium' : 'badge-standard'
-                      )}>
-                        {isPremium ? 'Premium' : 'Standard'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[13px] text-stone">
-                      {consultant.city && <span>{consultant.city}</span>}
-                      {lastContact && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {lastContact}
-                        </span>
-                      )}
-                      {!lastContact && (
-                        <span className="text-mist">Aucun RDV</span>
-                      )}
-                    </div>
+                <div className="flex flex-col items-center text-center">
+                  {/* Avatar + status dot */}
+                  <div className="relative mb-3">
+                    <Avatar name={getDisplayName(consultant)} size="lg" />
+                    <span className={cn(
+                      'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white',
+                      !isActive ? 'bg-mist' :
+                      meta.lastConsultation && new Date(meta.lastConsultation) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? 'bg-gold' :
+                      'bg-success'
+                    )} />
                   </div>
 
-                  {/* Right side indicators */}
-                  <div className="flex items-center gap-3 shrink-0">
-                    {/* Activity dot */}
-                    <span className={cn(
-                      'status-dot',
-                      !isActive && 'inactive',
-                      isActive && meta.lastConsultation && new Date(meta.lastConsultation) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) && 'warning'
-                    )} />
+                  {/* Name */}
+                  <h3 className="text-sm font-semibold text-charcoal truncate w-full mb-1">
+                    {getDisplayName(consultant)}
+                  </h3>
 
-                    {/* Unread messages badge */}
-                    {meta.unreadMessages && meta.unreadMessages > 0 && (
-                      <span className="message-badge flex items-center gap-1">
+                  {/* Badge */}
+                  <span className={cn(
+                    'px-2 py-0.5 rounded-2xl text-[11px] font-medium mb-2',
+                    isPremium ? 'badge-premium' : 'badge-standard'
+                  )}>
+                    {isPremium ? 'Premium' : 'Standard'}
+                  </span>
+
+                  {/* City */}
+                  {consultant.city && (
+                    <p className="text-xs text-stone mb-2">{consultant.city}</p>
+                  )}
+
+                  {/* Meta info */}
+                  <div className="flex items-center gap-3 text-[11px] text-stone mt-auto pt-2 border-t border-divider w-full justify-center">
+                    {lastContact ? (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {lastContact}
+                      </span>
+                    ) : (
+                      <span className="text-mist">Aucun RDV</span>
+                    )}
+
+                    {meta.unreadMessages && meta.unreadMessages > 0 ? (
+                      <span className="message-badge flex items-center gap-1 text-[11px] px-2 py-0.5">
                         <MessageSquare className="h-3 w-3" />
                         {meta.unreadMessages}
                       </span>
-                    )}
-
-                    <ChevronRight className="h-4 w-4 text-stone" />
+                    ) : null}
                   </div>
                 </div>
               </Link>
