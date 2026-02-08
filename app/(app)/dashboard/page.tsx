@@ -26,7 +26,7 @@ import type { Appointment } from '@/lib/types';
 
 type ConsultantRow = {
   id: string;
-  full_name?: string | null;
+  name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   is_premium?: boolean | null;
@@ -65,7 +65,7 @@ const timeFormatter = new Intl.DateTimeFormat('fr-FR', {
 const RECONTACT_DAYS = 30;
 
 function getConsultantName(consultant: ConsultantRow): string {
-  if (consultant.full_name) return consultant.full_name;
+  if (consultant.name) return consultant.name;
   const parts = [consultant.first_name, consultant.last_name].filter(Boolean);
   return parts.length > 0 ? parts.join(' ') : 'Consultant';
 }
@@ -124,7 +124,7 @@ export default function DashboardPage() {
       // Load consultants for recontact
       const { data: consultants, error: consultantsError } = await supabase
         .from('consultants')
-        .select('id, full_name, first_name, last_name, is_premium, status, activated')
+        .select('id, name, first_name, last_name, is_premium, status, activated')
         .eq('practitioner_id', userId)
         .is('deleted_at', null);
 
@@ -140,16 +140,16 @@ export default function DashboardPage() {
         // Use appointments table for last contact instead of consultations
         const { data: appointmentsHistory } = await supabase
           .from('appointments')
-          .select('patient_id, starts_at')
-          .in('patient_id', consultantIds)
+          .select('consultant_id, starts_at')
+          .in('consultant_id', consultantIds)
           .eq('status', 'completed');
 
         const lastContactMap = new Map<string, string>();
-        (appointmentsHistory ?? []).forEach((a: { patient_id: string; starts_at: string }) => {
-          if (!a.patient_id || !a.starts_at) return;
-          const current = lastContactMap.get(a.patient_id);
+        (appointmentsHistory ?? []).forEach((a: { consultant_id: string; starts_at: string }) => {
+          if (!a.consultant_id || !a.starts_at) return;
+          const current = lastContactMap.get(a.consultant_id);
           if (!current || new Date(a.starts_at) > new Date(current)) {
-            lastContactMap.set(a.patient_id, a.starts_at);
+            lastContactMap.set(a.consultant_id, a.starts_at);
           }
         });
 
@@ -322,7 +322,7 @@ export default function DashboardPage() {
                 <div
                   key={appointment.id}
                   className="flex items-center justify-between p-4 hover:bg-white/30 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/consultants/${appointment.patient_id || ''}`)}
+                  onClick={() => router.push(`/consultants/${appointment.consultant_id || ''}`)}
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-center min-w-[50px]">
@@ -402,7 +402,7 @@ export default function DashboardPage() {
                 <button
                   key={apt.id}
                   onClick={() => {
-                    if (apt.patient_id) router.push(`/consultants/${apt.patient_id}?tab=Notes+de+séance`);
+                    if (apt.consultant_id) router.push(`/consultants/${apt.consultant_id}?tab=Notes+de+séance`);
                   }}
                   className="w-full text-left flex items-center justify-between p-2 rounded-lg hover:bg-white/50 transition-colors"
                 >
