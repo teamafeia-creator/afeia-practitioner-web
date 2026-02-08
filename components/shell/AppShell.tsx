@@ -44,7 +44,7 @@ const ADMIN_NAV = [
   { href: '/admin/practitioners', label: 'Praticiens', icon: Users },
   { href: '/admin/consultants', label: 'Consultants', icon: Users },
   { href: '/admin/billing', label: 'Billing', icon: ClipboardList },
-  { href: '/admin/circular', label: 'Circular', icon: MessageSquare }
+  { href: '/admin/bague-connectee', label: 'Bague connectée', icon: MessageSquare }
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -85,12 +85,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       admin: 'Admin',
       admins: 'Admins',
       practitioners: 'Praticiens',
-      circular: 'Circular',
+      'bague-connectee': 'Bague connectée',
       'consultation-types': 'Types de seance',
       availability: 'Disponibilites'
     };
 
     const lastSegment = segments[segments.length - 1];
+
+    // If the last segment looks like a UUID, use the parent segment's label instead
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lastSegment);
+    if (isUUID && segments.length >= 2) {
+      const parentSegment = segments[segments.length - 2];
+      const parentLabel = labelMap[parentSegment];
+      if (parentLabel === 'Consultants') return 'Dossier consultant';
+      if (parentLabel) return parentLabel;
+      return parentSegment.replace(/-/g, ' ');
+    }
+
     return labelMap[lastSegment] || lastSegment.replace(/-/g, ' ');
   }, [pathname]);
 

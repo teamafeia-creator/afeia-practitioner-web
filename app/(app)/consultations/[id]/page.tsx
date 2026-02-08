@@ -245,7 +245,7 @@ export default function ConsultationPage() {
               <div className="rounded-2xl bg-white ring-1 ring-black/5 p-3">
                 <div className="text-xs text-warmgray">Prochaine action</div>
                 <div className="mt-1 text-sm text-charcoal">
-                  {consultant?.is_premium ? 'Analyser la semaine Circular et ajuster le plan.' : 'Finaliser les objectifs mesurables.'}
+                  {consultant?.is_premium ? 'Analyser la semaine bague connectée et ajuster le plan.' : 'Finaliser les objectifs mesurables.'}
                 </div>
               </div>
             </CardContent>

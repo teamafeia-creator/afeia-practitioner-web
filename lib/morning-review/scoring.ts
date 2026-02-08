@@ -124,7 +124,7 @@ export function calculateAttentionScore(consultant: ConsultantForReview): number
 
   // === C. SIGNAUX PHYSIOLOGIQUES (poids x1.5) — Premium uniquement ===
 
-  if (consultant.is_premium && consultant.hasCircularRing && consultant.wearableSummaries.length > 0) {
+  if (consultant.is_premium && consultant.hasBagueConnectee && consultant.wearableSummaries.length > 0) {
     // Sommeil < 6h pendant 5 jours
     const nightsShort = getNightsUnder6Hours(consultant.wearableSummaries);
     if (nightsShort >= 5) {
@@ -149,7 +149,7 @@ export function calculateAttentionScore(consultant: ConsultantForReview): number
       score += 10 * 1.5;
     }
 
-    // Insights Circular
+    // Insights bague connectée
     consultant.wearableInsights.forEach(insight => {
       if (insight.level === 'attention') score += 10 * 1.5;
       if (insight.level === 'info') score += 5 * 1.5;

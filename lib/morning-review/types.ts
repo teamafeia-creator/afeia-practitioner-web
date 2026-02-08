@@ -76,9 +76,9 @@ export interface LastWeekStats {
   adherenceTrend: Trend;
 }
 
-// === Stats Circular (Premium) ===
+// === Stats Bague connectée (Premium) ===
 
-export interface CircularStats {
+export interface BagueConnecteeStats {
   averageSleep: number; // heures
   sleepTrend: Trend;
   averageHRV: number;
@@ -93,7 +93,7 @@ export interface ConsultantSummary {
   attentionScore: number;
   attentionLevel: AttentionLevel;
   lastWeekStats: LastWeekStats;
-  circularStats?: CircularStats;
+  bagueConnecteeStats?: BagueConnecteeStats;
   primarySignal?: Signal;
   suggestedActions: SuggestedAction[];
 }
@@ -113,7 +113,7 @@ export interface ConsultantForReview extends Consultant {
   isSnoozed: boolean;
   snoozeUntil: string | null;
   snoozeReason: string | null;
-  hasCircularRing: boolean;
+  hasBagueConnectee: boolean;
 }
 
 // === Donnees revue matinale ===

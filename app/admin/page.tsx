@@ -49,9 +49,9 @@ const shortcuts = [
     href: '/admin/billing'
   },
   {
-    title: 'Circular',
-    description: 'Synchroniser les consultants et statuts Circular.',
-    href: '/admin/circular'
+    title: 'Bague connectée',
+    description: 'Synchroniser les consultants et statuts bague connectée.',
+    href: '/admin/bague-connectee'
   },
   {
     title: 'Base de donnees',

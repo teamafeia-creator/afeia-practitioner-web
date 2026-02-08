@@ -26,9 +26,9 @@ type ConsultantIdentity = {
   city: string | null;
   status: string | null;
   is_premium: boolean | null;
-  circular_enabled: boolean | null;
-  last_circular_sync_at: string | null;
-  last_circular_sync_status: string | null;
+  bague_connectee_enabled: boolean | null;
+  last_bague_connectee_sync_at: string | null;
+  last_bague_connectee_sync_status: string | null;
 };
 
 export default function AdminConsultantDetailPage() {
@@ -98,7 +98,7 @@ export default function AdminConsultantDetailPage() {
           city: consultant.city,
           status: consultant.status,
           is_premium: consultant.is_premium,
-          circular_enabled: consultant.circular_enabled
+          bague_connectee_enabled: consultant.bague_connectee_enabled
         })
       });
 
@@ -115,11 +115,11 @@ export default function AdminConsultantDetailPage() {
     }
   }
 
-  async function triggerCircularSync() {
+  async function triggerBagueConnecteeSync() {
     if (!consultant) return;
 
     try {
-      const response = await fetch('/api/admin/circular-sync', {
+      const response = await fetch('/api/admin/bague-connectee-sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -136,11 +136,11 @@ export default function AdminConsultantDetailPage() {
       showToast.success('Synchronisation lancee.');
       setConsultant({
         ...consultant,
-        last_circular_sync_at: new Date().toISOString(),
-        last_circular_sync_status: 'queued'
+        last_bague_connectee_sync_at: new Date().toISOString(),
+        last_bague_connectee_sync_status: 'queued'
       });
     } catch (err) {
-      console.error('[admin] triggerCircularSync error:', err);
+      console.error('[admin] triggerBagueConnecteeSync error:', err);
       showToast.error('Erreur réseau lors de la synchronisation.');
     }
   }
@@ -254,30 +254,30 @@ export default function AdminConsultantDetailPage() {
       </div>
 
       <Card className="p-5 space-y-3">
-        <h3 className="text-base font-semibold text-charcoal">Circular</h3>
+        <h3 className="text-base font-semibold text-charcoal">Bague connectée</h3>
         <div className="flex flex-wrap items-center gap-3">
           <Select
-            value={consultant.circular_enabled ? 'enabled' : 'disabled'}
+            value={consultant.bague_connectee_enabled ? 'enabled' : 'disabled'}
             onChange={(event) =>
               setConsultant({
                 ...consultant,
-                circular_enabled: event.target.value === 'enabled'
+                bague_connectee_enabled: event.target.value === 'enabled'
               })
             }
           >
-            <option value="enabled">Active</option>
-            <option value="disabled">Desactive</option>
+            <option value="enabled">Activée</option>
+            <option value="disabled">Désactivée</option>
           </Select>
-          <Button variant="outline" onClick={triggerCircularSync}>
+          <Button variant="outline" onClick={triggerBagueConnecteeSync}>
             Sync now
           </Button>
         </div>
         <p className="text-xs text-warmgray">
-          Derniere synchro :{' '}
-          {consultant.last_circular_sync_at
-            ? new Date(consultant.last_circular_sync_at).toLocaleString('fr-FR')
+          Dernière synchro :{' '}
+          {consultant.last_bague_connectee_sync_at
+            ? new Date(consultant.last_bague_connectee_sync_at).toLocaleString('fr-FR')
             : 'Jamais'}
-          {consultant.last_circular_sync_status ? ` (${consultant.last_circular_sync_status})` : ''}
+          {consultant.last_bague_connectee_sync_status ? ` (${consultant.last_bague_connectee_sync_status})` : ''}
         </p>
       </Card>
     </div>

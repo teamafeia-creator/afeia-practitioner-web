@@ -4,7 +4,7 @@
 import { supabase } from '../supabase';
 import type { ConsultantForReview, ConsultantSummary, MorningReviewData } from './types';
 import { calculateAttentionScore, getAttentionCategory } from './scoring';
-import { calculateLastWeekStats, calculateCircularStats } from './trends';
+import { calculateLastWeekStats, calculateBagueConnecteeStats } from './trends';
 import { identifyPrimarySignal, generateSuggestedActions } from './signals';
 
 export async function fetchMorningReviewData(): Promise<MorningReviewData> {
@@ -156,9 +156,9 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
     const notes = notesByConsultant[c.id] ?? [];
     const lastNote = notes[0] ?? null;
 
-    // Detecter si le consultant a des donnees Circular
+    // Detecter si le consultant a des donnees bague connectee
     const wearables = wearableByConsultant[c.id] ?? [];
-    const hasCircular = wearables.length > 0 || (c.has_circular_ring ?? false);
+    const hasBagueConnecteeData = wearables.length > 0 || (c.has_bague_connectee ?? false);
 
     return {
       ...c,
@@ -175,7 +175,7 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
       isSnoozed: c.is_snoozed ?? false,
       snoozeUntil: c.snooze_until ?? null,
       snoozeReason: c.snooze_reason ?? null,
-      hasCircularRing: hasCircular,
+      hasBagueConnectee: hasBagueConnecteeData,
     };
   });
 
@@ -192,11 +192,11 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
       : getAttentionCategory(attentionScore);
 
     const lastWeekStats = calculateLastWeekStats(consultant.journalEntries);
-    const circularStats = consultant.is_premium && consultant.hasCircularRing
-      ? calculateCircularStats(consultant.wearableSummaries, consultant.wearableInsights)
+    const bagueConnecteeStats = consultant.is_premium && consultant.hasBagueConnectee
+      ? calculateBagueConnecteeStats(consultant.wearableSummaries, consultant.wearableInsights)
       : undefined;
 
-    const primarySignal = identifyPrimarySignal(consultant, lastWeekStats, circularStats);
+    const primarySignal = identifyPrimarySignal(consultant, lastWeekStats, bagueConnecteeStats);
     const suggestedActions = generateSuggestedActions(consultant, primarySignal);
 
     return {
@@ -204,7 +204,7 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
       attentionScore,
       attentionLevel,
       lastWeekStats,
-      circularStats,
+      bagueConnecteeStats,
       primarySignal,
       suggestedActions,
     };

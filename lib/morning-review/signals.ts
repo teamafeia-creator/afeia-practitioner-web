@@ -1,13 +1,13 @@
 // Identification des signaux et generation des actions suggerees
 // pour la Revue Matinale
 
-import type { ConsultantForReview, Signal, SuggestedAction, LastWeekStats, CircularStats } from './types';
+import type { ConsultantForReview, Signal, SuggestedAction, LastWeekStats, BagueConnecteeStats } from './types';
 import { daysSince } from './trends';
 
 export function identifyPrimarySignal(
   consultant: ConsultantForReview,
   lastWeekStats: LastWeekStats,
-  circularStats?: CircularStats
+  bagueConnecteeStats?: BagueConnecteeStats
 ): Signal | undefined {
   const name = consultant.name ?? 'Ce consultant';
 
@@ -66,17 +66,17 @@ export function identifyPrimarySignal(
   }
 
   // Priorite 6 : Sommeil perturbe (Premium)
-  if (circularStats && circularStats.sleepTrend === 'down' && circularStats.averageSleep < 6.5) {
+  if (bagueConnecteeStats && bagueConnecteeStats.sleepTrend === 'down' && bagueConnecteeStats.averageSleep < 6.5) {
     return {
       category: 'sleep',
       severity: 'attention',
-      message: `Le sommeil de ${name} montre des nuits courtes depuis plusieurs jours (${circularStats.averageSleep.toFixed(1)}h en moyenne)`,
+      message: `Le sommeil de ${name} montre des nuits courtes depuis plusieurs jours (${bagueConnecteeStats.averageSleep.toFixed(1)}h en moyenne)`,
       iconName: 'Moon',
     };
   }
 
   // Priorite 7 : HRV en baisse (Premium)
-  if (circularStats && circularStats.hrvTrend === 'down') {
+  if (bagueConnecteeStats && bagueConnecteeStats.hrvTrend === 'down') {
     return {
       category: 'recovery',
       severity: 'info',

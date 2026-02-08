@@ -88,7 +88,7 @@ const TABS = [
   T.tabProfil,
   T.tabRendezVous,
   T.tabAnamnese,
-  T.tabCircular,
+  T.tabBagueConnectee,
   T.tabJournal,
   T.tabNotesSeance,
   T.tabConseillancier,
@@ -102,7 +102,7 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
   [T.tabProfil]: { title: T.tabProfil, description: T.descProfil },
   [T.tabRendezVous]: { title: T.tabRendezVous, description: T.descRendezVous },
   [T.tabAnamnese]: { title: T.tabAnamnese, description: T.descAnamnese },
-  [T.tabCircular]: { title: T.tabCircular, description: T.descCircular },
+  [T.tabBagueConnectee]: { title: T.tabBagueConnectee, description: T.descBagueConnectee },
   [T.tabJournal]: { title: T.tabJournal, description: T.descJournal },
   [T.tabNotesSeance]: { title: T.tabNotesSeance, description: T.descNotesSeance },
   [T.tabConseillancier]: { title: T.tabConseillancier, description: T.descConseillancier },
@@ -485,6 +485,24 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
+
+  // Refetch appointments when the "Rendez-vous" tab becomes active
+  useEffect(() => {
+    if (tab !== T.tabRendezVous) return;
+    let cancelled = false;
+    async function refetchAppointments() {
+      const { data } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('consultant_id', consultant.id)
+        .order('starts_at', { ascending: false });
+      if (!cancelled && data) {
+        setAppointments(data);
+      }
+    }
+    refetchAppointments();
+    return () => { cancelled = true; };
+  }, [tab, consultant.id]);
 
   useEffect(() => {
     let active = true;
@@ -1387,11 +1405,11 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </Card>
       )}
 
-      {tab === 'Circular' && (
+      {tab === T.tabBagueConnectee && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Circular</h2>
+              <h2 className="text-sm font-semibold">Bague connectée</h2>
               {isPremium ? <Badge variant="active">Actif</Badge> : <Badge variant="attention">Non activé</Badge>}
             </div>
           </CardHeader>
@@ -1403,7 +1421,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 </div>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-charcoal">
-                    <p className="text-sm font-semibold">Fonctionnalite Circular verrouillee</p>
+                    <p className="text-sm font-semibold">Fonctionnalité Bague connectée verrouillée</p>
                   </div>
                   <p>
                     Proposez l&apos;offre Premium a votre client afin d&apos;avoir acces a cette fonctionnalite.
@@ -1414,7 +1432,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     </Button>
                     <Button
                       variant="secondary"
-                      onClick={() => router.push('/circular/en-savoir-plus')}
+                      onClick={() => router.push('/bague-connectee/en-savoir-plus')}
                     >
                       En savoir plus
                     </Button>
@@ -1424,7 +1442,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             ) : wearableSummaries.length === 0 ? (
               <EmptyState
                 icon="inbox"
-                title="Aucune donnee Circular disponible"
+                title="Aucune donnée bague connectée disponible"
                 description="Les donnees s'afficheront des la premiere synchronisation."
               />
             ) : (
@@ -1471,7 +1489,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 ) : (
                   <EmptyState
                     icon="notifications"
-                    title="Aucun insight Circular disponible"
+                    title="Aucun insight bague connectée disponible"
                     description="Les suggestions apparaitront apres analyse."
                   />
                 )}

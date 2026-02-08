@@ -110,7 +110,7 @@ export function CancelSubscriptionDialog({
                   <svg className="h-4 w-4 text-aubergine" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  Intégration Circular (sommeil, HRV, activité)
+                  Intégration bague connectée (sommeil, HRV, activité)
                 </li>
                 <li className="flex items-center gap-2">
                   <svg className="h-4 w-4 text-aubergine" fill="none" viewBox="0 0 24 24" stroke="currentColor">

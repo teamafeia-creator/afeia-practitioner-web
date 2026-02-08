@@ -106,7 +106,7 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
     );
   }
 
-  const { consultant, attentionLevel, lastWeekStats, circularStats, primarySignal, suggestedActions } = currentSummary;
+  const { consultant, attentionLevel, lastWeekStats, bagueConnecteeStats, primarySignal, suggestedActions } = currentSummary;
   const messageTemplate = suggestedActions.find(a => a.type === 'send_message')?.templateMessage;
 
   return (
@@ -175,25 +175,25 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
                 </div>
               </div>
 
-              {/* Circular stats */}
-              {circularStats && (
+              {/* Bague connectée stats */}
+              {bagueConnecteeStats && (
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="bg-neutral-50 rounded-lg p-3">
                     <div className="flex items-center gap-2">
                       <Moon className="w-4 h-4 text-warmgray" />
                       <span className="text-sm text-charcoal">
-                        Sommeil : {circularStats.averageSleep.toFixed(1)}h
+                        Sommeil : {bagueConnecteeStats.averageSleep.toFixed(1)}h
                       </span>
-                      <TrendIcon trend={circularStats.sleepTrend} />
+                      <TrendIcon trend={bagueConnecteeStats.sleepTrend} />
                     </div>
                   </div>
                   <div className="bg-neutral-50 rounded-lg p-3">
                     <div className="flex items-center gap-2">
                       <Heart className="w-4 h-4 text-warmgray" />
                       <span className="text-sm text-charcoal">
-                        HRV : {circularStats.averageHRV.toFixed(0)} ms
+                        HRV : {bagueConnecteeStats.averageHRV.toFixed(0)} ms
                       </span>
-                      <TrendIcon trend={circularStats.hrvTrend} />
+                      <TrendIcon trend={bagueConnecteeStats.hrvTrend} />
                     </div>
                   </div>
                 </div>
