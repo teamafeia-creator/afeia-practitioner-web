@@ -140,7 +140,7 @@ export default function StripeConnectSettingsPage() {
                 {isConnected ? (
                   <Badge variant="success">Connecte</Badge>
                 ) : (
-                  <Badge variant="warning">Configuration incomplete</Badge>
+                  <Badge variant="attention">Configuration incomplete</Badge>
                 )}
               </div>
 
