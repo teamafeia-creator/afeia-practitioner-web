@@ -121,7 +121,24 @@ CREATE INDEX IF NOT EXISTS idx_appointments_starts_at ON appointments(starts_at)
 CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
 CREATE INDEX IF NOT EXISTS idx_appointments_consultation_type ON appointments(consultation_type_id);
 
--- 1.5 Migrate consultations to appointments (legacy data)
+-- 1.5 Fix RLS policies on appointments (old policies reference patient_id / patients which no longer exist)
+DROP POLICY IF EXISTS "Practitioners access own appointments" ON appointments;
+DROP POLICY IF EXISTS "Patients access own appointments" ON appointments;
+DROP POLICY IF EXISTS "appointments_select_own" ON appointments;
+DROP POLICY IF EXISTS "appointments_insert_own" ON appointments;
+DROP POLICY IF EXISTS "appointments_update_own" ON appointments;
+DROP POLICY IF EXISTS "appointments_delete_own" ON appointments;
+
+CREATE POLICY "appointments_select_own" ON appointments
+  FOR SELECT USING (practitioner_id = auth.uid());
+CREATE POLICY "appointments_insert_own" ON appointments
+  FOR INSERT WITH CHECK (practitioner_id = auth.uid());
+CREATE POLICY "appointments_update_own" ON appointments
+  FOR UPDATE USING (practitioner_id = auth.uid()) WITH CHECK (practitioner_id = auth.uid());
+CREATE POLICY "appointments_delete_own" ON appointments
+  FOR DELETE USING (practitioner_id = auth.uid());
+
+-- 1.6 Migrate consultations to appointments (legacy data)
 -- Only run if both tables exist and there are consultations not yet migrated
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'consultations') THEN
