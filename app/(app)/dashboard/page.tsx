@@ -13,6 +13,8 @@ import {
   MessageSquare,
   Receipt,
   Plus,
+  RefreshCw,
+  Banknote,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
@@ -230,35 +232,47 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <Toaster />
 
-      {/* Welcome Header */}
+      {/* Welcome Header with nature background */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
       >
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>
-              {greeting}
-              {practitionerName ? `, ${practitionerName}` : ''}
-            </h1>
-            <p className="text-sm text-stone capitalize mt-1">{todayLabel}</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              variant="primary"
-              icon={<Plus className="w-4 h-4" />}
-              onClick={() => router.push('/consultants/new')}
-            >
-              Nouveau consultant
-            </Button>
-            <Button
-              variant="secondary"
-              icon={<Calendar className="w-4 h-4" />}
-              onClick={() => router.push('/agenda')}
-            >
-              Nouvelle seance
-            </Button>
+        <div className="relative rounded-2xl overflow-hidden border border-divider shadow-card">
+          {/* Nature background overlay */}
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: 'url(https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80&auto=format&fit=crop)',
+            }}
+          />
+          <div className="absolute inset-0 bg-cream/85" />
+          <div className="relative px-6 py-8 md:px-8 md:py-10">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>
+                  {greeting}
+                  {practitionerName ? `, ${practitionerName}` : ''} !
+                </h1>
+                <p className="text-sm text-stone capitalize mt-1">{todayLabel}</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="primary"
+                  icon={<Plus className="w-4 h-4" />}
+                  onClick={() => router.push('/consultants/new')}
+                >
+                  Nouveau consultant
+                </Button>
+                <Button
+                  variant="secondary"
+                  icon={<Calendar className="w-4 h-4" />}
+                  onClick={() => router.push('/agenda')}
+                >
+                  Nouvelle seance
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -520,25 +534,25 @@ export default function DashboardPage() {
               </h2>
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
-                  icon="👥"
+                  icon={<Users className="h-5 w-5" />}
                   value={stats.activeConsultants}
                   label="Consultants actifs"
                   color="#5B8C6E"
                 />
                 <StatCard
-                  icon="📅"
+                  icon={<Calendar className="h-5 w-5" />}
                   value={stats.sessionsCount}
                   label="Seances ce mois"
                   color="#5B8C6E"
                 />
                 <StatCard
-                  icon="🔄"
+                  icon={<RefreshCw className="h-5 w-5" />}
                   value={`${stats.retentionRate}%`}
                   label="Fidelisation"
                   color={stats.retentionRate >= 70 ? '#7BAE7F' : stats.retentionRate >= 50 ? '#D4A060' : '#D4738B'}
                 />
                 <StatCard
-                  icon="💰"
+                  icon={<Banknote className="h-5 w-5" />}
                   value={stats.revenue > 0 ? `${(stats.revenue / 100).toFixed(0)} €` : '—'}
                   label="CA mensuel"
                   color="#5B8C6E"

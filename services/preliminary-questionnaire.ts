@@ -140,7 +140,7 @@ export async function createConsultantFromQuestionnaire(questionnaireId: string)
     .single();
 
   if (consultantError || !consultant) {
-    console.error('❌ Erreur récupération consultant après création:', consultantError);
+    console.error('[questionnaire] Erreur recuperation consultant apres creation:', consultantError);
     return { consultantId };
   }
 
@@ -149,7 +149,7 @@ export async function createConsultantFromQuestionnaire(questionnaireId: string)
   const accessToken = sessionData?.session?.access_token;
 
   if (!accessToken) {
-    console.error('⚠️ Pas de token de session pour envoyer le code d\'activation');
+    console.error('[questionnaire] Pas de token de session pour envoyer le code d\'activation');
     return { consultantId, email: consultant.email };
   }
 
@@ -175,20 +175,20 @@ export async function createConsultantFromQuestionnaire(questionnaireId: string)
     const result = await response.json();
 
     if (result.ok) {
-      console.log('✅ Code d\'activation envoyé pour consultant créé depuis questionnaire');
-      console.log('📧 Email:', consultant.email);
-      console.log('🔑 Code:', result.code);
+      console.log('[questionnaire] Code d\'activation envoye pour consultant cree depuis questionnaire');
+      console.log('[questionnaire] Email:', consultant.email);
+      console.log('[questionnaire] Code:', result.code);
       return {
         consultantId,
         code: result.code,
         email: consultant.email
       };
     } else {
-      console.error('⚠️ Erreur envoi code activation:', result.error);
+      console.error('[questionnaire] Erreur envoi code activation:', result.error);
       return { consultantId, email: consultant.email };
     }
   } catch (err) {
-    console.error('⚠️ Exception envoi code activation:', err);
+    console.error('[questionnaire] Exception envoi code activation:', err);
     return { consultantId, email: consultant.email };
   }
 }
@@ -215,8 +215,7 @@ export async function linkQuestionnaireToExistingConsultant(
   questionnaireId: string,
   consultantId: string
 ): Promise<void> {
-  console.log('═══════════════════════════════════════');
-  console.log('🔗 LIAISON QUESTIONNAIRE → CONSULTANT');
+  console.log('[questionnaire] LIAISON QUESTIONNAIRE -> CONSULTANT');
   console.log('Questionnaire ID:', questionnaireId);
   console.log('Consultant ID:', consultantId);
 
@@ -228,7 +227,7 @@ export async function linkQuestionnaireToExistingConsultant(
     .single();
 
   if (qError || !questionnaire) {
-    console.error('❌ Questionnaire non trouvé:', qError);
+    console.error('[questionnaire] Questionnaire non trouve:', qError);
     throw new Error('Questionnaire non trouvé.');
   }
 
@@ -244,7 +243,7 @@ export async function linkQuestionnaireToExistingConsultant(
     .maybeSingle();
 
   if (aError) {
-    console.error('❌ Erreur récupération anamnèse:', aError);
+    console.error('[questionnaire] Erreur recuperation anamnese:', aError);
     throw new Error('Impossible de récupérer l\'anamnèse du consultant.');
   }
 
@@ -264,7 +263,7 @@ export async function linkQuestionnaireToExistingConsultant(
     )
   };
 
-  console.log('📝 Fusion des réponses...');
+  console.log('[questionnaire] Fusion des reponses...');
 
   // 4. Mettre à jour ou créer l'anamnèse
   const newVersion = (anamnesis?.version || 0) + 1;
@@ -282,11 +281,11 @@ export async function linkQuestionnaireToExistingConsultant(
     });
 
   if (upsertError) {
-    console.error('❌ Erreur mise à jour anamnèse:', upsertError);
+    console.error('[questionnaire] Erreur mise a jour anamnese:', upsertError);
     throw new Error('Impossible de mettre à jour l\'anamnèse.');
   }
 
-  console.log('✅ Anamnèse mise à jour (version', newVersion, ')');
+  console.log('[questionnaire] Anamnese mise a jour (version', newVersion, ')');
 
   // 5. Marquer le questionnaire comme lié
   const { error: linkError } = await supabase
@@ -300,12 +299,11 @@ export async function linkQuestionnaireToExistingConsultant(
     .eq('id', questionnaireId);
 
   if (linkError) {
-    console.error('❌ Erreur liaison questionnaire:', linkError);
+    console.error('[questionnaire] Erreur liaison questionnaire:', linkError);
     throw new Error('Impossible de lier le questionnaire.');
   }
 
-  console.log('✅ Questionnaire lié au consultant');
-  console.log('═══════════════════════════════════════');
+  console.log('[questionnaire] Questionnaire lie au consultant');
 }
 
 /**

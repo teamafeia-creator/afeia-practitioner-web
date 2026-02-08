@@ -82,15 +82,15 @@ AFEIA - Votre assistant santé personnalisé
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('❌ Resend error:', errorBody);
+      console.error('[email] Resend error:', errorBody);
       throw new Error(`Email provider error: ${errorBody}`);
     }
 
     const data = await response.json();
-    console.log('✅ Email envoyé:', data);
+    console.log('[email] Email sent:', data);
     return { success: true, data };
   } catch (err) {
-    console.error('❌ Email failed:', err);
+    console.error('[email] Email failed:', err);
     throw err;
   }
 }

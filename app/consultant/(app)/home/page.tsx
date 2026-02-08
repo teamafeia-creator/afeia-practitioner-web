@@ -67,7 +67,7 @@ export default function ConsultantHomePage() {
         return
       }
 
-      console.log('🔍 Chargement données consultant pour:', user.id)
+      console.log('[consultant] Loading data for:', user.id)
 
       // Nouveau flow: chercher le consultant directement par son ID (qui est le même que l'auth user ID)
       let consultantData = null
@@ -105,7 +105,7 @@ export default function ConsultantHomePage() {
         return
       }
 
-      console.log('✅ Consultant trouvé:', consultantData.full_name || consultantData.first_name)
+      console.log('[consultant] Found:', consultantData.full_name || consultantData.first_name)
       setConsultant(consultantData)
 
       // Charger les messages
@@ -171,7 +171,7 @@ export default function ConsultantHomePage() {
       <div className="min-h-screen bg-gradient-to-br from-[#F8F9FB] to-[#EDF2F7] flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-xl p-8 text-center max-w-md">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">😔</span>
+            <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
           </div>
           <h1 className="text-xl font-bold text-[#2D3748] mb-2">Compte non trouvé</h1>
           <p className="text-[#718096] mb-4">
@@ -203,7 +203,7 @@ export default function ConsultantHomePage() {
               </h1>
               {consultant.is_premium && (
                 <span className="inline-flex items-center gap-1 bg-white/20 text-white text-xs px-3 py-1 rounded-full mt-2">
-                  ✨ Premium
+                  Premium
                 </span>
               )}
             </div>
@@ -225,7 +225,7 @@ export default function ConsultantHomePage() {
             className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all text-left relative"
           >
             <div className="w-10 h-10 bg-[#6B8DC9]/10 rounded-xl flex items-center justify-center mb-2">
-              <span className="text-xl">💬</span>
+              <svg className="w-5 h-5 text-[#6B8DC9]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
             </div>
             <p className="font-medium text-[#2D3748]">Messages</p>
             <p className="text-xs text-[#718096]">
@@ -243,7 +243,7 @@ export default function ConsultantHomePage() {
             className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all text-left"
           >
             <div className="w-10 h-10 bg-[#9B8DC9]/10 rounded-xl flex items-center justify-center mb-2">
-              <span className="text-xl">📔</span>
+              <svg className="w-5 h-5 text-[#9B8DC9]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
             </div>
             <p className="font-medium text-[#2D3748]">Journal</p>
             <p className="text-xs text-[#718096]">Mes humeurs</p>
@@ -254,7 +254,7 @@ export default function ConsultantHomePage() {
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-gradient-to-br from-[#7BA591] to-[#6B8DC9] rounded-2xl flex items-center justify-center">
-              <span className="text-2xl">🌿</span>
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
             </div>
             <div className="flex-1">
               <p className="text-xs text-[#718096] uppercase tracking-wide">Mon naturopathe</p>
@@ -327,7 +327,7 @@ export default function ConsultantHomePage() {
                         ? 'bg-[#7BA591]/10 text-[#7BA591]'
                         : 'bg-[#6B8DC9]/10 text-[#6B8DC9]'
                     }`}>
-                      {isPractitioner ? '🌿' : '👤'}
+                      {isPractitioner ? 'N' : 'M'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-[#718096]">
@@ -348,7 +348,7 @@ export default function ConsultantHomePage() {
         {messages.length === 0 && plans.length === 0 && (
           <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
             <div className="w-16 h-16 bg-[#6B8DC9]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🌱</span>
+              <svg className="w-8 h-8 text-[#6B8DC9]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
             </div>
             <h2 className="font-semibold text-[#2D3748] mb-2">Bienvenue !</h2>
             <p className="text-sm text-[#718096]">

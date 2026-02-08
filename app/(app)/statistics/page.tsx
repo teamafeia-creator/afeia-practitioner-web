@@ -10,6 +10,7 @@ import { StatCard } from '@/components/ui/StatCard';
 import { PeriodSelector } from '@/components/ui/PeriodSelector';
 import { usePractitionerStats } from '@/hooks/usePractitionerStats';
 import { useRequireAuth } from '@/hooks/useAuth';
+import { Calendar, Users, Activity, RefreshCw, Banknote, BookOpen } from 'lucide-react';
 import type { PeriodKey } from '@/lib/types/stats';
 import { getPeriodRange } from '@/lib/types/stats';
 
@@ -85,31 +86,31 @@ export default function StatisticsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          <StatCard icon="📅" value={stats.sessionsCount} label="Seances" color="#2A8080" />
-          <StatCard icon="👥" value={stats.newConsultants} label="Nouveaux consultants" color="#2A8080" />
+          <StatCard icon={<Calendar className="h-5 w-5" />} value={stats.sessionsCount} label="Seances" color="#5B8C6E" />
+          <StatCard icon={<Users className="h-5 w-5" />} value={stats.newConsultants} label="Nouveaux consultants" color="#5B8C6E" />
           <StatCard
-            icon="🟢"
+            icon={<Activity className="h-5 w-5" />}
             value={`${stats.activeConsultants}/${stats.totalConsultants}`}
             label="Actifs cette semaine"
-            color="#2A8080"
+            color="#5B8C6E"
           />
           <StatCard
-            icon="🔄"
+            icon={<RefreshCw className="h-5 w-5" />}
             value={`${stats.retentionRate}%`}
             label="Fidelisation"
-            color={stats.retentionRate >= 70 ? '#10B981' : stats.retentionRate >= 50 ? '#F59E0B' : '#EF4444'}
+            color={stats.retentionRate >= 70 ? '#7BAE7F' : stats.retentionRate >= 50 ? '#D4A060' : '#D4738B'}
           />
           <StatCard
-            icon="💰"
+            icon={<Banknote className="h-5 w-5" />}
             value={stats.revenue > 0 ? `${(stats.revenue / 100).toFixed(0)} €` : '—'}
             label="CA periode"
-            color="#2A8080"
+            color="#5B8C6E"
           />
           <StatCard
-            icon="📓"
+            icon={<BookOpen className="h-5 w-5" />}
             value={`${stats.avgJournalFillRate}%`}
             label="Remplissage journal"
-            color={stats.avgJournalFillRate >= 60 ? '#10B981' : stats.avgJournalFillRate >= 30 ? '#F59E0B' : '#EF4444'}
+            color={stats.avgJournalFillRate >= 60 ? '#7BAE7F' : stats.avgJournalFillRate >= 30 ? '#D4A060' : '#D4738B'}
           />
         </motion.div>
       )}

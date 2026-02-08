@@ -43,6 +43,18 @@ import { SectionSuggestButton } from '../ai/SectionSuggestButton';
 import { MedicalAlertBanner } from '../ai/MedicalAlertBanner';
 import { AIStatusBar } from '../ai/AIStatusBar';
 import type { BlockSection } from '../../lib/blocks-types';
+import {
+  User,
+  ClipboardList,
+  FileText,
+  Calendar,
+  BookOpen,
+  Watch,
+  BarChart3,
+  StickyNote,
+  MessageSquare,
+  FileUp,
+} from 'lucide-react';
 import type {
   AnamnesisAnswers,
   Appointment,
@@ -109,6 +121,38 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
   [T.tabDocuments]: { title: T.tabDocuments, description: T.descDocuments },
   [T.tabMessages]: { title: T.tabMessages, description: T.descMessages },
 };
+
+const SIDEBAR_GROUPS = [
+  {
+    label: 'Identite',
+    items: [
+      { tab: T.tabProfil as Tab, label: 'Synthese', icon: User },
+      { tab: T.tabAnamnese as Tab, label: 'Anamnese', icon: ClipboardList },
+    ],
+  },
+  {
+    label: 'Suivi',
+    items: [
+      { tab: T.tabConseillancier as Tab, label: 'Conseillancier', icon: FileText },
+      { tab: T.tabRendezVous as Tab, label: 'Rendez-vous', icon: Calendar },
+      { tab: T.tabJournal as Tab, label: 'Journal', icon: BookOpen },
+    ],
+  },
+  {
+    label: 'Donnees',
+    items: [
+      { tab: T.tabCircular as Tab, label: 'Bague connectee', icon: Watch },
+      { tab: T.tabDocuments as Tab, label: 'Documents', icon: FileUp },
+    ],
+  },
+  {
+    label: 'Communications',
+    items: [
+      { tab: T.tabNotesSeance as Tab, label: 'Notes privees', icon: StickyNote },
+      { tab: T.tabMessages as Tab, label: 'Messages', icon: MessageSquare },
+    ],
+  },
+];
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
@@ -931,24 +975,25 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Persistent Header */}
       <div className="glass-card p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-teal/10 text-lg font-semibold text-teal">
+            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-sage-light text-lg font-semibold text-sage">
               {getInitials(consultantState.name)}
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-warmgray">Dossier consultant</p>
-              <h1 className="text-2xl font-semibold text-charcoal">
+              <p className="text-xs tracking-wide text-stone" style={{ fontVariant: 'small-caps' }}>Dossier consultant</p>
+              <h1 className="text-2xl font-semibold font-serif text-charcoal">
                 {consultantState.name ?? 'Consultant'}
               </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-warmgray">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-stone">
                 <Badge variant={isPremium ? 'premium' : 'standard'}>
                   {isPremium ? 'Premium' : 'Standard'}
                 </Badge>
                 {consultantState.age ? <span>{consultantState.age} ans</span> : null}
-                {consultantState.city ? <span>• {consultantState.city}</span> : null}
+                {consultantState.city ? <span>· {consultantState.city}</span> : null}
               </div>
             </div>
           </div>
@@ -971,18 +1016,60 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               variant="destructive"
               onClick={() => setDeleteModalOpen(true)}
             >
-              Supprimer le consultant
+              Supprimer
             </Button>
           </div>
         </div>
       </div>
 
-      <TabsPills tabs={TABS} active={tab} onChange={setTab} />
-
-      <div className="rounded-lg bg-white/60 px-4 py-3 border border-teal/10">
-        <h2 className="text-sm font-semibold text-charcoal">{activeMeta.title}</h2>
-        <p className="text-xs text-warmgray">{activeMeta.description}</p>
+      {/* Mobile: horizontal tabs */}
+      <div className="lg:hidden">
+        <TabsPills tabs={TABS} active={tab} onChange={setTab} />
       </div>
+
+      {/* Desktop: Sidebar + Content layout */}
+      <div className="flex gap-6">
+        {/* Secondary Sidebar — desktop only */}
+        <aside className="hidden lg:block w-[180px] shrink-0">
+          <nav className="sticky top-20 space-y-4">
+            {SIDEBAR_GROUPS.map((group) => (
+              <div key={group.label}>
+                <div className="px-3 mb-1 text-[11px] font-medium tracking-wider text-mist" style={{ fontVariant: 'small-caps' }}>
+                  {group.label}
+                </div>
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const isActive = tab === item.tab;
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.tab}
+                        onClick={() => setTab(item.tab)}
+                        className={cn(
+                          'w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors',
+                          isActive
+                            ? 'bg-sage text-white shadow-sm'
+                            : 'text-stone hover:bg-cream hover:text-charcoal'
+                        )}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Content Area */}
+        <div className="flex-1 min-w-0">
+          {/* Section description */}
+          <div className="rounded-xl bg-white px-4 py-3 border border-divider mb-4">
+            <h2 className="text-sm font-semibold text-charcoal">{activeMeta.title}</h2>
+            <p className="text-xs text-stone">{activeMeta.description}</p>
+          </div>
 
       {tab === 'Profil' && (
         <div className="space-y-4">
@@ -2136,9 +2223,12 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           </CardContent>
         </Card>
       )}
+        </div>{/* end content area */}
+      </div>{/* end flex sidebar+content */}
+
       {appointmentModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-lg glass-card p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/30 backdrop-blur-[4px] px-4">
+          <div className="w-full max-w-md rounded-xl glass-card p-6">
             <h2 className="text-lg font-semibold text-charcoal">Planifier un rendez-vous</h2>
             <p className="mt-2 text-sm text-warmgray">
               Définissez la date, l’heure et la durée estimée du rendez-vous.
@@ -2194,8 +2284,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </div>
       ) : null}
       {deleteModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-lg glass-card p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/30 backdrop-blur-[4px] px-4">
+          <div className="w-full max-w-md rounded-xl glass-card p-6">
             <h2 className="text-lg font-semibold text-charcoal">Suppression définitive</h2>
             <p className="mt-2 text-sm text-warmgray">
               Cette action est définitive. Le consultant et toutes ses données associées seront supprimés.

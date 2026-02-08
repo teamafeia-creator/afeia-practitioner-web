@@ -304,7 +304,7 @@ export default function QuestionnairesPage() {
 
       {filteredQuestionnaires.length === 0 && (
         <EmptyState
-          icon="📋"
+          icon="clipboard"
           title={
             activeTabLabel === 'En attente'
               ? 'Aucun questionnaire en attente'
