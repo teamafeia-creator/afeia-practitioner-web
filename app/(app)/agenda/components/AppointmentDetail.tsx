@@ -94,7 +94,7 @@ export function AppointmentDetail({
     appointment.patient?.name ||
     [appointment.patient?.first_name, appointment.patient?.last_name].filter(Boolean).join(' ') ||
     'Consultant';
-  const patientId = appointment.patient?.id || appointment.patient_id;
+  const patientId = appointment.patient?.id || appointment.consultant_id;
   const isPast = new Date(appointment.starts_at) < new Date();
   const isActive = ['scheduled', 'confirmed', 'in_progress'].includes(appointment.status);
 

@@ -125,7 +125,7 @@ CREATE INDEX IF NOT EXISTS idx_appointments_consultation_type ON appointments(co
 -- Only run if both tables exist and there are consultations not yet migrated
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'consultations') THEN
-    INSERT INTO appointments (patient_id, practitioner_id, starts_at, ends_at, status, notes_internal, source, created_at)
+    INSERT INTO appointments (consultant_id, practitioner_id, starts_at, ends_at, status, notes_internal, source, created_at)
     SELECT
       c.consultant_id,
       c.practitioner_id,
@@ -139,7 +139,7 @@ DO $$ BEGIN
     WHERE c.practitioner_id IS NOT NULL
     AND NOT EXISTS (
       SELECT 1 FROM appointments a
-      WHERE a.patient_id = c.consultant_id
+      WHERE a.consultant_id = c.consultant_id
       AND a.starts_at = c.date
       AND a.source = 'legacy_migration'
     );

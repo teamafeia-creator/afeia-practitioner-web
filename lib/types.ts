@@ -189,8 +189,7 @@ export interface AvailabilityOverride {
 
 export type Appointment = {
   id: string;
-  patient_id: string | null;
-  consultant_id?: string;
+  consultant_id: string | null;
   practitioner_id: string;
   consultation_type_id: string | null;
   starts_at: string;
@@ -215,10 +214,10 @@ export type Appointment = {
   // Relations (when joined)
   patient?: {
     id: string;
-    name: string;
-    first_name?: string;
-    last_name?: string;
-    email?: string;
+    name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
     is_premium?: boolean;
   };
   consultation_type?: ConsultationType;
