@@ -30,7 +30,6 @@ type SortField = 'created_at' | 'full_name' | 'status';
 type InviteFormState = {
   email: string;
   full_name: string;
-  calendly_url: string;
 };
 
 export default function AdminPractitionersPage() {
@@ -48,7 +47,6 @@ export default function AdminPractitionersPage() {
   const [inviteForm, setInviteForm] = useState<InviteFormState>({
     email: '',
     full_name: '',
-    calendly_url: ''
   });
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -155,7 +153,7 @@ export default function AdminPractitionersPage() {
 
     showToast.success('Invitation envoyee.');
     setInviteOpen(false);
-    setInviteForm({ email: '', full_name: '', calendly_url: '' });
+    setInviteForm({ email: '', full_name: '' });
     setPage(1);
   }
 
@@ -360,13 +358,6 @@ export default function AdminPractitionersPage() {
             <Input
               value={inviteForm.full_name}
               onChange={(event) => setInviteForm({ ...inviteForm, full_name: event.target.value })}
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-warmgray">Calendly URL</label>
-            <Input
-              value={inviteForm.calendly_url}
-              onChange={(event) => setInviteForm({ ...inviteForm, calendly_url: event.target.value })}
             />
           </div>
         </div>

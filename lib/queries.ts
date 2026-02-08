@@ -850,12 +850,10 @@ export async function getPractitionerProfile() {
 export async function updatePractitionerProfile({
   full_name,
   email,
-  calendly_url,
   default_consultation_reason
 }: {
   full_name?: string | null;
   email?: string | null;
-  calendly_url?: string | null;
   default_consultation_reason?: string | null;
 }): Promise<void> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -877,7 +875,6 @@ export async function updatePractitionerProfile({
     .update({
       ...(full_name !== undefined ? { full_name } : {}),
       ...(email !== undefined ? { email } : {}),
-      ...(calendly_url !== undefined ? { calendly_url } : {}),
       ...(default_consultation_reason !== undefined
         ? { default_consultation_reason }
         : {}),
@@ -894,57 +891,6 @@ export async function updatePractitionerProfile({
   if (!data || data.length === 0) {
     throw new Error('Impossible de mettre à jour le profil.');
   }
-}
-
-export async function getPractitionerCalendlyUrl(): Promise<string | null> {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) {
-    console.error('Error fetching user:', userError);
-    throw new Error(describeSupabaseError(userError));
-  }
-
-  console.log('[calendly] fetch url start', { practitionerId: userData.user.id });
-  const { data, error } = await supabase
-    .from('practitioners')
-    .select('calendly_url')
-    .eq('id', userData.user.id)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Error fetching practitioner calendly URL:', error);
-    throw new Error(describeSupabaseError(error));
-  }
-
-  console.log('[calendly] fetch url success', { calendlyUrl: data?.calendly_url ?? null });
-  return data?.calendly_url ?? null;
-}
-
-export async function updatePractitionerCalendlyUrl(calendlyUrl: string | null): Promise<void> {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) {
-    console.error('Error fetching user:', userError);
-    throw new Error('Veuillez vous reconnecter pour enregistrer ce lien.');
-  }
-
-  console.log('[calendly] update start', {
-    practitionerId: userData.user.id,
-    calendlyUrl
-  });
-  const { data, error } = await supabase
-    .from('practitioners')
-    .update({ calendly_url: calendlyUrl, updated_at: new Date().toISOString() })
-    .eq('id', userData.user.id)
-    .select('id');
-
-  if (error) {
-    console.error('Error updating practitioner calendly URL:', error);
-    throw new Error(describeSupabaseError(error));
-  }
-
-  if (!data || data.length === 0) {
-    throw new Error('Impossible d’enregistrer le lien Calendly.');
-  }
-  console.log('[calendly] update success', { practitionerId: userData.user.id });
 }
 
 export async function upsertPractitionerNote(

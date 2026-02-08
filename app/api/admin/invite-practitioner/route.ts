@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const email = String(body.email ?? '').trim().toLowerCase();
   const fullName = String(body.full_name ?? '').trim();
-  const calendlyUrl = String(body.calendly_url ?? '').trim();
   const subscriptionStatus = body.subscription_status ? String(body.subscription_status) : null;
 
   if (!email) {
@@ -37,7 +36,6 @@ export async function POST(request: NextRequest) {
       id: userId,
       email,
       full_name: fullName,
-      calendly_url: calendlyUrl || null,
       status: 'active',
       subscription_status: subscriptionStatus,
       updated_at: new Date().toISOString()
