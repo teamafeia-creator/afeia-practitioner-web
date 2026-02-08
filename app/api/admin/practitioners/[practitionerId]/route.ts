@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/server/adminGuard';
+import { requireAdminAuth } from '@/lib/admin/auth';
+import { logAdminAction, getClientIp } from '@/lib/admin/audit-log';
+import { computeHealthScore } from '@/lib/admin/health-score';
 
-/**
- * GET /api/admin/practitioners/[practitionerId]
- * Récupérer les détails d'un praticien
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ practitionerId: string }> }
 ) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }
@@ -26,25 +24,95 @@ export async function GET(
       .single();
 
     if (error || !practitioner) {
-      return NextResponse.json({ error: 'Praticien non trouvé.' }, { status: 404 });
+      return NextResponse.json({ error: 'Praticien non trouve.' }, { status: 404 });
     }
 
-    return NextResponse.json({ practitioner });
+    // Fetch enriched data in parallel
+    const [
+      consultantsResult,
+      subscriptionResult,
+      activityResult,
+    ] = await Promise.all([
+      supabase
+        .from('consultants_identity')
+        .select('id, full_name, email, status, is_premium, created_at')
+        .eq('practitioner_id', practitionerId)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('stripe_subscriptions')
+        .select('id, status, price_id, current_period_end, payment_failed, customer_id')
+        .eq('practitioner_id', practitionerId)
+        .maybeSingle(),
+      supabase
+        .from('practitioner_activity_log')
+        .select('event_type, created_at')
+        .eq('practitioner_id', practitionerId)
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false }),
+    ]);
+
+    const consultants = consultantsResult.data ?? [];
+    const subscription = subscriptionResult.data;
+    const recentActivity = activityResult.data ?? [];
+
+    // Compute feature usage this month
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const monthActivity = recentActivity.filter((a) => a.created_at >= startOfMonth);
+    const featuresUsed = new Set(monthActivity.map((a) => a.event_type)).size;
+    const TOTAL_FEATURES = 5; // conseillanciers, questionnaires, journal, circular, app mobile
+
+    // Determine payment status
+    let paymentStatus: 'ok' | 'late_short' | 'late_long' | 'free' = 'free';
+    if (subscription) {
+      if (subscription.payment_failed) {
+        const daysSincePeriodEnd = subscription.current_period_end
+          ? Math.floor((Date.now() - new Date(subscription.current_period_end).getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+        paymentStatus = daysSincePeriodEnd > 7 ? 'late_long' : 'late_short';
+      } else if (subscription.status === 'active') {
+        paymentStatus = 'ok';
+      }
+    }
+
+    const healthScore = computeHealthScore({
+      lastLoginAt: practitioner.last_login_at,
+      consultantsCount: consultants.length,
+      featuresUsedThisMonth: featuresUsed,
+      totalFeatures: TOTAL_FEATURES,
+      paymentStatus,
+      createdAt: practitioner.created_at,
+    });
+
+    // Count logins this month
+    const loginsThisMonth = monthActivity.filter((a) => a.event_type === 'login').length;
+
+    // Count active features
+    const circularEnabled = consultants.filter((c) => c.status === 'premium').length;
+
+    return NextResponse.json({
+      practitioner,
+      consultants,
+      subscription,
+      healthScore,
+      usage: {
+        lastLoginAt: practitioner.last_login_at,
+        loginsThisMonth,
+        totalConsultants: consultants.length,
+        featuresUsedThisMonth: featuresUsed,
+        circularConsultants: circularEnabled,
+      },
+    });
   } catch (err) {
     console.error('Exception GET practitioner:', err);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }
 
-/**
- * PATCH /api/admin/practitioners/[practitionerId]
- * Mettre à jour un praticien (admin seulement)
- */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ practitionerId: string }> }
 ) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }
@@ -53,15 +121,22 @@ export async function PATCH(
     const payload = (await request.json()) as Record<string, unknown>;
     const { practitionerId } = await params;
 
+    // Fetch current data for audit diff
+    const supabase = createAdminClient();
+    const { data: current } = await supabase
+      .from('practitioners_public')
+      .select('email, full_name, status, subscription_status')
+      .eq('id', practitionerId)
+      .single();
+
     const updates = {
       email: payload.email,
       full_name: payload.full_name,
       status: payload.status,
       subscription_status: payload.subscription_status,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
-    const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('practitioners_public')
       .update(updates)
@@ -71,8 +146,26 @@ export async function PATCH(
 
     if (error) {
       console.error('Erreur update practitioner:', error);
-      return NextResponse.json({ error: 'Erreur lors de la mise à jour.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur lors de la mise a jour.' }, { status: 500 });
     }
+
+    // Determine specific action for audit log
+    const action = current?.status !== payload.status
+      ? (payload.status === 'suspended' ? 'practitioner.suspend' : 'practitioner.unsuspend')
+      : 'practitioner.update';
+
+    await logAdminAction({
+      adminUserId: guard.user.id || undefined,
+      adminEmail: guard.user.email,
+      action,
+      targetType: 'practitioner',
+      targetId: practitionerId,
+      details: {
+        previous: current,
+        updated: { email: payload.email, full_name: payload.full_name, status: payload.status, subscription_status: payload.subscription_status },
+      },
+      ipAddress: getClientIp(request),
+    });
 
     return NextResponse.json({ practitioner: data });
   } catch (err) {
@@ -81,15 +174,11 @@ export async function PATCH(
   }
 }
 
-/**
- * DELETE /api/admin/practitioners/[practitionerId]
- * Supprimer un praticien (admin seulement)
- */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ practitionerId: string }> }
 ) {
-  const guard = await requireAdmin(request);
+  const guard = await requireAdminAuth(request);
   if ('response' in guard) {
     return guard.response;
   }
@@ -98,7 +187,6 @@ export async function DELETE(
     const { practitionerId } = await params;
     const supabase = createAdminClient();
 
-    // 1. Vérifier que le praticien existe
     const { data: practitioner, error: practError } = await supabase
       .from('practitioners_public')
       .select('id, email, full_name')
@@ -106,11 +194,9 @@ export async function DELETE(
       .single();
 
     if (practError || !practitioner) {
-      return NextResponse.json({ error: 'Praticien non trouvé.' }, { status: 404 });
+      return NextResponse.json({ error: 'Praticien non trouve.' }, { status: 404 });
     }
 
-    // 2. Supprimer le praticien dans Supabase Auth
-    // Ceci déclenchera CASCADE pour supprimer dans la table practitioners
     const { error: authDeleteError } = await supabase.auth.admin.deleteUser(practitionerId);
 
     if (authDeleteError) {
@@ -138,14 +224,20 @@ export async function DELETE(
       );
     }
 
-    console.log(
-      `✅ Praticien ${practitioner.full_name} (${practitionerId}) supprimé par admin ${guard.user.email}`
-    );
+    await logAdminAction({
+      adminUserId: guard.user.id || undefined,
+      adminEmail: guard.user.email,
+      action: 'practitioner.delete',
+      targetType: 'practitioner',
+      targetId: practitionerId,
+      details: { email: practitioner.email, full_name: practitioner.full_name },
+      ipAddress: getClientIp(request),
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Praticien supprimé avec succès.',
-      practitionerId
+      message: 'Praticien supprime avec succes.',
+      practitionerId,
     });
   } catch (err) {
     console.error('Exception DELETE practitioner:', err);

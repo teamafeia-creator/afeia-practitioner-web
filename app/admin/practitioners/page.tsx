@@ -2,17 +2,16 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { PageShell } from '@/components/ui/PageShell';
+import { AdminHeader } from '@/components/admin/AdminHeader';
+import { HealthScoreBadge } from '@/components/admin/HealthScoreBadge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { AdminDataTable } from '@/components/admin/AdminDataTable';
-import { AdminBackBar } from '@/components/admin/AdminBackBar';
 import { Modal, ModalFooter } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toaster';
 import { useDeletePractitioner } from '@/hooks/useAdmin';
-import { Trash2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/Spinner';
+import { Trash2, Eye } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
@@ -23,6 +22,7 @@ type PractitionerRow = {
   status: string | null;
   subscription_status: string | null;
   created_at: string | null;
+  last_login_at: string | null;
 };
 
 type SortField = 'created_at' | 'full_name' | 'status';
@@ -31,6 +31,44 @@ type InviteFormState = {
   email: string;
   full_name: string;
 };
+
+function formatRelativeTime(dateString: string | null): string {
+  if (!dateString) return 'Jamais';
+  const now = Date.now();
+  const then = new Date(dateString).getTime();
+  const diffMs = now - then;
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 1) return "A l'instant";
+  if (diffMinutes < 60) return `Il y a ${diffMinutes}min`;
+  if (diffHours < 24) return `Il y a ${diffHours}h`;
+  if (diffDays === 1) return 'Hier';
+  if (diffDays < 30) return `Il y a ${diffDays}j`;
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `Il y a ${diffMonths} mois`;
+  const diffYears = Math.floor(diffDays / 365);
+  return `Il y a ${diffYears} an${diffYears > 1 ? 's' : ''}`;
+}
+
+function approximateHealthScore(lastLoginAt: string | null): { score: number; color: 'green' | 'yellow' | 'red' } {
+  if (!lastLoginAt) return { score: 20, color: 'red' };
+  const daysSince = Math.floor(
+    (Date.now() - new Date(lastLoginAt).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  if (daysSince <= 7) return { score: 80, color: 'green' };
+  if (daysSince <= 14) return { score: 55, color: 'yellow' };
+  if (daysSince <= 30) return { score: 40, color: 'yellow' };
+  return { score: 20, color: 'red' };
+}
+
+function daysSinceLogin(lastLoginAt: string | null): number | null {
+  if (!lastLoginAt) return null;
+  return Math.floor(
+    (Date.now() - new Date(lastLoginAt).getTime()) / (1000 * 60 * 60 * 24)
+  );
+}
 
 export default function AdminPractitionersPage() {
   const router = useRouter();
@@ -41,6 +79,8 @@ export default function AdminPractitionersPage() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [planFilter, setPlanFilter] = useState('');
+  const [healthFilter, setHealthFilter] = useState('');
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -54,6 +94,14 @@ export default function AdminPractitionersPage() {
   const totalPages = useMemo(() => Math.ceil(total / PAGE_SIZE), [total]);
 
   const deletePractitionerMutation = useDeletePractitioner();
+
+  const filteredRows = useMemo(() => {
+    if (!healthFilter) return rows;
+    return rows.filter((row) => {
+      const { color } = approximateHealthScore(row.last_login_at);
+      return color === healthFilter;
+    });
+  }, [rows, healthFilter]);
 
   const handleDeletePractitioner = async () => {
     if (!practitionerToDelete) return;
@@ -85,11 +133,15 @@ export default function AdminPractitionersPage() {
           page: String(page),
           pageSize: String(PAGE_SIZE),
           sortField,
-          sortDirection
+          sortDirection,
         });
 
         if (statusFilter) {
           params.set('status', statusFilter);
+        }
+
+        if (planFilter) {
+          params.set('plan', planFilter);
         }
 
         if (search.trim()) {
@@ -97,7 +149,7 @@ export default function AdminPractitionersPage() {
         }
 
         const response = await fetch(`/api/admin/practitioners?${params.toString()}`, {
-          credentials: 'include'
+          credentials: 'include',
         });
 
         if (!isMounted) return;
@@ -118,7 +170,7 @@ export default function AdminPractitionersPage() {
       } catch (err) {
         console.error('[admin] loadPractitioners error:', err);
         if (!isMounted) return;
-        showToast.error('Erreur réseau lors du chargement des praticiens.');
+        showToast.error('Erreur reseau lors du chargement des praticiens.');
         setRows([]);
         setTotal(0);
         setLoadError('Erreur de chargement.');
@@ -132,7 +184,7 @@ export default function AdminPractitionersPage() {
     return () => {
       isMounted = false;
     };
-  }, [page, refreshKey, search, sortField, sortDirection, statusFilter]);
+  }, [page, refreshKey, search, sortField, sortDirection, statusFilter, planFilter]);
 
   async function handleInvite() {
     if (!inviteForm.email.trim()) return;
@@ -140,10 +192,10 @@ export default function AdminPractitionersPage() {
     const response = await fetch('/api/admin/invite-practitioner', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify(inviteForm)
+      body: JSON.stringify(inviteForm),
     });
 
     if (!response.ok) {
@@ -155,17 +207,19 @@ export default function AdminPractitionersPage() {
     setInviteOpen(false);
     setInviteForm({ email: '', full_name: '' });
     setPage(1);
+    setRefreshKey((value) => value + 1);
   }
 
   function exportCsv() {
-    const headers = ['full_name', 'email', 'status', 'subscription_status', 'created_at'];
+    const headers = ['full_name', 'email', 'status', 'subscription_status', 'created_at', 'last_login_at'];
     const lines = rows.map((row) =>
       [
         row.full_name ?? '',
         row.email ?? '',
         row.status ?? '',
         row.subscription_status ?? '',
-        row.created_at ?? ''
+        row.created_at ?? '',
+        row.last_login_at ?? '',
       ]
         .map((value) => `"${String(value).replace(/"/g, '""')}"`)
         .join(',')
@@ -183,24 +237,24 @@ export default function AdminPractitionersPage() {
 
   return (
     <div className="space-y-6">
-      <AdminBackBar />
-      <PageHeader
+      <AdminHeader
         title="Praticiens"
         subtitle="Liste des praticiens et statut de la plateforme."
         actions={
-          <div className="flex flex-wrap gap-2">
+          <>
             <Button variant="outline" onClick={exportCsv}>
               Exporter CSV
             </Button>
             <Button onClick={() => setInviteOpen(true)}>Inviter un praticien</Button>
-          </div>
+          </>
         }
       />
 
-      <PageShell className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-4">
+      {/* Filters */}
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="grid gap-4 md:grid-cols-6">
           <div className="md:col-span-2">
-            <label className="text-xs font-medium text-warmgray">Recherche</label>
+            <label className="text-xs font-medium text-slate-500">Recherche</label>
             <Input
               value={search}
               onChange={(event) => {
@@ -211,7 +265,7 @@ export default function AdminPractitionersPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-warmgray">Statut</label>
+            <label className="text-xs font-medium text-slate-500">Statut</label>
             <Select
               value={statusFilter}
               onChange={(event) => {
@@ -225,7 +279,37 @@ export default function AdminPractitionersPage() {
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-warmgray">Tri</label>
+            <label className="text-xs font-medium text-slate-500">Plan</label>
+            <Select
+              value={planFilter}
+              onChange={(event) => {
+                setPlanFilter(event.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">Tous</option>
+              <option value="active">Actif</option>
+              <option value="past_due">En retard</option>
+              <option value="canceled">Annule</option>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-500">Sante</label>
+            <Select
+              value={healthFilter}
+              onChange={(event) => {
+                setHealthFilter(event.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">Tous</option>
+              <option value="green">Vert</option>
+              <option value="yellow">Jaune</option>
+              <option value="red">Rouge</option>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-slate-500">Tri</label>
             <Select
               value={sortField}
               onChange={(event) => setSortField(event.target.value as SortField)}
@@ -237,108 +321,148 @@ export default function AdminPractitionersPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="mt-2"
+              className="mt-1 text-xs text-slate-500"
               onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
             >
               {sortDirection === 'asc' ? 'Croissant' : 'Decroissant'}
             </Button>
           </div>
         </div>
-      </PageShell>
+      </div>
 
-      <AdminDataTable
-        rows={rows}
-        isLoading={loading}
-        emptyMessage={loadError ? 'Erreur de chargement.' : 'Aucun praticien trouve.'}
-        columns={[
-          {
-            key: 'full_name',
-            header: 'Nom',
-            render: (row) => (
-              <div className="flex flex-col">
-                <span className="font-medium text-charcoal">{row.full_name ?? '—'}</span>
-                <span className="text-xs text-warmgray">{row.email}</span>
-              </div>
-            )
-          },
-          {
-            key: 'status',
-            header: 'Statut',
-            render: (row) => (
-              <span
-                className={
-                  row.status === 'suspended'
-                    ? 'rounded-full bg-red-100 px-2 py-1 text-xs text-red-600'
-                    : 'rounded-full bg-teal/10 px-2 py-1 text-xs text-teal'
-                }
-              >
-                {row.status === 'suspended' ? 'Suspendu' : 'Actif'}
-              </span>
-            )
-          },
-          {
-            key: 'subscription_status',
-            header: 'Abonnement',
-            render: (row) => row.subscription_status ?? '—'
-          },
-          {
-            key: 'created_at',
-            header: 'Cree le',
-            render: (row) =>
-              row.created_at ? new Date(row.created_at).toLocaleDateString('fr-FR') : '—'
-          },
-          {
-            key: 'actions',
-            header: 'Actions',
-            className: 'text-right',
-            render: (row) => (
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push(`/admin/practitioners/${row.id}`)}
-                >
-                  Voir
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-600 hover:bg-red-50"
-                  onClick={() => openDeleteModal(row)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )
-          }
-        ]}
-        footer={
-          <div className="flex w-full items-center justify-between text-sm text-warmgray">
-            <span>
-              Page {page} / {totalPages || 1}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-              >
-                Precedent
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                Suivant
-              </Button>
-            </div>
-          </div>
-        }
-      />
+      {/* Table */}
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+              <th className="py-2 px-3">Nom</th>
+              <th className="py-2 px-3">Statut</th>
+              <th className="py-2 px-3">Abonnement</th>
+              <th className="py-2 px-3">Sante</th>
+              <th className="py-2 px-3">Derniere connexion</th>
+              <th className="py-2 px-3">Cree le</th>
+              <th className="py-2 px-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="px-3 py-8">
+                  <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
+                    <Spinner size="sm" />
+                    Chargement...
+                  </div>
+                </td>
+              </tr>
+            ) : filteredRows.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-3 py-8 text-center text-sm text-slate-400">
+                  {loadError ? 'Erreur de chargement.' : 'Aucun praticien trouve.'}
+                </td>
+              </tr>
+            ) : (
+              filteredRows.map((row) => {
+                const health = approximateHealthScore(row.last_login_at);
+                const loginDays = daysSinceLogin(row.last_login_at);
+                const isStale = loginDays !== null && loginDays > 14;
 
+                return (
+                  <tr key={row.id} className="text-slate-800 hover:bg-slate-50">
+                    <td className="py-2 px-3">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-slate-800">
+                          {row.full_name ?? '\u2014'}
+                        </span>
+                        <span className="text-xs text-slate-400">{row.email}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 px-3">
+                      <span
+                        className={
+                          row.status === 'suspended'
+                            ? 'inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700'
+                            : 'inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700'
+                        }
+                      >
+                        {row.status === 'suspended' ? 'Suspendu' : 'Actif'}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 text-slate-600">
+                      {row.subscription_status ?? '\u2014'}
+                    </td>
+                    <td className="py-2 px-3">
+                      <HealthScoreBadge score={health.score} color={health.color} />
+                    </td>
+                    <td className="py-2 px-3">
+                      <span
+                        className={
+                          isStale
+                            ? 'text-red-600 font-medium'
+                            : 'text-slate-600'
+                        }
+                      >
+                        {formatRelativeTime(row.last_login_at)}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 text-slate-600">
+                      {row.created_at
+                        ? new Date(row.created_at).toLocaleDateString('fr-FR')
+                        : '\u2014'}
+                    </td>
+                    <td className="py-2 px-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-slate-500 hover:text-slate-800"
+                          onClick={() => router.push(`/admin/practitioners/${row.id}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => openDeleteModal(row)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between text-sm text-slate-500">
+        <span>
+          Page {page} / {totalPages || 1}
+        </span>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage(page - 1)}
+          >
+            Precedent
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+          >
+            Suivant
+          </Button>
+        </div>
+      </div>
+
+      {/* Invite Modal */}
       <Modal
         isOpen={inviteOpen}
         onClose={() => setInviteOpen(false)}
@@ -347,14 +471,14 @@ export default function AdminPractitionersPage() {
       >
         <div className="space-y-3">
           <div>
-            <label className="text-xs font-medium text-warmgray">Email</label>
+            <label className="text-xs font-medium text-slate-500">Email</label>
             <Input
               value={inviteForm.email}
               onChange={(event) => setInviteForm({ ...inviteForm, email: event.target.value })}
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-warmgray">Nom complet</label>
+            <label className="text-xs font-medium text-slate-500">Nom complet</label>
             <Input
               value={inviteForm.full_name}
               onChange={(event) => setInviteForm({ ...inviteForm, full_name: event.target.value })}
@@ -369,6 +493,7 @@ export default function AdminPractitionersPage() {
         </ModalFooter>
       </Modal>
 
+      {/* Delete Modal */}
       <Modal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
@@ -376,13 +501,17 @@ export default function AdminPractitionersPage() {
         description="Cette action est irreversible. Le compte praticien et toutes ses donnees seront supprimes."
       >
         <div className="space-y-4">
-          <p className="text-sm text-warmgray">
+          <p className="text-sm text-slate-500">
             Etes-vous sur de vouloir supprimer le praticien{' '}
-            <strong>{practitionerToDelete?.full_name || practitionerToDelete?.email}</strong> ?
+            <strong className="text-slate-800">
+              {practitionerToDelete?.full_name || practitionerToDelete?.email}
+            </strong>{' '}
+            ?
           </p>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3">
             <p className="text-sm text-red-800">
-              Attention : Cette action supprimera egalement tous les consultants associes a ce praticien.
+              Attention : Cette action supprimera egalement tous les consultants associes a ce
+              praticien.
             </p>
           </div>
         </div>
