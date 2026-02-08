@@ -69,8 +69,6 @@ export async function createPaymentLink(params: {
   consultantId: string;
   successUrl: string;
 }): Promise<Stripe.PaymentLink> {
-  const expiresAt = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
-
   return getStripe().paymentLinks.create(
     {
       line_items: [
@@ -97,7 +95,6 @@ export async function createPaymentLink(params: {
         practitioner_id: params.practitionerId,
         consultant_id: params.consultantId,
       },
-      expires_at: expiresAt,
     },
     {
       stripeAccount: params.stripeAccountId,
