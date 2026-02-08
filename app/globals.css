@@ -325,3 +325,180 @@ body {
   letter-spacing: 0.05em;
   color: #8C8680;
 }
+
+/* ============================================
+   AGENDA CALENDAR STYLES
+   react-big-calendar overrides for AFEIA theme
+   ============================================ */
+.agenda-calendar-wrapper .rbc-calendar {
+  font-family: inherit;
+  color: #3D3D3D;
+}
+
+.agenda-calendar-wrapper .rbc-toolbar {
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 0;
+}
+
+.agenda-calendar-wrapper .rbc-toolbar button {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border: 1px solid rgba(26, 108, 108, 0.2);
+  border-radius: 6px;
+  color: #3D3D3D;
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.agenda-calendar-wrapper .rbc-toolbar button:hover {
+  background: rgba(26, 108, 108, 0.05);
+  border-color: rgba(26, 108, 108, 0.4);
+}
+
+.agenda-calendar-wrapper .rbc-toolbar button.rbc-active {
+  background: #1A6C6C;
+  color: white;
+  border-color: #1A6C6C;
+  box-shadow: 0 2px 8px rgba(26, 108, 108, 0.2);
+}
+
+.agenda-calendar-wrapper .rbc-toolbar-label {
+  font-weight: 600;
+  color: #3D3D3D;
+  text-transform: capitalize;
+}
+
+.agenda-calendar-wrapper .rbc-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8C8680;
+  text-transform: capitalize;
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(26, 108, 108, 0.1);
+}
+
+.agenda-calendar-wrapper .rbc-time-view,
+.agenda-calendar-wrapper .rbc-month-view {
+  border: 1px solid rgba(26, 108, 108, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.agenda-calendar-wrapper .rbc-time-header-content {
+  border-left: 1px solid rgba(26, 108, 108, 0.08);
+}
+
+.agenda-calendar-wrapper .rbc-time-content {
+  border-top: 1px solid rgba(26, 108, 108, 0.1);
+}
+
+.agenda-calendar-wrapper .rbc-time-slot {
+  border-top: 1px solid rgba(26, 108, 108, 0.05);
+}
+
+.agenda-calendar-wrapper .rbc-timeslot-group {
+  border-bottom: 1px solid rgba(26, 108, 108, 0.08);
+  min-height: 50px;
+}
+
+.agenda-calendar-wrapper .rbc-time-gutter .rbc-label {
+  font-size: 11px;
+  color: #8C8680;
+  padding: 0 8px;
+}
+
+.agenda-calendar-wrapper .rbc-day-slot .rbc-time-slot {
+  border-top: 1px solid rgba(26, 108, 108, 0.04);
+}
+
+.agenda-calendar-wrapper .rbc-today {
+  background-color: rgba(26, 108, 108, 0.03);
+}
+
+.agenda-calendar-wrapper .rbc-current-time-indicator {
+  background-color: #E91E63;
+  height: 2px;
+}
+
+.agenda-calendar-wrapper .rbc-current-time-indicator::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #E91E63;
+}
+
+.agenda-calendar-wrapper .rbc-event {
+  border: none !important;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.agenda-calendar-wrapper .rbc-event:hover {
+  opacity: 0.85;
+}
+
+.agenda-calendar-wrapper .rbc-event-label {
+  font-size: 11px;
+}
+
+.agenda-calendar-wrapper .rbc-show-more {
+  font-size: 12px;
+  color: #1A6C6C;
+  font-weight: 500;
+}
+
+.agenda-calendar-wrapper .rbc-off-range-bg {
+  background-color: rgba(140, 134, 128, 0.05);
+}
+
+.agenda-calendar-wrapper .rbc-agenda-view table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-table td,
+.agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-table th {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(26, 108, 108, 0.08);
+  font-size: 13px;
+}
+
+.agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-date-cell {
+  font-weight: 600;
+  color: #3D3D3D;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-time-cell {
+  color: #8C8680;
+  white-space: nowrap;
+}
+
+.agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-event-cell {
+  color: #3D3D3D;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .agenda-calendar-wrapper .rbc-toolbar {
+    justify-content: center;
+  }
+
+  .agenda-calendar-wrapper .rbc-toolbar-label {
+    width: 100%;
+    text-align: center;
+    order: -1;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+}

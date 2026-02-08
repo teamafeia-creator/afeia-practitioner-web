@@ -10,6 +10,7 @@ import { NotificationDropdown } from '../notifications/NotificationDropdown';
 import { supabase } from '../../lib/supabase';
 import { Avatar } from '../ui/Avatar';
 import {
+  Calendar,
   ChevronDown,
   LayoutDashboard,
   Users,
@@ -26,6 +27,7 @@ import { useMessageNotifications } from '@/hooks/useMessageNotifications';
 
 const NAV = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { href: '/agenda', label: 'Agenda', icon: Calendar },
   { href: '/consultants', label: 'Consultants', icon: Users },
   { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
   { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
@@ -65,6 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const labelMap: Record<string, string> = {
       dashboard: 'Tableau de bord',
+      agenda: 'Agenda',
       consultants: 'Consultants',
       messages: 'Messages',
       questionnaires: 'Questionnaires',
@@ -77,7 +80,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       admin: 'Admin',
       admins: 'Admins',
       practitioners: 'Praticiens',
-      circular: 'Circular'
+      circular: 'Circular',
+      'consultation-types': 'Types de seance',
+      availability: 'Disponibilites'
     };
 
     const lastSegment = segments[segments.length - 1];
