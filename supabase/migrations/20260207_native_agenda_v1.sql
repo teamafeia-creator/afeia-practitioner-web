@@ -91,7 +91,12 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_overrides_practitioner_date ON availability_overrides(practitioner_id, date);
 
--- 1.4 Evolve appointments table - add new columns
+-- 1.4 Update status CHECK constraint to support new statuses
+ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_status_check;
+ALTER TABLE appointments ADD CONSTRAINT appointments_status_check
+  CHECK (status IN ('scheduled', 'confirmed', 'in_progress', 'completed', 'done', 'cancelled', 'rescheduled', 'no_show'));
+
+-- 1.5 Evolve appointments table - add new columns
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS consultation_type_id UUID REFERENCES consultation_types(id) ON DELETE SET NULL;
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS location_type TEXT DEFAULT 'in_person';
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS video_link TEXT;
@@ -121,14 +126,31 @@ CREATE INDEX IF NOT EXISTS idx_appointments_starts_at ON appointments(starts_at)
 CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
 CREATE INDEX IF NOT EXISTS idx_appointments_consultation_type ON appointments(consultation_type_id);
 
--- 1.5 Migrate consultations to appointments (legacy data)
+-- 1.5 Fix RLS policies on appointments (old policies reference patient_id / patients which no longer exist)
+DROP POLICY IF EXISTS "Practitioners access own appointments" ON appointments;
+DROP POLICY IF EXISTS "Patients access own appointments" ON appointments;
+DROP POLICY IF EXISTS "appointments_select_own" ON appointments;
+DROP POLICY IF EXISTS "appointments_insert_own" ON appointments;
+DROP POLICY IF EXISTS "appointments_update_own" ON appointments;
+DROP POLICY IF EXISTS "appointments_delete_own" ON appointments;
+
+CREATE POLICY "appointments_select_own" ON appointments
+  FOR SELECT USING (practitioner_id = auth.uid());
+CREATE POLICY "appointments_insert_own" ON appointments
+  FOR INSERT WITH CHECK (practitioner_id = auth.uid());
+CREATE POLICY "appointments_update_own" ON appointments
+  FOR UPDATE USING (practitioner_id = auth.uid()) WITH CHECK (practitioner_id = auth.uid());
+CREATE POLICY "appointments_delete_own" ON appointments
+  FOR DELETE USING (practitioner_id = auth.uid());
+
+-- 1.6 Migrate consultations to appointments (legacy data)
 -- Only run if both tables exist and there are consultations not yet migrated
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'consultations') THEN
     INSERT INTO appointments (consultant_id, practitioner_id, starts_at, ends_at, status, notes_internal, source, created_at)
     SELECT
       c.consultant_id,
-      c.practitioner_id,
+      ct.practitioner_id,
       c.date,
       c.date + INTERVAL '60 minutes',
       'completed',
@@ -136,7 +158,8 @@ DO $$ BEGIN
       'legacy_migration',
       c.created_at
     FROM consultations c
-    WHERE c.practitioner_id IS NOT NULL
+    JOIN consultants ct ON ct.id = c.consultant_id
+    WHERE ct.practitioner_id IS NOT NULL
     AND NOT EXISTS (
       SELECT 1 FROM appointments a
       WHERE a.consultant_id = c.consultant_id
