@@ -61,7 +61,7 @@ const ADMIN_NAV = [
   { href: '/admin/practitioners', label: 'Praticiens', icon: Users },
   { href: '/admin/consultants', label: 'Consultants', icon: Users },
   { href: '/admin/billing', label: 'Billing', icon: ClipboardList },
-  { href: '/admin/circular', label: 'Circular', icon: MessageSquare }
+  { href: '/admin/bague-connectee', label: 'Bague connectée', icon: MessageSquare }
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

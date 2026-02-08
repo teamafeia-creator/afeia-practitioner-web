@@ -231,48 +231,55 @@ export async function getConsultantsWithUnreadCountsPaged({
 }
 
 export async function getConsultantById(id: string): Promise<ConsultantWithDetails | null> {
-  // Récupérer le consultant
   console.log('[consultants] fetch detail start', { consultantId: id });
+
+  // First fetch the consultant (required before anything else)
   const { data: consultant, error: consultantError } = await supabase
     .from('consultants')
     .select('*')
     .eq('id', id)
     .is('deleted_at', null)
     .single();
-  
+
   if (consultantError || !consultant) {
     console.error('Error fetching consultant:', consultantError);
     return null;
   }
   console.log('[consultants] fetch detail success', { consultantId: id });
 
-  // Récupérer l'anamnèse
-  const { data: anamnese } = await supabase
-    .from('anamneses')
-    .select('*')
-    .eq('consultant_id', id)
-    .single();
+  // Run all independent queries in parallel
+  const [
+    anameseResult,
+    consultationsResult,
+    appointmentsResult,
+    planResult,
+    journalResult,
+    consultantAnamnesisResult,
+    anamneseInstanceResult,
+    practitionerNoteResult,
+    messagesResult,
+    wearableSummariesResult,
+    wearableInsightsResult,
+    consultantPlansResult,
+    analysisResultsResult
+  ] = await Promise.all([
+    supabase.from('anamneses').select('*').eq('consultant_id', id).single(),
+    supabase.from('consultations').select('*').eq('consultant_id', id).order('date', { ascending: false }),
+    supabase.from('appointments').select('*').eq('consultant_id', id).order('starts_at', { ascending: false }),
+    supabase.from('plans').select('*').eq('consultant_id', id).single(),
+    supabase.from('journal_entries').select('*').eq('consultant_id', id).order('date', { ascending: false }).limit(100),
+    supabase.from('consultant_anamnesis').select('*').eq('consultant_id', id).maybeSingle(),
+    supabase.from('anamnese_instances').select('answers').eq('consultant_id', id).maybeSingle(),
+    supabase.from('practitioner_notes').select('*').eq('consultant_id', id).maybeSingle(),
+    supabase.from('messages').select('*').eq('consultant_id', id).order('sent_at', { ascending: true }).limit(100),
+    supabase.from('wearable_summaries').select('*').eq('consultant_id', id).order('date', { ascending: false }).limit(50),
+    supabase.from('wearable_insights').select('*').eq('consultant_id', id).order('created_at', { ascending: false }).limit(50),
+    supabase.from('consultant_plans').select('*').eq('consultant_id', id).order('version', { ascending: false }),
+    supabase.from('consultant_analysis_results').select('*').eq('consultant_id', id).order('analysis_date', { ascending: false })
+  ]);
 
-  // Récupérer les consultations
-  const { data: consultations } = await supabase
-    .from('consultations')
-    .select('*')
-    .eq('consultant_id', id)
-    .order('date', { ascending: false });
-
-  const { data: appointments } = await supabase
-    .from('appointments')
-    .select('*')
-    .eq('consultant_id', id)
-    .order('starts_at', { ascending: false });
-
-  // Récupérer le plan avec ses versions et sections
-  const { data: plan } = await supabase
-    .from('plans')
-    .select('*')
-    .eq('consultant_id', id)
-    .single();
-
+  // Handle plan -> versions -> sections (dependent chain, but eliminate N+1)
+  const plan = planResult.data;
   let planWithVersions = plan;
   if (plan) {
     const { data: versions } = await supabase
@@ -281,85 +288,40 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
       .eq('plan_id', plan.id)
       .order('version', { ascending: false });
 
-    if (versions) {
-      const versionsWithSections = await Promise.all(
-        versions.map(async (version) => {
-          const { data: sections } = await supabase
-            .from('plan_sections')
-            .select('*')
-            .eq('plan_version_id', version.id)
-            .order('sort_order');
-          return { ...version, sections: sections || [] };
-        })
-      );
+    if (versions && versions.length > 0) {
+      // Fetch ALL sections for all versions in a single query (eliminates N+1)
+      const versionIds = versions.map((v) => v.id);
+      const { data: allSections } = await supabase
+        .from('plan_sections')
+        .select('*')
+        .in('plan_version_id', versionIds)
+        .order('sort_order');
+
+      // Group sections by version ID
+      const sectionsByVersion = (allSections || []).reduce<Record<string, typeof allSections>>((acc, section) => {
+        const vid = section.plan_version_id;
+        if (!acc[vid]) acc[vid] = [];
+        acc[vid]!.push(section);
+        return acc;
+      }, {});
+
+      const versionsWithSections = versions.map((version) => ({
+        ...version,
+        sections: sectionsByVersion[version.id] || []
+      }));
       planWithVersions = { ...plan, versions: versionsWithSections };
     }
   }
 
-  // Récupérer le journal
-  const { data: journal_entries } = await supabase
-    .from('journal_entries')
-    .select('*')
-    .eq('consultant_id', id)
-    .order('date', { ascending: false });
-
-  const { data: consultantAnamnesis } = await supabase
-    .from('consultant_anamnesis')
-    .select('*')
-    .eq('consultant_id', id)
-    .maybeSingle();
-
-  const { data: anamneseInstance } = await supabase
-    .from('anamnese_instances')
-    .select('answers')
-    .eq('consultant_id', id)
-    .maybeSingle();
-
-  const { data: practitionerNote } = await supabase
-    .from('practitioner_notes')
-    .select('*')
-    .eq('consultant_id', id)
-    .maybeSingle();
-
-  // Récupérer les messages
-  const { data: messages } = await supabase
-    .from('messages')
-    .select('*')
-    .eq('consultant_id', id)
-    .order('sent_at', { ascending: true });
-
-  // Récupérer les données wearable
-  const { data: wearable_summaries } = await supabase
-    .from('wearable_summaries')
-    .select('*')
-    .eq('consultant_id', id)
-    .order('date', { ascending: false });
-
-  // Récupérer les insights wearable
-  const { data: wearable_insights } = await supabase
-    .from('wearable_insights')
-    .select('*')
-    .eq('consultant_id', id)
-    .order('created_at', { ascending: false });
-
-  const { data: consultantPlans } = await supabase
-    .from('consultant_plans')
-    .select('*')
-    .eq('consultant_id', id)
-    .order('version', { ascending: false });
-
-  // Fetch analysis results
-  const { data: analysisResults } = await supabase
-    .from('consultant_analysis_results')
-    .select('*')
-    .eq('consultant_id', id)
-    .order('analysis_date', { ascending: false });
+  const anamnese = anameseResult.data;
+  const consultantAnamnesis = consultantAnamnesisResult.data;
+  const anamneseInstance = anamneseInstanceResult.data;
 
   return {
     ...consultant,
     anamnese: anamnese || undefined,
-    consultations: consultations || [],
-    appointments: appointments || [],
+    consultations: consultationsResult.data || [],
+    appointments: appointmentsResult.data || [],
     plan: planWithVersions || undefined,
     consultant_anamnesis:
       consultantAnamnesis ||
@@ -372,13 +334,13 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
             updated_at: new Date().toISOString()
           } as ConsultantAnamnesis)
         : null),
-    practitioner_note: practitionerNote || null,
-    journal_entries: journal_entries || [],
-    messages: messages || [],
-    wearable_summaries: wearable_summaries || [],
-    wearable_insights: wearable_insights || [],
-    consultant_plans: consultantPlans || [],
-    analysis_results: analysisResults || []
+    practitioner_note: practitionerNoteResult.data || null,
+    journal_entries: journalResult.data || [],
+    messages: messagesResult.data || [],
+    wearable_summaries: wearableSummariesResult.data || [],
+    wearable_insights: wearableInsightsResult.data || [],
+    consultant_plans: consultantPlansResult.data || [],
+    analysis_results: analysisResultsResult.data || []
   };
 }
 

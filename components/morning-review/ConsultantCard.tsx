@@ -99,7 +99,7 @@ function getStatusLine(summary: ConsultantSummary): string {
 
 export function ConsultantCard({ summary, onActionComplete }: ConsultantCardProps) {
   const router = useRouter();
-  const { consultant, attentionLevel, lastWeekStats, circularStats, primarySignal, suggestedActions } = summary;
+  const { consultant, attentionLevel, lastWeekStats, bagueConnecteeStats, primarySignal, suggestedActions } = summary;
 
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [showSnoozeModal, setShowSnoozeModal] = useState(false);
@@ -165,18 +165,18 @@ export function ConsultantCard({ summary, onActionComplete }: ConsultantCardProp
           </div>
         </div>
 
-        {/* Donnees Circular (si Premium) */}
-        {circularStats && (
+        {/* Donnees bague connectee (si Premium) */}
+        {bagueConnecteeStats && (
           <div className="mb-3 text-sm text-warmgray space-y-1">
             <div className="flex items-center gap-2">
               <Moon className="w-3.5 h-3.5" />
-              <span>Sommeil : {circularStats.averageSleep.toFixed(1)}h</span>
-              <TrendIcon trend={circularStats.sleepTrend} className="w-3.5 h-3.5" />
+              <span>Sommeil : {bagueConnecteeStats.averageSleep.toFixed(1)}h</span>
+              <TrendIcon trend={bagueConnecteeStats.sleepTrend} className="w-3.5 h-3.5" />
             </div>
             <div className="flex items-center gap-2">
               <Heart className="w-3.5 h-3.5" />
-              <span>HRV : {circularStats.averageHRV.toFixed(0)} ms</span>
-              <TrendIcon trend={circularStats.hrvTrend} className="w-3.5 h-3.5" />
+              <span>HRV : {bagueConnecteeStats.averageHRV.toFixed(0)} ms</span>
+              <TrendIcon trend={bagueConnecteeStats.hrvTrend} className="w-3.5 h-3.5" />
             </div>
           </div>
         )}

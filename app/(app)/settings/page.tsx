@@ -258,7 +258,7 @@ export default function SettingsPage() {
                 <Badge variant="premium">Premium</Badge>
               </div>
               <div className="rounded-lg bg-white/60 p-3 text-sm text-charcoal border border-divider">
-                Circular (sommeil, HRV, activite) active pour les consultants Premium.
+                Bague connectée (sommeil, HRV, activité) activée pour les consultants Premium.
               </div>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/abonnement')}>
                 Voir mon abonnement

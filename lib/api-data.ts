@@ -65,15 +65,15 @@ export async function getSummary() {
     console.error('Error fetching questionnaire notifications:', questionnaireError);
   }
 
-  // Get new circular data notifications
-  const { count: newCircularData, error: circularError } = await supabase
+  // Get new bague connectee data notifications
+  const { count: newBagueConnecteeData, error: bagueConnecteeError } = await supabase
     .from('notifications')
     .select('*', { count: 'exact', head: true })
-    .eq('type', 'circular')
+    .eq('type', 'bague_connectee')
     .eq('read', false);
 
-  if (circularError) {
-    console.error('Error fetching circular notifications:', circularError);
+  if (bagueConnecteeError) {
+    console.error('Error fetching bague connectee notifications:', bagueConnecteeError);
   }
 
   // Get unread messages count
@@ -91,7 +91,7 @@ export async function getSummary() {
     totalConsultants: totalConsultants ?? 0,
     premiumConsultants: premiumConsultants ?? 0,
     newQuestionnaire: newQuestionnaire ?? 0,
-    newCircularData: newCircularData ?? 0,
+    newBagueConnecteeData: newBagueConnecteeData ?? 0,
     unreadMessages: unreadMessages ?? 0
   };
 }
@@ -145,12 +145,12 @@ export async function getItems() {
     return acc;
   }, {});
 
-  const notificationsMap = (notificationsResult.data ?? []).reduce<Record<string, { questionnaire: boolean; circular: boolean }>>((acc, row) => {
+  const notificationsMap = (notificationsResult.data ?? []).reduce<Record<string, { questionnaire: boolean; bagueConnectee: boolean }>>((acc, row) => {
     if (!acc[row.consultant_id]) {
-      acc[row.consultant_id] = { questionnaire: false, circular: false };
+      acc[row.consultant_id] = { questionnaire: false, bagueConnectee: false };
     }
     if (row.type === 'questionnaire') acc[row.consultant_id].questionnaire = true;
-    if (row.type === 'circular') acc[row.consultant_id].circular = true;
+    if (row.type === 'bague_connectee') acc[row.consultant_id].bagueConnectee = true;
     return acc;
   }, {});
 
@@ -184,7 +184,7 @@ export async function getItems() {
     nextConsultation: nextAppointmentMap[consultant.id] ?? null,
     flags: {
       newQuestionnaire: notificationsMap[consultant.id]?.questionnaire ?? false,
-      newCircularData: notificationsMap[consultant.id]?.circular ?? false,
+      newBagueConnecteeData: notificationsMap[consultant.id]?.bagueConnectee ?? false,
       unreadMessages: unreadMessagesMap[consultant.id] ?? 0
     }
   }));
@@ -219,7 +219,7 @@ export async function getItemById(id: string) {
     .eq('read', false);
 
   const hasNewQuestionnaire = notifications?.some((n) => n.type === 'questionnaire') ?? false;
-  const hasNewCircularData = notifications?.some((n) => n.type === 'circular') ?? false;
+  const hasNewBagueConnecteeData = notifications?.some((n) => n.type === 'bague_connectee') ?? false;
 
   // Get last consultation
   const { data: lastConsult } = await supabase
@@ -251,7 +251,7 @@ export async function getItemById(id: string) {
     nextConsultation: nextAppt?.starts_at ?? null,
     flags: {
       newQuestionnaire: hasNewQuestionnaire,
-      newCircularData: hasNewCircularData,
+      newBagueConnecteeData: hasNewBagueConnecteeData,
       unreadMessages: unreadMessages ?? 0
     }
   };

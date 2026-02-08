@@ -1,6 +1,6 @@
 // Utilitaires de calcul de tendances pour la Revue Matinale
 import type { JournalEntry, WearableSummary } from '../types';
-import type { Trend, LastWeekStats, CircularStats } from './types';
+import type { Trend, LastWeekStats, BagueConnecteeStats } from './types';
 
 // Seuil en pourcentage pour qualifier un changement de "significatif"
 const TREND_THRESHOLD = 0.1;
@@ -104,10 +104,10 @@ export function calculateLastWeekStats(entries: JournalEntry[]): LastWeekStats {
   };
 }
 
-export function calculateCircularStats(
+export function calculateBagueConnecteeStats(
   summaries: WearableSummary[],
   insights: import('../types').WearableInsight[]
-): CircularStats | undefined {
+): BagueConnecteeStats | undefined {
   const last7 = summaries.filter(s => isWithinLastDays(s.date, 7));
   const prev7 = summaries.filter(s => isWithinDays(s.date, 14, 7));
 

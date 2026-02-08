@@ -22,7 +22,7 @@ export interface SubscriptionPlan {
   price_yearly: number;
   features: string[];
   max_consultants: number | null;
-  circular_integration: boolean;
+  bague_connectee_integration: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;

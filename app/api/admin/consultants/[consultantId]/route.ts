@@ -18,7 +18,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('consultants_identity')
       .select(
-        'id, practitioner_id, full_name, email, phone, age, city, status, is_premium, circular_enabled, last_circular_sync_at, last_circular_sync_status'
+        'id, practitioner_id, full_name, email, phone, age, city, status, is_premium, bague_connectee_enabled, last_bague_connectee_sync_at, last_bague_connectee_sync_status'
       )
       .eq('id', consultantId)
       .single();
@@ -57,7 +57,7 @@ export async function PATCH(
       city: payload.city,
       status: payload.status,
       is_premium: payload.is_premium,
-      circular_enabled: payload.circular_enabled,
+      bague_connectee_enabled: payload.bague_connectee_enabled,
       updated_at: new Date().toISOString()
     };
 
@@ -67,7 +67,7 @@ export async function PATCH(
       .update(updates)
       .eq('id', consultantId)
       .select(
-        'id, practitioner_id, full_name, email, phone, age, city, status, is_premium, circular_enabled, last_circular_sync_at, last_circular_sync_status'
+        'id, practitioner_id, full_name, email, phone, age, city, status, is_premium, bague_connectee_enabled, last_bague_connectee_sync_at, last_bague_connectee_sync_status'
       )
       .single();
 
