@@ -21,13 +21,14 @@ import {
   X,
   LogOut,
   Shield,
-  Receipt
+  Receipt,
+  Sunrise
 } from 'lucide-react';
 import { useMessageNotifications } from '@/hooks/useMessageNotifications';
 
 const NAV = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/agenda', label: 'Agenda', icon: Calendar },
+  { href: '/morning-review', label: 'Revue matinale', icon: Sunrise },
   { href: '/consultants', label: 'Consultants', icon: Users },
   { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
   { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
@@ -67,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     const labelMap: Record<string, string> = {
       dashboard: 'Tableau de bord',
-      agenda: 'Agenda',
+      'morning-review': 'Revue matinale',
       consultants: 'Consultants',
       messages: 'Messages',
       questionnaires: 'Questionnaires',
