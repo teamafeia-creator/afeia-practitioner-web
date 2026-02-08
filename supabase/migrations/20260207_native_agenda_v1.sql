@@ -128,7 +128,7 @@ DO $$ BEGIN
     INSERT INTO appointments (consultant_id, practitioner_id, starts_at, ends_at, status, notes_internal, source, created_at)
     SELECT
       c.consultant_id,
-      c.practitioner_id,
+      ct.practitioner_id,
       c.date,
       c.date + INTERVAL '60 minutes',
       'completed',
@@ -136,7 +136,8 @@ DO $$ BEGIN
       'legacy_migration',
       c.created_at
     FROM consultations c
-    WHERE c.practitioner_id IS NOT NULL
+    JOIN consultants ct ON ct.id = c.consultant_id
+    WHERE ct.practitioner_id IS NOT NULL
     AND NOT EXISTS (
       SELECT 1 FROM appointments a
       WHERE a.consultant_id = c.consultant_id
