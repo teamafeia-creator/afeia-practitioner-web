@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" fill="none">
+  <!-- Mains paumes — schéma épuré -->
+  <g stroke="#E5E1DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Main gauche — paume -->
+    <path d="M120 450 Q110 380 115 320 Q120 260 145 220 Q165 195 185 250 Q190 280 188 320" />
+    <path d="M188 320 Q190 260 200 210 Q210 170 225 165 Q240 168 245 210 Q248 260 245 320" />
+    <path d="M245 320 Q248 250 255 195 Q262 155 278 150 Q293 155 298 195 Q303 250 300 320" />
+    <path d="M300 320 Q305 260 312 210 Q318 175 332 172 Q346 178 348 215 Q350 265 345 320" />
+    <path d="M345 320 Q355 290 362 265 Q370 245 382 248 Q390 260 385 290 Q378 320 370 350" />
+    <path d="M120 450 Q125 520 140 580 Q160 640 200 680 Q240 700 280 690 Q320 670 345 630 Q365 590 370 530 Q372 480 370 350" />
+    <!-- Lignes de la paume gauche -->
+    <path d="M145 400 Q200 370 340 390" stroke="#D5D0C8" stroke-width="1.5" />
+    <path d="M155 470 Q220 440 350 460" stroke="#D5D0C8" stroke-width="1.5" />
+
+    <!-- Main droite — paume -->
+    <path d="M680 450 Q690 380 685 320 Q680 260 655 220 Q635 195 615 250 Q610 280 612 320" />
+    <path d="M612 320 Q610 260 600 210 Q590 170 575 165 Q560 168 555 210 Q552 260 555 320" />
+    <path d="M555 320 Q552 250 545 195 Q538 155 522 150 Q507 155 502 195 Q497 250 500 320" />
+    <path d="M500 320 Q495 260 488 210 Q482 175 468 172 Q454 178 452 215 Q450 265 455 320" />
+    <path d="M455 320 Q445 290 438 265 Q430 245 418 248 Q410 260 415 290 Q422 320 430 350" />
+    <path d="M680 450 Q675 520 660 580 Q640 640 600 680 Q560 700 520 690 Q480 670 455 630 Q435 590 430 530 Q428 480 430 350" />
+    <!-- Lignes de la paume droite -->
+    <path d="M460 390 Q600 370 655 400" stroke="#D5D0C8" stroke-width="1.5" />
+    <path d="M450 460 Q580 440 645 470" stroke="#D5D0C8" stroke-width="1.5" />
+  </g>
+  <!-- Labels -->
+  <text x="230" y="740" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#D5D0C8" text-anchor="middle">Gauche</text>
+  <text x="570" y="740" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#D5D0C8" text-anchor="middle">Droit</text>
+</svg>

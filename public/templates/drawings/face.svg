@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" fill="none">
+  <!-- Visage de face — schéma médical épuré -->
+  <g stroke="#E5E1DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Ovale du visage -->
+    <ellipse cx="400" cy="400" rx="200" ry="260" />
+    <!-- Ligne de cheveux -->
+    <path d="M230 280 Q280 180 400 160 Q520 180 570 280" stroke="#D5D0C8" stroke-width="1.5" />
+    <!-- Sourcil gauche -->
+    <path d="M285 310 Q320 290 365 305" />
+    <!-- Sourcil droit -->
+    <path d="M435 305 Q480 290 515 310" />
+    <!-- Oeil gauche -->
+    <path d="M290 340 Q325 320 365 340 Q325 355 290 340" />
+    <circle cx="328" cy="340" r="8" stroke="#D5D0C8" stroke-width="1.5" />
+    <!-- Oeil droit -->
+    <path d="M435 340 Q475 320 510 340 Q475 355 435 340" />
+    <circle cx="472" cy="340" r="8" stroke="#D5D0C8" stroke-width="1.5" />
+    <!-- Nez — arête -->
+    <line x1="400" y1="330" x2="400" y2="410" stroke="#D5D0C8" stroke-width="1.5" />
+    <!-- Nez — narines -->
+    <path d="M380 420 Q390 430 400 425 Q410 430 420 420" />
+    <!-- Bouche -->
+    <path d="M350 480 Q375 470 400 475 Q425 470 450 480" />
+    <path d="M350 480 Q375 500 400 505 Q425 500 450 480" stroke="#D5D0C8" stroke-width="1.5" />
+    <!-- Oreille gauche -->
+    <path d="M202 340 Q175 340 170 380 Q168 420 195 430" />
+    <!-- Oreille droite -->
+    <path d="M598 340 Q625 340 630 380 Q632 420 605 430" />
+    <!-- Ligne médiane verticale -->
+    <line x1="400" y1="160" x2="400" y2="660" stroke="#D5D0C8" stroke-width="1" stroke-dasharray="6 4" />
+    <!-- Ligne horizontale yeux -->
+    <line x1="250" y1="340" x2="550" y2="340" stroke="#D5D0C8" stroke-width="1" stroke-dasharray="6 4" />
+  </g>
+</svg>

@@ -471,10 +471,26 @@ export type ConsultantWithDetails = Consultant & {
   wearable_insights?: WearableInsight[];
   consultant_plans?: ConsultantPlan[];
   analysis_results?: ConsultantAnalysisResult[];
+  drawings?: ConsultantDrawing[];
   medical_history?: MedicalHistoryEntry[];
   allergies_structured?: AllergyEntry[];
   current_treatments?: CurrentTreatmentEntry[];
   relationships?: ConsultantRelationship[];
+};
+
+export type ConsultantDrawing = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  title: string;
+  template_type: string;
+  excalidraw_data: any;
+  snapshot_path: string | null;
+  appointment_id: string | null;
+  version: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 // ============================================

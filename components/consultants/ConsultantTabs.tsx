@@ -54,6 +54,7 @@ import {
   StickyNote,
   MessageSquare,
   FileUp,
+  Pencil,
   Heart,
   Plus,
   Trash2,
@@ -68,6 +69,7 @@ import type {
   Message,
   ConsultantPlan,
   ConsultantWithDetails,
+  ConsultantDrawing,
   WearableInsight,
   MedicalHistoryEntry,
   AllergyEntry,
@@ -93,6 +95,18 @@ import { Modal, ModalFooter } from '../ui/Modal';
 import { useContraindications } from '../../hooks/useContraindications';
 import { ContraindicationBanner } from '../care-plan/ContraindicationBanner';
 import { ContraindicationValidationModal } from '../care-plan/ContraindicationValidationModal';
+import { DrawingGallery } from '../drawings/DrawingGallery';
+import { TemplatePicker } from '../drawings/TemplatePicker';
+import type { TemplateType, ExcalidrawData } from '../drawings/types';
+import {
+  createDrawing,
+  updateDrawing,
+  deleteDrawing as deleteDrawingQuery,
+  uploadDrawingSnapshot,
+} from '../../lib/queries/drawings';
+import dynamic from 'next/dynamic';
+
+const DrawingCanvas = dynamic(() => import('../drawings/DrawingCanvas'), { ssr: false });
 
 /**
  * Helper to flatten nested anamnesis answers to flat format.
@@ -131,6 +145,7 @@ const TABS = [
   T.tabJournal,
   T.tabNotesSeance,
   T.tabConseillancier,
+  T.tabSchemas,
   T.tabDocuments,
   T.tabMessages,
 ] as const;
@@ -146,6 +161,7 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
   [T.tabJournal]: { title: T.tabJournal, description: T.descJournal },
   [T.tabNotesSeance]: { title: T.tabNotesSeance, description: T.descNotesSeance },
   [T.tabConseillancier]: { title: T.tabConseillancier, description: T.descConseillancier },
+  [T.tabSchemas]: { title: T.tabSchemas, description: T.descSchemas },
   [T.tabDocuments]: { title: T.tabDocuments, description: T.descDocuments },
   [T.tabMessages]: { title: T.tabMessages, description: T.descMessages },
 };
@@ -171,6 +187,7 @@ const SIDEBAR_GROUPS = [
     label: 'Donnees',
     items: [
       { tab: T.tabBagueConnectee as Tab, label: 'Bague connectee', icon: Watch },
+      { tab: T.tabSchemas as Tab, label: 'Schémas corporels', icon: Pencil },
       { tab: T.tabDocuments as Tab, label: 'Documents', icon: FileUp },
     ],
   },
@@ -422,6 +439,13 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   } | null>(null);
 
   const [showContraindicationModal, setShowContraindicationModal] = useState(false);
+
+  // ─── Drawings states ─────────────────────────────
+  const [drawings, setDrawings] = useState<ConsultantDrawing[]>(consultant.drawings ?? []);
+  const [activeDrawing, setActiveDrawing] = useState<ConsultantDrawing | null>(null);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [showDrawingCanvas, setShowDrawingCanvas] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType | null>(null);
 
   // ─── Medical record states ──────────────────────
   const [medicalHistory, setMedicalHistory] = useState<MedicalHistoryEntry[]>(consultant.medical_history ?? []);
@@ -1084,6 +1108,98 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       notes: ''
     });
     setAppointmentModalOpen(true);
+  }
+
+  // ─── Drawing handlers ───────────────────────────
+  function handleCreateDrawing() {
+    setShowTemplatePicker(true);
+  }
+
+  function handleOpenDrawing(drawing: ConsultantDrawing) {
+    setActiveDrawing(drawing);
+    setSelectedTemplate(drawing.template_type as TemplateType);
+    setShowDrawingCanvas(true);
+  }
+
+  async function handleSaveDrawing(data: ExcalidrawData, pngBlob: Blob, drawingTitle: string) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (activeDrawing) {
+        const updated = await updateDrawing(activeDrawing.id, {
+          title: drawingTitle,
+          excalidraw_data: data,
+          version: (activeDrawing.version ?? 1) + 1,
+        });
+        if (updated) {
+          const snapshotPath = await uploadDrawingSnapshot(user.id, activeDrawing.id, pngBlob);
+          if (snapshotPath) {
+            await updateDrawing(activeDrawing.id, { snapshot_path: snapshotPath });
+            updated.snapshot_path = snapshotPath;
+          }
+          setDrawings((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+        }
+      } else {
+        const created = await createDrawing({
+          consultant_id: consultant.id,
+          practitioner_id: user.id,
+          title: drawingTitle,
+          template_type: selectedTemplate ?? 'blank',
+          excalidraw_data: data,
+        });
+        if (created) {
+          const snapshotPath = await uploadDrawingSnapshot(user.id, created.id, pngBlob);
+          if (snapshotPath) {
+            await updateDrawing(created.id, { snapshot_path: snapshotPath });
+            created.snapshot_path = snapshotPath;
+          }
+          setDrawings((prev) => [created, ...prev]);
+        }
+      }
+
+      setShowDrawingCanvas(false);
+      setActiveDrawing(null);
+      setToast({ title: 'Schéma sauvegardé', variant: 'success' });
+    } catch (error) {
+      console.error('[drawings] save error:', error);
+      setToast({ title: 'Erreur de sauvegarde', variant: 'error' });
+    }
+  }
+
+  async function handleDeleteDrawing(id: string) {
+    const drawing = drawings.find((d) => d.id === id);
+    const success = await deleteDrawingQuery(id, drawing?.snapshot_path);
+    if (success) {
+      setDrawings((prev) => prev.filter((d) => d.id !== id));
+      setToast({ title: 'Schéma supprimé', variant: 'success' });
+    } else {
+      setToast({ title: 'Erreur lors de la suppression', variant: 'error' });
+    }
+  }
+
+  async function handleExportDrawingPDF(drawingId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const url = `/api/consultants/${consultant.id}/drawings/${drawingId}/pdf`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setToast({ title: err.error || 'Erreur PDF', variant: 'error' });
+        return;
+      }
+
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } catch {
+      setToast({ title: 'Erreur lors de l\'export PDF', variant: 'error' });
+    }
   }
 
   return (
@@ -2551,6 +2667,49 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             loading={planSharing}
           />
         </div>
+      )}
+
+      {tab === T.tabSchemas && (
+        <>
+          <DrawingGallery
+            drawings={drawings}
+            onCreate={handleCreateDrawing}
+            onOpen={handleOpenDrawing}
+            onDelete={handleDeleteDrawing}
+            onExportPDF={handleExportDrawingPDF}
+          />
+
+          <TemplatePicker
+            isOpen={showTemplatePicker}
+            onClose={() => setShowTemplatePicker(false)}
+            onSelect={(t) => {
+              setSelectedTemplate(t);
+              setActiveDrawing(null);
+              setShowTemplatePicker(false);
+              setShowDrawingCanvas(true);
+            }}
+          />
+
+          {showDrawingCanvas && selectedTemplate && (
+            <Modal
+              isOpen={showDrawingCanvas}
+              onClose={() => setShowDrawingCanvas(false)}
+              size="full"
+              showCloseButton={false}
+              className="!max-w-[95vw] !h-[90vh]"
+            >
+              <div className="-m-5 h-[90vh]">
+                <DrawingCanvas
+                  templateType={selectedTemplate}
+                  initialData={activeDrawing?.excalidraw_data}
+                  title={activeDrawing?.title ?? ''}
+                  onSave={handleSaveDrawing}
+                  onClose={() => setShowDrawingCanvas(false)}
+                />
+              </div>
+            </Modal>
+          )}
+        </>
       )}
 
       {tab === T.tabDocuments && (
