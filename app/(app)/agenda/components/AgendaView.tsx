@@ -5,24 +5,27 @@ import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
 import 'moment/locale/fr';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { getAppointmentsForRange, getAvailabilitySchedules, getAvailabilityOverrides } from '@/lib/queries/appointments';
-import type { Appointment, AvailabilitySchedule, AvailabilityOverride } from '@/lib/types';
+import { Users } from 'lucide-react';
+import { getAppointmentsForRange } from '@/lib/queries/appointments';
+import { getGroupSessionsForRange } from '@/lib/queries/group-sessions';
+import type { Appointment, GroupSession } from '@/lib/types';
 
 moment.locale('fr');
 const localizer = momentLocalizer(moment);
 
-type CalendarEvent = {
+export type CalendarEvent = {
   id: string;
   title: string;
   start: Date;
   end: Date;
-  resource: Appointment;
+  resource: Appointment | GroupSession;
   color: string;
   isCancelled: boolean;
+  isGroupSession: boolean;
 };
 
 interface AgendaViewProps {
-  onSelectEvent: (appointment: Appointment) => void;
+  onSelectEvent: (event: CalendarEvent) => void;
   onSelectSlot: (slotInfo: { start: Date; end: Date }) => void;
   refreshKey: number;
 }
@@ -51,6 +54,7 @@ function getEventName(appointment: Appointment): string {
 
 export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaViewProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [groupSessions, setGroupSessions] = useState<(GroupSession & { registration_count: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<string>(Views.WEEK);
@@ -73,7 +77,7 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
     }
   }, [isMobile, currentView]);
 
-  const loadAppointments = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       // Calculate range based on view
@@ -84,38 +88,56 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
       const rangeStart = moment(start).subtract(1, 'day').toISOString();
       const rangeEnd = moment(end).add(1, 'day').toISOString();
 
-      const data = await getAppointmentsForRange(rangeStart, rangeEnd);
-      setAppointments(data);
+      const [appointmentsData, groupSessionsData] = await Promise.all([
+        getAppointmentsForRange(rangeStart, rangeEnd),
+        getGroupSessionsForRange(rangeStart, rangeEnd),
+      ]);
+
+      setAppointments(appointmentsData);
+      setGroupSessions(groupSessionsData);
     } catch (err) {
-      console.error('Error loading appointments:', err);
+      console.error('Error loading agenda data:', err);
     } finally {
       setLoading(false);
     }
   }, [currentDate, currentView]);
 
   useEffect(() => {
-    loadAppointments();
-  }, [loadAppointments, refreshKey]);
+    loadData();
+  }, [loadData, refreshKey]);
 
-  const events: CalendarEvent[] = useMemo(
-    () =>
-      appointments.map((apt) => ({
-        id: apt.id,
-        title: getEventName(apt),
-        start: new Date(apt.starts_at),
-        end: new Date(apt.ends_at),
-        resource: apt,
-        color: apt.consultation_type?.color || '#4CAF50',
-        isCancelled: apt.status === 'cancelled' || apt.status === 'rescheduled',
-      })),
-    [appointments]
-  );
+  const events: CalendarEvent[] = useMemo(() => {
+    const appointmentEvents: CalendarEvent[] = appointments.map((apt) => ({
+      id: apt.id,
+      title: getEventName(apt),
+      start: new Date(apt.starts_at),
+      end: new Date(apt.ends_at),
+      resource: apt,
+      color: apt.consultation_type?.color || '#4CAF50',
+      isCancelled: apt.status === 'cancelled' || apt.status === 'rescheduled',
+      isGroupSession: false,
+    }));
+
+    const groupEvents: CalendarEvent[] = groupSessions.map((gs) => ({
+      id: gs.id,
+      title: `${gs.title} (${gs.registration_count}/${gs.max_participants})`,
+      start: new Date(gs.starts_at),
+      end: new Date(gs.ends_at),
+      resource: gs,
+      color: gs.consultation_type?.color || '#2196F3',
+      isCancelled: gs.status === 'cancelled',
+      isGroupSession: true,
+    }));
+
+    return [...appointmentEvents, ...groupEvents];
+  }, [appointments, groupSessions]);
 
   const eventStyleGetter = useCallback(
     (event: CalendarEvent) => {
       const isPast = event.end < new Date();
-      const isActive = ['scheduled', 'confirmed', 'in_progress'].includes(event.resource.status);
-      const needsNotes = isPast && isActive;
+      const resourceStatus = 'status' in event.resource ? (event.resource as { status: string }).status : '';
+      const isActive = ['scheduled', 'confirmed', 'in_progress'].includes(resourceStatus);
+      const needsNotes = isPast && isActive && !event.isGroupSession;
 
       return {
         style: {
@@ -125,7 +147,11 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
           opacity: event.isCancelled ? 0.5 : 1,
           textDecoration: event.isCancelled ? 'line-through' : 'none',
           borderRadius: '6px',
-          border: needsNotes ? '2px solid #f59e0b' : 'none',
+          border: needsNotes
+            ? '2px solid #f59e0b'
+            : event.isGroupSession
+              ? `2px dashed ${event.isCancelled ? '#9ca3af' : event.color}`
+              : 'none',
           fontSize: '12px',
           padding: '2px 6px',
         },
@@ -136,7 +162,23 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
 
   const CustomEvent = useCallback(
     ({ event }: { event: CalendarEvent }) => {
-      const apt = event.resource;
+      if (event.isGroupSession) {
+        const gs = event.resource as GroupSession;
+        const typeName = gs.consultation_type?.name || '';
+        return (
+          <div className="leading-tight">
+            <div className="font-medium truncate flex items-center gap-1">
+              <Users className="h-3 w-3 flex-shrink-0" />
+              {event.title}
+            </div>
+            <div className="text-[10px] opacity-80 truncate">
+              {typeName}
+            </div>
+          </div>
+        );
+      }
+
+      const apt = event.resource as Appointment;
       const typeName = apt.consultation_type?.name || '';
       const isVideo = apt.location_type === 'video';
 
@@ -174,7 +216,7 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
           views={availableViews}
           onView={(view) => setCurrentView(view)}
           onNavigate={(date) => setCurrentDate(date)}
-          onSelectEvent={(event) => onSelectEvent((event as CalendarEvent).resource)}
+          onSelectEvent={(event) => onSelectEvent(event as CalendarEvent)}
           onSelectSlot={onSelectSlot}
           selectable
           step={15}
