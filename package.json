@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "auth:smoke": "node scripts/auth-smoke-test.mjs",
-    "questionnaire:smoke": "node scripts/questionnaire-code-smoke-test.mjs"
+    "questionnaire:smoke": "node scripts/questionnaire-code-smoke-test.mjs",
+    "screenshots": "node scripts/screenshot-dashboard.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.3.4",
+    "@playwright/test": "^1.58.2",
     "@types/node": "^20.14.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
