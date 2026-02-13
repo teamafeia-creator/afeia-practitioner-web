@@ -195,7 +195,7 @@ export default function AISettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Formation et approche</h2>
-              <p className="text-xs text-warmgray">
+              <p className="text-xs text-stone">
                 Permet à l&apos;IA d&apos;adapter ses recommandations à votre courant naturopathique.
               </p>
             </CardHeader>
@@ -226,7 +226,7 @@ export default function AISettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Style de rédaction</h2>
-              <p className="text-xs text-warmgray">
+              <p className="text-xs text-stone">
                 Définissez le ton et la longueur des textes générés.
               </p>
             </CardHeader>
@@ -241,7 +241,7 @@ export default function AISettingsPage() {
                       onClick={() => setForm({ ...form, ton: option.value })}
                       className={`text-left rounded-lg border p-3 text-sm transition ${
                         form.ton === option.value
-                          ? 'border-teal bg-teal/5 text-teal font-medium'
+                          ? 'border-sage bg-sage-light/50 text-sage font-medium'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300'
                       }`}
                     >
@@ -260,7 +260,7 @@ export default function AISettingsPage() {
                       onClick={() => setForm({ ...form, longueur_preferee: option.value })}
                       className={`text-left rounded-lg border p-3 text-sm transition ${
                         form.longueur_preferee === option.value
-                          ? 'border-teal bg-teal/5 text-teal font-medium'
+                          ? 'border-sage bg-sage-light/50 text-sage font-medium'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300'
                       }`}
                     >
@@ -276,7 +276,7 @@ export default function AISettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Approches privilégiées</h2>
-              <p className="text-xs text-warmgray">
+              <p className="text-xs text-stone">
                 L&apos;IA mettra l&apos;accent sur ces approches dans ses recommandations.
               </p>
             </CardHeader>
@@ -289,7 +289,7 @@ export default function AISettingsPage() {
                     onClick={() => toggleApproche(approche)}
                     className={`rounded-full px-4 py-2 text-sm transition ${
                       form.approches.includes(approche)
-                        ? 'bg-teal text-white'
+                        ? 'bg-sage text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
@@ -304,13 +304,13 @@ export default function AISettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Plantes et compléments favoris</h2>
-              <p className="text-xs text-warmgray">
+              <p className="text-xs text-stone">
                 Les produits que vous recommandez régulièrement. L&apos;IA les privilégiera.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <label className="block">
-                <span className="text-[13px] font-medium text-warmgray">Plantes favorites</span>
+                <span className="text-[13px] font-medium text-stone">Plantes favorites</span>
                 <Textarea
                   className="mt-1"
                   value={form.plantes_favorites}
@@ -320,7 +320,7 @@ export default function AISettingsPage() {
                 />
               </label>
               <label className="block">
-                <span className="text-[13px] font-medium text-warmgray">Compléments favoris</span>
+                <span className="text-[13px] font-medium text-stone">Compléments favoris</span>
                 <Textarea
                   className="mt-1"
                   value={form.complements_favoris}
@@ -336,7 +336,7 @@ export default function AISettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Exemples de formulations</h2>
-              <p className="text-xs text-warmgray">
+              <p className="text-xs text-stone">
                 Collez 2-3 paragraphes types que vous utilisez dans vos conseillanciers.
                 L&apos;IA s&apos;en inspirera pour reproduire votre style.
               </p>
@@ -367,11 +367,11 @@ export default function AISettingsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-warmgray">Générations ce mois</span>
+                <span className="text-stone">Générations ce mois</span>
                 <span className="font-medium text-charcoal">{stats.thisMonth}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-warmgray">Total générations</span>
+                <span className="text-stone">Total générations</span>
                 <span className="font-medium text-charcoal">{stats.total}</span>
               </div>
             </CardContent>
@@ -382,7 +382,7 @@ export default function AISettingsPage() {
               <h2 className="text-sm font-semibold">Comment ça marche</h2>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 text-xs text-warmgray">
+              <div className="space-y-3 text-xs text-stone">
                 <p>
                   L&apos;IA utilise le bilan de vitalité (anamnèse), le journal quotidien et les notes
                   de consultation pour pré-remplir les conseillanciers.

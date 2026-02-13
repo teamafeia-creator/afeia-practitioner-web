@@ -39,7 +39,7 @@ export default async function BookingPage({ params }: Props) {
         <h1 className="text-xl font-semibold text-charcoal mb-2">
           Page non disponible
         </h1>
-        <p className="text-sm text-warmgray">
+        <p className="text-sm text-stone">
           Ce praticien n&apos;accepte pas les reservations en ligne pour le moment.
         </p>
       </div>

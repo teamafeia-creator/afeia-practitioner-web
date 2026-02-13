@@ -33,15 +33,15 @@ export function InvoiceStatsDisplay({ stats, loading }: Props) {
       label: 'CA du mois',
       value: formatCurrency(stats.ca_mois),
       icon: TrendingUp,
-      color: 'text-teal',
-      bg: 'bg-teal/10',
+      color: 'text-sage',
+      bg: 'bg-sage-light',
     },
     {
       label: 'CA annuel',
       value: formatCurrency(stats.ca_annee),
       icon: Calculator,
-      color: 'text-aubergine',
-      bg: 'bg-aubergine/10',
+      color: 'text-terracotta',
+      bg: 'bg-terracotta/10',
     },
     {
       label: 'Factures payees',
@@ -73,7 +73,7 @@ export function InvoiceStatsDisplay({ stats, loading }: Props) {
                   <Icon className={`h-5 w-5 ${item.color}`} />
                 </div>
                 <div>
-                  <p className="text-xs text-warmgray">{item.label}</p>
+                  <p className="text-xs text-stone">{item.label}</p>
                   <p className="text-lg font-semibold text-charcoal">
                     {item.value}
                   </p>

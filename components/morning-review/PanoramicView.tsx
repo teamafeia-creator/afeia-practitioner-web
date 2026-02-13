@@ -35,9 +35,9 @@ export function PanoramicView({ consultantsSummary }: PanoramicViewProps) {
       >
         <h2 className="text-lg font-semibold text-charcoal">Vue panoramique</h2>
         {isCollapsed ? (
-          <ChevronDown className="w-5 h-5 text-warmgray" />
+          <ChevronDown className="w-5 h-5 text-stone" />
         ) : (
-          <ChevronUp className="w-5 h-5 text-warmgray" />
+          <ChevronUp className="w-5 h-5 text-stone" />
         )}
       </button>
 
@@ -63,7 +63,7 @@ export function PanoramicView({ consultantsSummary }: PanoramicViewProps) {
             </div>
 
             {/* Resume textuel */}
-            <div className="text-sm text-warmgray space-y-1">
+            <div className="text-sm text-stone space-y-1">
               <p>
                 <span className="inline-block w-2 h-2 rounded-full mr-2" style={{ backgroundColor: ATTENTION_COLORS.stable }} />
                 {counts.stable} sur la bonne voie
@@ -103,7 +103,7 @@ export function PanoramicView({ consultantsSummary }: PanoramicViewProps) {
 
             <Link
               href="/consultants"
-              className="text-sm text-teal hover:text-teal-deep mt-3 inline-block font-medium"
+              className="text-sm text-sage hover:text-sage-deep mt-3 inline-block font-medium"
             >
               Voir tous les consultants &rarr;
             </Link>

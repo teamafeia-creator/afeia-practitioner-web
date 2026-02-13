@@ -14,8 +14,8 @@ export default function LogoutPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-sable flex items-center justify-center">
-      <div className="text-warmgray">Déconnexion…</div>
+    <div className="min-h-screen bg-cream flex items-center justify-center">
+      <div className="text-stone">Déconnexion…</div>
     </div>
   );
 }

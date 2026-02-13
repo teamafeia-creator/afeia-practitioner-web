@@ -25,7 +25,7 @@ export function SaveAsBlockButton({
       <button
         type="button"
         onClick={() => setFormOpen(true)}
-        className="inline-flex items-center gap-1 text-[11px] text-warmgray hover:text-teal transition-colors"
+        className="inline-flex items-center gap-1 text-[11px] text-stone hover:text-sage transition-colors"
       >
         <BookmarkPlus className="h-3 w-3" />
         Sauvegarder comme bloc

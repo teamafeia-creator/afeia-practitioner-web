@@ -111,42 +111,42 @@ export default function AnamnesePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-sable flex items-center justify-center p-6">
-        <div className="text-warmgray">Chargement...</div>
+      <main className="min-h-screen bg-cream flex items-center justify-center p-6">
+        <div className="text-stone">Chargement...</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-sable flex items-center justify-center p-6">
+    <main className="min-h-screen bg-cream flex items-center justify-center p-6">
       <div className="w-full max-w-3xl space-y-6">
         <div className="flex items-center justify-center gap-3">
           <Image src="/afeia_symbol.svg" alt="AFEIA" width={36} height={36} />
           <div>
             <div className="text-2xl font-semibold tracking-tight">Afeia</div>
-            <div className="text-sm text-warmgray">Anamnèse obligatoire</div>
+            <div className="text-sm text-stone">Anamnèse obligatoire</div>
           </div>
         </div>
 
         <Card className="p-6">
           {error ? (
-            <div className="rounded-xl border border-gold/30 bg-gold/10 p-4 text-sm text-marine">
+            <div className="rounded-xl border border-gold/30 bg-gold/10 p-4 text-sm text-charcoal">
               {error}
             </div>
           ) : null}
 
           {message ? (
-            <div className="rounded-xl border border-teal/30 bg-teal/10 p-4 text-sm text-marine">
+            <div className="rounded-xl border border-sage/30 bg-sage-light p-4 text-sm text-charcoal">
               {message}
             </div>
           ) : null}
 
           {status === null ? (
-            <div className="text-sm text-warmgray">Aucune anamnèse en attente.</div>
+            <div className="text-sm text-stone">Aucune anamnèse en attente.</div>
           ) : null}
 
           {status === 'COMPLETED' ? (
-            <div className="text-sm text-warmgray">Votre anamnèse est déjà complétée.</div>
+            <div className="text-sm text-stone">Votre anamnèse est déjà complétée.</div>
           ) : null}
 
           {isPending ? (
@@ -156,7 +156,7 @@ export default function AnamnesePage() {
                   <div>
                     <h3 className="text-sm font-semibold text-charcoal">{section.title}</h3>
                     {section.description ? (
-                      <p className="text-xs text-warmgray">{section.description}</p>
+                      <p className="text-xs text-stone">{section.description}</p>
                     ) : null}
                   </div>
                   <div className="grid gap-4">
@@ -167,7 +167,7 @@ export default function AnamnesePage() {
                           <select
                             value={answers[question.key] ?? ''}
                             onChange={(event) => updateAnswer(question.key, event.target.value)}
-                            className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+                            className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
                           >
                             <option value="">Sélectionner</option>
                             {question.options?.map((option) => (

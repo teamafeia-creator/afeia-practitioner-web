@@ -13,8 +13,8 @@ const baseClasses =
   'inline-flex items-center justify-center gap-2 rounded-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
 const variants = {
-  ghost: 'bg-transparent text-charcoal hover:bg-sable/70 focus-visible:ring-teal/30',
-  outline: 'border border-teal/30 bg-white text-teal hover:border-teal hover:bg-teal/5'
+  ghost: 'bg-transparent text-charcoal hover:bg-cream focus-visible:ring-sage/30',
+  outline: 'border border-sage/30 bg-white text-sage hover:border-sage hover:bg-sage-light/50'
 };
 
 const sizes = {

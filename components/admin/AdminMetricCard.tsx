@@ -14,7 +14,7 @@ type AdminMetricCardProps = {
 };
 
 const accentClasses: Record<string, string> = {
-  teal: 'text-teal-600',
+  teal: 'text-sage-600',
   emerald: 'text-emerald-600',
   blue: 'text-blue-600',
   red: 'text-red-600',

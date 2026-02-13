@@ -111,7 +111,7 @@ export function ActivationCard({
         >
           <button
             onClick={() => setIsHidden(false)}
-            className="flex items-center gap-2 text-sm text-teal-dark hover:text-teal-deep transition-colors"
+            className="flex items-center gap-2 text-sm text-sage-dark hover:text-sage-deep transition-colors"
           >
             <Eye className="h-4 w-4" />
             <span>Afficher le code d&apos;activation</span>
@@ -150,7 +150,7 @@ export function ActivationCard({
             className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/50 transition-colors"
             title="Masquer temporairement"
           >
-            <X className="h-4 w-4 text-warmgray" />
+            <X className="h-4 w-4 text-stone" />
           </button>
 
           {/* Header */}
@@ -163,23 +163,23 @@ export function ActivationCard({
                 <h3 className="text-lg font-semibold text-charcoal">
                   Code d&apos;activation
                 </h3>
-                <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-gold/20 text-marine ring-1 ring-gold/30">
+                <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-gold/20 text-charcoal ring-1 ring-gold/30">
                   En attente d&apos;activation
                 </span>
               </div>
-              <p className="text-sm text-warmgray mt-1">
+              <p className="text-sm text-stone mt-1">
                 Partagez ce code avec {consultantName} pour qu&apos;il puisse activer son compte.
               </p>
             </div>
           </div>
 
           {/* Code display */}
-          <div className="bg-white/60 rounded-lg p-4 mb-4 border border-teal/10">
+          <div className="bg-white/60 rounded-lg p-4 mb-4 border border-divider">
             <div className="flex items-center justify-center gap-2">
               <span
                 className={cn(
-                  'font-mono text-3xl md:text-4xl font-bold tracking-[0.3em] text-teal-dark select-all',
-                  isExpired && 'text-warmgray line-through'
+                  'font-mono text-3xl md:text-4xl font-bold tracking-[0.3em] text-sage-dark select-all',
+                  isExpired && 'text-stone line-through'
                 )}
               >
                 {displayCode}
@@ -190,7 +190,7 @@ export function ActivationCard({
                   'p-2 rounded-lg transition-all',
                   copied
                     ? 'bg-sage/20 text-sage'
-                    : 'hover:bg-teal/10 text-teal-dark'
+                    : 'hover:bg-sage-light text-sage-dark'
                 )}
                 title="Copier le code"
               >
@@ -204,7 +204,7 @@ export function ActivationCard({
             {expiresAt && (
               <p className={cn(
                 'text-xs text-center mt-2',
-                isExpired ? 'text-red-500' : 'text-warmgray'
+                isExpired ? 'text-red-500' : 'text-stone'
               )}>
                 {formatExpirationDate()}
               </p>
@@ -244,7 +244,7 @@ export function ActivationCard({
           </div>
 
           {/* Info text */}
-          <p className="text-xs text-warmgray mt-4 text-center">
+          <p className="text-xs text-stone mt-4 text-center">
             Le consultant recevra un email a {consultantEmail} avec les instructions d&apos;activation.
             Cette carte disparaitra automatiquement une fois le compte active.
           </p>

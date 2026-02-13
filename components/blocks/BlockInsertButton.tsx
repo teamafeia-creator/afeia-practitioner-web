@@ -25,7 +25,7 @@ export function BlockInsertButton({
       <button
         type="button"
         onClick={() => setSidebarOpen(true)}
-        className="inline-flex items-center gap-1 rounded-md border border-dashed border-teal/30 px-2 py-1 text-[11px] font-medium text-teal transition-colors hover:border-teal/50 hover:bg-teal/5"
+        className="inline-flex items-center gap-1 rounded-md border border-dashed border-sage/30 px-2 py-1 text-[11px] font-medium text-sage transition-colors hover:border-sage/50 hover:bg-sage-light/50"
       >
         <Plus className="h-3 w-3" />
         Insérer un bloc

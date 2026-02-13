@@ -28,7 +28,7 @@ export default function MorningReviewPage() {
     return (
       <div className="space-y-6">
         <div className="glass-card p-8 text-center">
-          <p className="text-warmgray">Redirection vers la page de connexion...</p>
+          <p className="text-stone">Redirection vers la page de connexion...</p>
         </div>
       </div>
     );
@@ -38,12 +38,12 @@ export default function MorningReviewPage() {
     return (
       <div className="space-y-6">
         <div className="glass-card p-8 text-center">
-          <p className="text-warmgray mb-4">
+          <p className="text-stone mb-4">
             Erreur lors du chargement de la revue matinale.
           </p>
           <button
             onClick={() => refetch()}
-            className="text-sm text-teal hover:text-teal-deep font-medium"
+            className="text-sm text-sage hover:text-sage-deep font-medium"
           >
             Reessayer
           </button>
@@ -83,7 +83,7 @@ export default function MorningReviewPage() {
       {consultantsSummary.some(c => c.attentionLevel === 'insufficient') && (
         <div className="glass-card p-4 md:p-6">
           <h2 className="text-lg font-semibold text-charcoal mb-3">Donnees insuffisantes</h2>
-          <p className="text-sm text-warmgray mb-3">
+          <p className="text-sm text-stone mb-3">
             Ces consultants n&apos;ont pas encore assez de donnees pour etre evalues.
           </p>
           <div className="space-y-2">
@@ -95,7 +95,7 @@ export default function MorningReviewPage() {
                   className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg"
                 >
                   <span className="text-sm text-charcoal">{summary.consultant.name}</span>
-                  <span className="text-xs text-warmgray">
+                  <span className="text-xs text-stone">
                     Cree le {new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(new Date(summary.consultant.created_at))}
                   </span>
                 </div>

@@ -176,9 +176,9 @@ function formatDate(value?: string | null, withTime = false) {
 
 function renderValue(value?: string | null, fallback = 'Non renseigné') {
   if (!value || value.trim() === '') {
-    return <span className="italic text-warmgray">{fallback}</span>;
+    return <span className="italic text-stone">{fallback}</span>;
   }
-  return <span className="text-marine">{value}</span>;
+  return <span className="text-charcoal">{value}</span>;
 }
 
 function renderAnswer(value?: string | null) {
@@ -240,7 +240,7 @@ function areJournalEntriesEqual(
 
 function EditBanner({ label }: { label: string }) {
   return (
-    <div className="mt-4 rounded-lg border border-teal/20 bg-teal/5 px-3 py-2 text-xs font-medium text-teal">
+    <div className="mt-4 rounded-lg border border-sage/20 bg-sage-light/50 px-3 py-2 text-xs font-medium text-sage">
       Mode edition active - {label}
     </div>
   );
@@ -292,7 +292,7 @@ function renderAdherence(entry: JournalEntry) {
           key={item.label}
           className={cn(
             'rounded-full px-3 py-1 text-xs font-medium',
-            item.value ? 'bg-teal/10 text-teal' : 'bg-sable/70 text-warmgray'
+            item.value ? 'bg-sage-light text-sage' : 'bg-cream text-stone'
           )}
         >
           {item.label}: {item.value ? 'Oui' : 'Non'}
@@ -304,15 +304,15 @@ function renderAdherence(entry: JournalEntry) {
 
 function renderInsight(insight: WearableInsight) {
   return (
-    <div key={insight.id} className="rounded-lg bg-white/60 p-4 border border-teal/10">
+    <div key={insight.id} className="rounded-lg bg-white/60 p-4 border border-divider">
       <div className="flex items-center justify-between">
-        <span className="text-xs uppercase tracking-wide text-warmgray">Insight {insight.type ?? ''}</span>
+        <span className="text-xs uppercase tracking-wide text-stone">Insight {insight.type ?? ''}</span>
         <Badge variant={insight.level === 'attention' ? 'attention' : 'info'}>
           {insight.level ?? 'info'}
         </Badge>
       </div>
-      <p className="mt-2 text-sm text-marine">{insight.message ?? '—'}</p>
-      <p className="mt-2 text-xs text-warmgray">
+      <p className="mt-2 text-sm text-charcoal">{insight.message ?? '—'}</p>
+      <p className="mt-2 text-xs text-stone">
         Suggestion : {insight.suggested_action ?? '—'}
       </p>
     </div>
@@ -1094,14 +1094,14 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           <Card
             className={cn(
               'transition',
-              profileEditing ? 'ring-2 ring-teal/20 bg-teal/5' : ''
+              profileEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : ''
             )}
           >
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-semibold">Informations consultant</h2>
-                  <p className="text-xs text-warmgray">Profil et coordonnées du consultant.</p>
+                  <p className="text-xs text-stone">Profil et coordonnées du consultant.</p>
                 </div>
                 {!profileEditing ? (
                   <Button variant="secondary" onClick={() => setProfileEditing(true)}>
@@ -1156,12 +1156,12 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     }
                   />
                   <div className="sm:col-span-2">
-                    <p className="text-xs font-medium text-warmgray">Statut</p>
+                    <p className="text-xs font-medium text-stone">Statut</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Badge variant={isPremium ? 'premium' : 'standard'}>
                         {isPremium ? 'Premium' : 'Standard'}
                       </Badge>
-                      <span className="text-xs text-warmgray">
+                      <span className="text-xs text-stone">
                         Statut non modifiable depuis le profil.
                       </span>
                     </div>
@@ -1170,29 +1170,29 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-warmgray">Nom</p>
+                    <p className="text-xs uppercase tracking-wide text-stone">Nom</p>
                     <p className="mt-1 text-sm">{renderValue(consultantState.name)}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-warmgray">Email</p>
+                    <p className="text-xs uppercase tracking-wide text-stone">Email</p>
                     <p className="mt-1 text-sm">{renderValue(consultantState.email)}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-warmgray">Téléphone</p>
+                    <p className="text-xs uppercase tracking-wide text-stone">Téléphone</p>
                     <p className="mt-1 text-sm">{renderValue(consultantState.phone)}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-warmgray">Âge</p>
+                    <p className="text-xs uppercase tracking-wide text-stone">Âge</p>
                     <p className="mt-1 text-sm">
                       {renderValue(consultantState.age ? `${consultantState.age} ans` : null)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-warmgray">Ville</p>
+                    <p className="text-xs uppercase tracking-wide text-stone">Ville</p>
                     <p className="mt-1 text-sm">{renderValue(consultantState.city)}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-warmgray">Statut</p>
+                    <p className="text-xs uppercase tracking-wide text-stone">Statut</p>
                     <div className="mt-1">
                       <Badge variant={isPremium ? 'premium' : 'standard'}>
                         {isPremium ? 'Premium' : 'Standard'}
@@ -1229,7 +1229,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           <Card
             className={cn(
               'transition',
-              profileEditing ? 'ring-2 ring-teal/20 bg-teal/5' : ''
+              profileEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : ''
             )}
           >
             <CardHeader>
@@ -1252,7 +1252,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                   rows={4}
                 />
               ) : (
-                <p className="text-sm text-marine whitespace-pre-line">
+                <p className="text-sm text-charcoal whitespace-pre-line">
                   {renderAnswer(consultantState.consultation_reason)}
                 </p>
               )}
@@ -1303,7 +1303,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                       {upcoming.map((appointment) => (
                         <div
                           key={appointment.id}
-                          className="rounded-lg bg-white/60 p-4 border border-teal/10"
+                          className="rounded-lg bg-white/60 p-4 border border-divider"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
@@ -1311,7 +1311,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                                 {formatDate(appointment.starts_at, true)}
                               </p>
                               {appointment.ends_at ? (
-                                <p className="text-xs text-warmgray">
+                                <p className="text-xs text-stone">
                                   {formatDate(appointment.starts_at, true)} - {formatDate(appointment.ends_at, true)}
                                 </p>
                               ) : null}
@@ -1321,7 +1321,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                             </Badge>
                           </div>
                           {(appointment.notes_internal || appointment.notes) ? (
-                            <p className="mt-2 text-sm text-marine">{appointment.notes_internal || appointment.notes}</p>
+                            <p className="mt-2 text-sm text-charcoal">{appointment.notes_internal || appointment.notes}</p>
                           ) : null}
                         </div>
                       ))}
@@ -1356,7 +1356,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         <div
                           key={appointment.id}
                           className={cn(
-                            'rounded-lg bg-white/60 p-4 border border-teal/10',
+                            'rounded-lg bg-white/60 p-4 border border-divider',
                             appointment.status === 'cancelled' && 'opacity-60'
                           )}
                         >
@@ -1379,7 +1379,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                             </div>
                           </div>
                           {(appointment.notes_internal || appointment.notes) ? (
-                            <p className="mt-2 text-sm text-marine">{appointment.notes_internal || appointment.notes}</p>
+                            <p className="mt-2 text-sm text-charcoal">{appointment.notes_internal || appointment.notes}</p>
                           ) : null}
                         </div>
                       ))}
@@ -1393,7 +1393,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       )}
 
       {tab === 'Anamnèse' && (
-        <Card className={cn(anamnesisEditing ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
+        <Card className={cn(anamnesisEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Anamnèse</h2>
@@ -1412,16 +1412,16 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                   <div>
                     <h3 className="text-sm font-semibold text-charcoal">{section.title}</h3>
                     {section.description ? (
-                      <p className="text-xs text-warmgray">{section.description}</p>
+                      <p className="text-xs text-stone">{section.description}</p>
                     ) : null}
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     {section.questions.map((question) => (
                       <div
                         key={question.key}
-                        className="rounded-lg bg-white/60 p-4 border border-teal/10"
+                        className="rounded-lg bg-white/60 p-4 border border-divider"
                       >
-                        <p className="text-xs uppercase tracking-wide text-warmgray">{question.label}</p>
+                        <p className="text-xs uppercase tracking-wide text-stone">{question.label}</p>
                         {anamnesisEditing ? (
                           question.type === 'choice' ? (
                             <Select
@@ -1456,7 +1456,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                             />
                           )
                         ) : (
-                          <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
+                          <p className="mt-2 text-sm text-charcoal whitespace-pre-line break-words">
                             {renderAnswer(anamnesisAnswers[question.key])}
                           </p>
                         )}
@@ -1502,8 +1502,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           </CardHeader>
           <CardContent>
             {!isPremium ? (
-              <div className="relative overflow-hidden rounded-lg border border-dashed border-teal/20 bg-teal/5 p-6 text-sm text-marine">
-                <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-teal shadow-soft">
+              <div className="relative overflow-hidden rounded-lg border border-dashed border-sage/20 bg-sage-light/50 p-6 text-sm text-charcoal">
+                <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-sage shadow-soft">
                   Premium
                 </div>
                 <div className="flex flex-col gap-3">
@@ -1537,7 +1537,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[640px] text-sm">
                     <thead>
-                      <tr className="text-left text-warmgray">
+                      <tr className="text-left text-stone">
                         <th className="py-2">Date</th>
                         <th className="py-2">Sommeil</th>
                         <th className="py-2">Score</th>
@@ -1587,7 +1587,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       )}
 
       {tab === 'Journal' && (
-        <Card className={cn(journalEditing ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
+        <Card className={cn(journalEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Journal</h2>
@@ -1601,16 +1601,16 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="rounded-lg bg-white/60 p-5 border border-teal/10">
+              <div className="rounded-lg bg-white/60 p-5 border border-divider">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-charcoal">Dernière entrée</p>
-                  <span className="text-xs text-warmgray">
+                  <span className="text-xs text-stone">
                     {journalForm.date ? formatDate(journalForm.date) : '—'}
                   </span>
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-warmgray">Humeur</p>
+                    <p className="text-xs uppercase tracking-wide text-stone">Humeur</p>
                     {journalEditing ? (
                       <Select
                         className="mt-2"
@@ -1629,7 +1629,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     )}
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-warmgray">Énergie</p>
+                    <p className="text-xs uppercase tracking-wide text-stone">Énergie</p>
                     {journalEditing ? (
                       <Select
                         className="mt-2"
@@ -1652,7 +1652,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-xs uppercase tracking-wide text-warmgray">Notes du consultant</p>
+                  <p className="text-xs uppercase tracking-wide text-stone">Notes du consultant</p>
                   {journalEditing ? (
                     <Textarea
                       className="mt-2"
@@ -1676,8 +1676,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                       { key: 'adherence_plantes', label: 'Plantes' }
                     ] as const
                   ).map((item) => (
-                    <div key={item.key} className="flex items-center justify-between rounded-sm bg-sable/50 px-3 py-2">
-                      <span className="text-xs text-warmgray">{item.label}</span>
+                    <div key={item.key} className="flex items-center justify-between rounded-sm bg-cream/80 px-3 py-2">
+                      <span className="text-xs text-stone">{item.label}</span>
                       {journalEditing ? (
                         <Select
                           value={journalForm[item.key] ? 'Oui' : 'Non'}
@@ -1693,7 +1693,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                           <option value="Non">Non</option>
                         </Select>
                       ) : (
-                        <span className="text-xs font-medium text-marine">
+                        <span className="text-xs font-medium text-charcoal">
                           {journalForm[item.key] ? 'Oui' : 'Non'}
                         </span>
                       )}
@@ -1726,7 +1726,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               ) : null}
 
               <div className="space-y-3">
-                <p className="text-xs uppercase tracking-wide text-warmgray">Historique</p>
+                <p className="text-xs uppercase tracking-wide text-stone">Historique</p>
                 {journalEntries.length === 0 ? (
                   <EmptyState
                     icon="documents"
@@ -1747,7 +1747,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 ) : (
                   <div className="grid gap-3">
                     {journalEntries.map((entry) => (
-                      <div key={entry.id} className="rounded-lg bg-white/60 p-4 border border-teal/10">
+                      <div key={entry.id} className="rounded-lg bg-white/60 p-4 border border-divider">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
                           <div className="flex items-center gap-2 text-sm">
@@ -1770,7 +1770,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       )}
 
       {tab === T.tabNotesSeance && (
-        <Card className={cn(noteEditing ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
+        <Card className={cn(noteEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Notes privées de consultation</h2>
@@ -1783,15 +1783,15 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             {noteEditing ? <EditBanner label="Enregistrez vos notes confidentielles." /> : null}
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 rounded-lg bg-white/60 p-4 text-sm text-charcoal border border-teal/10">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal/10 flex-shrink-0">
-                <svg className="w-4 h-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-start gap-3 rounded-lg bg-white/60 p-4 text-sm text-charcoal border border-divider">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage-light flex-shrink-0">
+                <svg className="w-4 h-4 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
               <div>
                 <p className="text-sm font-semibold text-charcoal">Notes privees</p>
-                <p className="mt-1 text-xs text-warmgray">
+                <p className="mt-1 text-xs text-stone">
                   Visibles uniquement par le naturopathe. Non partagees avec le consultant.
                 </p>
               </div>
@@ -1804,7 +1804,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 rows={6}
               />
             ) : (
-              <div className="rounded-lg bg-white/60 p-4 text-sm border border-teal/10 whitespace-pre-line">
+              <div className="rounded-lg bg-white/60 p-4 text-sm border border-divider whitespace-pre-line">
                 {renderValue(noteContent)}
               </div>
             )}
@@ -1849,7 +1849,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-semibold">Versions du {T.conseillancierLower}</h2>
-                  <p className="text-xs text-warmgray">
+                  <p className="text-xs text-stone">
                     {T.descConseillancier}
                   </p>
                 </div>
@@ -1891,8 +1891,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         type="button"
                         onClick={() => setActivePlanId(planItem.id)}
                         className={cn(
-                          'text-left rounded-lg border border-teal/10 bg-white/60 p-4 transition',
-                          isActive ? 'border-teal/40 ring-2 ring-teal/20' : 'hover:border-teal/20'
+                          'text-left rounded-lg border border-divider bg-white/60 p-4 transition',
+                          isActive ? 'border-sage/40 ring-2 ring-sage/20' : 'hover:border-sage/20'
                         )}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -1900,7 +1900,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                             <p className="text-sm font-semibold text-charcoal">
                               Version v{planItem.version}
                             </p>
-                            <p className="text-xs text-warmgray">
+                            <p className="text-xs text-stone">
                               {formatDate(planItem.shared_at ?? planItem.created_at, true)}
                             </p>
                           </div>
@@ -1933,14 +1933,14 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           ) : null}
 
           {activePlan ? (
-            <Card className={cn(canEditPlan ? 'ring-2 ring-teal/20 bg-teal/5' : '')}>
+            <Card className={cn(canEditPlan ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <h2 className="text-sm font-semibold">
                       {T.conseillancier} v{activePlan.version}
                     </h2>
-                    <p className="text-xs text-warmgray">
+                    <p className="text-xs text-stone">
                       {canEditPlan
                         ? 'Version brouillon (modifiable).'
                         : 'Version partagée (lecture seule).'}
@@ -2009,11 +2009,11 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         <h3 className="text-sm font-semibold text-charcoal">
                           {section.icon ? `${section.icon} ` : ''}{section.title}
                           {section.optional ? (
-                            <span className="ml-2 text-xs font-normal text-warmgray">(optionnel)</span>
+                            <span className="ml-2 text-xs font-normal text-stone">(optionnel)</span>
                           ) : null}
                         </h3>
                         {section.description ? (
-                          <p className="text-xs text-warmgray">{section.description}</p>
+                          <p className="text-xs text-stone">{section.description}</p>
                         ) : null}
                       </div>
                       <div className="grid gap-4 md:grid-cols-2">
@@ -2023,10 +2023,10 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                           return (
                             <div
                               key={field.key}
-                              className="rounded-lg bg-white/60 p-4 border border-teal/10"
+                              className="rounded-lg bg-white/60 p-4 border border-divider"
                             >
                               <div className="flex items-center justify-between">
-                                <p className="text-xs uppercase tracking-wide text-warmgray">{field.label}</p>
+                                <p className="text-xs uppercase tracking-wide text-stone">{field.label}</p>
                                 {canEditPlan && (
                                   <div className="flex items-center gap-1">
                                     <SectionSuggestButton
@@ -2077,7 +2077,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                                   </div>
                                 </>
                               ) : (
-                                <p className="mt-2 text-sm text-marine whitespace-pre-line break-words">
+                                <p className="mt-2 text-sm text-charcoal whitespace-pre-line break-words">
                                   {renderAnswer(planForm[field.key])}
                                 </p>
                               )}
@@ -2126,7 +2126,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         <Card>
           <CardHeader>
             <h2 className="text-sm font-semibold">{T.tabDocuments}</h2>
-            <p className="text-xs text-warmgray">{T.descDocuments}</p>
+            <p className="text-xs text-stone">{T.descDocuments}</p>
           </CardHeader>
           <CardContent>
             {!consultant.analysis_results || consultant.analysis_results.length === 0 ? (
@@ -2140,14 +2140,14 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 {consultant.analysis_results.map((result) => (
                   <div
                     key={result.id}
-                    className="flex items-center justify-between rounded-xl border border-warmgray/20 bg-sable/30 p-4"
+                    className="flex items-center justify-between rounded-xl border border-divider bg-cream/60 p-4"
                   >
                     <div className="flex-1 min-w-0 mr-4">
                       <p className="text-sm font-medium text-charcoal truncate">{result.file_name}</p>
                       {result.description && (
-                        <p className="text-xs text-warmgray mt-1 line-clamp-2">{result.description}</p>
+                        <p className="text-xs text-stone mt-1 line-clamp-2">{result.description}</p>
                       )}
-                      <p className="text-xs text-warmgray mt-1">
+                      <p className="text-xs text-stone mt-1">
                         {result.analysis_date
                           ? `Date : ${DATE_FORMATTER.format(new Date(result.analysis_date))}`
                           : `Ajouté le ${DATE_FORMATTER.format(new Date(result.uploaded_at))}`
@@ -2196,22 +2196,22 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 description="Envoyez un premier message pour ouvrir la conversation."
               />
             ) : (
-              <div className="space-y-3 rounded-lg bg-white/60 p-4 border border-teal/10">
+              <div className="space-y-3 rounded-lg bg-white/60 p-4 border border-divider">
                 {messages.map((message) => (
                   <div
                     key={message.id}
                     className={cn(
                       'max-w-[90%] rounded-lg px-4 py-2 text-sm sm:max-w-[78%]',
                       message.sender === 'consultant'
-                        ? 'bg-sable/80 text-marine'
-                        : 'ml-auto bg-teal text-white'
+                        ? 'bg-cream text-charcoal'
+                        : 'ml-auto bg-sage text-white'
                     )}
                   >
                     <p className="break-words">{message.text || '—'}</p>
                     <p
                       className={cn(
                         'mt-1 text-[11px] opacity-80',
-                        message.sender === 'consultant' ? 'text-warmgray' : 'text-white/80'
+                        message.sender === 'consultant' ? 'text-stone' : 'text-white/80'
                       )}
                     >
                       {formatDate(message.sent_at, true)}
@@ -2248,7 +2248,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/30 backdrop-blur-[4px] px-4">
           <div className="w-full max-w-md rounded-xl glass-card p-6">
             <h2 className="text-lg font-semibold text-charcoal">Planifier un rendez-vous</h2>
-            <p className="mt-2 text-sm text-warmgray">
+            <p className="mt-2 text-sm text-stone">
               Définissez la date, l’heure et la durée estimée du rendez-vous.
             </p>
             <div className="mt-4 space-y-4">
@@ -2305,7 +2305,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/30 backdrop-blur-[4px] px-4">
           <div className="w-full max-w-md rounded-xl glass-card p-6">
             <h2 className="text-lg font-semibold text-charcoal">Suppression définitive</h2>
-            <p className="mt-2 text-sm text-warmgray">
+            <p className="mt-2 text-sm text-stone">
               Cette action est définitive. Le consultant et toutes ses données associées seront supprimés.
             </p>
             <div className="mt-5 flex flex-wrap justify-end gap-2">

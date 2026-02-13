@@ -31,8 +31,8 @@ export function BlockCard({
       className={cn(
         'group relative rounded-lg border bg-white p-3 transition-all cursor-pointer',
         selected
-          ? 'border-teal/40 ring-2 ring-teal/20 shadow-sm'
-          : 'border-teal/10 hover:border-teal/25 hover:shadow-sm'
+          ? 'border-sage/40 ring-2 ring-sage/20 shadow-sm'
+          : 'border-divider hover:border-sage/25 hover:shadow-sm'
       )}
       onClick={() => onSelect?.(block)}
     >
@@ -47,7 +47,7 @@ export function BlockCard({
             )}
           </div>
           {!compact && (
-            <p className="mt-1 text-xs text-warmgray line-clamp-2">{excerpt}</p>
+            <p className="mt-1 text-xs text-stone line-clamp-2">{excerpt}</p>
           )}
         </div>
         <button
@@ -60,7 +60,7 @@ export function BlockCard({
             'shrink-0 p-1 rounded transition-colors',
             block.is_favorite
               ? 'text-gold'
-              : 'text-warmgray/40 hover:text-gold/70'
+              : 'text-stone/40 hover:text-gold/70'
           )}
           title={block.is_favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
         >
@@ -70,7 +70,7 @@ export function BlockCard({
 
       {!compact && (
         <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1 text-[10px] text-warmgray">
+          <div className="flex items-center gap-1 text-[10px] text-stone">
             {block.usage_count > 0 && (
               <span>{block.usage_count} utilisation{block.usage_count > 1 ? 's' : ''}</span>
             )}
@@ -82,7 +82,7 @@ export function BlockCard({
                 e.stopPropagation();
                 onInsert(block.content);
               }}
-              className="shrink-0 rounded-md bg-teal px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-teal-deep"
+              className="shrink-0 rounded-md bg-sage px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-sage-deep"
             >
               Insérer
             </button>

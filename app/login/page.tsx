@@ -66,7 +66,7 @@ function LoginForm() {
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-charcoal">Connexion</h1>
-            <p className="text-warmgray mt-2">
+            <p className="text-stone mt-2">
               Accédez à vos dossiers et consultations
             </p>
           </div>
@@ -74,7 +74,7 @@ function LoginForm() {
           <form onSubmit={onSubmit} className="space-y-5">
             <div className="space-y-4">
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-warmgray">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone">
                   <Mail className="w-5 h-5" />
                 </div>
                 <input
@@ -84,12 +84,12 @@ function LoginForm() {
                   placeholder="votre@email.com"
                   autoComplete="email"
                   required
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-neutral-200 bg-white text-charcoal placeholder:text-warmgray/60 focus:border-teal focus:ring-2 focus:ring-teal/20 transition-all outline-none"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-neutral-200 bg-white text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
                 />
               </div>
 
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-warmgray">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone">
                   <Lock className="w-5 h-5" />
                 </div>
                 <input
@@ -99,12 +99,12 @@ function LoginForm() {
                   placeholder="Mot de passe"
                   autoComplete="current-password"
                   required
-                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-neutral-200 bg-white text-charcoal placeholder:text-warmgray/60 focus:border-teal focus:ring-2 focus:ring-teal/20 transition-all outline-none"
+                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-neutral-200 bg-white text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-warmgray hover:text-charcoal transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone hover:text-charcoal transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -115,13 +115,13 @@ function LoginForm() {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded border-neutral-300 text-teal focus:ring-teal/20"
+                  className="w-4 h-4 rounded border-neutral-300 text-sage focus:ring-sage/20"
                 />
-                <span className="text-sm text-warmgray">Se souvenir de moi</span>
+                <span className="text-sm text-stone">Se souvenir de moi</span>
               </label>
               <Link
                 href="/reset-password"
-                className="text-sm text-teal hover:text-teal-deep transition-colors"
+                className="text-sm text-sage hover:text-sage-deep transition-colors"
               >
                 Mot de passe oublié ?
               </Link>
@@ -162,11 +162,11 @@ function LoginForm() {
           </div>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-warmgray">
+            <p className="text-sm text-stone">
               Pas encore de compte ?{' '}
               <Link
                 href="/signup"
-                className="text-teal hover:text-teal-deep font-medium transition-colors"
+                className="text-sage hover:text-sage-deep font-medium transition-colors"
               >
                 Créer un compte
               </Link>
@@ -179,17 +179,17 @@ function LoginForm() {
               <div className="w-full border-t border-neutral-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-4 text-warmgray">ou</span>
+              <span className="bg-white px-4 text-stone">ou</span>
             </div>
           </div>
 
           {/* Demo info */}
-          <div className="rounded-xl bg-teal/5 border border-teal/10 p-4">
+          <div className="rounded-xl bg-sage-light/50 border border-divider p-4">
             <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-teal flex-shrink-0 mt-0.5" />
+              <Sparkles className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-charcoal">Mode démo disponible</p>
-                <p className="text-xs text-warmgray mt-1">
+                <p className="text-xs text-stone mt-1">
                   Explorez l&apos;application avec des données de démonstration.
                 </p>
               </div>
@@ -203,10 +203,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-sable via-white to-teal/5 relative overflow-hidden">
+    <main className="min-h-screen bg-gradient-to-br from-cream via-white to-sage/5 relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-teal/10 blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-sage-light blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-primary-500/5 blur-3xl" />
       </div>
@@ -222,7 +222,7 @@ export default function LoginPage() {
             <div className="flex items-center gap-3 mb-2">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal to-teal-deep flex items-center justify-center shadow-glow"
+                className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sage to-sage-dark flex items-center justify-center shadow-glow"
               >
                 <Image
                   src="/afeia_symbol.svg"
@@ -234,7 +234,7 @@ export default function LoginPage() {
               </motion.div>
               <div>
                 <h2 className="text-2xl font-bold text-charcoal">AFEIA</h2>
-                <p className="text-sm text-warmgray">Espace Naturopathe</p>
+                <p className="text-sm text-stone">Espace Naturopathe</p>
               </div>
             </div>
           </motion.div>
@@ -257,18 +257,18 @@ export default function LoginPage() {
             transition={{ delay: 0.5 }}
             className="mt-8 text-center"
           >
-            <p className="text-xs text-warmgray">
+            <p className="text-xs text-stone">
               RGPD : hébergement UE, RBAC strict, audit trail.
             </p>
-            <p className="text-xs text-warmgray mt-1">
+            <p className="text-xs text-stone mt-1">
               AFEIA ne remplace jamais un médecin.
             </p>
             <div className="mt-4 flex items-center justify-center gap-4">
-              <Link href="/welcome" className="text-xs text-teal hover:underline">
+              <Link href="/welcome" className="text-xs text-sage hover:underline">
                 Découvrir AFEIA
               </Link>
               <span className="text-neutral-300">|</span>
-              <Link href="#" className="text-xs text-teal hover:underline">
+              <Link href="#" className="text-xs text-sage hover:underline">
                 Politique de confidentialité
               </Link>
             </div>

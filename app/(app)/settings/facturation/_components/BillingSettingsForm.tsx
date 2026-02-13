@@ -116,7 +116,7 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
             onChange={(e) => setAdresse(e.target.value)}
             className="min-h-[80px]"
           />
-          <span className="text-[13px] font-medium text-warmgray block -mt-2">
+          <span className="text-[13px] font-medium text-stone block -mt-2">
             Adresse de facturation
           </span>
 
@@ -154,7 +154,7 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
                 type="checkbox"
                 checked={emailAutoConsultant}
                 onChange={(e) => setEmailAutoConsultant(e.target.checked)}
-                className="rounded border-teal/30 text-teal focus:ring-teal/30"
+                className="rounded border-sage/30 text-sage focus:ring-sage/30"
               />
               <span className="text-sm text-charcoal">
                 Envoyer automatiquement la facture par email au consultant
@@ -166,7 +166,7 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
                 type="checkbox"
                 checked={emailCopiePraticien}
                 onChange={(e) => setEmailCopiePraticien(e.target.checked)}
-                className="rounded border-teal/30 text-teal focus:ring-teal/30"
+                className="rounded border-sage/30 text-sage focus:ring-sage/30"
               />
               <span className="text-sm text-charcoal">
                 Recevoir une copie de chaque facture envoyee

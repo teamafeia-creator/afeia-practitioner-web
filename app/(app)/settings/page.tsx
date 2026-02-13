@@ -132,7 +132,7 @@ export default function SettingsPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-sm font-semibold">Profil professionnel</h2>
-                <p className="text-xs text-warmgray">Vos informations visibles par vos consultants.</p>
+                <p className="text-xs text-stone">Vos informations visibles par vos consultants.</p>
               </div>
               {profile ? (
                 <Button
@@ -159,7 +159,7 @@ export default function SettingsPage() {
                   />
                 ) : (
                   <div>
-                    <p className="text-xs font-medium text-warmgray uppercase tracking-wide">Nom</p>
+                    <p className="text-xs font-medium text-stone uppercase tracking-wide">Nom</p>
                     <div className="mt-2 text-sm text-charcoal">{profileName}</div>
                   </div>
                 )}
@@ -177,7 +177,7 @@ export default function SettingsPage() {
                   />
                 ) : (
                   <div>
-                    <p className="text-xs font-medium text-warmgray uppercase tracking-wide">Email</p>
+                    <p className="text-xs font-medium text-stone uppercase tracking-wide">Email</p>
                     <div className="mt-2 text-sm text-charcoal">{profileEmail}</div>
                   </div>
                 )}
@@ -221,7 +221,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Agenda</h2>
-              <p className="text-xs text-warmgray">Configurez vos types de seances et disponibilites.</p>
+              <p className="text-xs text-stone">Configurez vos types de seances et disponibilites.</p>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/consultation-types')}>
@@ -239,7 +239,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Assistance IA</h2>
-              <p className="text-xs text-warmgray">Personnalisez le style de l'IA pour vos conseillanciers.</p>
+              <p className="text-xs text-stone">Personnalisez le style de l'IA pour vos conseillanciers.</p>
             </CardHeader>
             <CardContent>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/ai')}>
@@ -269,7 +269,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Notifications</h2>
-              <p className="text-xs text-warmgray">Preferences de communication.</p>
+              <p className="text-xs text-stone">Preferences de communication.</p>
             </CardHeader>
             <CardContent>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/facturation/relances')}>
@@ -281,7 +281,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Donnees et RGPD</h2>
-              <p className="text-xs text-warmgray">Vie privee et protection des donnees.</p>
+              <p className="text-xs text-stone">Vie privee et protection des donnees.</p>
             </CardHeader>
             <CardContent>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/rgpd')}>

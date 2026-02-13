@@ -158,7 +158,7 @@ export function AdminPractitionerDetailClient({
       <div className="rounded-lg border border-slate-200 bg-white p-6">
         <div className="flex flex-wrap items-start gap-4">
           {/* Avatar */}
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-100 text-teal-700 text-lg font-bold">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-100 text-sage-700 text-lg font-bold">
             {initials}
           </div>
           {/* Info */}
@@ -378,7 +378,7 @@ export function AdminPractitionerDetailClient({
       <div className="flex justify-end">
         <Link
           href={`/admin/settings/logs?targetId=${practitioner.id}`}
-          className="inline-flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-800 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-sage-600 hover:text-sage-800 transition-colors"
         >
           <FileText className="h-3.5 w-3.5" />
           Voir les logs de ce praticien

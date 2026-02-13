@@ -95,7 +95,7 @@ export function InvoiceTemplatesManager({
         <CardContent>
           {templates.length === 0 ? (
             <div className="text-center py-6">
-              <p className="text-sm text-warmgray mb-4">
+              <p className="text-sm text-stone mb-4">
                 Aucun template configure. Creez des templates pour accelerer
                 la facturation.
               </p>
@@ -120,7 +120,7 @@ export function InvoiceTemplatesManager({
                     <p className="text-sm font-medium text-charcoal">
                       {template.label}
                     </p>
-                    <p className="text-xs text-warmgray">
+                    <p className="text-xs text-stone">
                       {template.description}
                     </p>
                   </div>
@@ -129,7 +129,7 @@ export function InvoiceTemplatesManager({
                       {formatCurrency(template.montant_defaut)}
                     </p>
                     {template.duree_defaut && (
-                      <p className="text-xs text-warmgray">
+                      <p className="text-xs text-stone">
                         {template.duree_defaut} min
                       </p>
                     )}

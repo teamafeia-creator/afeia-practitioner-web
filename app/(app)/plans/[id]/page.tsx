@@ -214,7 +214,7 @@ export default function PlanPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-stone">
         Chargement du plan…
       </div>
     );
@@ -224,7 +224,7 @@ export default function PlanPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold">Plan introuvable</h1>
-        <p className="text-sm text-warmgray">
+        <p className="text-sm text-stone">
           Ce plan n&apos;existe pas ou n&apos;a pas de versions.
           Vous pouvez créer un conseillancier depuis le dossier consultant.
         </p>
@@ -244,9 +244,9 @@ export default function PlanPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-charcoal">Plan d&apos;accompagnement</h1>
-          <div className="mt-1 text-sm text-warmgray">
+          <div className="mt-1 text-sm text-stone">
             {consultant ? (
-              <Link className="text-teal hover:underline" href={`/consultants/${consultant.id}`}>
+              <Link className="text-sage hover:underline" href={`/consultants/${consultant.id}`}>
                 {consultant.name}
               </Link>
             ) : (
@@ -296,14 +296,14 @@ export default function PlanPage() {
                   onClick={() => handleVersionSelect(idx)}
                   className={`rounded-xl px-3 py-1 text-xs font-medium ring-1 transition ${
                     idx === selected
-                      ? 'bg-teal text-white ring-teal/40'
-                      : 'bg-white text-marine ring-black/10 hover:bg-sable'
+                      ? 'bg-sage text-white ring-sage/40'
+                      : 'bg-white text-charcoal ring-black/10 hover:bg-cream'
                   }`}
                 >
                   V{v.version}
                 </button>
               ))}
-              <span className="ml-2 text-xs text-warmgray">
+              <span className="ml-2 text-xs text-stone">
                 {new Date(current.published_at).toLocaleDateString('fr-FR')} •{' '}
                 {isLatest ? 'Version active' : 'Version archivée'}
               </span>
@@ -313,12 +313,12 @@ export default function PlanPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="md:col-span-2">
-              <label className="text-xs font-medium text-warmgray">Titre du plan</label>
+              <label className="text-xs font-medium text-stone">Titre du plan</label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs font-medium text-warmgray">Statut</label>
-              <div className="mt-1 rounded-xl bg-sable p-2 text-sm text-marine ring-1 ring-black/5">
+              <label className="text-xs font-medium text-stone">Statut</label>
+              <div className="mt-1 rounded-xl bg-cream p-2 text-sm text-charcoal ring-1 ring-black/5">
                 {isLatest ? 'Brouillon (modifiable)' : 'Lecture seule (historique)'}
               </div>
             </div>
@@ -356,7 +356,7 @@ export default function PlanPage() {
                     next[idx] = { ...next[idx], body: e.target.value };
                     setSections(next);
                   }}
-                  className="mt-3 min-h-[120px] w-full rounded-2xl border border-black/10 bg-white p-3 text-sm text-charcoal placeholder:text-warmgray focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/30"
+                  className="mt-3 min-h-[120px] w-full rounded-2xl border border-black/10 bg-white p-3 text-sm text-charcoal placeholder:text-stone focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
                   placeholder="Recommandations (ton neutre, pédagogique, non médical)"
                 />
               </div>
@@ -384,7 +384,7 @@ export default function PlanPage() {
             </Button>
           </div>
 
-          <div className="rounded-2xl bg-sable p-3 text-xs text-warmgray ring-1 ring-black/5">
+          <div className="rounded-2xl bg-cream p-3 text-xs text-stone ring-1 ring-black/5">
             Rappel : ce plan ne remplace pas un suivi médical. En cas de signaux préoccupants,
             recommander une consultation médicale.
           </div>

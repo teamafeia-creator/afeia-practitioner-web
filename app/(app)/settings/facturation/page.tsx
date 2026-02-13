@@ -55,7 +55,7 @@ export default function FacturationSettingsPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Parametres facturation" />
-        <div className="glass-card rounded-lg p-8 text-center text-warmgray">
+        <div className="glass-card rounded-lg p-8 text-center text-stone">
           Chargement...
         </div>
       </div>
@@ -96,16 +96,16 @@ export default function FacturationSettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/settings/facturation/stripe" className="block">
-          <div className="glass-card rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-teal/10">
+          <div className="glass-card rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-divider">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-teal/10 p-2">
-                <CreditCard className="h-5 w-5 text-teal" />
+              <div className="rounded-lg bg-sage-light p-2">
+                <CreditCard className="h-5 w-5 text-sage" />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-charcoal">
                   Paiement en ligne
                 </h3>
-                <p className="text-xs text-warmgray">
+                <p className="text-xs text-stone">
                   Connecter Stripe pour recevoir des paiements
                 </p>
               </div>
@@ -114,16 +114,16 @@ export default function FacturationSettingsPage() {
         </Link>
 
         <Link href="/settings/facturation/relances" className="block">
-          <div className="glass-card rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-teal/10">
+          <div className="glass-card rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-divider">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-teal/10 p-2">
-                <Bell className="h-5 w-5 text-teal" />
+              <div className="rounded-lg bg-sage-light p-2">
+                <Bell className="h-5 w-5 text-sage" />
               </div>
               <div>
                 <h3 className="text-sm font-medium text-charcoal">
                   Relances automatiques
                 </h3>
-                <p className="text-xs text-warmgray">
+                <p className="text-xs text-stone">
                   Configurer les rappels pour les factures impayees
                 </p>
               </div>

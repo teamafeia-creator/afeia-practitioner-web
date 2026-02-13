@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { Toast } from '@/components/ui/Toast';
 import { Avatar } from '@/components/ui/Avatar';
@@ -340,7 +341,12 @@ export default function ConsultantsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="space-y-6"
+    >
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>Consultants</h1>
@@ -459,10 +465,10 @@ export default function ConsultantsPage() {
         </div>
       )}
 
-      {/* Consultant Grid (compact cards) */}
+      {/* Consultant Grid (compact cards) with stagger animation */}
       {filteredConsultants.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredConsultants.map((consultant) => {
+          {filteredConsultants.map((consultant, index) => {
             const meta = consultantMeta[consultant.id] ?? {};
             const isPremium = consultant.is_premium || consultant.status === 'premium';
             const isActive = consultant.activated !== false;
@@ -474,10 +480,19 @@ export default function ConsultantsPage() {
               : null;
 
             return (
-              <Link
+              <motion.div
                 key={consultant.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.3 }}
+                whileHover={{
+                  boxShadow: '0 8px 30px rgba(45,52,54,0.08)',
+                  transition: { duration: 0.2 }
+                }}
+              >
+              <Link
                 href={`/consultants/${consultant.id}`}
-                className="block bg-white border border-divider rounded-xl p-5 shadow-card hover:shadow-card-hover transition-all duration-200 hover:border-sage/30"
+                className="block bg-white border border-divider rounded-xl p-5 shadow-card transition-all duration-200 hover:border-sage/30"
               >
                 <div className="flex flex-col items-center text-center">
                   {/* Avatar + status dot */}
@@ -529,6 +544,7 @@ export default function ConsultantsPage() {
                   </div>
                 </div>
               </Link>
+              </motion.div>
             );
           })}
         </div>
@@ -629,6 +645,6 @@ export default function ConsultantsPage() {
           onClose={() => setToast(null)}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

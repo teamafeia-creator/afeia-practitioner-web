@@ -122,7 +122,7 @@ export default function BibliotequePage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>Ma bibliotheque</h1>
-          <p className="text-sm text-warmgray">
+          <p className="text-sm text-stone">
             {blocks.length} bloc{blocks.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -137,27 +137,27 @@ export default function BibliotequePage() {
         <CardContent className="space-y-3 pt-4">
           {/* Search bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-warmgray" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher dans vos blocs..."
-              className="w-full rounded-lg border border-teal/15 bg-sable-light py-2.5 pl-10 pr-3 text-sm text-charcoal placeholder:text-warmgray/60 focus:border-teal/30 focus:outline-none focus:ring-2 focus:ring-teal/10"
+              className="w-full rounded-lg border border-divider bg-cream py-2.5 pl-10 pr-3 text-sm text-charcoal placeholder:text-stone/60 focus:border-sage/30 focus:outline-none focus:ring-2 focus:ring-sage/10"
             />
           </div>
 
           {/* View toggle + favorites */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex rounded-lg border border-teal/15 overflow-hidden">
+            <div className="flex rounded-lg border border-divider overflow-hidden">
               <button
                 type="button"
                 onClick={() => { setViewMode('section'); setActiveFilter(null); }}
                 className={cn(
                   'flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-colors',
                   viewMode === 'section'
-                    ? 'bg-teal text-white'
-                    : 'bg-white text-teal hover:bg-teal/5'
+                    ? 'bg-sage text-white'
+                    : 'bg-white text-sage hover:bg-sage-light/50'
                 )}
               >
                 <Grid3X3 className="h-3 w-3" />
@@ -169,8 +169,8 @@ export default function BibliotequePage() {
                 className={cn(
                   'flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-colors',
                   viewMode === 'motif'
-                    ? 'bg-teal text-white'
-                    : 'bg-white text-teal hover:bg-teal/5'
+                    ? 'bg-sage text-white'
+                    : 'bg-white text-sage hover:bg-sage-light/50'
                 )}
               >
                 <List className="h-3 w-3" />
@@ -185,7 +185,7 @@ export default function BibliotequePage() {
                 'flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors border',
                 showFavorites
                   ? 'bg-gold/10 text-gold border-gold/30'
-                  : 'bg-white text-warmgray border-teal/15 hover:border-teal/30'
+                  : 'bg-white text-stone border-divider hover:border-sage/30'
               )}
             >
               <Star className="h-3 w-3" fill={showFavorites ? 'currentColor' : 'none'} />
@@ -201,8 +201,8 @@ export default function BibliotequePage() {
               className={cn(
                 'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors',
                 activeFilter === null
-                  ? 'bg-teal text-white'
-                  : 'bg-teal/5 text-teal hover:bg-teal/10'
+                  ? 'bg-sage text-white'
+                  : 'bg-sage-light/50 text-sage hover:bg-sage-light'
               )}
             >
               Tous
@@ -215,8 +215,8 @@ export default function BibliotequePage() {
                 className={cn(
                   'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors whitespace-nowrap',
                   activeFilter === f.key
-                    ? 'bg-teal text-white'
-                    : 'bg-teal/5 text-teal hover:bg-teal/10'
+                    ? 'bg-sage text-white'
+                    : 'bg-sage-light/50 text-sage hover:bg-sage-light'
                 )}
               >
                 {f.label}
@@ -229,13 +229,13 @@ export default function BibliotequePage() {
       {/* Blocks grid */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-sage border-t-transparent" />
         </div>
       ) : blocks.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
-            <p className="text-sm text-warmgray">Aucun bloc trouvé.</p>
-            <p className="mt-1 text-xs text-warmgray">
+            <p className="text-sm text-stone">Aucun bloc trouvé.</p>
+            <p className="mt-1 text-xs text-stone">
               Créez votre premier bloc ou modifiez vos filtres.
             </p>
           </CardContent>
@@ -318,7 +318,7 @@ function LibraryBlockCard({
               ) : (
                 <Badge variant="standard" className="text-[9px] px-1.5 py-0.5">Personnel</Badge>
               )}
-              <span className="text-[10px] text-warmgray">
+              <span className="text-[10px] text-stone">
                 {BLOCK_SECTION_LABELS[block.section as BlockSection]}
               </span>
             </div>
@@ -330,7 +330,7 @@ function LibraryBlockCard({
               'shrink-0 p-1 rounded transition-colors',
               block.is_favorite
                 ? 'text-gold'
-                : 'text-warmgray/40 hover:text-gold/70'
+                : 'text-stone/40 hover:text-gold/70'
             )}
           >
             <Star className="h-4 w-4" fill={block.is_favorite ? 'currentColor' : 'none'} />
@@ -338,7 +338,7 @@ function LibraryBlockCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <p className="text-xs text-warmgray line-clamp-3 whitespace-pre-line">{excerpt}</p>
+        <p className="text-xs text-stone line-clamp-3 whitespace-pre-line">{excerpt}</p>
 
         {/* Motifs pills */}
         {block.motifs.length > 0 && (
@@ -346,20 +346,20 @@ function LibraryBlockCard({
             {block.motifs.slice(0, 4).map((motif) => (
               <span
                 key={motif}
-                className="rounded-full bg-teal/5 px-2 py-0.5 text-[10px] font-medium text-teal"
+                className="rounded-full bg-sage-light/50 px-2 py-0.5 text-[10px] font-medium text-sage"
               >
                 {MOTIF_LABELS[motif as ConsultationMotif] ?? motif}
               </span>
             ))}
             {block.motifs.length > 4 && (
-              <span className="text-[10px] text-warmgray">+{block.motifs.length - 4}</span>
+              <span className="text-[10px] text-stone">+{block.motifs.length - 4}</span>
             )}
           </div>
         )}
 
         {/* Footer */}
         <div className="mt-3 flex items-center justify-between">
-          <span className="text-[10px] text-warmgray">
+          <span className="text-[10px] text-stone">
             {block.usage_count > 0 && `${block.usage_count} utilisation${block.usage_count > 1 ? 's' : ''}`}
           </span>
           {!isAfeia && (
@@ -367,7 +367,7 @@ function LibraryBlockCard({
               <button
                 type="button"
                 onClick={() => onEdit(block)}
-                className="rounded px-2 py-1 text-[11px] font-medium text-teal hover:bg-teal/5 transition-colors"
+                className="rounded px-2 py-1 text-[11px] font-medium text-sage hover:bg-sage-light/50 transition-colors"
               >
                 Modifier
               </button>

@@ -131,10 +131,10 @@ export const showToast = {
         <div
           className={`${
             t.visible ? 'animate-slide-down' : 'animate-fade-out'
-          } flex items-start gap-3 bg-white px-4 py-3 rounded-2xl shadow-lg ring-1 ring-teal/20 max-w-sm`}
+          } flex items-start gap-3 bg-white px-4 py-3 rounded-2xl shadow-lg ring-1 ring-sage/20 max-w-sm`}
         >
-          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-teal/10 flex items-center justify-center">
-            <Info className="w-4 h-4 text-teal" />
+          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-sage-light flex items-center justify-center">
+            <Info className="w-4 h-4 text-sage" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-charcoal">{message}</p>

@@ -32,11 +32,11 @@ export function InvoiceRow({ invoice }: InvoiceRowProps) {
   };
 
   return (
-    <tr className="border-b border-sable/50 last:border-0">
+    <tr className="border-b border-divider/50 last:border-0">
       <td className="py-3 pr-4">
         <span className="font-medium text-charcoal">{invoice.invoice_number}</span>
       </td>
-      <td className="py-3 pr-4 text-sm text-marine">
+      <td className="py-3 pr-4 text-sm text-charcoal">
         {formatShortDate(invoice.invoice_date)}
       </td>
       <td className="py-3 pr-4 text-sm font-medium text-charcoal">

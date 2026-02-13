@@ -31,7 +31,7 @@ export function ProgressBar({
   };
 
   const colors = {
-    teal: 'bg-gradient-to-r from-teal to-teal-deep',
+    teal: 'bg-gradient-to-r from-sage to-sage-dark',
     emerald: 'bg-gradient-to-r from-emerald-400 to-emerald-600',
     orange: 'bg-gradient-to-r from-accent-orange to-orange-500',
     pink: 'bg-gradient-to-r from-accent-pink to-pink-600',
@@ -110,7 +110,7 @@ export function ProgressCircle({
   };
 
   const colors = {
-    teal: '#2A8080',
+    teal: '#5B8C6E',
     emerald: '#10B981',
     orange: '#F59E0B',
     pink: '#EC4899',
@@ -197,9 +197,9 @@ export function StepsProgress({
               className={cn(
                 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
                 index < currentStep
-                  ? 'bg-teal text-white'
+                  ? 'bg-sage text-white'
                   : index === currentStep
-                  ? 'bg-teal/20 text-teal ring-2 ring-teal'
+                  ? 'bg-sage-light text-sage ring-2 ring-sage'
                   : 'bg-neutral-100 text-neutral-400'
               )}
             >
@@ -219,7 +219,7 @@ export function StepsProgress({
                   initial={{ width: 0 }}
                   animate={{ width: index < currentStep ? '100%' : '0%' }}
                   transition={{ duration: 0.3, delay: 0.1 }}
-                  className="h-full bg-teal"
+                  className="h-full bg-sage"
                 />
               </div>
             )}

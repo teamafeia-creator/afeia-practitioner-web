@@ -249,14 +249,14 @@ export function AppointmentForm({
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
         {/* Consultant selection */}
         <div>
-          <span className="text-[13px] font-medium text-warmgray">Consultant *</span>
+          <span className="text-[13px] font-medium text-stone">Consultant *</span>
           <div className="mt-1">
             {form.consultant_id && selectedConsultant ? (
-              <div className="flex items-center justify-between p-3 bg-teal/5 rounded-lg ring-1 ring-teal/20">
+              <div className="flex items-center justify-between p-3 bg-sage-light/50 rounded-lg ring-1 ring-sage/20">
                 <div>
                   <div className="text-sm font-medium text-charcoal">{getConsultantDisplayName(selectedConsultant)}</div>
                   {selectedConsultant.email && (
-                    <div className="text-xs text-warmgray">{selectedConsultant.email}</div>
+                    <div className="text-xs text-stone">{selectedConsultant.email}</div>
                   )}
                 </div>
                 <button
@@ -264,7 +264,7 @@ export function AppointmentForm({
                     setForm((f) => ({ ...f, consultant_id: '' }));
                     setShowSearch(true);
                   }}
-                  className="text-xs text-teal hover:underline"
+                  className="text-xs text-sage hover:underline"
                 >
                   Changer
                 </button>
@@ -272,7 +272,7 @@ export function AppointmentForm({
             ) : (
               <div className="relative">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-warmgray" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone" />
                   <input
                     type="text"
                     placeholder="Rechercher un consultant..."
@@ -282,13 +282,13 @@ export function AppointmentForm({
                       setShowSearch(true);
                     }}
                     onFocus={() => setShowSearch(true)}
-                    className="w-full rounded-sm border border-teal/20 bg-white/50 pl-10 pr-3.5 py-2.5 text-sm text-charcoal placeholder:text-warmgray/80 transition duration-200 focus:border-teal focus:outline-none focus:ring-[3px] focus:ring-teal/10"
+                    className="w-full rounded-sm border border-sage/20 bg-white/50 pl-10 pr-3.5 py-2.5 text-sm text-charcoal placeholder:text-stone/80 transition duration-200 focus:border-sage focus:outline-none focus:ring-[3px] focus:ring-sage/10"
                   />
                 </div>
                 {showSearch && (
                   <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white rounded-lg shadow-lg ring-1 ring-black/5">
                     {filteredConsultants.length === 0 ? (
-                      <div className="p-3 text-sm text-warmgray">Aucun consultant trouve</div>
+                      <div className="p-3 text-sm text-stone">Aucun consultant trouve</div>
                     ) : (
                       filteredConsultants.slice(0, 20).map((c) => (
                         <button
@@ -298,10 +298,10 @@ export function AppointmentForm({
                             setSearchQuery('');
                             setShowSearch(false);
                           }}
-                          className="w-full text-left px-3 py-2 hover:bg-teal/5 transition-colors"
+                          className="w-full text-left px-3 py-2 hover:bg-sage-light/50 transition-colors"
                         >
                           <div className="text-sm font-medium text-charcoal">{getConsultantDisplayName(c)}</div>
-                          {c.email && <div className="text-xs text-warmgray">{c.email}</div>}
+                          {c.email && <div className="text-xs text-stone">{c.email}</div>}
                         </button>
                       ))
                     )}
@@ -391,7 +391,7 @@ export function AppointmentForm({
 
         {/* Notes */}
         <div>
-          <span className="text-[13px] font-medium text-warmgray">Notes internes</span>
+          <span className="text-[13px] font-medium text-stone">Notes internes</span>
           <Textarea
             value={form.notes_internal}
             onChange={(e) => setForm((f) => ({ ...f, notes_internal: e.target.value }))}

@@ -52,7 +52,7 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col bg-slate-900">
       {/* Logo */}
       <div className="flex items-baseline gap-2 px-6 py-5">
-        <span className="text-lg font-bold text-teal-400">AFEIA</span>
+        <span className="text-lg font-bold text-sage-400">AFEIA</span>
         <span className="text-xs text-slate-400">Admin</span>
       </div>
 
@@ -120,7 +120,7 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
         </div>
         <Link
           href="/dashboard"
-          className="flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-sage-400 hover:text-sage-300 transition-colors"
         >
           Espace praticien
           <ArrowRight className="h-3 w-3" />

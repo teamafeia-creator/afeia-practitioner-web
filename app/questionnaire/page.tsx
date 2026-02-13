@@ -162,12 +162,12 @@ export default function PublicQuestionnairePage() {
   // Already submitted - show success message
   if (submitted) {
     return (
-      <main className="min-h-screen bg-sable flex items-center justify-center p-6">
+      <main className="min-h-screen bg-cream flex items-center justify-center p-6">
         <div className="w-full max-w-lg">
           <Card className="p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-teal/20 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-sage-light rounded-full flex items-center justify-center">
               <svg
-                className="w-8 h-8 text-teal"
+                className="w-8 h-8 text-sage"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -181,11 +181,11 @@ export default function PublicQuestionnairePage() {
               </svg>
             </div>
             <h1 className="text-2xl font-semibold text-charcoal mb-2">Questionnaire envoyé !</h1>
-            <p className="text-warmgray mb-6">
+            <p className="text-stone mb-6">
               Votre questionnaire a bien été transmis à votre naturopathe. Vous serez contacté(e)
               prochainement pour la suite de votre accompagnement.
             </p>
-            <p className="text-sm text-marine/80">
+            <p className="text-sm text-charcoal/80">
               Vous pouvez fermer cette page en toute sécurité.
             </p>
           </Card>
@@ -195,20 +195,20 @@ export default function PublicQuestionnairePage() {
   }
 
   return (
-    <main className="min-h-screen bg-sable py-8 px-4">
+    <main className="min-h-screen bg-cream py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <Image src="/afeia_symbol.svg" alt="AFEIA" width={36} height={36} />
           <div>
             <div className="text-2xl font-semibold tracking-tight">Afeia</div>
-            <div className="text-sm text-warmgray">Questionnaire Anamnèse</div>
+            <div className="text-sm text-stone">Questionnaire Anamnèse</div>
           </div>
         </div>
 
         {/* Progress bar */}
         <div className="mb-6">
-          <div className="flex justify-between text-xs text-warmgray mb-2">
+          <div className="flex justify-between text-xs text-stone mb-2">
             <span>
               Étape {step + 1} sur {TOTAL_SECTIONS + 2}
             </span>
@@ -216,7 +216,7 @@ export default function PublicQuestionnairePage() {
           </div>
           <div className="h-2 bg-white/50 rounded-full overflow-hidden">
             <div
-              className="h-full bg-teal transition-all duration-300"
+              className="h-full bg-sage transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -229,7 +229,7 @@ export default function PublicQuestionnairePage() {
             className="mb-4 rounded-xl border border-gold/30 bg-gold/10 p-3 text-sm"
           >
             <div className="font-medium">Attention</div>
-            <div className="text-marine mt-1">{error}</div>
+            <div className="text-charcoal mt-1">{error}</div>
           </div>
         )}
 
@@ -237,7 +237,7 @@ export default function PublicQuestionnairePage() {
         {step === 0 && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-charcoal mb-1">Vos informations</h2>
-            <p className="text-sm text-warmgray mb-6">
+            <p className="text-sm text-stone mb-6">
               Ces informations permettront à votre naturopathe de vous contacter et de préparer
               votre accompagnement.
             </p>
@@ -307,7 +307,7 @@ export default function PublicQuestionnairePage() {
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-charcoal mb-1">{currentSection.title}</h2>
             {currentSection.description && (
-              <p className="text-sm text-warmgray mb-6">{currentSection.description}</p>
+              <p className="text-sm text-stone mb-6">{currentSection.description}</p>
             )}
 
             <div className="space-y-5">
@@ -317,7 +317,7 @@ export default function PublicQuestionnairePage() {
                 if (question.type === 'choice' && question.options) {
                   return (
                     <div key={question.key}>
-                      <label className="block text-xs font-medium text-marine/80 mb-2">
+                      <label className="block text-xs font-medium text-charcoal/80 mb-2">
                         {question.label}
                       </label>
                       <div className="flex flex-wrap gap-2">
@@ -336,8 +336,8 @@ export default function PublicQuestionnairePage() {
                             }}
                             className={`px-4 py-2 rounded-xl text-sm transition-all ${
                               currentValue === option
-                                ? 'bg-teal text-white shadow-sm'
-                                : 'bg-white/80 text-charcoal hover:bg-teal/10 border border-black/10'
+                                ? 'bg-sage text-white shadow-sm'
+                                : 'bg-white/80 text-charcoal hover:bg-sage-light border border-black/10'
                             }`}
                           >
                             {option}
@@ -350,7 +350,7 @@ export default function PublicQuestionnairePage() {
 
                 return (
                   <div key={question.key}>
-                    <label className="block text-xs font-medium text-marine/80 mb-1">
+                    <label className="block text-xs font-medium text-charcoal/80 mb-1">
                       {question.label}
                     </label>
                     <Textarea
@@ -377,28 +377,28 @@ export default function PublicQuestionnairePage() {
         {step === TOTAL_SECTIONS + 1 && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-charcoal mb-1">Vérification</h2>
-            <p className="text-sm text-warmgray mb-6">
+            <p className="text-sm text-stone mb-6">
               Vérifiez vos informations avant de soumettre le questionnaire.
             </p>
 
             {/* Contact summary */}
-            <div className="bg-sable/50 rounded-xl p-4 mb-6">
-              <h3 className="font-medium text-marine mb-2">Vos coordonnées</h3>
+            <div className="bg-cream/80 rounded-xl p-4 mb-6">
+              <h3 className="font-medium text-charcoal mb-2">Vos coordonnées</h3>
               <div className="text-sm text-charcoal space-y-1">
                 <p>
-                  <span className="text-warmgray">Naturopathe :</span>{' '}
+                  <span className="text-stone">Naturopathe :</span>{' '}
                   {practitioners.find((p) => p.id === contactInfo.naturopathId)?.full_name || '-'}
                 </p>
                 <p>
-                  <span className="text-warmgray">Nom :</span> {contactInfo.firstName}{' '}
+                  <span className="text-stone">Nom :</span> {contactInfo.firstName}{' '}
                   {contactInfo.lastName}
                 </p>
                 <p>
-                  <span className="text-warmgray">Email :</span> {contactInfo.email}
+                  <span className="text-stone">Email :</span> {contactInfo.email}
                 </p>
                 {contactInfo.phone && (
                   <p>
-                    <span className="text-warmgray">Téléphone :</span> {contactInfo.phone}
+                    <span className="text-stone">Téléphone :</span> {contactInfo.phone}
                   </p>
                 )}
               </div>
@@ -406,7 +406,7 @@ export default function PublicQuestionnairePage() {
 
             {/* Sections summary */}
             <div className="space-y-4 mb-6">
-              <h3 className="font-medium text-marine">Vos réponses</h3>
+              <h3 className="font-medium text-charcoal">Vos réponses</h3>
               {ANAMNESIS_SECTIONS.map((section) => {
                 const sectionResponses = responses[section.id];
                 const hasResponses = sectionResponses && Object.keys(sectionResponses).length > 0;
@@ -417,7 +417,7 @@ export default function PublicQuestionnairePage() {
                       <span className="text-sm font-medium text-charcoal">{section.title}</span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${
-                          hasResponses ? 'bg-teal/10 text-teal' : 'bg-warmgray/10 text-warmgray'
+                          hasResponses ? 'bg-sage-light text-sage' : 'bg-stone/10 text-stone'
                         }`}
                       >
                         {hasResponses ? 'Rempli' : 'Non rempli'}
@@ -429,7 +429,7 @@ export default function PublicQuestionnairePage() {
             </div>
 
             <div className="bg-gold/10 rounded-xl p-4 mb-6">
-              <p className="text-sm text-marine">
+              <p className="text-sm text-charcoal">
                 En soumettant ce questionnaire, vous acceptez que vos informations soient transmises
                 à votre naturopathe dans le cadre de votre accompagnement. Vos données sont
                 protégées conformément au RGPD.
@@ -448,7 +448,7 @@ export default function PublicQuestionnairePage() {
         )}
 
         {/* Footer */}
-        <div className="mt-6 text-xs text-warmgray text-center">
+        <div className="mt-6 text-xs text-stone text-center">
           RGPD : vos données sont hébergées en UE et protégées. Afeia ne remplace jamais un
           médecin.
         </div>

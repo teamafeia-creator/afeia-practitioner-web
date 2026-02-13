@@ -175,7 +175,7 @@ export default function AdminPatientDetailPage({
       <div className="rounded-lg border border-slate-200 bg-white p-6">
         <div className="flex items-start gap-4">
           {/* Initials avatar */}
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-100 text-teal-700 font-semibold text-lg shrink-0">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-100 text-sage-700 font-semibold text-lg shrink-0">
             {getInitials(patient.full_name)}
           </div>
 
@@ -205,7 +205,7 @@ export default function AdminPatientDetailPage({
                   Praticien :{' '}
                   <Link
                     href={`/admin/practitioners/${practitioner.id}`}
-                    className="text-teal-600 hover:text-teal-700 hover:underline"
+                    className="text-sage-600 hover:text-sage-700 hover:underline"
                   >
                     {practitioner.full_name ?? practitioner.email}
                   </Link>
@@ -250,7 +250,7 @@ export default function AdminPatientDetailPage({
                   practitioner ? (
                     <Link
                       href={`/admin/practitioners/${practitioner.id}`}
-                      className="text-teal-600 hover:text-teal-700 hover:underline"
+                      className="text-sage-600 hover:text-sage-700 hover:underline"
                     >
                       {practitioner.full_name ?? practitioner.email}
                     </Link>

@@ -8,7 +8,7 @@ function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'animate-pulse rounded-lg bg-sable/70',
+        'animate-pulse rounded-lg bg-cream',
         className
       )}
     />
@@ -44,7 +44,7 @@ export function BillingSkeleton() {
                 <Skeleton className="h-5 w-48" />
                 <Skeleton className="h-5 w-52" />
               </div>
-              <div className="pt-4 border-t border-sable/50">
+              <div className="pt-4 border-t border-divider/50">
                 <Skeleton className="h-4 w-full" />
               </div>
               <div className="flex gap-3">
@@ -69,7 +69,7 @@ export function BillingSkeleton() {
                   <Skeleton className="h-4" />
                 </div>
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="grid grid-cols-5 gap-4 py-3 border-t border-sable/30">
+                  <div key={i} className="grid grid-cols-5 gap-4 py-3 border-t border-divider/30">
                     <Skeleton className="h-5" />
                     <Skeleton className="h-5" />
                     <Skeleton className="h-5" />
@@ -110,7 +110,7 @@ export function BillingSkeleton() {
               <Skeleton className="h-5 w-40" />
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-3 p-3 bg-sable/30 rounded-xl">
+              <div className="flex items-center gap-3 p-3 bg-cream/60 rounded-xl">
                 <Skeleton className="w-10 h-6 rounded" />
                 <div className="flex-1 space-y-1">
                   <Skeleton className="h-4 w-32" />
@@ -156,7 +156,7 @@ export function InvoiceListSkeleton() {
       <CardContent>
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center justify-between py-3 border-b border-sable/30 last:border-0">
+            <div key={i} className="flex items-center justify-between py-3 border-b border-divider/30 last:border-0">
               <div className="space-y-1">
                 <Skeleton className="h-5 w-24" />
                 <Skeleton className="h-4 w-20" />

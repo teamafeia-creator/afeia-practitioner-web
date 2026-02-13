@@ -94,19 +94,19 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-orbs bg-sable flex items-center justify-center p-6">
+    <main className="min-h-screen bg-orbs bg-cream flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-3 mb-6">
           <Image src="/afeia_symbol.svg" alt="AFEIA" width={36} height={36} />
           <div>
             <div className="text-2xl font-semibold tracking-tight">Afeia</div>
-            <div className="text-sm text-warmgray">Mot de passe oublié</div>
+            <div className="text-sm text-stone">Mot de passe oublié</div>
           </div>
         </div>
 
         <Card className="p-6">
           <h1 className="text-xl font-semibold text-charcoal">Réinitialiser votre accès</h1>
-          <p className="text-sm text-warmgray mt-1">
+          <p className="text-sm text-stone mt-1">
             {hasSession
               ? 'Définissez un nouveau mot de passe sécurisé.'
               : 'Recevez un lien de réinitialisation sécurisé par email.'}
@@ -149,12 +149,12 @@ export default function ResetPasswordPage() {
             {error ? (
               <div role="alert" className="rounded-xl border border-gold/30 bg-gold/10 p-3 text-sm">
                 <div className="font-medium">Impossible de traiter la demande</div>
-                <div className="text-marine mt-1">{error}</div>
+                <div className="text-charcoal mt-1">{error}</div>
               </div>
             ) : null}
 
             {message ? (
-              <div className="rounded-xl border border-teal/30 bg-teal/10 p-3 text-sm text-marine">
+              <div className="rounded-xl border border-sage/30 bg-sage-light p-3 text-sm text-charcoal">
                 {message}
               </div>
             ) : null}
@@ -163,8 +163,8 @@ export default function ResetPasswordPage() {
               {hasSession ? 'Mettre à jour le mot de passe' : 'Envoyer le lien de réinitialisation'}
             </Button>
 
-            <div className="text-xs text-warmgray">
-              <Link href="/login" className="text-teal hover:underline">
+            <div className="text-xs text-stone">
+              <Link href="/login" className="text-sage hover:underline">
                 Retour à la connexion
               </Link>
             </div>

@@ -75,7 +75,7 @@ export function SavedViewsTabs({ filters, activeFilterCount, onApplyView }: Save
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {views.length > 0 && (
-        <Bookmark className="h-4 w-4 text-warmgray flex-shrink-0" />
+        <Bookmark className="h-4 w-4 text-stone flex-shrink-0" />
       )}
 
       {views.map((view) => (
@@ -85,8 +85,8 @@ export function SavedViewsTabs({ filters, activeFilterCount, onApplyView }: Save
           className={cn(
             'group relative flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border transition-colors',
             activeViewId === view.id
-              ? 'border-teal bg-teal/10 text-teal'
-              : 'border-gray-200 text-warmgray hover:text-charcoal hover:border-gray-300'
+              ? 'border-sage bg-sage-light text-sage'
+              : 'border-gray-200 text-stone hover:text-charcoal hover:border-gray-300'
           )}
         >
           {view.name}
@@ -106,7 +106,7 @@ export function SavedViewsTabs({ filters, activeFilterCount, onApplyView }: Save
       {activeFilterCount > 0 && !showNameInput && (
         <button
           onClick={() => setShowNameInput(true)}
-          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-warmgray hover:text-teal border border-dashed border-gray-300 hover:border-teal rounded-full transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-stone hover:text-sage border border-dashed border-gray-300 hover:border-sage rounded-full transition-colors"
         >
           <Plus className="h-3 w-3" />
           Sauvegarder cette vue
@@ -124,19 +124,19 @@ export function SavedViewsTabs({ filters, activeFilterCount, onApplyView }: Save
               if (e.key === 'Escape') setShowNameInput(false);
             }}
             placeholder="Nom de la vue..."
-            className="px-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-teal w-32"
+            className="px-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:border-sage w-32"
             autoFocus
           />
           <button
             onClick={handleSaveView}
             disabled={saving || !viewName.trim()}
-            className="px-2 py-1 text-xs font-medium text-white bg-teal rounded-md hover:bg-teal-deep disabled:opacity-50 transition-colors"
+            className="px-2 py-1 text-xs font-medium text-white bg-sage rounded-md hover:bg-sage-deep disabled:opacity-50 transition-colors"
           >
             {saving ? '...' : 'OK'}
           </button>
           <button
             onClick={() => setShowNameInput(false)}
-            className="text-warmgray hover:text-charcoal"
+            className="text-stone hover:text-charcoal"
           >
             <X className="h-3.5 w-3.5" />
           </button>

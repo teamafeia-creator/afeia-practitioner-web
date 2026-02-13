@@ -30,7 +30,7 @@ const slides: Slide[] = [
     description:
       'La plateforme qui connecte les naturopathes à leurs consultants pour un accompagnement holistique et personnalisé.',
     icon: <Sparkles className="w-8 h-8 text-white" />,
-    gradient: 'from-teal via-teal-deep to-emerald-700',
+    gradient: 'from-sage via-sage-dark to-emerald-700',
     illustration: (
       <WelcomeIllustration />
     )
@@ -52,7 +52,7 @@ const slides: Slide[] = [
     description:
       'Messagerie sécurisée conforme RGPD pour échanger avec vos consultants en toute confidentialité.',
     icon: <MessageSquare className="w-8 h-8 text-white" />,
-    gradient: 'from-emerald-500 via-emerald-600 to-teal',
+    gradient: 'from-emerald-500 via-emerald-600 to-sage',
     illustration: (
       <MessagingIllustration />
     )
@@ -87,7 +87,7 @@ function WelcomeIllustration() {
       >
         <div className="w-28 h-28 rounded-full bg-white/30 flex items-center justify-center">
           <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-xl">
-            <span className="text-3xl font-bold text-teal">A</span>
+            <span className="text-3xl font-bold text-sage">A</span>
           </div>
         </div>
       </motion.div>
@@ -123,7 +123,7 @@ function CalendarIllustration() {
       <div className="w-48 h-56 bg-white/20 backdrop-blur-sm rounded-2xl p-4 shadow-xl">
         {/* Calendar header */}
         <div className="h-8 bg-white/30 rounded-lg mb-3 flex items-center px-3">
-          <div className="w-2 h-2 rounded-full bg-teal mr-2" />
+          <div className="w-2 h-2 rounded-full bg-sage mr-2" />
           <div className="w-16 h-2 bg-white/50 rounded" />
         </div>
         {/* Calendar grid */}

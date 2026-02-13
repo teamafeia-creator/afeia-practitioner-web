@@ -23,7 +23,7 @@ export function SlotPicker({
 }) {
   if (loading) {
     return (
-      <div className="mt-4 text-center text-sm text-warmgray">
+      <div className="mt-4 text-center text-sm text-stone">
         Chargement des creneaux...
       </div>
     );
@@ -36,7 +36,7 @@ export function SlotPicker({
 
   if (slots.length === 0) {
     return (
-      <div className="mt-4 rounded-lg bg-warmgray/5 p-4 text-center text-sm text-warmgray">
+      <div className="mt-4 rounded-lg bg-stone/5 p-4 text-center text-sm text-stone">
         Aucun creneau disponible le {dayName} {day} {monthName}.
         <br />
         Essayez un autre jour.
@@ -58,8 +58,8 @@ export function SlotPicker({
               px-4 py-2 rounded-lg text-sm font-medium transition-all
               ${
                 selectedSlot === slot
-                  ? 'bg-teal text-white shadow-sm'
-                  : 'bg-white/80 border border-teal/20 text-charcoal hover:border-teal/40 hover:bg-teal/5'
+                  ? 'bg-sage text-white shadow-sm'
+                  : 'bg-white/80 border border-sage/20 text-charcoal hover:border-sage/40 hover:bg-sage-light/50'
               }
             `}
           >

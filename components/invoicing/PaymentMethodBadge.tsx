@@ -12,14 +12,14 @@ const METHOD_CONFIG: Record<PaymentMethod, { label: string; icon: typeof Banknot
 };
 
 export function PaymentMethodBadge({ method }: { method: PaymentMethod | null }) {
-  if (!method) return <span className="text-sm text-warmgray">-</span>;
+  if (!method) return <span className="text-sm text-stone">-</span>;
 
   const config = METHOD_CONFIG[method];
   const Icon = config.icon;
 
   return (
     <span className="inline-flex items-center gap-1.5 text-sm text-charcoal">
-      <Icon className="h-3.5 w-3.5 text-warmgray" />
+      <Icon className="h-3.5 w-3.5 text-stone" />
       {config.label}
     </span>
   );

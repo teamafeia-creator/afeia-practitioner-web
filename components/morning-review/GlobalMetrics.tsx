@@ -36,7 +36,7 @@ function TrendBadge({ trend }: { trend: Trend }) {
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1 text-xs text-warmgray">
+        <span className="inline-flex items-center gap-1 text-xs text-stone">
           <Minus className="w-3 h-3" />
         </span>
       );
@@ -125,12 +125,12 @@ function MetricCard({ icon, label, value, trend, subtitle, highlight }: MetricCa
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">{icon}</div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-warmgray mb-1">{label}</p>
+          <p className="text-xs text-stone mb-1">{label}</p>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-semibold text-charcoal">{value}</span>
             {trend && <TrendBadge trend={trend} />}
           </div>
-          {subtitle && <p className="text-xs text-warmgray mt-1">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-stone mt-1">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -158,9 +158,9 @@ export function GlobalMetrics({ consultantsSummary }: GlobalMetricsProps) {
       >
         <h2 className="text-lg font-semibold text-charcoal">Metriques globales</h2>
         {isCollapsed ? (
-          <ChevronDown className="w-5 h-5 text-warmgray" />
+          <ChevronDown className="w-5 h-5 text-stone" />
         ) : (
-          <ChevronUp className="w-5 h-5 text-warmgray" />
+          <ChevronUp className="w-5 h-5 text-stone" />
         )}
       </button>
 
@@ -175,21 +175,21 @@ export function GlobalMetrics({ consultantsSummary }: GlobalMetricsProps) {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
               <MetricCard
-                icon={<Users className="w-5 h-5 text-teal" />}
+                icon={<Users className="w-5 h-5 text-sage" />}
                 label="Consultants actifs cette semaine"
                 value={metrics.activeThisWeek}
                 trend={metrics.activeThisWeekTrend}
               />
 
               <MetricCard
-                icon={<BarChart3 className="w-5 h-5 text-teal" />}
+                icon={<BarChart3 className="w-5 h-5 text-sage" />}
                 label="Taux de presence ce mois"
                 value={`${metrics.presenceRate}%`}
                 trend={metrics.presenceRateTrend}
               />
 
               <MetricCard
-                icon={<CheckSquare className="w-5 h-5 text-teal" />}
+                icon={<CheckSquare className="w-5 h-5 text-sage" />}
                 label="Adhesion moyenne aux 4 piliers"
                 value={`${metrics.averageAdherence}%`}
                 trend={metrics.adherenceTrend}
@@ -206,7 +206,7 @@ export function GlobalMetrics({ consultantsSummary }: GlobalMetricsProps) {
               />
 
               <MetricCard
-                icon={<Calendar className="w-5 h-5 text-aubergine" />}
+                icon={<Calendar className="w-5 h-5 text-terracotta" />}
                 label="Consultations cette semaine"
                 value={metrics.consultationsThisWeek}
                 subtitle={nextConsultStr ? `Prochaine : ${nextConsultStr}` : 'Aucune planifiee'}

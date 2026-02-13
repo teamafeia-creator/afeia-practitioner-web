@@ -155,11 +155,11 @@ export function NotificationDropdown() {
       {/* Bell button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-xl hover:bg-sable/50 transition"
+        className="relative p-2 rounded-xl hover:bg-cream/80 transition"
         aria-label="Notifications"
       >
         <svg
-          className="w-6 h-6 text-marine"
+          className="w-6 h-6 text-charcoal"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -173,7 +173,7 @@ export function NotificationDropdown() {
         </svg>
         {/* Unread badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-aubergine text-[10px] font-bold text-white">
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-terracotta text-[10px] font-bold text-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -188,7 +188,7 @@ export function NotificationDropdown() {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="text-xs text-teal hover:underline"
+                className="text-xs text-sage hover:underline"
               >
                 Tout marquer comme lu
               </button>
@@ -198,15 +198,15 @@ export function NotificationDropdown() {
           {/* Notification list */}
           <div className="max-h-96 overflow-y-auto">
             {loading ? (
-              <div className="p-4 text-center text-warmgray text-sm">Chargement...</div>
+              <div className="p-4 text-center text-stone text-sm">Chargement...</div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal/10 mx-auto mb-3">
-                  <svg className="w-6 h-6 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sage-light mx-auto mb-3">
+                  <svg className="w-6 h-6 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </div>
-                <p className="text-sm text-warmgray">Aucune notification</p>
+                <p className="text-sm text-stone">Aucune notification</p>
               </div>
             ) : (
               notifications.map((notification) => (
@@ -218,8 +218,8 @@ export function NotificationDropdown() {
                     setIsOpen(false);
                   }}
                   className={cn(
-                    'block px-4 py-3 hover:bg-sable/30 transition border-b border-black/5 last:border-0',
-                    !notification.read && 'bg-teal/5'
+                    'block px-4 py-3 hover:bg-cream/60 transition border-b border-black/5 last:border-0',
+                    !notification.read && 'bg-sage-light/50'
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -227,12 +227,12 @@ export function NotificationDropdown() {
                     <div
                       className={cn(
                         'mt-1.5 w-2 h-2 rounded-full shrink-0',
-                        notification.read ? 'bg-warmgray/30' : 'bg-teal'
+                        notification.read ? 'bg-stone/30' : 'bg-teal'
                       )}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-xs text-warmgray">
+                        <span className="text-xs text-stone">
                           {getNotificationTypeLabel(notification.type ?? 'general')}
                         </span>
                         {notification.level === 'attention' && (
@@ -245,11 +245,11 @@ export function NotificationDropdown() {
                         {notification.title}
                       </p>
                       {notification.description && (
-                        <p className="text-xs text-warmgray mt-0.5 line-clamp-2">
+                        <p className="text-xs text-stone mt-0.5 line-clamp-2">
                           {notification.description}
                         </p>
                       )}
-                      <p className="text-xs text-warmgray/70 mt-1">
+                      <p className="text-xs text-stone/70 mt-1">
                         {formatTimeAgo(notification.created_at)}
                       </p>
                     </div>
@@ -264,7 +264,7 @@ export function NotificationDropdown() {
             <div className="px-4 py-2 border-t border-black/5">
               <Link
                 href="/notifications"
-                className="text-xs text-teal hover:underline"
+                className="text-xs text-sage hover:underline"
                 onClick={() => setIsOpen(false)}
               >
                 Voir toutes les notifications →

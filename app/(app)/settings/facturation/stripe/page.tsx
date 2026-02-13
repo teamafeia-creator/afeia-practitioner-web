@@ -71,7 +71,7 @@ export default function StripeConnectSettingsPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Paiement en ligne" />
-        <div className="glass-card rounded-lg p-8 text-center text-warmgray">
+        <div className="glass-card rounded-lg p-8 text-center text-stone">
           Chargement...
         </div>
       </div>
@@ -106,21 +106,21 @@ export default function StripeConnectSettingsPage() {
         <CardContent className="space-y-4">
           {!status?.connected ? (
             <>
-              <div className="rounded-lg bg-sable/30 border border-teal/10 p-4 space-y-3">
+              <div className="rounded-lg bg-cream/60 border border-divider p-4 space-y-3">
                 <h3 className="text-sm font-medium text-charcoal">
                   Pourquoi connecter Stripe ?
                 </h3>
-                <ul className="text-sm text-warmgray space-y-1.5">
+                <ul className="text-sm text-stone space-y-1.5">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-teal mt-0.5 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-sage mt-0.5 shrink-0" />
                     Envoyez des liens de paiement a vos consultants
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-teal mt-0.5 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-sage mt-0.5 shrink-0" />
                     Recevez les paiements directement sur votre compte
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-teal mt-0.5 shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 text-sage mt-0.5 shrink-0" />
                     Les factures sont marquees comme payees automatiquement
                   </li>
                 </ul>
@@ -145,14 +145,14 @@ export default function StripeConnectSettingsPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-lg bg-white/60 border border-teal/10 p-3">
-                  <p className="text-xs font-medium text-warmgray uppercase tracking-wider mb-1">
+                <div className="rounded-lg bg-white/60 border border-divider p-3">
+                  <p className="text-xs font-medium text-stone uppercase tracking-wider mb-1">
                     Statut du compte
                   </p>
                   <div className="flex items-center gap-2 text-sm text-charcoal">
                     {status.charges_enabled ? (
                       <>
-                        <CheckCircle2 className="h-4 w-4 text-teal" />
+                        <CheckCircle2 className="h-4 w-4 text-sage" />
                         Paiements actifs
                       </>
                     ) : (
@@ -164,14 +164,14 @@ export default function StripeConnectSettingsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-white/60 border border-teal/10 p-3">
-                  <p className="text-xs font-medium text-warmgray uppercase tracking-wider mb-1">
+                <div className="rounded-lg bg-white/60 border border-divider p-3">
+                  <p className="text-xs font-medium text-stone uppercase tracking-wider mb-1">
                     Informations
                   </p>
                   <div className="flex items-center gap-2 text-sm text-charcoal">
                     {status.details_submitted ? (
                       <>
-                        <CheckCircle2 className="h-4 w-4 text-teal" />
+                        <CheckCircle2 className="h-4 w-4 text-sage" />
                         Profil complet
                       </>
                     ) : (
@@ -185,7 +185,7 @@ export default function StripeConnectSettingsPage() {
               </div>
 
               {status.email && (
-                <div className="text-sm text-warmgray">
+                <div className="text-sm text-stone">
                   Compte Stripe : {status.email}
                 </div>
               )}
@@ -210,7 +210,7 @@ export default function StripeConnectSettingsPage() {
               )}
 
               {isConnected && (
-                <div className="rounded-lg bg-teal/5 border border-teal/10 p-3">
+                <div className="rounded-lg bg-sage-light/50 border border-divider p-3">
                   <p className="text-sm text-charcoal">
                     Votre compte Stripe est actif. Vous pouvez envoyer des liens de paiement
                     a vos consultants depuis la page de detail de chaque facture.

@@ -65,7 +65,7 @@ export default function InvoiceDetailPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Chargement..." />
-        <div className="glass-card rounded-lg p-8 text-center text-warmgray">
+        <div className="glass-card rounded-lg p-8 text-center text-stone">
           Chargement de la facture...
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function InvoiceDetailPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Facture introuvable" />
-        <div className="glass-card rounded-lg p-8 text-center text-warmgray">
+        <div className="glass-card rounded-lg p-8 text-center text-stone">
           Cette facture n&apos;existe pas ou vous n&apos;y avez pas acces.
         </div>
       </div>

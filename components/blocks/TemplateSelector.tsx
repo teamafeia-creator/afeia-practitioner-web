@@ -95,7 +95,7 @@ export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-2 rounded-lg border border-teal/20 bg-white px-3 py-2 text-sm font-medium text-teal transition-colors hover:border-teal/40 hover:bg-teal/5"
+        className="inline-flex items-center gap-2 rounded-lg border border-sage/20 bg-white px-3 py-2 text-sm font-medium text-sage transition-colors hover:border-sage/40 hover:bg-sage-light/50"
       >
         <FileText className="h-4 w-4" />
         Partir d&apos;un modèle de conseillancier
@@ -103,10 +103,10 @@ export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-40 mt-1 w-96 rounded-xl border border-teal/15 bg-white shadow-lg">
+        <div className="absolute left-0 top-full z-40 mt-1 w-96 rounded-xl border border-divider bg-white shadow-lg">
           <div className="p-3 border-b border-neutral-100">
             <p className="text-xs font-medium text-charcoal">Modèles disponibles</p>
-            <p className="text-[10px] text-warmgray">
+            <p className="text-[10px] text-stone">
               Sélectionnez un modèle pour pré-remplir le conseillancier.
             </p>
           </div>
@@ -114,10 +114,10 @@ export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
           <div className="max-h-64 overflow-y-auto p-2">
             {loading ? (
               <div className="flex items-center justify-center py-6">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-teal border-t-transparent" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-sage border-t-transparent" />
               </div>
             ) : templates.length === 0 ? (
-              <p className="py-6 text-center text-xs text-warmgray">
+              <p className="py-6 text-center text-xs text-stone">
                 Aucun modèle disponible.
               </p>
             ) : (
@@ -126,7 +126,7 @@ export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
                   key={template.id}
                   type="button"
                   onClick={() => handleSelectTemplate(template)}
-                  className="w-full rounded-lg p-3 text-left transition-colors hover:bg-sable-light"
+                  className="w-full rounded-lg p-3 text-left transition-colors hover:bg-cream-light"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -134,7 +134,7 @@ export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
                         {template.title}
                       </p>
                       {template.description && (
-                        <p className="mt-0.5 text-xs text-warmgray line-clamp-2">
+                        <p className="mt-0.5 text-xs text-stone line-clamp-2">
                           {template.description}
                         </p>
                       )}

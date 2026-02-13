@@ -1,9 +1,9 @@
 export default function BookingNotFound() {
   return (
     <div className="text-center py-16 space-y-4">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-warmgray/10">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-stone/10">
         <svg
-          className="h-8 w-8 text-warmgray"
+          className="h-8 w-8 text-stone"
           fill="none"
           viewBox="0 0 24 24"
           strokeWidth={1.5}
@@ -19,13 +19,13 @@ export default function BookingNotFound() {
       <h1 className="text-xl font-semibold text-charcoal">
         Praticien non trouve
       </h1>
-      <p className="text-sm text-warmgray max-w-sm mx-auto">
+      <p className="text-sm text-stone max-w-sm mx-auto">
         Ce praticien n&apos;existe pas sur AFEIA ou n&apos;a pas active
         la prise de rendez-vous en ligne.
       </p>
       <a
         href="https://afeia.fr"
-        className="inline-block mt-4 text-sm text-teal hover:underline"
+        className="inline-block mt-4 text-sm text-sage hover:underline"
       >
         Retour a afeia.fr
       </a>

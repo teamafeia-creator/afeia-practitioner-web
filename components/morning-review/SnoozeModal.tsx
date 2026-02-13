@@ -82,13 +82,13 @@ export function SnoozeModal({ consultantName, consultantId, onClose, onSnoozed }
 
         {reason === 'other' && (
           <div className="mb-6">
-            <label className="block text-sm text-warmgray mb-2">Jusqu&apos;au :</label>
+            <label className="block text-sm text-stone mb-2">Jusqu&apos;au :</label>
             <input
               type="date"
               value={customDate}
               onChange={(e) => setCustomDate(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
-              className="w-full p-2 border border-neutral-200 rounded-lg text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal"
+              className="w-full p-2 border border-neutral-200 rounded-lg text-sm focus:ring-2 focus:ring-sage/30 focus:border-sage"
             />
           </div>
         )}

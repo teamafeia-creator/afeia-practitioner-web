@@ -143,7 +143,7 @@ export function BookingPageClient({
                     ? 'bg-teal'
                     : ['type', 'date', 'contact'].indexOf(step) > i
                       ? 'bg-teal/40'
-                      : 'bg-warmgray/20'
+                      : 'bg-stone/20'
                 }`}
               />
             </div>

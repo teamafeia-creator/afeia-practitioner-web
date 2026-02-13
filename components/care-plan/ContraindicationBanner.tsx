@@ -75,9 +75,9 @@ export function ContraindicationBanner({
           </span>
         </div>
         {expanded ? (
-          <ChevronUp className="h-4 w-4 text-warmgray" />
+          <ChevronUp className="h-4 w-4 text-stone" />
         ) : (
-          <ChevronDown className="h-4 w-4 text-warmgray" />
+          <ChevronDown className="h-4 w-4 text-stone" />
         )}
       </button>
 

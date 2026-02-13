@@ -59,7 +59,7 @@ export function SendMessageModal({ consultantName, consultantId, templateMessage
       <div>
         {/* Templates */}
         <div className="mb-4">
-          <p className="text-sm text-warmgray mb-2">Suggestions de messages :</p>
+          <p className="text-sm text-stone mb-2">Suggestions de messages :</p>
           <div className="flex gap-2 flex-wrap">
             {MESSAGE_TEMPLATES.map(template => (
               <button
@@ -77,7 +77,7 @@ export function SendMessageModal({ consultantName, consultantId, templateMessage
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="w-full h-32 p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-teal/30 focus:border-teal text-sm resize-none"
+          className="w-full h-32 p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-sage/30 focus:border-sage text-sm resize-none"
           placeholder="Ecrivez votre message..."
           autoFocus
         />

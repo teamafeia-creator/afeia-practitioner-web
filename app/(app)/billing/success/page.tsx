@@ -43,17 +43,17 @@ export default function BillingSuccessPage() {
             {loading ? (
               <>
                 <div className="animate-pulse">
-                  <div className="mx-auto w-16 h-16 bg-sable rounded-full mb-6" />
-                  <div className="h-8 bg-sable rounded w-48 mx-auto mb-4" />
-                  <div className="h-4 bg-sable rounded w-64 mx-auto" />
+                  <div className="mx-auto w-16 h-16 bg-cream rounded-full mb-6" />
+                  <div className="h-8 bg-cream rounded w-48 mx-auto mb-4" />
+                  <div className="h-4 bg-cream rounded w-64 mx-auto" />
                 </div>
               </>
             ) : (
               <>
                 {/* Icône de succès */}
-                <div className="mx-auto w-16 h-16 bg-teal/10 rounded-full flex items-center justify-center mb-6">
+                <div className="mx-auto w-16 h-16 bg-sage-light rounded-full flex items-center justify-center mb-6">
                   <svg
-                    className="h-8 w-8 text-teal"
+                    className="h-8 w-8 text-sage"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -73,31 +73,31 @@ export default function BillingSuccessPage() {
                 </h1>
 
                 {/* Description */}
-                <p className="text-marine mb-6">
+                <p className="text-charcoal mb-6">
                   Votre abonnement Premium a été activé avec succès. Vous avez maintenant accès à toutes les fonctionnalités.
                 </p>
 
                 {/* Détails de l'abonnement */}
                 {subscription?.plan && (
-                  <div className="bg-sable/30 rounded-xl p-4 mb-6 text-left">
+                  <div className="bg-cream/60 rounded-xl p-4 mb-6 text-left">
                     <h3 className="font-medium text-charcoal mb-3">
                       Détails de votre abonnement
                     </h3>
                     <dl className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <dt className="text-marine">Plan</dt>
+                        <dt className="text-charcoal">Plan</dt>
                         <dd className="font-medium text-charcoal">
                           {subscription.plan.display_name}
                         </dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-marine">Cycle</dt>
+                        <dt className="text-charcoal">Cycle</dt>
                         <dd className="font-medium text-charcoal">
                           {subscription.billing_cycle === 'monthly' ? 'Mensuel' : 'Annuel'}
                         </dd>
                       </div>
                       <div className="flex justify-between">
-                        <dt className="text-marine">Prochain renouvellement</dt>
+                        <dt className="text-charcoal">Prochain renouvellement</dt>
                         <dd className="font-medium text-charcoal">
                           {formatDate(subscription.current_period_end)}
                         </dd>
@@ -112,26 +112,26 @@ export default function BillingSuccessPage() {
                     Vous pouvez maintenant :
                   </h3>
                   <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-sm text-marine">
-                      <svg className="h-5 w-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <li className="flex items-center gap-2 text-sm text-charcoal">
+                      <svg className="h-5 w-5 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       Ajouter des consultants sans limite
                     </li>
-                    <li className="flex items-center gap-2 text-sm text-marine">
-                      <svg className="h-5 w-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <li className="flex items-center gap-2 text-sm text-charcoal">
+                      <svg className="h-5 w-5 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       Consulter les données bague connectée de vos consultants
                     </li>
-                    <li className="flex items-center gap-2 text-sm text-marine">
-                      <svg className="h-5 w-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <li className="flex items-center gap-2 text-sm text-charcoal">
+                      <svg className="h-5 w-5 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       Créer des plans personnalisés avancés
                     </li>
-                    <li className="flex items-center gap-2 text-sm text-marine">
-                      <svg className="h-5 w-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <li className="flex items-center gap-2 text-sm text-charcoal">
+                      <svg className="h-5 w-5 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                       Bénéficier du support prioritaire

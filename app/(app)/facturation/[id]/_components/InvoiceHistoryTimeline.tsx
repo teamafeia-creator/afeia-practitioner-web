@@ -13,12 +13,12 @@ import {
 } from 'lucide-react';
 
 const ACTION_CONFIG: Record<string, { label: string; icon: typeof Plus; color: string }> = {
-  created: { label: 'Facture creee', icon: Plus, color: 'text-teal' },
-  issued: { label: 'Facture emise', icon: FileText, color: 'text-aubergine' },
+  created: { label: 'Facture creee', icon: Plus, color: 'text-sage' },
+  issued: { label: 'Facture emise', icon: FileText, color: 'text-terracotta' },
   paid: { label: 'Paiement enregistre', icon: Check, color: 'text-sage' },
   cancelled: { label: 'Facture annulee', icon: X, color: 'text-accent-danger' },
-  sent: { label: 'Email envoye', icon: Send, color: 'text-teal' },
-  updated: { label: 'Facture modifiee', icon: Edit3, color: 'text-warmgray' },
+  sent: { label: 'Email envoye', icon: Send, color: 'text-sage' },
+  updated: { label: 'Facture modifiee', icon: Edit3, color: 'text-stone' },
 };
 
 interface Props {
@@ -39,7 +39,7 @@ export function InvoiceHistoryTimeline({ history }: Props) {
             const config = ACTION_CONFIG[entry.action] || {
               label: entry.action,
               icon: FileText,
-              color: 'text-warmgray',
+              color: 'text-stone',
             };
             const Icon = config.icon;
 
@@ -54,11 +54,11 @@ export function InvoiceHistoryTimeline({ history }: Props) {
                   <p className="text-sm font-medium text-charcoal">
                     {config.label}
                   </p>
-                  <p className="text-xs text-warmgray">
+                  <p className="text-xs text-stone">
                     {formatDate(entry.created_at)}
                   </p>
                   {entry.metadata && entry.action === 'sent' && (
-                    <p className="text-xs text-warmgray mt-0.5">
+                    <p className="text-xs text-stone mt-0.5">
                       Envoye a {(entry.metadata as Record<string, string>).email}
                     </p>
                   )}

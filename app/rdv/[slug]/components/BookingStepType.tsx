@@ -29,7 +29,7 @@ export function BookingStepType({
           <button
             key={type.id}
             onClick={() => onSelect(type.id)}
-            className="w-full text-left rounded-xl border border-teal/15 bg-white/70 p-4 hover:border-teal/40 hover:bg-white/90 hover:shadow-sm transition-all group"
+            className="w-full text-left rounded-xl border border-teal/15 bg-white/70 p-4 hover:border-sage/40 hover:bg-white/90 hover:shadow-sm transition-all group"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
@@ -40,7 +40,7 @@ export function BookingStepType({
                   />
                   <span className="font-medium text-charcoal">{type.name}</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-warmgray">
+                <div className="flex items-center gap-3 text-sm text-stone">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3.5 w-3.5" />
                     {type.duration_minutes} min
@@ -50,12 +50,12 @@ export function BookingStepType({
                   )}
                 </div>
                 {type.description && (
-                  <p className="mt-2 text-xs text-warmgray leading-relaxed">
+                  <p className="mt-2 text-xs text-stone leading-relaxed">
                     {type.description}
                   </p>
                 )}
               </div>
-              <ChevronRight className="h-5 w-5 text-warmgray group-hover:text-teal transition-colors flex-shrink-0 mt-1" />
+              <ChevronRight className="h-5 w-5 text-stone group-hover:text-sage transition-colors flex-shrink-0 mt-1" />
             </div>
           </button>
         ))}

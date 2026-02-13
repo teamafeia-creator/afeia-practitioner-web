@@ -115,7 +115,7 @@ export default function NewConsultantPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>Ajouter un consultant</h1>
-          <p className="text-sm text-warmgray">Créez le dossier et envoyez un code sécurisé.</p>
+          <p className="text-sm text-stone">Créez le dossier et envoyez un code sécurisé.</p>
         </div>
         <Link href="/consultants">
           <Button variant="secondary">Retour</Button>

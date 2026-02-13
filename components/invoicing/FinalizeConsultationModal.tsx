@@ -125,7 +125,7 @@ export function FinalizeConsultationModal({
 
         <div className="flex gap-3">
           <div className="flex-1">
-            <label className="block text-[13px] font-medium text-warmgray mb-1">
+            <label className="block text-[13px] font-medium text-stone mb-1">
               Montant
             </label>
             <input
@@ -134,7 +134,7 @@ export function FinalizeConsultationModal({
               min="0"
               value={montant}
               onChange={(e) => setMontant(parseFloat(e.target.value) || 0)}
-              className="w-full rounded-sm border border-teal/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal transition duration-200 focus:border-teal focus:outline-none focus:ring-[3px] focus:ring-teal/10"
+              className="w-full rounded-sm border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal transition duration-200 focus:border-sage focus:outline-none focus:ring-[3px] focus:ring-sage/10"
             />
           </div>
         </div>
