@@ -38,6 +38,7 @@ export const T = {
   tabJournal: 'Journal',
   tabNotesSeance: 'Notes de séance',
   tabConseillancier: 'Conseillancier',
+  tabSchemas: 'Schémas corporels',
   tabDocuments: 'Documents et analyses',
   tabMessages: 'Messages',
 
@@ -49,6 +50,7 @@ export const T = {
   descJournal: 'Suivi quotidien du ressenti du consultant.',
   descNotesSeance: 'Notes internes réservées au praticien.',
   descConseillancier: 'Versions du conseillancier partagé au consultant.',
+  descSchemas: 'Annotez des schémas anatomiques pour le suivi du consultant.',
   descDocuments: 'Documents et résultats transmis par le consultant.',
   descMessages: 'Conversation directe avec le consultant.',
 

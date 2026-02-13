@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" fill="none">
+  <!-- Silhouette humaine de dos — schéma médical épuré -->
+  <g stroke="#E5E1DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Tête -->
+    <ellipse cx="400" cy="105" rx="55" ry="65" />
+    <!-- Cou -->
+    <line x1="380" y1="170" x2="380" y2="205" />
+    <line x1="420" y1="170" x2="420" y2="205" />
+    <!-- Épaules -->
+    <path d="M380 205 Q340 205 290 230" />
+    <path d="M420 205 Q460 205 510 230" />
+    <!-- Tronc -->
+    <line x1="290" y1="230" x2="280" y2="520" />
+    <line x1="510" y1="230" x2="520" y2="520" />
+    <!-- Colonne vertébrale (dos) -->
+    <line x1="400" y1="205" x2="400" y2="580" stroke="#D5D0C8" stroke-width="1.5" />
+    <!-- Omoplates -->
+    <path d="M340 260 Q355 290 370 320 Q380 340 375 360 Q360 350 340 330 Q325 310 330 280 Z" stroke="#D5D0C8" stroke-width="1.5" />
+    <path d="M460 260 Q445 290 430 320 Q420 340 425 360 Q440 350 460 330 Q475 310 470 280 Z" stroke="#D5D0C8" stroke-width="1.5" />
+    <!-- Taille / Hanches -->
+    <path d="M280 520 Q300 540 310 580" />
+    <path d="M520 520 Q500 540 490 580" />
+    <!-- Bras gauche -->
+    <path d="M290 230 Q260 300 250 400 Q245 450 240 500" />
+    <path d="M240 500 Q235 530 225 560 Q220 580 210 600" />
+    <!-- Main gauche -->
+    <path d="M210 600 Q205 620 200 640 Q195 655 190 665" />
+    <!-- Bras droit -->
+    <path d="M510 230 Q540 300 550 400 Q555 450 560 500" />
+    <path d="M560 500 Q565 530 575 560 Q580 580 590 600" />
+    <!-- Main droite -->
+    <path d="M590 600 Q595 620 600 640 Q605 655 610 665" />
+    <!-- Bassin -->
+    <path d="M310 580 Q350 600 400 605 Q450 600 490 580" />
+    <!-- Fessier -->
+    <path d="M340 590 Q360 620 400 625 Q440 620 460 590" stroke="#D5D0C8" stroke-width="1.5" />
+    <!-- Jambe gauche -->
+    <path d="M310 580 Q320 650 325 720 Q328 780 330 840" />
+    <path d="M330 840 Q332 900 335 960 Q336 1000 338 1040" />
+    <!-- Pied gauche -->
+    <path d="M338 1040 Q335 1060 330 1075 Q320 1090 300 1095 Q290 1095 285 1090" />
+    <!-- Jambe droite -->
+    <path d="M490 580 Q480 650 475 720 Q472 780 470 840" />
+    <path d="M470 840 Q468 900 465 960 Q464 1000 462 1040" />
+    <!-- Pied droit -->
+    <path d="M462 1040 Q465 1060 470 1075 Q480 1090 500 1095 Q510 1095 515 1090" />
+    <!-- Genou gauche -->
+    <ellipse cx="332" cy="840" rx="18" ry="10" stroke="#D5D0C8" stroke-width="1.5" />
+    <!-- Genou droit -->
+    <ellipse cx="468" cy="840" rx="18" ry="10" stroke="#D5D0C8" stroke-width="1.5" />
+  </g>
+</svg>

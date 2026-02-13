@@ -261,7 +261,8 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     wearableSummariesResult,
     wearableInsightsResult,
     consultantPlansResult,
-    analysisResultsResult
+    analysisResultsResult,
+    drawingsResult
   ] = await Promise.all([
     supabase.from('anamneses').select('*').eq('consultant_id', id).single(),
     supabase.from('consultations').select('*').eq('consultant_id', id).order('date', { ascending: false }),
@@ -275,7 +276,8 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     supabase.from('wearable_summaries').select('*').eq('consultant_id', id).order('date', { ascending: false }).limit(50),
     supabase.from('wearable_insights').select('*').eq('consultant_id', id).order('created_at', { ascending: false }).limit(50),
     supabase.from('consultant_plans').select('*').eq('consultant_id', id).order('version', { ascending: false }),
-    supabase.from('consultant_analysis_results').select('*').eq('consultant_id', id).order('analysis_date', { ascending: false })
+    supabase.from('consultant_analysis_results').select('*').eq('consultant_id', id).order('analysis_date', { ascending: false }),
+    supabase.from('consultant_drawings').select('*').eq('consultant_id', id).order('created_at', { ascending: false })
   ]);
 
   // Handle plan -> versions -> sections (dependent chain, but eliminate N+1)
@@ -340,7 +342,8 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     wearable_summaries: wearableSummariesResult.data || [],
     wearable_insights: wearableInsightsResult.data || [],
     consultant_plans: consultantPlansResult.data || [],
-    analysis_results: analysisResultsResult.data || []
+    analysis_results: analysisResultsResult.data || [],
+    drawings: drawingsResult.data || []
   };
 }
 
