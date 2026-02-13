@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Copy, ExternalLink, Check, AlertCircle } from 'lucide-react';
+import { Copy, ExternalLink, Check, AlertCircle, Video, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -57,6 +57,7 @@ export default function BookingSettingsPage() {
     booking_phone: '',
     cancellation_policy_hours: 24,
     cancellation_policy_text: '',
+    video_provider: 'external' as 'external' | 'daily',
   });
 
   const loadConfig = useCallback(async () => {
@@ -66,7 +67,7 @@ export default function BookingSettingsPage() {
 
       const { data: practitioner } = await supabase
         .from('practitioners')
-        .select('full_name, booking_slug, booking_enabled, booking_intro_text, booking_address, booking_phone, cancellation_policy_hours, cancellation_policy_text')
+        .select('full_name, booking_slug, booking_enabled, booking_intro_text, booking_address, booking_phone, cancellation_policy_hours, cancellation_policy_text, video_provider')
         .eq('id', userData.user.id)
         .single();
 
@@ -90,6 +91,7 @@ export default function BookingSettingsPage() {
           booking_phone: cfg.booking_phone || '',
           cancellation_policy_hours: cfg.cancellation_policy_hours || 24,
           cancellation_policy_text: cfg.cancellation_policy_text || '',
+          video_provider: (practitioner.video_provider as 'external' | 'daily') || 'external',
         });
       }
 
@@ -216,6 +218,7 @@ export default function BookingSettingsPage() {
           booking_phone: form.booking_phone || null,
           cancellation_policy_hours: form.cancellation_policy_hours,
           cancellation_policy_text: form.cancellation_policy_text || null,
+          video_provider: form.video_provider,
           updated_at: new Date().toISOString(),
         })
         .eq('id', userData.user.id);
@@ -442,6 +445,44 @@ export default function BookingSettingsPage() {
               className="min-h-[60px]"
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Video conferencing */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-sm font-semibold">Visioconference</h2>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Select
+            label="Mode de visioconference"
+            value={form.video_provider}
+            onChange={(e) => setForm(prev => ({ ...prev, video_provider: e.target.value as 'external' | 'daily' }))}
+          >
+            <option value="external">Lien externe (Google Meet, Zoom, etc.)</option>
+            <option value="daily">Visioconference integree AFEIA</option>
+          </Select>
+
+          {form.video_provider === 'daily' ? (
+            <div className="flex items-start gap-3 p-3 bg-sage/5 border border-sage/15 rounded-lg">
+              <CheckCircle className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-charcoal">
+                <p className="font-medium">Visioconference integree activee</p>
+                <p className="text-stone mt-1">
+                  Les salles de visioconference seront creees automatiquement pour chaque rendez-vous en visio.
+                  Vos consultants recevront un lien de connexion par email.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
+              <Video className="h-5 w-5 text-stone flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-stone">
+                Vous pourrez saisir manuellement un lien de visioconference (Google Meet, Zoom, etc.)
+                lors de la creation de chaque rendez-vous.
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -307,6 +307,7 @@ export async function updateNativeAppointment(
     ends_at?: string;
     location_type?: LocationType;
     video_link?: string | null;
+    video_room_name?: string | null;
     notes_internal?: string | null;
     status?: AppointmentStatus;
   }

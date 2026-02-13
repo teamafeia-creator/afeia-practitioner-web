@@ -15,11 +15,23 @@ interface BookingEmailData {
   cancellationPolicyHours: number | null;
   cancellationPolicyText: string | null;
   reason: string | null;
+  videoLink?: string | null;
 }
 
 export function buildConfirmationEmail(data: BookingEmailData) {
   const locationLine = data.practitionerAddress
     ? `<p style="margin:4px 0;">&#128205; ${escapeHtml(data.practitionerAddress)}</p>`
+    : '';
+
+  const videoLine = data.videoLink
+    ? `<div style="margin-top:16px;padding:16px;background:#f0f7f6;border-radius:8px;border:1px solid #d4e8e2;">
+         <p style="margin:0 0 8px;font-weight:600;font-size:14px;">&#128249; Consultation en visioconference</p>
+         <p style="margin:0 0 12px;font-size:13px;color:#666;">Rejoignez votre consultation en cliquant sur le lien ci-dessous :</p>
+         <div style="text-align:center;">
+           <a href="${escapeHtml(data.videoLink)}" style="display:inline-block;background:#2B5651;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;">Rejoindre la visio</a>
+         </div>
+         <p style="margin:12px 0 0;font-size:12px;color:#999;">Le lien sera actif 15 minutes avant le debut de votre consultation.</p>
+       </div>`
     : '';
 
   const cancellationLine =
@@ -53,6 +65,8 @@ export function buildConfirmationEmail(data: BookingEmailData) {
         ${locationLine}
       </div>
 
+      ${videoLine}
+
       ${cancellationLine}
 
       <p style="text-align:center;color:#666;font-size:13px;margin-top:24px;">A bientot !</p>
@@ -71,6 +85,7 @@ Votre rendez-vous est confirme :
 - ${data.consultationTypeName} (${data.durationMinutes} min)
 - Avec ${data.practitionerName}
 ${data.practitionerAddress ? `- ${data.practitionerAddress}` : ''}
+${data.videoLink ? `\nConsultation en visioconference :\n${data.videoLink}\nLe lien sera actif 15 minutes avant le debut de votre consultation.` : ''}
 ${data.cancellationPolicyText ? `\nPolitique d'annulation : ${data.cancellationPolicyText}` : ''}
 
 A bientot !
@@ -115,6 +130,8 @@ export function buildPractitionerNotificationEmail(data: BookingEmailData & {
       </div>
 
       ${consultantStatus}
+
+      ${data.videoLink ? '<p style="margin:8px 0;font-size:13px;color:#2B5651;">&#128249; Une salle de visioconference a ete creee automatiquement pour ce rendez-vous.</p>' : ''}
 
       <div style="text-align:center;margin-top:20px;">
         <a href="${escapeHtml(data.agendaUrl)}" style="display:inline-block;background:#2B5651;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;">Voir dans l'agenda</a>
