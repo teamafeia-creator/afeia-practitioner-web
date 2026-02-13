@@ -31,6 +31,17 @@ export type Consultant = {
   activated?: boolean;
   activated_at?: string | null;
   deleted_at?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  address_line1?: string | null;
+  address_line2?: string | null;
+  postal_code?: string | null;
+  profession?: string | null;
+  referring_doctor_name?: string | null;
+  referring_doctor_phone?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  emergency_contact_relation?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -382,6 +393,66 @@ export type PreliminaryQuestionnaireWithConsultant = PreliminaryQuestionnaire & 
   linked_consultant?: Consultant | null;
 };
 
+// ============================================
+// MEDICAL RECORD TYPES
+// ============================================
+
+export type MedicalHistoryEntry = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  category: 'personal' | 'family' | 'surgical';
+  description: string;
+  year_onset: number | null;
+  is_active: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AllergyEntry = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  type: 'allergy' | 'intolerance' | 'sensitivity';
+  substance: string;
+  severity: 'mild' | 'moderate' | 'severe' | null;
+  reaction: string | null;
+  diagnosed: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CurrentTreatmentEntry = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  name: string;
+  dosage: string | null;
+  prescriber: string | null;
+  start_date: string | null;
+  is_active: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConsultantRelationship = {
+  id: string;
+  consultant_id: string;
+  related_consultant_id: string;
+  relationship_type: 'parent' | 'child' | 'spouse' | 'sibling' | 'other';
+  label: string | null;
+  created_at: string;
+  related_consultant?: {
+    id: string;
+    name: string;
+    first_name?: string;
+    last_name?: string;
+  };
+};
+
 // Types enrichis (avec relations)
 export type ConsultantWithDetails = Consultant & {
   anamnese?: Anamnese;
@@ -401,6 +472,10 @@ export type ConsultantWithDetails = Consultant & {
   consultant_plans?: ConsultantPlan[];
   analysis_results?: ConsultantAnalysisResult[];
   drawings?: ConsultantDrawing[];
+  medical_history?: MedicalHistoryEntry[];
+  allergies_structured?: AllergyEntry[];
+  current_treatments?: CurrentTreatmentEntry[];
+  relationships?: ConsultantRelationship[];
 };
 
 export type ConsultantDrawing = {
@@ -455,4 +530,38 @@ export type AIGenerationLog = {
   status: 'success' | 'error' | 'filtered';
   error_message: string | null;
   created_at: string;
+};
+
+// ============================================
+// WAITLIST / ALERTE DESISTEMENT
+// ============================================
+
+export type TimeOfDayPreference = 'morning' | 'afternoon' | 'evening' | 'any';
+
+export type WaitlistEntry = {
+  id: string;
+  practitioner_id: string;
+  consultation_type_id: string | null;
+  email: string;
+  first_name: string;
+  phone: string | null;
+  preferred_time_of_day: TimeOfDayPreference;
+  preferred_days: number[];
+  notified_at: string | null;
+  notified_for_slot: string | null;
+  fulfilled_at: string | null;
+  expires_at: string;
+  created_at: string;
+  // Joined relation
+  consultation_type?: { name: string } | null;
+};
+
+export type WaitlistInsert = {
+  practitioner_id: string;
+  consultation_type_id?: string | null;
+  email: string;
+  first_name: string;
+  phone?: string | null;
+  preferred_time_of_day: TimeOfDayPreference;
+  preferred_days: number[];
 };

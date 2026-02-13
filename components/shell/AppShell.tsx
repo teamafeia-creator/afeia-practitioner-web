@@ -35,7 +35,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
       { href: '/consultants', label: 'Consultants', icon: Users },
-      { href: '/agenda', label: 'Agenda', icon: Calendar },
+      { href: '/agenda', label: 'Agenda', icon: Calendar, showWaitlistBadge: true },
     ]
   },
   {
@@ -78,6 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const helpMenuRef = useRef<HTMLDivElement>(null);
   const { unreadCount: unreadMessages } = useMessageNotifications();
+  const [waitlistCount, setWaitlistCount] = useState(0);
 
   const active = useMemo(() => {
     const match = [...ALL_NAV, ...ADMIN_NAV, { href: '/settings' }].find((n) => pathname.startsWith(n.href));
@@ -176,6 +177,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [userMenuOpen, helpMenuOpen]);
 
+  // Fetch waitlist count
+  useEffect(() => {
+    if (checkingAuth || !userEmail) return;
+    (async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const token = session?.session?.access_token;
+        if (!token) return;
+        const res = await fetch('/api/waitlist/count', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setWaitlistCount(data.count ?? 0);
+        }
+      } catch {
+        // Silently ignore
+      }
+    })();
+  }, [checkingAuth, userEmail]);
+
   async function logout() {
     await supabase.auth.signOut();
     setUserEmail(null);
@@ -192,10 +214,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean }, onClick?: () => void) => {
+  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean; showWaitlistBadge?: boolean }, onClick?: () => void) => {
     const isActive = active === item.href;
     const Icon = item.icon;
     const showBadge = item.showBadge && unreadMessages > 0;
+    const showWaitlist = item.showWaitlistBadge && waitlistCount > 0;
 
     return (
       <Link
@@ -231,6 +254,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
           <span>{item.label}</span>
+          {showWaitlist && (
+            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white/15 text-[10px] font-medium text-sidebar-text px-1.5">
+              {waitlistCount > 99 ? '99+' : waitlistCount}
+            </span>
+          )}
         </div>
       </Link>
     );

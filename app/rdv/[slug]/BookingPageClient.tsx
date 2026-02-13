@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { PractitionerPublicProfile } from '@/lib/queries/booking';
 import { PractitionerHeader } from './components/PractitionerHeader';
 import { BookingStepType } from './components/BookingStepType';
@@ -40,6 +41,7 @@ export function BookingPageClient({
   practitioner: PractitionerPublicProfile;
   slug: string;
 }) {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>('type');
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -48,20 +50,79 @@ export function BookingPageClient({
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [contactEmail, setContactEmail] = useState('');
+  const [prefillSlotUnavailable, setPrefillSlotUnavailable] = useState(false);
+  const [prefillChecked, setPrefillChecked] = useState(false);
 
   const selectedType = useMemo(
     () => practitioner.consultation_types.find(t => t.id === selectedTypeId),
     [selectedTypeId, practitioner.consultation_types]
   );
 
+  // Handle pre-fill from query params (waitlist notification link)
+  const checkPrefillSlot = useCallback(async (
+    prefillDate: string,
+    prefillTime: string,
+    prefillTypeId: string,
+  ) => {
+    try {
+      const res = await fetch(
+        `/api/booking/${slug}/slots?date=${prefillDate}&consultation_type_id=${prefillTypeId}`
+      );
+      if (!res.ok) return false;
+      const data = await res.json();
+      const slots: string[] = data.slots || [];
+      return slots.includes(prefillTime);
+    } catch {
+      return false;
+    }
+  }, [slug]);
+
+  useEffect(() => {
+    if (prefillChecked) return;
+
+    const prefillDate = searchParams.get('date');
+    const prefillTime = searchParams.get('time');
+    const prefillTypeId = searchParams.get('consultation_type_id');
+
+    if (!prefillDate || !prefillTime || !prefillTypeId) {
+      setPrefillChecked(true);
+      return;
+    }
+
+    // Validate the type exists
+    const typeExists = practitioner.consultation_types.some(t => t.id === prefillTypeId);
+    if (!typeExists) {
+      setPrefillChecked(true);
+      return;
+    }
+
+    // Check if the slot is still available
+    checkPrefillSlot(prefillDate, prefillTime, prefillTypeId).then(available => {
+      if (available) {
+        setSelectedTypeId(prefillTypeId);
+        setSelectedDate(prefillDate);
+        setSelectedTime(prefillTime);
+        setStep('contact');
+      } else {
+        // Slot no longer available — go to date step with a message
+        setSelectedTypeId(prefillTypeId);
+        setPrefillSlotUnavailable(true);
+        setStep('date');
+      }
+      setPrefillChecked(true);
+    });
+  }, [searchParams, practitioner.consultation_types, checkPrefillSlot, prefillChecked]);
+
   const handleSelectType = (typeId: string) => {
     setSelectedTypeId(typeId);
+    setPrefillSlotUnavailable(false);
     setStep('date');
   };
 
   const handleSelectSlot = (date: string, time: string) => {
     setSelectedDate(date);
     setSelectedTime(time);
+    setPrefillSlotUnavailable(false);
     setStep('contact');
   };
 
@@ -120,6 +181,7 @@ export function BookingPageClient({
     setConfirmation(null);
     setBookingError(null);
     setContactEmail('');
+    setPrefillSlotUnavailable(false);
   };
 
   // Format date/time for display
@@ -127,6 +189,16 @@ export function BookingPageClient({
     ? dateFormatter.format(new Date(selectedDate + 'T12:00:00'))
     : '';
   const timeFormatted = selectedTime || '';
+
+  // Show loading while checking prefill params
+  if (!prefillChecked && searchParams.get('date')) {
+    return (
+      <div>
+        <PractitionerHeader practitioner={practitioner} />
+        <div className="text-center py-12 text-stone">Chargement...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -151,6 +223,15 @@ export function BookingPageClient({
         </div>
       )}
 
+      {/* Prefill slot unavailable message */}
+      {prefillSlotUnavailable && step === 'date' && (
+        <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-4 text-center">
+          <p className="text-sm text-amber-800">
+            Ce creneau n&apos;est malheureusement plus disponible. Veuillez en choisir un autre.
+          </p>
+        </div>
+      )}
+
       {/* Step content */}
       {step === 'type' && (
         <BookingStepType
@@ -166,6 +247,8 @@ export function BookingPageClient({
           consultationTypeName={selectedType?.name || ''}
           onSelectSlot={handleSelectSlot}
           onBack={() => setStep('type')}
+          practitionerSlug={slug}
+          consultationTypes={practitioner.consultation_types}
         />
       )}
 

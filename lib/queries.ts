@@ -262,7 +262,11 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     wearableInsightsResult,
     consultantPlansResult,
     analysisResultsResult,
-    drawingsResult
+    drawingsResult,
+    medicalHistoryResult,
+    allergiesResult,
+    currentTreatmentsResult,
+    relationshipsResult
   ] = await Promise.all([
     supabase.from('anamneses').select('*').eq('consultant_id', id).single(),
     supabase.from('consultations').select('*').eq('consultant_id', id).order('date', { ascending: false }),
@@ -277,7 +281,11 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     supabase.from('wearable_insights').select('*').eq('consultant_id', id).order('created_at', { ascending: false }).limit(50),
     supabase.from('consultant_plans').select('*').eq('consultant_id', id).order('version', { ascending: false }),
     supabase.from('consultant_analysis_results').select('*').eq('consultant_id', id).order('analysis_date', { ascending: false }),
-    supabase.from('consultant_drawings').select('*').eq('consultant_id', id).order('created_at', { ascending: false })
+    supabase.from('consultant_drawings').select('*').eq('consultant_id', id).order('created_at', { ascending: false }),
+    supabase.from('medical_history').select('*').eq('consultant_id', id).order('created_at', { ascending: false }),
+    supabase.from('allergies').select('*').eq('consultant_id', id).order('created_at', { ascending: false }),
+    supabase.from('current_treatments').select('*').eq('consultant_id', id).order('created_at', { ascending: false }),
+    supabase.from('consultant_relationships').select(`*, related_consultant:consultants!consultant_relationships_related_consultant_id_fkey(id, name, first_name, last_name)`).eq('consultant_id', id).order('created_at', { ascending: false })
   ]);
 
   // Handle plan -> versions -> sections (dependent chain, but eliminate N+1)
@@ -343,7 +351,11 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     wearable_insights: wearableInsightsResult.data || [],
     consultant_plans: consultantPlansResult.data || [],
     analysis_results: analysisResultsResult.data || [],
-    drawings: drawingsResult.data || []
+    drawings: drawingsResult.data || [],
+    medical_history: medicalHistoryResult.data || [],
+    allergies_structured: allergiesResult.data || [],
+    current_treatments: currentTreatmentsResult.data || [],
+    relationships: relationshipsResult.data || []
   };
 }
 

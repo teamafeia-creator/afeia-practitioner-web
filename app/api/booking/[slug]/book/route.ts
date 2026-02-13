@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPractitionerBySlug } from '@/lib/queries/booking';
+import { markAsFulfilled } from '@/lib/queries/waitlist';
 import { sendEmail } from '@/lib/server/email';
 import { buildConfirmationEmail, buildPractitionerNotificationEmail } from '@/lib/emails/booking-confirmation';
 import { generateICS } from '@/lib/utils/generate-ics';
@@ -186,6 +187,13 @@ export async function POST(
       }
     } catch (emailError) {
       console.error('Failed to send practitioner notification:', emailError);
+    }
+
+    // Mark any waitlist entries notified for this slot as fulfilled
+    try {
+      await markAsFulfilled(practitioner.id, startsAtDate);
+    } catch (err) {
+      console.error('Failed to mark waitlist as fulfilled:', err);
     }
 
     return NextResponse.json({

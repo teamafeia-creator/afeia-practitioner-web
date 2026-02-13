@@ -16,6 +16,7 @@ import {
   cancelAppointment,
   completeAppointment,
 } from '@/lib/queries/appointments';
+import { triggerWaitlistNotification } from '@/lib/waitlist-trigger';
 import type { Appointment } from '@/lib/types';
 
 interface AppointmentDetailProps {
@@ -116,6 +117,8 @@ export function AppointmentDetail({
     setProcessing(true);
     try {
       await cancelAppointment(appointment!.id, cancelReason || null, cancelledBy);
+      // Fire-and-forget: notify waitlist entries about the freed slot
+      triggerWaitlistNotification(appointment!.id);
       showToast.success('Seance annulee');
       setShowCancelModal(false);
       onUpdated();

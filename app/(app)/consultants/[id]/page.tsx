@@ -12,7 +12,8 @@ import { getConsultantById } from '@/lib/queries';
 import { supabase } from '@/lib/supabase';
 import { useDeleteConsultant } from '@/hooks/useConsultants';
 import type { ConsultantWithDetails } from '@/lib/types';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Download } from 'lucide-react';
+import { T } from '@/lib/terminology';
 
 export default function ConsultantDetailPage() {
   const params = useParams<{ id: string }>();
@@ -31,8 +32,40 @@ export default function ConsultantDetailPage() {
     variant?: 'success' | 'error' | 'info';
   } | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const deleteConsultantMutation = useDeleteConsultant();
+
+  // Handler pour exporter le dossier en PDF
+  const handleExportDossier = async () => {
+    setExportingPdf(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        setToast({ title: 'Erreur', description: 'Session expirée. Veuillez vous reconnecter.', variant: 'error' });
+        return;
+      }
+      const response = await fetch(`/api/consultants/${consultantId}/dossier-pdf`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération du PDF.');
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `dossier-${(consultant?.name || 'consultant').replace(/\s+/g, '-').toLowerCase()}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Erreur export PDF:', err);
+      setToast({ title: 'Erreur', description: err instanceof Error ? err.message : 'Impossible de générer le PDF.', variant: 'error' });
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   // Handler pour supprimer le consultant
   const handleDeleteConsultant = async () => {
@@ -444,6 +477,16 @@ export default function ConsultantDetailPage() {
 
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <Button
+          variant="secondary"
+          onClick={handleExportDossier}
+          loading={exportingPdf}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          {T.labelExportDossier}
+        </Button>
+      </div>
       <ConsultantTabs consultant={consultant} />
       {toast ? (
         <Toast

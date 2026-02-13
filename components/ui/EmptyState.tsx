@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import {
   Calendar,
   MessageSquare,
@@ -30,6 +31,7 @@ interface EmptyStateProps {
   title: string;
   description?: string;
   icon?: PresetIcon | React.ReactNode;
+  image?: string;
   action?: React.ReactNode;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
@@ -51,6 +53,7 @@ export function EmptyState({
   title,
   description,
   icon,
+  image,
   action,
   className,
   size = 'md'
@@ -95,24 +98,36 @@ export function EmptyState({
         className
       )}
     >
-      {/* Icon */}
-      <div
-        className={cn(
-          'flex items-center justify-center rounded-2xl bg-sage-light',
-          sizeStyles[size].iconWrapper
-        )}
-      >
-        {IconComponent ? (
-          <IconComponent
-            className={cn('text-sage', sizeStyles[size].icon)}
-            strokeWidth={1.5}
+      {/* Image or Icon */}
+      {image ? (
+        <div className="w-28 h-28 rounded-full overflow-hidden mb-2 opacity-50">
+          <Image
+            src={image}
+            alt=""
+            width={112}
+            height={112}
+            className="object-cover w-full h-full"
           />
-        ) : typeof icon === 'string' ? (
-          <span className="text-3xl">{icon}</span>
-        ) : (
-          icon
-        )}
-      </div>
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'flex items-center justify-center rounded-2xl bg-sage-light',
+            sizeStyles[size].iconWrapper
+          )}
+        >
+          {IconComponent ? (
+            <IconComponent
+              className={cn('text-sage', sizeStyles[size].icon)}
+              strokeWidth={1.5}
+            />
+          ) : typeof icon === 'string' ? (
+            <span className="text-3xl">{icon}</span>
+          ) : (
+            icon
+          )}
+        </div>
+      )}
 
       {/* Text content */}
       <div className="space-y-1">
@@ -154,7 +169,7 @@ export function EmptyState({
 export function NoConsultants({ action }: { action?: React.ReactNode }) {
   return (
     <EmptyState
-      icon="consultants"
+      image="/images/palm-minimal.jpg"
       title="Aucun consultant"
       description="Commencez par ajouter votre premier consultant pour suivre son parcours."
       action={action}
@@ -166,7 +181,7 @@ export function NoConsultants({ action }: { action?: React.ReactNode }) {
 export function NoAppointments({ action }: { action?: React.ReactNode }) {
   return (
     <EmptyState
-      icon="appointments"
+      image="/images/sage-tisane.jpg"
       title="Aucun rendez-vous"
       description="Vous n'avez aucun rendez-vous programme. Planifiez votre premiere seance."
       action={action}
@@ -177,7 +192,7 @@ export function NoAppointments({ action }: { action?: React.ReactNode }) {
 export function NoMessages({ action }: { action?: React.ReactNode }) {
   return (
     <EmptyState
-      icon="messages"
+      image="/images/eucalyptus-minimal.jpg"
       title="Aucun message"
       description="Vous n'avez pas encore de conversations. Les messages de vos consultants apparaitront ici."
       action={action}
