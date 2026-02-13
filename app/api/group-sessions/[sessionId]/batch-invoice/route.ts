@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { cookies } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { sessionId: string } }
 ) {
   try {
-    // Get the authenticated user from the request cookie
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const cookieStore = cookies();
-    const authToken = cookieStore.get('afeia-auth-token')?.value;
-
-    if (!authToken) {
-      return NextResponse.json({ error: 'Non authentifie.' }, { status: 401 });
-    }
-
     const supabase = createAdminClient();
 
     // Load the session with registrations
@@ -49,7 +37,9 @@ export async function POST(
       return NextResponse.json({ error: 'Aucun participant present a facturer.' }, { status: 400 });
     }
 
-    const consultationType = session.consultation_type as { id: string; price_cents: number | null } | null;
+    // Supabase may return the join as array or object depending on context
+    const ctRaw = session.consultation_type;
+    const consultationType = (Array.isArray(ctRaw) ? ctRaw[0] : ctRaw) as { id: string; price_cents: number | null } | undefined;
     const priceCents = consultationType?.price_cents || 0;
 
     // Filter only those with a consultant_id (can create invoices)
