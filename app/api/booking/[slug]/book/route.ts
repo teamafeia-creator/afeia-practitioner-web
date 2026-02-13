@@ -5,6 +5,7 @@ import { markAsFulfilled } from '@/lib/queries/waitlist';
 import { sendEmail } from '@/lib/server/email';
 import { buildConfirmationEmail, buildPractitionerNotificationEmail } from '@/lib/emails/booking-confirmation';
 import { generateICS } from '@/lib/utils/generate-ics';
+import { createDailyRoom, generateRoomName } from '@/lib/server/daily';
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'AFEIA <contact@afeia.fr>';
 
@@ -105,6 +106,40 @@ export async function POST(
       );
     }
 
+    // Create Daily.co room if practitioner uses integrated video and consultation type implies video
+    let videoLink: string | null = null;
+    let videoRoomName: string | null = null;
+
+    const isVideoConsultation = /visio|video|teleconsultation/i.test(ct.name);
+    if (isVideoConsultation) {
+      const { data: practitionerSettings } = await supabase
+        .from('practitioners')
+        .select('video_provider')
+        .eq('id', practitioner.id)
+        .single();
+
+      if (practitionerSettings?.video_provider === 'daily') {
+        const roomName = generateRoomName(appointmentId as string);
+        const roomExpiresAt = new Date(endsAtDate.getTime() + 30 * 60 * 1000);
+        const room = await createDailyRoom({ name: roomName, expiresAt: roomExpiresAt });
+
+        if (room) {
+          videoLink = room.url;
+          videoRoomName = room.name;
+
+          await supabase
+            .from('appointments')
+            .update({
+              video_link: videoLink,
+              video_room_name: videoRoomName,
+              location_type: 'video',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', appointmentId);
+        }
+      }
+    }
+
     // Check if this is a new or existing consultant
     const { data: consultant } = await supabase
       .from('consultants')
@@ -142,6 +177,7 @@ export async function POST(
       cancellationPolicyHours: practitioner.cancellation_policy_hours,
       cancellationPolicyText: practitioner.cancellation_policy_text,
       reason: sanitizedReason,
+      videoLink,
     };
 
     // Send confirmation email to consultant
@@ -205,6 +241,7 @@ export async function POST(
       practitioner_name: practitioner.full_name,
       practitioner_address: practitioner.booking_address,
       ics_download_url: `/api/booking/${params.slug}/ics?appointment_id=${appointmentId}`,
+      video_link: videoLink,
     });
   } catch (error) {
     console.error('Error in book API:', error);

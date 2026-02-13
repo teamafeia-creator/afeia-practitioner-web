@@ -13,6 +13,8 @@ export type Practitioner = {
   booking_enabled?: boolean;
   booking_address?: string | null;
   booking_phone?: string | null;
+  video_provider?: 'external' | 'daily';
+  daily_api_key?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -160,6 +162,10 @@ export type Consultation = {
   updated_at: string;
 };
 
+// --- Video conferencing ---
+
+export type VideoProvider = 'external' | 'daily';
+
 // --- Agenda V1 types ---
 
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rescheduled';
@@ -227,6 +233,7 @@ export type Appointment = {
   booking_name: string | null;
   booking_email: string | null;
   booking_phone: string | null;
+  video_room_name: string | null;
   google_event_id: string | null;
   created_at: string;
   updated_at: string;

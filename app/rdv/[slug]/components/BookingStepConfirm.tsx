@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarPlus, ArrowLeft, MapPin, Download } from 'lucide-react';
+import { CalendarPlus, ArrowLeft, MapPin, Download, Video } from 'lucide-react';
 
 interface BookingStepConfirmProps {
   confirmation: {
@@ -12,6 +12,7 @@ interface BookingStepConfirmProps {
     practitioner_name: string;
     practitioner_address: string | null;
     ics_download_url: string;
+    video_link?: string | null;
   };
   email: string;
   onReset: () => void;
@@ -92,6 +93,42 @@ export function BookingStepConfirm({
           </div>
         )}
       </div>
+
+      {confirmation.video_link && (
+        <div className="rounded-xl border border-sage/20 bg-sage/5 p-5 text-left space-y-3">
+          <div className="flex items-center gap-2">
+            <Video className="h-5 w-5 text-sage" />
+            <span className="text-sm font-semibold text-charcoal">
+              Consultation en visioconference
+            </span>
+          </div>
+          <p className="text-sm text-stone">
+            Le lien sera actif 15 minutes avant votre consultation. Il a aussi ete envoye par email.
+          </p>
+          {(() => {
+            const now = new Date();
+            const startsAtTime = new Date(confirmation.starts_at);
+            const windowStart = new Date(startsAtTime.getTime() - 15 * 60 * 1000);
+            const isAccessible = now >= windowStart;
+
+            return isAccessible ? (
+              <a
+                href={`/consultation/video/${confirmation.appointment_id}?token=public&name=Consultant`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 w-full rounded-lg bg-sage px-5 py-2.5 text-sm font-medium text-white hover:bg-sage/90 transition-colors"
+              >
+                <Video className="h-4 w-4" />
+                Rejoindre la visio
+              </a>
+            ) : (
+              <div className="text-xs text-stone text-center">
+                Le bouton sera actif 15 minutes avant le debut.
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       <p className="text-sm text-stone">
         Un email de confirmation vous a ete envoye a{' '}

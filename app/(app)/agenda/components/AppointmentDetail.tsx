@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   X, MapPin, Video, Phone, Home, Clock, User,
-  CheckCircle, XCircle, CalendarClock, FileText, AlertTriangle
+  CheckCircle, XCircle, CalendarClock, FileText, AlertTriangle, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
@@ -17,6 +17,7 @@ import {
   completeAppointment,
 } from '@/lib/queries/appointments';
 import { triggerWaitlistNotification } from '@/lib/waitlist-trigger';
+import { supabase } from '@/lib/supabase';
 import type { Appointment } from '@/lib/types';
 
 interface AppointmentDetailProps {
@@ -119,6 +120,22 @@ export function AppointmentDetail({
       await cancelAppointment(appointment!.id, cancelReason || null, cancelledBy);
       // Fire-and-forget: notify waitlist entries about the freed slot
       triggerWaitlistNotification(appointment!.id);
+      // Fire-and-forget: clean up Daily room if exists
+      if (appointment!.video_room_name) {
+        supabase.auth.getSession().then(({ data: sessionData }) => {
+          const accessToken = sessionData.session?.access_token;
+          if (accessToken) {
+            fetch('/api/video/provision', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({ appointment_id: appointment!.id, action: 'delete' }),
+            }).catch(() => { /* best-effort */ });
+          }
+        });
+      }
       showToast.success('Seance annulee');
       setShowCancelModal(false);
       onUpdated();
@@ -234,16 +251,51 @@ export function AppointmentDetail({
                   <span>{LOCATION_LABELS[appointment.location_type] || appointment.location_type}</span>
                 </div>
 
-                {appointment.video_link && (
+                {appointment.video_room_name ? (
+                  (() => {
+                    const now = new Date();
+                    const startsAt = new Date(appointment.starts_at);
+                    const endsAt = new Date(appointment.ends_at);
+                    const windowStart = new Date(startsAt.getTime() - 15 * 60 * 1000);
+                    const windowEnd = new Date(endsAt.getTime() + 30 * 60 * 1000);
+                    const isInWindow = now >= windowStart && now <= windowEnd;
+
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-sage/10 text-sage">
+                            <Video className="h-3 w-3" />
+                            Visio integree
+                          </span>
+                        </div>
+                        {isInWindow ? (
+                          <Button
+                            variant="primary"
+                            className="w-full"
+                            icon={<Video className="w-4 h-4" />}
+                            onClick={() => window.open(`/consultation/video/${appointment.id}`, '_blank')}
+                          >
+                            Rejoindre la visio
+                          </Button>
+                        ) : (
+                          <div className="text-xs text-stone bg-neutral-50 p-2 rounded-lg">
+                            Le lien sera disponible 15 min avant le debut de la seance.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()
+                ) : appointment.video_link ? (
                   <a
                     href={appointment.video_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-sage hover:underline"
+                    className="inline-flex items-center gap-1.5 text-sm text-sage hover:underline"
                   >
+                    <ExternalLink className="h-3.5 w-3.5" />
                     Ouvrir le lien visio
                   </a>
-                )}
+                ) : null}
 
                 {/* Notes */}
                 {appointment.notes_internal && (

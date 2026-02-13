@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Video } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -91,6 +91,7 @@ export function AppointmentForm({
   const [showSearch, setShowSearch] = useState(false);
   const [saving, setSaving] = useState(false);
   const [conflictWarning, setConflictWarning] = useState(false);
+  const [videoProvider, setVideoProvider] = useState<'external' | 'daily'>('external');
 
   const [form, setForm] = useState({
     consultant_id: '' as string,
@@ -108,17 +109,25 @@ export function AppointmentForm({
     if (!isOpen) return;
 
     async function load() {
-      const [typesResult, consultantsResult] = await Promise.all([
+      const [typesResult, consultantsResult, practitionerResult] = await Promise.all([
         getConsultationTypes(),
         supabase
           .from('consultants')
           .select('id, name, first_name, last_name, email')
           .is('deleted_at', null)
           .order('name'),
+        supabase
+          .from('practitioners')
+          .select('video_provider')
+          .limit(1)
+          .single(),
       ]);
 
       setConsultationTypes(typesResult.filter((t) => t.is_active));
       setConsultants((consultantsResult.data || []) as ConsultantOption[]);
+      if (practitionerResult.data?.video_provider) {
+        setVideoProvider(practitionerResult.data.video_provider as 'external' | 'daily');
+      }
     }
 
     load();
@@ -204,6 +213,10 @@ export function AppointmentForm({
       const startsAt = new Date(`${form.date}T${form.start_time}:00`).toISOString();
       const endsAt = new Date(`${form.date}T${form.end_time}:00`).toISOString();
 
+      const videoLinkValue = videoProvider === 'daily' && form.location_type === 'video'
+        ? null // Will be set by provision API
+        : (form.video_link || null);
+
       let result: Appointment;
       if (editAppointment) {
         result = await updateNativeAppointment(editAppointment.id, {
@@ -212,7 +225,7 @@ export function AppointmentForm({
           starts_at: startsAt,
           ends_at: endsAt,
           location_type: form.location_type,
-          video_link: form.video_link || null,
+          video_link: videoLinkValue,
           notes_internal: form.notes_internal || null,
         });
         showToast.success('Seance modifiee');
@@ -223,11 +236,53 @@ export function AppointmentForm({
           starts_at: startsAt,
           ends_at: endsAt,
           location_type: form.location_type,
-          video_link: form.video_link || null,
+          video_link: videoLinkValue,
           notes_internal: form.notes_internal || null,
         });
         const consultantName = selectedConsultant ? getConsultantDisplayName(selectedConsultant) : 'le consultant';
         showToast.success(`Seance creee avec ${consultantName}`);
+      }
+
+      // Provision Daily room for video appointments
+      if (videoProvider === 'daily' && form.location_type === 'video' && !result.video_room_name) {
+        try {
+          const session = await supabase.auth.getSession();
+          const accessToken = session.data.session?.access_token;
+          const provisionRes = await fetch('/api/video/provision', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ appointment_id: result.id }),
+          });
+          if (provisionRes.ok) {
+            const provisionData = await provisionRes.json();
+            result = { ...result, video_link: provisionData.video_link, video_room_name: provisionData.video_room_name };
+          } else {
+            showToast.error('La salle de visio n\'a pas pu etre creee automatiquement. Vous pouvez ajouter un lien manuellement.');
+          }
+        } catch {
+          showToast.error('La salle de visio n\'a pas pu etre creee automatiquement.');
+        }
+      }
+
+      // Clean up Daily room if location changed from video
+      if (editAppointment?.video_room_name && form.location_type !== 'video') {
+        try {
+          const session = await supabase.auth.getSession();
+          const accessToken = session.data.session?.access_token;
+          await fetch('/api/video/provision', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ appointment_id: editAppointment.id, action: 'delete' }),
+          });
+        } catch {
+          // Best-effort cleanup
+        }
       }
 
       onSaved(result);
@@ -380,13 +435,24 @@ export function AppointmentForm({
         </Select>
 
         {form.location_type === 'video' && (
-          <Input
-            label="Lien visio"
-            type="url"
-            value={form.video_link}
-            onChange={(e) => setForm((f) => ({ ...f, video_link: e.target.value }))}
-            placeholder="https://meet.google.com/..."
-          />
+          videoProvider === 'daily' ? (
+            <div className="flex items-center gap-2 p-3 bg-sage/5 border border-sage/15 rounded-lg">
+              <Video className="h-4 w-4 text-sage flex-shrink-0" />
+              <span className="text-sm text-charcoal">
+                {editAppointment?.video_link
+                  ? 'Salle de visioconference creee automatiquement.'
+                  : 'La salle de visioconference sera creee automatiquement.'}
+              </span>
+            </div>
+          ) : (
+            <Input
+              label="Lien visio"
+              type="url"
+              value={form.video_link}
+              onChange={(e) => setForm((f) => ({ ...f, video_link: e.target.value }))}
+              placeholder="https://meet.google.com/..."
+            />
+          )
         )}
 
         {/* Notes */}
