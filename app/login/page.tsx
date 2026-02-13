@@ -203,16 +203,16 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-cream via-white to-sage/5 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-sage-light blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-primary-500/5 blur-3xl" />
-      </div>
+    <main className="flex min-h-screen">
+      {/* Left: form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#FBF7F2] p-6 lg:p-12 relative overflow-hidden">
+        {/* Background decorations */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-sage-light blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl" />
+        </div>
 
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-6">
-        <div className="w-full max-w-md">
+        <div className="relative z-10 w-full max-w-md">
           {/* Logo and branding */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -274,6 +274,17 @@ export default function LoginPage() {
             </div>
           </motion.div>
         </div>
+      </div>
+
+      {/* Right: photo (hidden on mobile) */}
+      <div className="hidden lg:block lg:w-1/2 relative">
+        <Image
+          src="/images/eucalyptus-minimal.jpg"
+          alt=""
+          fill
+          className="object-cover"
+          quality={80}
+        />
       </div>
     </main>
   );

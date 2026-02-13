@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Banknote,
 } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { Toaster, showToast } from '@/components/ui/Toaster';
@@ -243,40 +244,44 @@ export default function DashboardPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="relative rounded-2xl overflow-hidden border border-divider shadow-card">
-          {/* Nature background overlay */}
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: 'url(/images/nature-hero.svg)',
-            }}
+        <div className="relative w-full rounded-2xl overflow-hidden min-h-[200px] border border-divider shadow-card">
+          {/* Background image — fougère verte lumineuse */}
+          <Image
+            src="/images/dashboard-header.jpg"
+            alt=""
+            fill
+            className="object-cover"
+            priority
+            quality={80}
           />
-          <div className="absolute inset-0 bg-cream/75" />
-          <div className="relative px-6 py-8 md:px-8 md:py-10">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>
-                  {greeting}
-                  {practitionerName ? `, ${practitionerName}` : ''} !
-                </h1>
-                <p className="text-sm text-stone capitalize mt-1">{todayLabel}</p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  variant="primary"
-                  icon={<Plus className="w-4 h-4" />}
-                  onClick={() => router.push('/consultants/new')}
-                >
-                  Nouveau consultant
-                </Button>
-                <Button
-                  variant="secondary"
-                  icon={<Calendar className="w-4 h-4" />}
-                  onClick={() => router.push('/agenda')}
-                >
-                  Nouvelle seance
-                </Button>
-              </div>
+
+          {/* Overlay dégradé — plus opaque à gauche (texte), plus transparent à droite (image visible) */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FBF7F2]/90 via-[#FBF7F2]/70 to-[#FBF7F2]/40" />
+
+          {/* Contenu par-dessus */}
+          <div className="relative z-10 p-6 md:p-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-h-[200px]">
+            <div>
+              <h1 className="text-[28px] md:text-3xl font-semibold font-serif text-[#2D3436]" style={{ letterSpacing: '-0.02em' }}>
+                {greeting}
+                {practitionerName ? `, ${practitionerName}` : ''} !
+              </h1>
+              <p className="text-[#6B7280] capitalize mt-1">{todayLabel}</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="primary"
+                icon={<Plus className="w-4 h-4" />}
+                onClick={() => router.push('/consultants/new')}
+              >
+                Nouveau consultant
+              </Button>
+              <Button
+                variant="secondary"
+                icon={<Calendar className="w-4 h-4" />}
+                onClick={() => router.push('/agenda')}
+              >
+                Nouvelle seance
+              </Button>
             </div>
           </div>
         </div>
@@ -345,20 +350,27 @@ export default function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white border border-divider rounded-xl p-8 text-center shadow-card">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sage-light mx-auto mb-4">
-                  <Calendar className="h-7 w-7 text-sage" />
+              <div className="bg-white border border-divider rounded-xl p-8 shadow-card flex flex-col items-center justify-center text-center">
+                <div className="w-28 h-28 rounded-full overflow-hidden mb-6 opacity-50">
+                  <Image
+                    src="/images/sage-tisane.jpg"
+                    alt=""
+                    width={112}
+                    height={112}
+                    className="object-cover w-full h-full"
+                  />
                 </div>
-                <h4 className="text-base font-semibold text-charcoal mb-2">
+                <h4 className="font-serif text-xl text-[#2D3436] mb-2">
                   Aucune seance prevue aujourd&apos;hui
                 </h4>
-                <p className="text-sm text-stone mb-4">
+                <p className="text-[#6B7280] text-sm max-w-sm">
                   Planifiez votre prochaine seance en quelques clics.
                 </p>
                 <Button
                   variant="primary"
                   icon={<Calendar className="w-4 h-4" />}
                   onClick={() => router.push('/agenda')}
+                  className="mt-6"
                 >
                   Ouvrir l&apos;agenda
                 </Button>
