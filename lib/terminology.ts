@@ -64,6 +64,19 @@ export const T = {
 
   // ─── Labels du dashboard ────────────────────────
   plansEnBrouillon: 'Conseillanciers en brouillon à finaliser et partager',
+
+  // ─── Ateliers / Séances collectives ────────────
+  labelAtelier: 'Atelier',
+  labelGroupSession: 'Séance collective',
+  labelParticipants: 'Participants',
+  labelRegistered: 'Inscrit',
+  labelConfirmed: 'Confirmé',
+  labelAttended: 'Présent',
+  labelNoShow: 'Absent',
+  labelCancelled: 'Annulé',
+  labelAvailableSpots: 'places restantes',
+  labelComplete: 'Complet',
+  tabAteliers: 'Ateliers',
 } as const;
 
 export type TerminologyKey = keyof typeof T;

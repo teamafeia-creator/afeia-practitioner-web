@@ -27,6 +27,8 @@ export interface PractitionerPublicProfile {
     description: string | null;
     buffer_minutes: number;
     sort_order: number;
+    is_group: boolean;
+    price_per_participant: boolean;
   }>;
 }
 
@@ -44,7 +46,7 @@ export async function getPractitionerBySlug(slug: string): Promise<PractitionerP
 
   const { data: types } = await supabase
     .from('consultation_types')
-    .select('id, name, duration_minutes, price_cents, color, description, buffer_minutes, sort_order')
+    .select('id, name, duration_minutes, price_cents, color, description, buffer_minutes, sort_order, is_group, price_per_participant')
     .eq('practitioner_id', practitioner.id)
     .eq('is_active', true)
     .eq('is_bookable_online', true)

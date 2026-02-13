@@ -167,6 +167,9 @@ export interface ConsultationType {
   description: string | null;
   sort_order: number;
   is_active: boolean;
+  is_group: boolean;
+  max_participants: number;
+  price_per_participant: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -226,6 +229,60 @@ export type Appointment = {
     is_premium?: boolean;
   };
   consultation_type?: ConsultationType;
+};
+
+// --- Group Sessions (Séances Collectives) ---
+
+export type GroupSessionStatus = 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+export type GroupSessionRegistrationStatus = 'registered' | 'confirmed' | 'attended' | 'no_show' | 'cancelled';
+export type RegistrationSource = 'manual' | 'online_booking';
+
+export type GroupSession = {
+  id: string;
+  practitioner_id: string;
+  consultation_type_id: string;
+  title: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string;
+  location_type: 'in_person' | 'video' | 'home_visit';
+  location_details: string | null;
+  max_participants: number;
+  status: GroupSessionStatus;
+  notes_internal: string | null;
+  cancellation_reason: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // Relations (when joined)
+  consultation_type?: ConsultationType;
+  registrations?: GroupSessionRegistration[];
+  registration_count?: number;
+};
+
+export type GroupSessionRegistration = {
+  id: string;
+  group_session_id: string;
+  consultant_id: string | null;
+  practitioner_id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  status: GroupSessionRegistrationStatus;
+  registered_at: string;
+  cancelled_at: string | null;
+  source: RegistrationSource;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  // Relations (when joined)
+  consultant?: {
+    id: string;
+    name: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
 };
 
 export type Plan = {

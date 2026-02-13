@@ -15,6 +15,7 @@ interface BookingStepConfirmProps {
   };
   email: string;
   onReset: () => void;
+  isGroupSession?: boolean;
 }
 
 const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
@@ -33,6 +34,7 @@ export function BookingStepConfirm({
   confirmation,
   email,
   onReset,
+  isGroupSession,
 }: BookingStepConfirmProps) {
   const startsAt = new Date(confirmation.starts_at);
 
@@ -57,7 +59,7 @@ export function BookingStepConfirm({
 
       <div>
         <h2 className="text-xl font-semibold text-charcoal">
-          Rendez-vous confirme !
+          {isGroupSession ? 'Inscription confirmee !' : 'Rendez-vous confirme !'}
         </h2>
       </div>
 
@@ -72,7 +74,7 @@ export function BookingStepConfirm({
         <div className="flex items-center gap-2 text-sm">
           <span className="text-stone">Seance :</span>
           <span className="font-medium text-charcoal">
-            {confirmation.consultation_type_name} ({confirmation.duration_minutes} min)
+            {confirmation.consultation_type_name}{confirmation.duration_minutes > 0 ? ` (${confirmation.duration_minutes} min)` : ''}
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm">
@@ -98,14 +100,16 @@ export function BookingStepConfirm({
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <a
-          href={confirmation.ics_download_url}
-          download
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-sage/20 bg-white/80 px-5 py-2.5 text-sm font-medium text-sage hover:bg-sage-light/50 transition-colors"
-        >
-          <Download className="h-4 w-4" />
-          Ajouter a mon agenda
-        </a>
+        {!isGroupSession && confirmation.ics_download_url && (
+          <a
+            href={confirmation.ics_download_url}
+            download
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-sage/20 bg-white/80 px-5 py-2.5 text-sm font-medium text-sage hover:bg-sage-light/50 transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            Ajouter a mon agenda
+          </a>
+        )}
         <button
           onClick={onReset}
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-sage/20 bg-white/80 px-5 py-2.5 text-sm font-medium text-stone hover:bg-stone/5 transition-colors"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { ArrowLeft, Plus, GripVertical, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ArrowLeft, Plus, GripVertical, Pencil, Trash2, ToggleLeft, ToggleRight, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -34,6 +34,8 @@ type FormData = {
   buffer_minutes: number;
   is_bookable_online: boolean;
   description: string;
+  is_group: boolean;
+  max_participants: number;
 };
 
 const emptyForm: FormData = {
@@ -44,6 +46,8 @@ const emptyForm: FormData = {
   buffer_minutes: 15,
   is_bookable_online: true,
   description: '',
+  is_group: false,
+  max_participants: 1,
 };
 
 export default function ConsultationTypesPage() {
@@ -89,6 +93,8 @@ export default function ConsultationTypesPage() {
       buffer_minutes: ct.buffer_minutes,
       is_bookable_online: ct.is_bookable_online,
       description: ct.description || '',
+      is_group: ct.is_group,
+      max_participants: ct.max_participants,
     });
     setPriceInput(ct.price_cents != null ? (ct.price_cents / 100).toString() : '');
     setModalOpen(true);
@@ -112,6 +118,8 @@ export default function ConsultationTypesPage() {
         description: form.description.trim() || null,
         sort_order: editingId ? undefined : types.length,
         is_active: true,
+        is_group: form.is_group,
+        max_participants: form.is_group ? form.max_participants : 1,
       };
 
       if (editingId) {
@@ -240,10 +248,19 @@ export default function ConsultationTypesPage() {
               />
 
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-charcoal">{ct.name}</div>
+                <div className="font-medium text-charcoal flex items-center gap-2">
+                  {ct.name}
+                  {ct.is_group && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">
+                      <Users className="h-3 w-3" />
+                      Collectif
+                    </span>
+                  )}
+                </div>
                 <div className="text-sm text-stone">
                   {ct.duration_minutes} min
                   {ct.price_cents != null && ` · ${(ct.price_cents / 100).toFixed(0)}€`}
+                  {ct.is_group && ` · ${ct.max_participants} places`}
                   {ct.buffer_minutes > 0 && ` · Buffer ${ct.buffer_minutes} min`}
                 </div>
               </div>
@@ -352,6 +369,43 @@ export default function ConsultationTypesPage() {
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             className="min-h-[80px]"
           />
+
+          {/* Group session toggle */}
+          <div className="space-y-3 pt-2 border-t border-neutral-100">
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({
+                ...f,
+                is_group: !f.is_group,
+                max_participants: !f.is_group ? 10 : 1,
+              }))}
+              className="flex items-center justify-between w-full py-2"
+            >
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-stone" />
+                <span className="text-[13px] font-medium text-stone">Seance collective</span>
+              </div>
+              {form.is_group ? (
+                <ToggleRight className="h-5 w-5 text-sage" />
+              ) : (
+                <ToggleLeft className="h-5 w-5 text-stone" />
+              )}
+            </button>
+
+            {form.is_group && (
+              <Input
+                label="Nombre de places max"
+                type="number"
+                min="2"
+                max="50"
+                value={form.max_participants}
+                onChange={(e) => setForm((f) => ({
+                  ...f,
+                  max_participants: Math.max(2, Math.min(50, Number(e.target.value))),
+                }))}
+              />
+            )}
+          </div>
         </div>
 
         <ModalFooter>

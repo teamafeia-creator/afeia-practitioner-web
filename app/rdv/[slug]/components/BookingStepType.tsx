@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, Clock } from 'lucide-react';
+import { ChevronRight, Clock, Users } from 'lucide-react';
 
 interface ConsultationTypeOption {
   id: string;
@@ -9,6 +9,8 @@ interface ConsultationTypeOption {
   price_cents: number | null;
   color: string;
   description: string | null;
+  is_group?: boolean;
+  price_per_participant?: boolean;
 }
 
 export function BookingStepType({
@@ -29,8 +31,14 @@ export function BookingStepType({
           <button
             key={type.id}
             onClick={() => onSelect(type.id)}
-            className="w-full text-left rounded-xl border border-teal/15 bg-white/70 p-4 hover:border-sage/40 hover:bg-white/90 hover:shadow-sm transition-all group"
+            className="w-full text-left rounded-xl border border-teal/15 bg-white/70 p-4 hover:border-sage/40 hover:bg-white/90 hover:shadow-sm transition-all group relative"
           >
+            {type.is_group && (
+              <span className="absolute top-3 right-12 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">
+                <Users className="h-3 w-3" />
+                Atelier
+              </span>
+            )}
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -38,7 +46,10 @@ export function BookingStepType({
                     className="h-3 w-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: type.color }}
                   />
-                  <span className="font-medium text-charcoal">{type.name}</span>
+                  <span className="font-medium text-charcoal flex items-center gap-1.5">
+                    {type.name}
+                    {type.is_group && <Users className="h-3.5 w-3.5 text-blue-600" />}
+                  </span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-stone">
                   <span className="flex items-center gap-1">
@@ -46,7 +57,12 @@ export function BookingStepType({
                     {type.duration_minutes} min
                   </span>
                   {type.price_cents != null && (
-                    <span>{formatPrice(type.price_cents)}</span>
+                    <span>
+                      {formatPrice(type.price_cents)}
+                      {type.is_group && type.price_per_participant !== false && (
+                        <span className="text-xs text-stone/70"> / pers.</span>
+                      )}
+                    </span>
                   )}
                 </div>
                 {type.description && (

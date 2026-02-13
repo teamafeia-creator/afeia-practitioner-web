@@ -6,20 +6,23 @@ import type { PractitionerPublicProfile } from '@/lib/queries/booking';
 import { PractitionerHeader } from './components/PractitionerHeader';
 import { BookingStepType } from './components/BookingStepType';
 import { BookingStepDate } from './components/BookingStepDate';
+import { BookingStepGroupSession, type GroupSessionOption } from './components/BookingStepGroupSession';
 import { BookingStepContact, type ContactFormData } from './components/BookingStepContact';
 import { BookingStepConfirm } from './components/BookingStepConfirm';
 
-type Step = 'type' | 'date' | 'contact' | 'confirm';
+type Step = 'type' | 'date' | 'group_session' | 'contact' | 'confirm';
 
 interface Confirmation {
-  appointment_id: string;
+  appointment_id?: string;
+  registration_id?: string;
   starts_at: string;
   ends_at: string;
   consultation_type_name: string;
-  duration_minutes: number;
+  duration_minutes?: number;
   practitioner_name: string;
   practitioner_address: string | null;
-  ics_download_url: string;
+  ics_download_url?: string;
+  session_title?: string;
 }
 
 const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
@@ -46,6 +49,7 @@ export function BookingPageClient({
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedGroupSession, setSelectedGroupSession] = useState<GroupSessionOption | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
@@ -57,6 +61,8 @@ export function BookingPageClient({
     () => practitioner.consultation_types.find(t => t.id === selectedTypeId),
     [selectedTypeId, practitioner.consultation_types]
   );
+
+  const isGroupType = !!(selectedType && 'is_group' in selectedType && (selectedType as Record<string, unknown>).is_group);
 
   // Handle pre-fill from query params (waitlist notification link)
   const checkPrefillSlot = useCallback(async (
@@ -116,7 +122,15 @@ export function BookingPageClient({
   const handleSelectType = (typeId: string) => {
     setSelectedTypeId(typeId);
     setPrefillSlotUnavailable(false);
-    setStep('date');
+    setSelectedGroupSession(null);
+
+    // Check if this type is a group type
+    const ct = practitioner.consultation_types.find(t => t.id === typeId);
+    if (ct && 'is_group' in ct && (ct as Record<string, unknown>).is_group) {
+      setStep('group_session');
+    } else {
+      setStep('date');
+    }
   };
 
   const handleSelectSlot = (date: string, time: string) => {
@@ -126,46 +140,92 @@ export function BookingPageClient({
     setStep('contact');
   };
 
-  const handleSubmitContact = async (data: ContactFormData) => {
-    if (!selectedDate || !selectedTime || !selectedTypeId) return;
+  const handleSelectGroupSession = (session: GroupSessionOption) => {
+    setSelectedGroupSession(session);
+    setStep('contact');
+  };
 
+  const handleSubmitContact = async (data: ContactFormData) => {
     setSubmitting(true);
     setBookingError(null);
     setContactEmail(data.email);
 
     try {
-      const startsAt = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+      if (selectedGroupSession) {
+        // Group session registration flow
+        const res = await fetch(`/api/booking/${slug}/group-sessions/${selectedGroupSession.id}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name,
+            first_name: data.first_name,
+            email: data.email,
+            phone: data.phone,
+            reason: data.reason || null,
+          }),
+        });
 
-      const res = await fetch(`/api/booking/${slug}/book`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          consultation_type_id: selectedTypeId,
-          starts_at: startsAt,
-          name: data.name,
-          first_name: data.first_name,
-          email: data.email,
-          phone: data.phone,
-          reason: data.reason || null,
-          consent_rgpd: data.consent_rgpd,
-          consent_cancellation: data.consent_cancellation,
-        }),
-      });
+        const result = await res.json();
 
-      const result = await res.json();
-
-      if (!res.ok) {
-        if (result.error === 'SLOT_CONFLICT') {
-          setBookingError('Ce creneau vient d\'etre reserve. Veuillez en choisir un autre.');
-          setStep('date');
-        } else {
-          setBookingError(result.message || result.error || 'Une erreur est survenue.');
+        if (!res.ok) {
+          if (result.error === 'FULL') {
+            setBookingError('Cette seance est malheureusement complete. Veuillez en choisir une autre.');
+            setStep('group_session');
+          } else if (result.error === 'DUPLICATE') {
+            setBookingError(result.message || 'Vous etes deja inscrit a cette seance.');
+          } else {
+            setBookingError(result.message || result.error || 'Une erreur est survenue.');
+          }
+          return;
         }
-        return;
-      }
 
-      setConfirmation(result);
-      setStep('confirm');
+        setConfirmation({
+          registration_id: result.registration_id,
+          starts_at: result.starts_at,
+          ends_at: result.ends_at,
+          consultation_type_name: selectedType?.name || '',
+          practitioner_name: result.practitioner_name,
+          practitioner_address: practitioner.booking_address,
+          session_title: result.session_title,
+        });
+        setStep('confirm');
+      } else {
+        // Individual appointment booking flow (existing)
+        if (!selectedDate || !selectedTime || !selectedTypeId) return;
+
+        const startsAt = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+
+        const res = await fetch(`/api/booking/${slug}/book`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            consultation_type_id: selectedTypeId,
+            starts_at: startsAt,
+            name: data.name,
+            first_name: data.first_name,
+            email: data.email,
+            phone: data.phone,
+            reason: data.reason || null,
+            consent_rgpd: data.consent_rgpd,
+            consent_cancellation: data.consent_cancellation,
+          }),
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+          if (result.error === 'SLOT_CONFLICT') {
+            setBookingError('Ce creneau vient d\'etre reserve. Veuillez en choisir un autre.');
+            setStep('date');
+          } else {
+            setBookingError(result.message || result.error || 'Une erreur est survenue.');
+          }
+          return;
+        }
+
+        setConfirmation(result);
+        setStep('confirm');
+      }
     } catch {
       setBookingError('Une erreur est survenue. Veuillez reessayer.');
     } finally {
@@ -178,6 +238,7 @@ export function BookingPageClient({
     setSelectedTypeId(null);
     setSelectedDate(null);
     setSelectedTime(null);
+    setSelectedGroupSession(null);
     setConfirmation(null);
     setBookingError(null);
     setContactEmail('');
@@ -185,10 +246,26 @@ export function BookingPageClient({
   };
 
   // Format date/time for display
-  const dateFormatted = selectedDate
-    ? dateFormatter.format(new Date(selectedDate + 'T12:00:00'))
-    : '';
-  const timeFormatted = selectedTime || '';
+  let dateFormatted = '';
+  let timeFormatted = '';
+
+  if (selectedGroupSession) {
+    const gs = selectedGroupSession;
+    dateFormatted = dateFormatter.format(new Date(gs.starts_at));
+    timeFormatted = `${timeFormatter.format(new Date(gs.starts_at))} - ${timeFormatter.format(new Date(gs.ends_at))}`;
+  } else if (selectedDate) {
+    dateFormatted = dateFormatter.format(new Date(selectedDate + 'T12:00:00'));
+    timeFormatted = selectedTime || '';
+  }
+
+  const contactStepBackTarget = selectedGroupSession ? 'group_session' : 'date';
+
+  // Determine progress steps for display
+  const progressSteps: readonly string[] = isGroupType || selectedGroupSession
+    ? ['type', 'group_session', 'contact']
+    : ['type', 'date', 'contact'];
+
+  const currentStepForProgress: string = step === 'group_session' ? 'group_session' : step;
 
   // Show loading while checking prefill params
   if (!prefillChecked && searchParams.get('date')) {
@@ -207,13 +284,13 @@ export function BookingPageClient({
       {/* Progress steps */}
       {step !== 'confirm' && (
         <div className="flex items-center justify-center gap-2 mb-8">
-          {(['type', 'date', 'contact'] as const).map((s, i) => (
+          {progressSteps.map((s, i) => (
             <div key={s} className="flex items-center gap-2">
               <div
                 className={`h-2 w-8 rounded-full transition-colors ${
-                  step === s
+                  currentStepForProgress === s
                     ? 'bg-teal'
-                    : ['type', 'date', 'contact'].indexOf(step) > i
+                    : progressSteps.indexOf(currentStepForProgress) > i
                       ? 'bg-teal/40'
                       : 'bg-stone/20'
                 }`}
@@ -252,16 +329,25 @@ export function BookingPageClient({
         />
       )}
 
+      {step === 'group_session' && selectedTypeId && (
+        <BookingStepGroupSession
+          slug={slug}
+          consultationTypeId={selectedTypeId}
+          onSelectSession={handleSelectGroupSession}
+          onBack={() => setStep('type')}
+        />
+      )}
+
       {step === 'contact' && (
         <BookingStepContact
           practitionerName={practitioner.full_name}
-          cancellationPolicyText={practitioner.cancellation_policy_text}
-          cancellationPolicyHours={practitioner.cancellation_policy_hours}
+          cancellationPolicyText={selectedGroupSession ? null : practitioner.cancellation_policy_text}
+          cancellationPolicyHours={selectedGroupSession ? null : practitioner.cancellation_policy_hours}
           dateFormatted={dateFormatted}
           timeFormatted={timeFormatted}
-          consultationTypeName={selectedType?.name || ''}
+          consultationTypeName={selectedGroupSession ? selectedGroupSession.title : (selectedType?.name || '')}
           onSubmit={handleSubmitContact}
-          onBack={() => setStep('date')}
+          onBack={() => setStep(contactStepBackTarget)}
           submitting={submitting}
           error={bookingError}
         />
@@ -269,9 +355,19 @@ export function BookingPageClient({
 
       {step === 'confirm' && confirmation && (
         <BookingStepConfirm
-          confirmation={confirmation}
+          confirmation={{
+            appointment_id: confirmation.appointment_id || confirmation.registration_id || '',
+            starts_at: confirmation.starts_at,
+            ends_at: confirmation.ends_at,
+            consultation_type_name: confirmation.session_title || confirmation.consultation_type_name,
+            duration_minutes: confirmation.duration_minutes || 0,
+            practitioner_name: confirmation.practitioner_name,
+            practitioner_address: confirmation.practitioner_address,
+            ics_download_url: confirmation.ics_download_url || '',
+          }}
           email={contactEmail}
           onReset={handleReset}
+          isGroupSession={!!confirmation.registration_id}
         />
       )}
     </div>
