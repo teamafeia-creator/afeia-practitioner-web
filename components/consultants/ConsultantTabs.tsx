@@ -54,6 +54,12 @@ import {
   StickyNote,
   MessageSquare,
   FileUp,
+  Heart,
+  Plus,
+  Trash2,
+  Search,
+  Link2,
+  X,
 } from 'lucide-react';
 import type {
   AnamnesisAnswers,
@@ -62,8 +68,28 @@ import type {
   Message,
   ConsultantPlan,
   ConsultantWithDetails,
-  WearableInsight
+  WearableInsight,
+  MedicalHistoryEntry,
+  AllergyEntry,
+  CurrentTreatmentEntry,
+  ConsultantRelationship,
 } from '../../lib/types';
+import {
+  createMedicalHistoryEntry,
+  updateMedicalHistoryEntry,
+  deleteMedicalHistoryEntry,
+  createAllergy,
+  updateAllergy,
+  deleteAllergy,
+  createTreatment,
+  updateTreatment,
+  deleteTreatment,
+  getConsultantRelationships,
+  createRelationship,
+  deleteRelationship,
+  searchConsultants,
+} from '../../lib/queries/medical-record';
+import { Modal, ModalFooter } from '../ui/Modal';
 import { useContraindications } from '../../hooks/useContraindications';
 import { ContraindicationBanner } from '../care-plan/ContraindicationBanner';
 import { ContraindicationValidationModal } from '../care-plan/ContraindicationValidationModal';
@@ -98,6 +124,7 @@ function flattenAnamnesisAnswers(answers: AnamnesisAnswers | null | undefined): 
 
 const TABS = [
   T.tabProfil,
+  T.tabDossierMedical,
   T.tabRendezVous,
   T.tabAnamnese,
   T.tabBagueConnectee,
@@ -112,6 +139,7 @@ type Tab = (typeof TABS)[number];
 
 const TAB_META: Record<Tab, { title: string; description: string }> = {
   [T.tabProfil]: { title: T.tabProfil, description: T.descProfil },
+  [T.tabDossierMedical]: { title: T.tabDossierMedical, description: T.descDossierMedical },
   [T.tabRendezVous]: { title: T.tabRendezVous, description: T.descRendezVous },
   [T.tabAnamnese]: { title: T.tabAnamnese, description: T.descAnamnese },
   [T.tabBagueConnectee]: { title: T.tabBagueConnectee, description: T.descBagueConnectee },
@@ -127,6 +155,7 @@ const SIDEBAR_GROUPS = [
     label: 'Identite',
     items: [
       { tab: T.tabProfil as Tab, label: 'Synthese', icon: User },
+      { tab: T.tabDossierMedical as Tab, label: 'Dossier medical', icon: Heart },
       { tab: T.tabAnamnese as Tab, label: 'Anamnese', icon: ClipboardList },
     ],
   },
@@ -336,7 +365,18 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     age: consultant.age ? String(consultant.age) : '',
     city: consultant.city ?? '',
     phone: consultant.phone ?? '',
-    consultation_reason: consultant.consultation_reason ?? ''
+    consultation_reason: consultant.consultation_reason ?? '',
+    date_of_birth: consultant.date_of_birth ?? '',
+    gender: consultant.gender ?? '',
+    address_line1: consultant.address_line1 ?? '',
+    address_line2: consultant.address_line2 ?? '',
+    postal_code: consultant.postal_code ?? '',
+    profession: consultant.profession ?? '',
+    referring_doctor_name: consultant.referring_doctor_name ?? '',
+    referring_doctor_phone: consultant.referring_doctor_phone ?? '',
+    emergency_contact_name: consultant.emergency_contact_name ?? '',
+    emergency_contact_phone: consultant.emergency_contact_phone ?? '',
+    emergency_contact_relation: consultant.emergency_contact_relation ?? '',
   });
   const [messages, setMessages] = useState<Message[]>(consultant.messages ?? []);
   const [messageText, setMessageText] = useState('');
@@ -382,6 +422,28 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   } | null>(null);
 
   const [showContraindicationModal, setShowContraindicationModal] = useState(false);
+
+  // ─── Medical record states ──────────────────────
+  const [medicalHistory, setMedicalHistory] = useState<MedicalHistoryEntry[]>(consultant.medical_history ?? []);
+  const [allergiesStructured, setAllergiesStructured] = useState<AllergyEntry[]>(consultant.allergies_structured ?? []);
+  const [currentTreatments, setCurrentTreatments] = useState<CurrentTreatmentEntry[]>(consultant.current_treatments ?? []);
+  const [relationships, setRelationships] = useState<ConsultantRelationship[]>(consultant.relationships ?? []);
+
+  const [medicalHistoryModal, setMedicalHistoryModal] = useState<{ open: boolean; editingEntry: MedicalHistoryEntry | null }>({ open: false, editingEntry: null });
+  const [allergyModal, setAllergyModal] = useState<{ open: boolean; editingEntry: AllergyEntry | null }>({ open: false, editingEntry: null });
+  const [treatmentModal, setTreatmentModal] = useState<{ open: boolean; editingEntry: CurrentTreatmentEntry | null }>({ open: false, editingEntry: null });
+  const [relationshipModal, setRelationshipModal] = useState<{ open: boolean }>({ open: false });
+  const [confirmDeleteId, setConfirmDeleteId] = useState<{ type: 'history' | 'allergy' | 'treatment' | 'relationship'; id: string } | null>(null);
+  const [medicalSaving, setMedicalSaving] = useState(false);
+
+  // Medical record form states
+  const [historyForm, setHistoryForm] = useState({ category: 'personal' as string, description: '', year_onset: '', is_active: true, notes: '' });
+  const [allergyForm, setAllergyForm] = useState({ type: 'allergy' as string, substance: '', severity: '' as string, reaction: '', diagnosed: false, notes: '' });
+  const [treatmentForm, setTreatmentForm] = useState({ name: '', dosage: '', prescriber: '', start_date: '', is_active: true, notes: '' });
+  const [relationshipForm, setRelationshipForm] = useState({ related_consultant_id: '', relationship_type: 'parent' as string, label: '' });
+  const [consultantSearch, setConsultantSearch] = useState('');
+  const [consultantSearchResults, setConsultantSearchResults] = useState<{ id: string; name: string; first_name?: string; last_name?: string }[]>([]);
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   // Extract substance names from plan content for contraindication checking
   const substanceNamesFromPlan = useMemo(() => {
@@ -444,20 +506,26 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       age: consultantState.age ? String(consultantState.age) : '',
       city: consultantState.city ?? '',
       phone: consultantState.phone ?? '',
-      consultation_reason: consultantState.consultation_reason ?? ''
+      consultation_reason: consultantState.consultation_reason ?? '',
+      date_of_birth: consultantState.date_of_birth ?? '',
+      gender: consultantState.gender ?? '',
+      address_line1: consultantState.address_line1 ?? '',
+      address_line2: consultantState.address_line2 ?? '',
+      postal_code: consultantState.postal_code ?? '',
+      profession: consultantState.profession ?? '',
+      referring_doctor_name: consultantState.referring_doctor_name ?? '',
+      referring_doctor_phone: consultantState.referring_doctor_phone ?? '',
+      emergency_contact_name: consultantState.emergency_contact_name ?? '',
+      emergency_contact_phone: consultantState.emergency_contact_phone ?? '',
+      emergency_contact_relation: consultantState.emergency_contact_relation ?? '',
     }),
     [consultantState]
   );
 
   const isProfileDirty = useMemo(() => {
-    return (
-      normalizeProfileValue(profileForm.name) !== normalizeProfileValue(initialProfile.name) ||
-      normalizeProfileValue(profileForm.email) !== normalizeProfileValue(initialProfile.email) ||
-      normalizeProfileValue(profileForm.age) !== normalizeProfileValue(initialProfile.age) ||
-      normalizeProfileValue(profileForm.city) !== normalizeProfileValue(initialProfile.city) ||
-      normalizeProfileValue(profileForm.phone) !== normalizeProfileValue(initialProfile.phone) ||
-      normalizeProfileValue(profileForm.consultation_reason) !==
-        normalizeProfileValue(initialProfile.consultation_reason)
+    const keys = Object.keys(initialProfile) as (keyof typeof initialProfile)[];
+    return keys.some(
+      (key) => normalizeProfileValue(profileForm[key]) !== normalizeProfileValue(initialProfile[key])
     );
   }, [initialProfile, profileForm]);
 
@@ -507,7 +575,18 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       age: consultant.age ? String(consultant.age) : '',
       city: consultant.city ?? '',
       phone: consultant.phone ?? '',
-      consultation_reason: consultant.consultation_reason ?? ''
+      consultation_reason: consultant.consultation_reason ?? '',
+      date_of_birth: consultant.date_of_birth ?? '',
+      gender: consultant.gender ?? '',
+      address_line1: consultant.address_line1 ?? '',
+      address_line2: consultant.address_line2 ?? '',
+      postal_code: consultant.postal_code ?? '',
+      profession: consultant.profession ?? '',
+      referring_doctor_name: consultant.referring_doctor_name ?? '',
+      referring_doctor_phone: consultant.referring_doctor_phone ?? '',
+      emergency_contact_name: consultant.emergency_contact_name ?? '',
+      emergency_contact_phone: consultant.emergency_contact_phone ?? '',
+      emergency_contact_relation: consultant.emergency_contact_relation ?? '',
     });
     setMessages(consultant.messages ?? []);
     setAnamnesisAnswers(flattenAnamnesisAnswers(consultant.consultant_anamnesis?.answers));
@@ -516,6 +595,10 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     setAppointments(consultant.appointments ?? []);
     setPlans(consultant.consultant_plans ?? []);
     setActivePlanId(consultant.consultant_plans?.[0]?.id ?? null);
+    setMedicalHistory(consultant.medical_history ?? []);
+    setAllergiesStructured(consultant.allergies_structured ?? []);
+    setCurrentTreatments(consultant.current_treatments ?? []);
+    setRelationships(consultant.relationships ?? []);
     setProfileEditing(false);
     setAnamnesisEditing(false);
     setJournalEditing(false);
@@ -590,7 +673,18 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         age: Number.isNaN(ageValue) ? null : ageValue,
         city: profileForm.city.trim() || null,
         phone: profileForm.phone.trim() || null,
-        consultation_reason: profileForm.consultation_reason.trim() || null
+        consultation_reason: profileForm.consultation_reason.trim() || null,
+        date_of_birth: profileForm.date_of_birth || null,
+        gender: profileForm.gender || null,
+        address_line1: profileForm.address_line1.trim() || null,
+        address_line2: profileForm.address_line2.trim() || null,
+        postal_code: profileForm.postal_code.trim() || null,
+        profession: profileForm.profession.trim() || null,
+        referring_doctor_name: profileForm.referring_doctor_name.trim() || null,
+        referring_doctor_phone: profileForm.referring_doctor_phone.trim() || null,
+        emergency_contact_name: profileForm.emergency_contact_name.trim() || null,
+        emergency_contact_phone: profileForm.emergency_contact_phone.trim() || null,
+        emergency_contact_relation: profileForm.emergency_contact_relation.trim() || null,
       };
       const updated = await updateConsultant(consultant.id, payload);
       setConsultantState((prev) => ({ ...prev, ...updated }));
@@ -1255,6 +1349,343 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 <p className="text-sm text-charcoal whitespace-pre-line">
                   {renderAnswer(consultantState.consultation_reason)}
                 </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ─── Card Informations administratives ───── */}
+          <Card className={cn('transition', profileEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">{T.labelInfosAdmin}</h2>
+              {profileEditing ? <EditBanner label="Complétez les informations administratives." /> : null}
+            </CardHeader>
+            <CardContent>
+              {profileEditing ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input label="Date de naissance" type="date" value={profileForm.date_of_birth} onChange={(e) => setProfileForm((prev) => ({ ...prev, date_of_birth: e.target.value }))} />
+                  <Select label="Sexe" value={profileForm.gender} onChange={(e) => setProfileForm((prev) => ({ ...prev, gender: e.target.value }))}>
+                    <option value="">— Non renseigné —</option>
+                    <option value="male">Homme</option>
+                    <option value="female">Femme</option>
+                    <option value="other">Autre</option>
+                  </Select>
+                  <Input label="Adresse" value={profileForm.address_line1} onChange={(e) => setProfileForm((prev) => ({ ...prev, address_line1: e.target.value }))} placeholder="Numéro et rue" />
+                  <Input label="Complément d'adresse" value={profileForm.address_line2} onChange={(e) => setProfileForm((prev) => ({ ...prev, address_line2: e.target.value }))} placeholder="Bâtiment, étage..." />
+                  <Input label="Code postal" value={profileForm.postal_code} onChange={(e) => setProfileForm((prev) => ({ ...prev, postal_code: e.target.value }))} />
+                  <Input label="Profession" value={profileForm.profession} onChange={(e) => setProfileForm((prev) => ({ ...prev, profession: e.target.value }))} />
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone">Date de naissance</p>
+                    <p className="mt-1 text-sm">
+                      {consultantState.date_of_birth ? (
+                        <>
+                          {formatDate(consultantState.date_of_birth)}
+                          {' '}
+                          <span className="text-stone">
+                            ({Math.floor((Date.now() - new Date(consultantState.date_of_birth).getTime()) / 31557600000)} ans)
+                          </span>
+                        </>
+                      ) : (
+                        <span className="italic text-stone">—</span>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone">Sexe</p>
+                    <p className="mt-1 text-sm">{renderValue(consultantState.gender === 'male' ? 'Homme' : consultantState.gender === 'female' ? 'Femme' : consultantState.gender === 'other' ? 'Autre' : null)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone">Adresse</p>
+                    <p className="mt-1 text-sm">
+                      {renderValue(
+                        [consultantState.address_line1, consultantState.address_line2, consultantState.postal_code, consultantState.city].filter(Boolean).join(', ') || null
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone">Profession</p>
+                    <p className="mt-1 text-sm">{renderValue(consultantState.profession)}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ─── Card Contacts médicaux et urgence ───── */}
+          <Card className={cn('transition', profileEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">{T.labelContactsMedicaux}</h2>
+              {profileEditing ? <EditBanner label="Renseignez les contacts médicaux." /> : null}
+            </CardHeader>
+            <CardContent>
+              {profileEditing ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input label="Médecin traitant" value={profileForm.referring_doctor_name} onChange={(e) => setProfileForm((prev) => ({ ...prev, referring_doctor_name: e.target.value }))} placeholder="Nom du médecin" />
+                  <Input label="Tél. médecin traitant" type="tel" value={profileForm.referring_doctor_phone} onChange={(e) => setProfileForm((prev) => ({ ...prev, referring_doctor_phone: e.target.value }))} />
+                  <Input label="Contact d'urgence" value={profileForm.emergency_contact_name} onChange={(e) => setProfileForm((prev) => ({ ...prev, emergency_contact_name: e.target.value }))} placeholder="Nom du contact" />
+                  <Input label="Tél. contact d'urgence" type="tel" value={profileForm.emergency_contact_phone} onChange={(e) => setProfileForm((prev) => ({ ...prev, emergency_contact_phone: e.target.value }))} />
+                  <Input label="Relation" value={profileForm.emergency_contact_relation} onChange={(e) => setProfileForm((prev) => ({ ...prev, emergency_contact_relation: e.target.value }))} placeholder="Ex : conjoint, parent..." />
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone">Médecin traitant</p>
+                    <p className="mt-1 text-sm">{renderValue(consultantState.referring_doctor_name)}</p>
+                    {consultantState.referring_doctor_phone ? <p className="text-xs text-stone">{consultantState.referring_doctor_phone}</p> : null}
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone">Contact d&apos;urgence</p>
+                    <p className="mt-1 text-sm">{renderValue(consultantState.emergency_contact_name)}</p>
+                    {consultantState.emergency_contact_phone ? <p className="text-xs text-stone">{consultantState.emergency_contact_phone}</p> : null}
+                    {consultantState.emergency_contact_relation ? <p className="text-xs text-stone">({consultantState.emergency_contact_relation})</p> : null}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ─── Card Liens familiaux ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h2 className="text-sm font-semibold">{T.labelLiensFamiliaux}</h2>
+                <Button variant="secondary" onClick={() => {
+                  setRelationshipForm({ related_consultant_id: '', relationship_type: 'parent', label: '' });
+                  setConsultantSearch('');
+                  setConsultantSearchResults([]);
+                  setRelationshipModal({ open: true });
+                }}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter un lien familial
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {relationships.length === 0 ? (
+                <EmptyState icon="users" title="Aucun lien familial" description="Ajoutez des liens de parenté avec d'autres consultants." />
+              ) : (
+                <div className="space-y-2">
+                  {relationships.map((rel) => {
+                    const relName = rel.related_consultant?.name || 'Consultant';
+                    const typeLabels: Record<string, string> = { parent: 'Parent', child: 'Enfant', spouse: 'Conjoint(e)', sibling: 'Frère/Sœur', other: 'Autre' };
+                    return (
+                      <div key={rel.id} className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider">
+                        <div className="flex items-center gap-2">
+                          <Link2 className="h-4 w-4 text-stone" />
+                          <button
+                            onClick={() => router.push(`/consultants/${rel.related_consultant_id}`)}
+                            className="text-sm font-medium text-charcoal hover:underline"
+                          >
+                            {relName}
+                          </button>
+                          <Badge variant="info">{typeLabels[rel.relationship_type] || rel.relationship_type}</Badge>
+                          {rel.label ? <span className="text-xs text-stone">({rel.label})</span> : null}
+                        </div>
+                        <button
+                          onClick={() => setConfirmDeleteId({ type: 'relationship', id: rel.id })}
+                          className="p-1 rounded text-stone hover:text-rose hover:bg-rose/10 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ═══════════════ DOSSIER MÉDICAL TAB ═══════════════ */}
+      {tab === T.tabDossierMedical && (
+        <div className="space-y-4">
+          {/* ─── Antécédents ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold">{T.labelAntecedents}</h2>
+                  <p className="text-xs text-stone">Antécédents personnels, familiaux et chirurgicaux.</p>
+                </div>
+                <Button variant="secondary" onClick={() => {
+                  setHistoryForm({ category: 'personal', description: '', year_onset: '', is_active: true, notes: '' });
+                  setMedicalHistoryModal({ open: true, editingEntry: null });
+                }}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {medicalHistory.length === 0 ? (
+                <EmptyState icon="clipboard" title="Aucun antécédent" description="Ajoutez les antécédents du consultant." />
+              ) : (
+                <div className="space-y-2">
+                  {(['personal', 'family', 'surgical'] as const).map((cat) => {
+                    const items = medicalHistory.filter((h) => h.category === cat);
+                    if (items.length === 0) return null;
+                    const catLabels: Record<string, string> = { personal: 'Personnel', family: 'Familial', surgical: 'Chirurgical' };
+                    const catVariants: Record<string, 'info' | 'success' | 'warning'> = { personal: 'info', family: 'success', surgical: 'warning' };
+                    return (
+                      <div key={cat}>
+                        <p className="text-xs font-medium text-stone uppercase tracking-wide mb-1">{catLabels[cat]}</p>
+                        {items.map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider mb-1 cursor-pointer hover:bg-cream/50"
+                            onClick={() => {
+                              setHistoryForm({
+                                category: entry.category,
+                                description: entry.description,
+                                year_onset: entry.year_onset ? String(entry.year_onset) : '',
+                                is_active: entry.is_active,
+                                notes: entry.notes ?? '',
+                              });
+                              setMedicalHistoryModal({ open: true, editingEntry: entry });
+                            }}
+                          >
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <Badge variant={catVariants[cat]}>{catLabels[cat]}</Badge>
+                              <span className="text-sm text-charcoal truncate">{entry.description}</span>
+                              {entry.year_onset ? <span className="text-xs text-stone">({entry.year_onset})</span> : null}
+                              <Badge variant={entry.is_active ? 'attention' : 'success'}>{entry.is_active ? 'Actif' : 'Résolu'}</Badge>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteId({ type: 'history', id: entry.id }); }}
+                              className="p-1 rounded text-stone hover:text-rose hover:bg-rose/10 transition-colors"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ─── Allergies et intolérances ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold">{T.labelAllergies}</h2>
+                  <p className="text-xs text-stone">Allergies, intolérances et sensibilités.</p>
+                </div>
+                <Button variant="secondary" onClick={() => {
+                  setAllergyForm({ type: 'allergy', substance: '', severity: '', reaction: '', diagnosed: false, notes: '' });
+                  setAllergyModal({ open: true, editingEntry: null });
+                }}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {allergiesStructured.length === 0 ? (
+                <EmptyState icon="alert" title="Aucune allergie" description="Ajoutez les allergies et intolérances du consultant." />
+              ) : (
+                <div className="space-y-2">
+                  {allergiesStructured.map((entry) => {
+                    const typeLabels: Record<string, string> = { allergy: 'Allergie', intolerance: 'Intolérance', sensitivity: 'Sensibilité' };
+                    const typeVariants: Record<string, 'urgent' | 'warning' | 'attention'> = { allergy: 'urgent', intolerance: 'warning', sensitivity: 'attention' };
+                    const sevLabels: Record<string, string> = { mild: 'Légère', moderate: 'Modérée', severe: 'Sévère' };
+                    const sevVariants: Record<string, 'attention' | 'warning' | 'urgent'> = { mild: 'attention', moderate: 'warning', severe: 'urgent' };
+                    return (
+                      <div
+                        key={entry.id}
+                        className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider cursor-pointer hover:bg-cream/50"
+                        onClick={() => {
+                          setAllergyForm({
+                            type: entry.type,
+                            substance: entry.substance,
+                            severity: entry.severity ?? '',
+                            reaction: entry.reaction ?? '',
+                            diagnosed: entry.diagnosed,
+                            notes: entry.notes ?? '',
+                          });
+                          setAllergyModal({ open: true, editingEntry: entry });
+                        }}
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
+                          <Badge variant={typeVariants[entry.type]}>{typeLabels[entry.type]}</Badge>
+                          <span className="text-sm font-medium text-charcoal">{entry.substance}</span>
+                          {entry.severity ? <Badge variant={sevVariants[entry.severity]}>{sevLabels[entry.severity]}</Badge> : null}
+                          {entry.diagnosed ? <Badge variant="info">Diagnostiquée</Badge> : null}
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteId({ type: 'allergy', id: entry.id }); }}
+                          className="p-1 rounded text-stone hover:text-rose hover:bg-rose/10 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {allergiesStructured.length > 0 ? (
+                <div className="mt-3 rounded-lg border border-sage/20 bg-sage-light/30 px-3 py-2 text-xs text-sage">
+                  Les allergies de ce consultant sont prises en compte dans les alertes de contre-indication du conseillancier.
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          {/* ─── Traitements en cours ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold">{T.labelTraitements}</h2>
+                  <p className="text-xs text-stone">Accompagnements et traitements actuels.</p>
+                </div>
+                <Button variant="secondary" onClick={() => {
+                  setTreatmentForm({ name: '', dosage: '', prescriber: '', start_date: '', is_active: true, notes: '' });
+                  setTreatmentModal({ open: true, editingEntry: null });
+                }}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {currentTreatments.length === 0 ? (
+                <EmptyState icon="clipboard" title="Aucun traitement" description="Ajoutez les traitements en cours du consultant." />
+              ) : (
+                <div className="space-y-2">
+                  {currentTreatments.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider cursor-pointer hover:bg-cream/50"
+                      onClick={() => {
+                        setTreatmentForm({
+                          name: entry.name,
+                          dosage: entry.dosage ?? '',
+                          prescriber: entry.prescriber ?? '',
+                          start_date: entry.start_date ?? '',
+                          is_active: entry.is_active,
+                          notes: entry.notes ?? '',
+                        });
+                        setTreatmentModal({ open: true, editingEntry: entry });
+                      }}
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
+                        <span className="text-sm font-medium text-charcoal">{entry.name}</span>
+                        {entry.dosage ? <span className="text-xs text-stone">{entry.dosage}</span> : null}
+                        {entry.prescriber ? <span className="text-xs text-stone">— {entry.prescriber}</span> : null}
+                        <Badge variant={entry.is_active ? 'info' : 'archived'}>{entry.is_active ? 'En cours' : 'Arrêté'}</Badge>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId({ type: 'treatment', id: entry.id }); }}
+                        className="p-1 rounded text-stone hover:text-rose hover:bg-rose/10 transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -2327,6 +2758,333 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           </div>
         </div>
       ) : null}
+      {/* ═══════════════ MODALS ═══════════════ */}
+
+      {/* Medical History Modal */}
+      <Modal
+        isOpen={medicalHistoryModal.open}
+        onClose={() => setMedicalHistoryModal({ open: false, editingEntry: null })}
+        title={medicalHistoryModal.editingEntry ? 'Modifier l\'antécédent' : 'Ajouter un antécédent'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Select label="Catégorie" value={historyForm.category} onChange={(e) => setHistoryForm((prev) => ({ ...prev, category: e.target.value }))}>
+            <option value="personal">Personnel</option>
+            <option value="family">Familial</option>
+            <option value="surgical">Chirurgical</option>
+          </Select>
+          <Input label="Description" value={historyForm.description} onChange={(e) => setHistoryForm((prev) => ({ ...prev, description: e.target.value }))} placeholder="Description de l'antécédent" />
+          <Input label="Année d'apparition (optionnel)" type="number" value={historyForm.year_onset} onChange={(e) => setHistoryForm((prev) => ({ ...prev, year_onset: e.target.value }))} placeholder="Ex : 2018" />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={historyForm.is_active} onChange={(e) => setHistoryForm((prev) => ({ ...prev, is_active: e.target.checked }))} className="rounded border-divider" />
+            Actif (non résolu)
+          </label>
+          <Textarea value={historyForm.notes} onChange={(e) => setHistoryForm((prev) => ({ ...prev, notes: e.target.value }))} placeholder="Notes (optionnel)" rows={3} />
+        </div>
+        <ModalFooter>
+          <Button variant="ghost" onClick={() => setMedicalHistoryModal({ open: false, editingEntry: null })}>Annuler</Button>
+          <Button variant="primary" loading={medicalSaving} disabled={!historyForm.description.trim()} onClick={async () => {
+            setMedicalSaving(true);
+            try {
+              const payload = {
+                consultant_id: consultant.id,
+                practitioner_id: consultantState.practitioner_id,
+                category: historyForm.category as 'personal' | 'family' | 'surgical',
+                description: historyForm.description.trim(),
+                year_onset: historyForm.year_onset ? Number(historyForm.year_onset) : null,
+                is_active: historyForm.is_active,
+                notes: historyForm.notes.trim() || null,
+              };
+              if (medicalHistoryModal.editingEntry) {
+                const updated = await updateMedicalHistoryEntry(medicalHistoryModal.editingEntry.id, {
+                  category: payload.category,
+                  description: payload.description,
+                  year_onset: payload.year_onset,
+                  is_active: payload.is_active,
+                  notes: payload.notes,
+                });
+                setMedicalHistory((prev) => prev.map((h) => h.id === updated.id ? updated : h));
+              } else {
+                const created = await createMedicalHistoryEntry(payload);
+                setMedicalHistory((prev) => [created, ...prev]);
+              }
+              setMedicalHistoryModal({ open: false, editingEntry: null });
+              setToast({ title: 'Antécédent enregistré', variant: 'success' });
+            } catch (err) {
+              setToast({ title: 'Erreur', description: err instanceof Error ? err.message : 'Impossible d\'enregistrer.', variant: 'error' });
+            } finally {
+              setMedicalSaving(false);
+            }
+          }}>
+            Enregistrer
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Allergy Modal */}
+      <Modal
+        isOpen={allergyModal.open}
+        onClose={() => setAllergyModal({ open: false, editingEntry: null })}
+        title={allergyModal.editingEntry ? 'Modifier l\'allergie' : 'Ajouter une allergie'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Select label="Type" value={allergyForm.type} onChange={(e) => setAllergyForm((prev) => ({ ...prev, type: e.target.value }))}>
+            <option value="allergy">Allergie</option>
+            <option value="intolerance">Intolérance</option>
+            <option value="sensitivity">Sensibilité</option>
+          </Select>
+          <Input label="Substance" value={allergyForm.substance} onChange={(e) => setAllergyForm((prev) => ({ ...prev, substance: e.target.value }))} placeholder="Ex : Gluten, Arachides..." />
+          <Select label="Sévérité" value={allergyForm.severity} onChange={(e) => setAllergyForm((prev) => ({ ...prev, severity: e.target.value }))}>
+            <option value="">— Non renseignée —</option>
+            <option value="mild">Légère</option>
+            <option value="moderate">Modérée</option>
+            <option value="severe">Sévère</option>
+          </Select>
+          <Input label="Réaction (optionnel)" value={allergyForm.reaction} onChange={(e) => setAllergyForm((prev) => ({ ...prev, reaction: e.target.value }))} placeholder="Description de la réaction" />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={allergyForm.diagnosed} onChange={(e) => setAllergyForm((prev) => ({ ...prev, diagnosed: e.target.checked }))} className="rounded border-divider" />
+            Diagnostiquée par un professionnel de santé
+          </label>
+          <Textarea value={allergyForm.notes} onChange={(e) => setAllergyForm((prev) => ({ ...prev, notes: e.target.value }))} placeholder="Notes (optionnel)" rows={3} />
+        </div>
+        <ModalFooter>
+          <Button variant="ghost" onClick={() => setAllergyModal({ open: false, editingEntry: null })}>Annuler</Button>
+          <Button variant="primary" loading={medicalSaving} disabled={!allergyForm.substance.trim()} onClick={async () => {
+            setMedicalSaving(true);
+            try {
+              const payload = {
+                consultant_id: consultant.id,
+                practitioner_id: consultantState.practitioner_id,
+                type: allergyForm.type as 'allergy' | 'intolerance' | 'sensitivity',
+                substance: allergyForm.substance.trim(),
+                severity: (allergyForm.severity || null) as 'mild' | 'moderate' | 'severe' | null,
+                reaction: allergyForm.reaction.trim() || null,
+                diagnosed: allergyForm.diagnosed,
+                notes: allergyForm.notes.trim() || null,
+              };
+              if (allergyModal.editingEntry) {
+                const updated = await updateAllergy(allergyModal.editingEntry.id, {
+                  type: payload.type,
+                  substance: payload.substance,
+                  severity: payload.severity,
+                  reaction: payload.reaction,
+                  diagnosed: payload.diagnosed,
+                  notes: payload.notes,
+                });
+                setAllergiesStructured((prev) => prev.map((a) => a.id === updated.id ? updated : a));
+              } else {
+                const created = await createAllergy(payload);
+                setAllergiesStructured((prev) => [created, ...prev]);
+              }
+              setAllergyModal({ open: false, editingEntry: null });
+              setToast({ title: 'Allergie enregistrée', variant: 'success' });
+            } catch (err) {
+              setToast({ title: 'Erreur', description: err instanceof Error ? err.message : 'Impossible d\'enregistrer.', variant: 'error' });
+            } finally {
+              setMedicalSaving(false);
+            }
+          }}>
+            Enregistrer
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Treatment Modal */}
+      <Modal
+        isOpen={treatmentModal.open}
+        onClose={() => setTreatmentModal({ open: false, editingEntry: null })}
+        title={treatmentModal.editingEntry ? 'Modifier le traitement' : 'Ajouter un traitement'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input label="Nom" value={treatmentForm.name} onChange={(e) => setTreatmentForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Nom du traitement" />
+          <Input label="Posologie (optionnel)" value={treatmentForm.dosage} onChange={(e) => setTreatmentForm((prev) => ({ ...prev, dosage: e.target.value }))} placeholder="Ex : 1 comprimé matin et soir" />
+          <Input label="Prescripteur (optionnel)" value={treatmentForm.prescriber} onChange={(e) => setTreatmentForm((prev) => ({ ...prev, prescriber: e.target.value }))} placeholder="Nom du prescripteur" />
+          <Input label="Date de début (optionnel)" type="date" value={treatmentForm.start_date} onChange={(e) => setTreatmentForm((prev) => ({ ...prev, start_date: e.target.value }))} />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={treatmentForm.is_active} onChange={(e) => setTreatmentForm((prev) => ({ ...prev, is_active: e.target.checked }))} className="rounded border-divider" />
+            En cours
+          </label>
+          <Textarea value={treatmentForm.notes} onChange={(e) => setTreatmentForm((prev) => ({ ...prev, notes: e.target.value }))} placeholder="Notes (optionnel)" rows={3} />
+        </div>
+        <ModalFooter>
+          <Button variant="ghost" onClick={() => setTreatmentModal({ open: false, editingEntry: null })}>Annuler</Button>
+          <Button variant="primary" loading={medicalSaving} disabled={!treatmentForm.name.trim()} onClick={async () => {
+            setMedicalSaving(true);
+            try {
+              const payload = {
+                consultant_id: consultant.id,
+                practitioner_id: consultantState.practitioner_id,
+                name: treatmentForm.name.trim(),
+                dosage: treatmentForm.dosage.trim() || null,
+                prescriber: treatmentForm.prescriber.trim() || null,
+                start_date: treatmentForm.start_date || null,
+                is_active: treatmentForm.is_active,
+                notes: treatmentForm.notes.trim() || null,
+              };
+              if (treatmentModal.editingEntry) {
+                const updated = await updateTreatment(treatmentModal.editingEntry.id, {
+                  name: payload.name,
+                  dosage: payload.dosage,
+                  prescriber: payload.prescriber,
+                  start_date: payload.start_date,
+                  is_active: payload.is_active,
+                  notes: payload.notes,
+                });
+                setCurrentTreatments((prev) => prev.map((t) => t.id === updated.id ? updated : t));
+              } else {
+                const created = await createTreatment(payload);
+                setCurrentTreatments((prev) => [created, ...prev]);
+              }
+              setTreatmentModal({ open: false, editingEntry: null });
+              setToast({ title: 'Traitement enregistré', variant: 'success' });
+            } catch (err) {
+              setToast({ title: 'Erreur', description: err instanceof Error ? err.message : 'Impossible d\'enregistrer.', variant: 'error' });
+            } finally {
+              setMedicalSaving(false);
+            }
+          }}>
+            Enregistrer
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Relationship Modal */}
+      <Modal
+        isOpen={relationshipModal.open}
+        onClose={() => setRelationshipModal({ open: false })}
+        title="Ajouter un lien familial"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-stone mb-1">Rechercher un consultant</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone" />
+              <input
+                type="text"
+                className="w-full rounded-[10px] border border-divider bg-white pl-9 pr-3 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-150 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+                placeholder="Tapez un nom..."
+                value={consultantSearch}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setConsultantSearch(val);
+                  if (searchTimeout) clearTimeout(searchTimeout);
+                  if (val.trim().length >= 2) {
+                    const timeout = setTimeout(async () => {
+                      const results = await searchConsultants(consultantState.practitioner_id, val);
+                      setConsultantSearchResults(results.filter((r) => r.id !== consultant.id));
+                    }, 300);
+                    setSearchTimeout(timeout);
+                  } else {
+                    setConsultantSearchResults([]);
+                  }
+                }}
+              />
+            </div>
+            {consultantSearchResults.length > 0 ? (
+              <div className="mt-1 rounded-lg border border-divider bg-white shadow-sm max-h-40 overflow-y-auto">
+                {consultantSearchResults.map((result) => (
+                  <button
+                    key={result.id}
+                    className={cn(
+                      'w-full text-left px-3 py-2 text-sm hover:bg-cream transition-colors',
+                      relationshipForm.related_consultant_id === result.id ? 'bg-sage-light text-sage-dark font-medium' : 'text-charcoal'
+                    )}
+                    onClick={() => {
+                      setRelationshipForm((prev) => ({ ...prev, related_consultant_id: result.id }));
+                      setConsultantSearch(result.name);
+                      setConsultantSearchResults([]);
+                    }}
+                  >
+                    {result.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <Select label="Type de relation" value={relationshipForm.relationship_type} onChange={(e) => setRelationshipForm((prev) => ({ ...prev, relationship_type: e.target.value }))}>
+            <option value="parent">Parent</option>
+            <option value="child">Enfant</option>
+            <option value="spouse">Conjoint(e)</option>
+            <option value="sibling">Frère/Sœur</option>
+            <option value="other">Autre</option>
+          </Select>
+          <Input label="Label personnalisé (optionnel)" value={relationshipForm.label} onChange={(e) => setRelationshipForm((prev) => ({ ...prev, label: e.target.value }))} placeholder='Ex : "mère", "fils aîné"...' />
+        </div>
+        <ModalFooter>
+          <Button variant="ghost" onClick={() => setRelationshipModal({ open: false })}>Annuler</Button>
+          <Button variant="primary" loading={medicalSaving} disabled={!relationshipForm.related_consultant_id} onClick={async () => {
+            setMedicalSaving(true);
+            try {
+              const created = await createRelationship({
+                consultant_id: consultant.id,
+                related_consultant_id: relationshipForm.related_consultant_id,
+                relationship_type: relationshipForm.relationship_type as 'parent' | 'child' | 'spouse' | 'sibling' | 'other',
+                label: relationshipForm.label.trim() || null,
+              });
+              // Re-fetch relationships to get joined data
+              const { data: freshRels } = await supabase
+                .from('consultant_relationships')
+                .select(`*, related_consultant:consultants!consultant_relationships_related_consultant_id_fkey(id, name, first_name, last_name)`)
+                .eq('consultant_id', consultant.id)
+                .order('created_at', { ascending: false });
+              setRelationships((freshRels ?? []) as ConsultantRelationship[]);
+              setRelationshipModal({ open: false });
+              setToast({ title: 'Lien familial créé', variant: 'success' });
+            } catch (err) {
+              setToast({ title: 'Erreur', description: err instanceof Error ? err.message : 'Impossible de créer le lien.', variant: 'error' });
+            } finally {
+              setMedicalSaving(false);
+            }
+          }}>
+            Enregistrer
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Confirm Delete Modal */}
+      {confirmDeleteId ? (
+        <Modal
+          isOpen={true}
+          onClose={() => setConfirmDeleteId(null)}
+          title="Confirmer la suppression"
+          size="sm"
+        >
+          <p className="text-sm text-stone">Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.</p>
+          <ModalFooter>
+            <Button variant="ghost" onClick={() => setConfirmDeleteId(null)}>Annuler</Button>
+            <Button variant="destructive" loading={medicalSaving} onClick={async () => {
+              setMedicalSaving(true);
+              try {
+                if (confirmDeleteId.type === 'history') {
+                  await deleteMedicalHistoryEntry(confirmDeleteId.id);
+                  setMedicalHistory((prev) => prev.filter((h) => h.id !== confirmDeleteId.id));
+                } else if (confirmDeleteId.type === 'allergy') {
+                  await deleteAllergy(confirmDeleteId.id);
+                  setAllergiesStructured((prev) => prev.filter((a) => a.id !== confirmDeleteId.id));
+                } else if (confirmDeleteId.type === 'treatment') {
+                  await deleteTreatment(confirmDeleteId.id);
+                  setCurrentTreatments((prev) => prev.filter((t) => t.id !== confirmDeleteId.id));
+                } else if (confirmDeleteId.type === 'relationship') {
+                  await deleteRelationship(confirmDeleteId.id, consultant.id);
+                  setRelationships((prev) => prev.filter((r) => r.id !== confirmDeleteId.id));
+                }
+                setConfirmDeleteId(null);
+                setToast({ title: 'Élément supprimé', variant: 'success' });
+              } catch (err) {
+                setToast({ title: 'Erreur', description: err instanceof Error ? err.message : 'Impossible de supprimer.', variant: 'error' });
+              } finally {
+                setMedicalSaving(false);
+              }
+            }}>
+              Supprimer
+            </Button>
+          </ModalFooter>
+        </Modal>
+      ) : null}
+
       {toast ? (
         <Toast
           title={toast.title}

@@ -64,6 +64,17 @@ export const T = {
 
   // ─── Labels du dashboard ────────────────────────
   plansEnBrouillon: 'Conseillanciers en brouillon à finaliser et partager',
+
+  // ─── Dossier médical (onglet enrichi) ──────────
+  tabDossierMedical: 'Dossier médical',
+  descDossierMedical: 'Antécédents, allergies et intolérances, traitements en cours.',
+  labelAntecedents: 'Antécédents',
+  labelAllergies: 'Allergies et intolérances',
+  labelTraitements: 'Traitements en cours',
+  labelLiensFamiliaux: 'Liens familiaux',
+  labelInfosAdmin: 'Informations administratives',
+  labelContactsMedicaux: 'Contacts médicaux et d\'urgence',
+  labelExportDossier: 'Exporter le dossier',
 } as const;
 
 export type TerminologyKey = keyof typeof T;
