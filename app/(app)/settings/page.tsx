@@ -3,11 +3,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card, CardContent, CardHeader } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
-import { PageHeader } from '../../../components/ui/PageHeader';
 import { Toast } from '../../../components/ui/Toast';
 import { getPractitionerProfile, updatePractitionerProfile } from '../../../lib/queries';
 
@@ -124,7 +124,20 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Paramètres" subtitle="Gérez votre profil professionnel et votre abonnement." />
+      <div className="relative rounded-2xl overflow-hidden mb-2 h-[120px]">
+        <Image
+          src="/images/fern-moody.jpg"
+          alt=""
+          fill
+          className="object-cover opacity-15"
+        />
+        <div className="relative z-10 p-6 flex flex-col justify-center h-full">
+          <h1 className="font-serif text-2xl font-semibold text-[#2D3436]">
+            Paramètres
+          </h1>
+          <p className="text-sm text-[#6B7280] mt-1">Gérez votre profil professionnel et votre abonnement.</p>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

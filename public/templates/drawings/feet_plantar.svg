@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" fill="none">
+  <!-- Pieds vue plantaire — schéma réflexologie épuré -->
+  <g stroke="#E5E1DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Pied gauche — contour -->
+    <path d="M130 180 Q115 250 110 350 Q105 450 115 530 Q120 600 140 660 Q160 710 200 740 Q240 755 270 740 Q300 720 310 680 Q325 600 330 520 Q335 420 325 320 Q315 240 290 180 Q270 150 230 140 Q180 140 150 160 Z" />
+    <!-- Orteils gauches -->
+    <ellipse cx="165" cy="155" rx="18" ry="22" />
+    <ellipse cx="200" cy="135" rx="14" ry="20" />
+    <ellipse cx="230" cy="130" rx="13" ry="18" />
+    <ellipse cx="258" cy="138" rx="12" ry="17" />
+    <ellipse cx="282" cy="155" rx="11" ry="16" />
+    <!-- Zones principales gauche -->
+    <path d="M150 300 Q220 290 300 310" stroke="#D5D0C8" stroke-width="1.5" />
+    <path d="M130 420 Q220 410 310 430" stroke="#D5D0C8" stroke-width="1.5" />
+    <path d="M140 550 Q220 540 305 560" stroke="#D5D0C8" stroke-width="1.5" />
+
+    <!-- Pied droit — contour -->
+    <path d="M670 180 Q685 250 690 350 Q695 450 685 530 Q680 600 660 660 Q640 710 600 740 Q560 755 530 740 Q500 720 490 680 Q475 600 470 520 Q465 420 475 320 Q485 240 510 180 Q530 150 570 140 Q620 140 650 160 Z" />
+    <!-- Orteils droits -->
+    <ellipse cx="635" cy="155" rx="18" ry="22" />
+    <ellipse cx="600" cy="135" rx="14" ry="20" />
+    <ellipse cx="570" cy="130" rx="13" ry="18" />
+    <ellipse cx="542" cy="138" rx="12" ry="17" />
+    <ellipse cx="518" cy="155" rx="11" ry="16" />
+    <!-- Zones principales droit -->
+    <path d="M500 310 Q580 290 650 300" stroke="#D5D0C8" stroke-width="1.5" />
+    <path d="M490 430 Q580 410 670 420" stroke="#D5D0C8" stroke-width="1.5" />
+    <path d="M495 560 Q580 540 660 550" stroke="#D5D0C8" stroke-width="1.5" />
+  </g>
+  <!-- Labels -->
+  <text x="220" y="790" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#D5D0C8" text-anchor="middle">Gauche</text>
+  <text x="580" y="790" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#D5D0C8" text-anchor="middle">Droit</text>
+</svg>

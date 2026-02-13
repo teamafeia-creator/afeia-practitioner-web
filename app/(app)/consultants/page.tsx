@@ -13,6 +13,7 @@ import { useConsultantFilters } from '@/hooks/useConsultantFilters';
 import { getMyConsultantsAndInvitations } from '@/services/practitioner.service';
 import { invitationService } from '@/services/invitation.service';
 import { supabase } from '@/lib/supabase';
+import Image from 'next/image';
 import {
   Search,
   Plus,
@@ -447,14 +448,20 @@ export default function ConsultantsPage() {
 
       {/* Empty State */}
       {filteredConsultants.length === 0 && (
-        <div className="bg-white border border-divider rounded-xl p-8 text-center shadow-card">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sage-light mx-auto mb-4">
-            <Users className="h-7 w-7 text-sage" />
+        <div className="bg-white border border-divider rounded-xl p-8 shadow-card flex flex-col items-center justify-center text-center">
+          <div className="w-28 h-28 rounded-full overflow-hidden mb-6 opacity-50">
+            <Image
+              src="/images/palm-minimal.jpg"
+              alt=""
+              width={112}
+              height={112}
+              className="object-cover w-full h-full"
+            />
           </div>
-          <h4 className="text-base font-semibold text-charcoal mb-2">
+          <h4 className="font-serif text-xl text-[#2D3436] mb-2">
             Aucun consultant
           </h4>
-          <p className="text-sm text-stone mb-4">
+          <p className="text-[#6B7280] text-sm max-w-sm mb-4">
             {search ? 'Aucun consultant ne correspond a votre recherche.' : 'Commencez par ajouter votre premier consultant.'}
           </p>
           <Link href="/consultants/new">

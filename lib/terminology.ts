@@ -38,6 +38,7 @@ export const T = {
   tabJournal: 'Journal',
   tabNotesSeance: 'Notes de séance',
   tabConseillancier: 'Conseillancier',
+  tabSchemas: 'Schémas corporels',
   tabDocuments: 'Documents et analyses',
   tabMessages: 'Messages',
 
@@ -49,6 +50,7 @@ export const T = {
   descJournal: 'Suivi quotidien du ressenti du consultant.',
   descNotesSeance: 'Notes internes réservées au praticien.',
   descConseillancier: 'Versions du conseillancier partagé au consultant.',
+  descSchemas: 'Annotez des schémas anatomiques pour le suivi du consultant.',
   descDocuments: 'Documents et résultats transmis par le consultant.',
   descMessages: 'Conversation directe avec le consultant.',
 
@@ -77,6 +79,17 @@ export const T = {
   labelAvailableSpots: 'places restantes',
   labelComplete: 'Complet',
   tabAteliers: 'Ateliers',
+
+  // ─── Dossier médical (onglet enrichi) ──────────
+  tabDossierMedical: 'Dossier médical',
+  descDossierMedical: 'Antécédents, allergies et intolérances, traitements en cours.',
+  labelAntecedents: 'Antécédents',
+  labelAllergies: 'Allergies et intolérances',
+  labelTraitements: 'Traitements en cours',
+  labelLiensFamiliaux: 'Liens familiaux',
+  labelInfosAdmin: 'Informations administratives',
+  labelContactsMedicaux: 'Contacts médicaux et d\'urgence',
+  labelExportDossier: 'Exporter le dossier',
 } as const;
 
 export type TerminologyKey = keyof typeof T;
