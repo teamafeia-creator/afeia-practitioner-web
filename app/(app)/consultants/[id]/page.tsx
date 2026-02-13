@@ -285,7 +285,7 @@ export default function ConsultantDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-stone">
         Chargement du dossier consultant…
       </div>
     );
@@ -335,7 +335,7 @@ export default function ConsultantDetailPage() {
                 <h3 className="text-lg font-semibold text-charcoal">
                   En attente d&apos;activation
                 </h3>
-                <p className="text-sm text-warmgray mt-1">
+                <p className="text-sm text-stone mt-1">
                   {consultantDisplayName} n&apos;a pas encore active son compte.
                 </p>
                 {consultant.email && (
@@ -361,29 +361,29 @@ export default function ConsultantDetailPage() {
           </h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-sm text-warmgray">Nom</p>
+              <p className="text-sm text-stone">Nom</p>
               <p className="text-charcoal">{consultantDisplayName}</p>
             </div>
             {consultant.email && (
               <div>
-                <p className="text-sm text-warmgray">Email</p>
+                <p className="text-sm text-stone">Email</p>
                 <p className="text-charcoal">{consultant.email}</p>
               </div>
             )}
             {consultant.phone && (
               <div>
-                <p className="text-sm text-warmgray">Telephone</p>
+                <p className="text-sm text-stone">Telephone</p>
                 <p className="text-charcoal">{consultant.phone}</p>
               </div>
             )}
             {consultant.city && (
               <div>
-                <p className="text-sm text-warmgray">Ville</p>
+                <p className="text-sm text-stone">Ville</p>
                 <p className="text-charcoal">{consultant.city}</p>
               </div>
             )}
           </div>
-          <div className="mt-6 pt-4 border-t border-sable flex justify-between items-center">
+          <div className="mt-6 pt-4 border-t border-divider flex justify-between items-center">
             <Button variant="secondary" onClick={() => router.push('/consultants')}>
               Retour a la liste
             </Button>
@@ -406,7 +406,7 @@ export default function ConsultantDetailPage() {
           description="Cette action est irreversible. Le dossier du consultant sera marque comme supprime."
         >
           <div className="space-y-4">
-            <p className="text-sm text-warmgray">
+            <p className="text-sm text-stone">
               Etes-vous sur de vouloir supprimer le dossier de <strong>{consultantDisplayName}</strong> ?
             </p>
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">

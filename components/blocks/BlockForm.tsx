@@ -131,7 +131,7 @@ export function BlockForm({
         />
 
         <div>
-          <label className="block text-[13px] font-medium text-warmgray mb-1">Contenu</label>
+          <label className="block text-[13px] font-medium text-stone mb-1">Contenu</label>
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -141,11 +141,11 @@ export function BlockForm({
         </div>
 
         <div>
-          <label className="block text-[13px] font-medium text-warmgray mb-1">Section</label>
+          <label className="block text-[13px] font-medium text-stone mb-1">Section</label>
           <select
             value={section}
             onChange={(e) => setSection(e.target.value as BlockSection)}
-            className="w-full rounded-sm border border-teal/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-[3px] focus:ring-teal/10"
+            className="w-full rounded-sm border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-[3px] focus:ring-sage/10"
           >
             {BLOCK_SECTIONS.map((s) => (
               <option key={s} value={s}>
@@ -156,7 +156,7 @@ export function BlockForm({
         </div>
 
         <div>
-          <label className="block text-[13px] font-medium text-warmgray mb-2">Motifs de consultation</label>
+          <label className="block text-[13px] font-medium text-stone mb-2">Motifs de consultation</label>
           <div className="flex flex-wrap gap-1.5">
             {ALL_MOTIFS.map((motif) => (
               <button
@@ -166,8 +166,8 @@ export function BlockForm({
                 className={cn(
                   'rounded-full px-3 py-1 text-[11px] font-medium transition-colors',
                   selectedMotifs.includes(motif)
-                    ? 'bg-teal text-white'
-                    : 'bg-teal/5 text-teal hover:bg-teal/10 border border-teal/15'
+                    ? 'bg-sage text-white'
+                    : 'bg-sage-light/50 text-sage hover:bg-sage-light border border-divider'
                 )}
               >
                 {MOTIF_LABELS[motif]}

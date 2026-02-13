@@ -83,13 +83,13 @@ export default function NewPlanPage({ params }: { params: Promise<{ id: string }
         <div>
           <Link
             href={`/consultants/${consultantId}`}
-            className="text-sm text-teal hover:underline flex items-center gap-1 mb-2"
+            className="text-sm text-sage hover:underline flex items-center gap-1 mb-2"
           >
             <ArrowLeft className="h-4 w-4" />
             Retour au consultant
           </Link>
           <h1 className="text-2xl font-semibold text-charcoal">Nouveau conseillancier</h1>
-          <p className="text-sm text-warmgray mt-1">
+          <p className="text-sm text-stone mt-1">
             Créez un conseillancier personnalisé pour votre consultant
           </p>
         </div>
@@ -146,7 +146,7 @@ export default function NewPlanPage({ params }: { params: Promise<{ id: string }
         {sections.length === 0 && (
           <Card className="border-dashed">
             <CardContent className="py-8 text-center">
-              <p className="text-warmgray">
+              <p className="text-stone">
                 Aucune section ajoutee. Cliquez sur &quot;Ajouter une section&quot; pour commencer.
               </p>
             </CardContent>

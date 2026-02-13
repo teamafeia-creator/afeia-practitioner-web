@@ -18,7 +18,7 @@ export function SubscriptionFeatures({ features, className }: SubscriptionFeatur
       {features.map((feature, index) => (
         <li key={index} className="flex items-start gap-2 text-sm">
           <svg
-            className="h-5 w-5 shrink-0 text-teal"
+            className="h-5 w-5 shrink-0 text-sage"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

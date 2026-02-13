@@ -228,7 +228,7 @@ export default function MessagesPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="text-warmgray">Chargement...</div>
+        <div className="text-stone">Chargement...</div>
       </div>
     );
   }
@@ -247,12 +247,12 @@ export default function MessagesPage() {
         {/* ---- Left column: conversation list ---- */}
         <div
           className={cn(
-            'w-full md:w-[340px] lg:w-[360px] border-r border-teal/10 flex flex-col flex-shrink-0',
+            'w-full md:w-[340px] lg:w-[360px] border-r border-divider flex flex-col flex-shrink-0',
             mobileShowChat && 'hidden md:flex'
           )}
         >
           {/* Header + search */}
-          <div className="p-4 border-b border-teal/10">
+          <div className="p-4 border-b border-divider">
             <h2 className="text-lg font-semibold text-charcoal mb-3">
               Conversations
             </h2>
@@ -279,8 +279,8 @@ export default function MessagesPage() {
                   key={conv.consultant_id}
                   onClick={() => handleSelectConversation(conv.consultant_id)}
                   className={cn(
-                    'w-full text-left px-4 py-3 border-b border-teal/5 transition-colors hover:bg-teal/5',
-                    selectedId === conv.consultant_id && 'bg-teal/10'
+                    'w-full text-left px-4 py-3 border-b border-divider/50 transition-colors hover:bg-cream/50',
+                    selectedId === conv.consultant_id && 'bg-sage-light'
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -290,19 +290,19 @@ export default function MessagesPage() {
                         <span className="font-medium text-sm text-charcoal truncate">
                           {conv.consultant_name}
                         </span>
-                        <span className="text-[11px] text-warmgray flex-shrink-0 ml-2">
+                        <span className="text-[11px] text-stone flex-shrink-0 ml-2">
                           {formatRelativeTime(conv.last_message.sent_at)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs text-warmgray truncate">
+                        <p className="text-xs text-stone truncate">
                           {conv.last_message.sender === 'praticien'
                             ? 'Vous : '
                             : ''}
                           {conv.last_message.text}
                         </p>
                         {conv.unread_count > 0 && (
-                          <span className="ml-2 flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-teal text-[10px] font-bold text-white">
+                          <span className="ml-2 flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-sage text-[10px] font-bold text-white">
                             {conv.unread_count > 9
                               ? '9+'
                               : conv.unread_count}
@@ -326,7 +326,7 @@ export default function MessagesPage() {
         >
           {!selectedId ? (
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center text-warmgray">
+              <div className="text-center text-stone">
                 <p className="text-base font-medium">
                   Selectionnez une conversation
                 </p>
@@ -338,10 +338,10 @@ export default function MessagesPage() {
           ) : (
             <>
               {/* Chat header */}
-              <div className="px-4 py-3 border-b border-teal/10 flex items-center gap-3">
+              <div className="px-4 py-3 border-b border-divider flex items-center gap-3">
                 <button
                   onClick={handleBack}
-                  className="md:hidden p-1.5 rounded-lg text-charcoal hover:bg-teal/10 transition-colors"
+                  className="md:hidden p-1.5 rounded-lg text-charcoal hover:bg-cream transition-colors"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </button>
@@ -354,14 +354,14 @@ export default function MessagesPage() {
                     {selectedConversation?.consultant_name}
                   </p>
                   {selectedConversation?.consultant_email && (
-                    <p className="text-xs text-warmgray truncate">
+                    <p className="text-xs text-stone truncate">
                       {selectedConversation.consultant_email}
                     </p>
                   )}
                 </div>
                 <Link
                   href={`/consultants/${selectedId}`}
-                  className="flex items-center gap-1 text-xs text-teal hover:text-teal-dark transition-colors"
+                  className="flex items-center gap-1 text-xs text-sage hover:text-sage-dark transition-colors"
                 >
                   Voir la fiche
                   <ExternalLink className="h-3 w-3" />
@@ -374,7 +374,7 @@ export default function MessagesPage() {
                   <SkeletonMessage />
                 ) : messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="text-center text-warmgray">
+                    <div className="text-center text-stone">
                       <p className="text-sm">
                         Aucun message pour l&apos;instant.
                       </p>
@@ -398,8 +398,8 @@ export default function MessagesPage() {
                         className={cn(
                           'max-w-[78%] rounded-lg px-4 py-2 text-sm',
                           msg.sender === 'praticien'
-                            ? 'bg-teal text-white'
-                            : 'bg-sable/80 text-marine'
+                            ? 'bg-sage text-white'
+                            : 'bg-cream text-charcoal'
                         )}
                       >
                         <p className="break-words whitespace-pre-wrap">
@@ -410,7 +410,7 @@ export default function MessagesPage() {
                             'mt-1 text-[11px]',
                             msg.sender === 'praticien'
                               ? 'text-white/60'
-                              : 'text-warmgray'
+                              : 'text-stone'
                           )}
                         >
                           {formatMessageTime(msg.sent_at)}
@@ -423,7 +423,7 @@ export default function MessagesPage() {
               </div>
 
               {/* Send area */}
-              <div className="border-t border-teal/10 p-3">
+              <div className="border-t border-divider p-3">
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
@@ -436,7 +436,7 @@ export default function MessagesPage() {
                       }
                     }}
                     placeholder="Ecrire un message..."
-                    className="flex-1 rounded-sm border border-teal/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal placeholder:text-warmgray/80 transition duration-200 focus:border-teal focus:outline-none focus:ring-[3px] focus:ring-teal/10"
+                    className="flex-1 rounded-lg border border-divider bg-white px-3.5 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-200 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
                   />
                   <Button
                     variant="primary"

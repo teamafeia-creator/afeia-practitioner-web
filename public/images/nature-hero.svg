@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1920" height="400" viewBox="0 0 1920 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="400" fill="#F0EDE8"/>
+  <!-- Soft botanical background pattern -->
+  <g opacity="0.15">
+    <!-- Leaves and organic shapes -->
+    <ellipse cx="200" cy="200" rx="180" ry="120" transform="rotate(-15 200 200)" fill="#5B8C6E"/>
+    <ellipse cx="350" cy="180" rx="140" ry="90" transform="rotate(10 350 180)" fill="#7BAE7F"/>
+    <ellipse cx="1700" cy="250" rx="200" ry="130" transform="rotate(-20 1700 250)" fill="#5B8C6E"/>
+    <ellipse cx="1550" cy="150" rx="160" ry="100" transform="rotate(25 1550 150)" fill="#7BAE7F"/>
+    <circle cx="960" cy="200" r="100" fill="#E8F0EB"/>
+    <ellipse cx="800" cy="300" rx="120" ry="80" transform="rotate(-5 800 300)" fill="#5B8C6E"/>
+    <ellipse cx="1200" cy="100" rx="100" ry="60" transform="rotate(15 1200 100)" fill="#7BAE7F"/>
+  </g>
+  <!-- Warm accent shapes -->
+  <g opacity="0.08">
+    <circle cx="1400" cy="80" r="60" fill="#C4856C"/>
+    <circle cx="500" cy="350" r="80" fill="#D4A060"/>
+    <ellipse cx="1100" cy="350" rx="90" ry="50" fill="#C4856C"/>
+  </g>
+  <!-- Light texture overlay -->
+  <g opacity="0.05">
+    <path d="M0 300Q240 200 480 300T960 300T1440 300T1920 300V400H0Z" fill="#5B8C6E"/>
+  </g>
+</svg>

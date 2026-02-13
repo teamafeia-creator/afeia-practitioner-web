@@ -17,7 +17,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
           <CardTitle>Factures</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-marine">Aucune facture pour le moment</p>
+          <p className="text-sm text-charcoal">Aucune facture pour le moment</p>
         </CardContent>
       </Card>
     );
@@ -32,7 +32,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-sable text-left text-xs font-medium uppercase tracking-wider text-marine">
+              <tr className="border-b border-divider text-left text-xs font-medium uppercase tracking-wider text-charcoal">
                 <th className="pb-3 pr-4">Numéro</th>
                 <th className="pb-3 pr-4">Date</th>
                 <th className="pb-3 pr-4">Montant</th>

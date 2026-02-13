@@ -52,7 +52,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   scheduled: 'bg-blue-100 text-blue-700',
-  confirmed: 'bg-teal/10 text-teal',
+  confirmed: 'bg-sage-light text-sage',
   in_progress: 'bg-amber-100 text-amber-700',
   completed: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-700',
@@ -178,20 +178,20 @@ export function AppointmentDetail({
 
                 {/* Consultant */}
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal/10">
-                    <User className="h-5 w-5 text-teal" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sage-light">
+                    <User className="h-5 w-5 text-sage" />
                   </div>
                   <div>
                     <button
                       onClick={() => {
                         if (patientId) router.push(`/consultants/${patientId}`);
                       }}
-                      className="text-sm font-semibold text-charcoal hover:text-teal transition-colors"
+                      className="text-sm font-semibold text-charcoal hover:text-sage transition-colors"
                     >
                       {patientName}
                     </button>
                     {appointment.patient?.email && (
-                      <div className="text-xs text-warmgray">{appointment.patient.email}</div>
+                      <div className="text-xs text-stone">{appointment.patient.email}</div>
                     )}
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export function AppointmentDetail({
                     <div className="text-sm text-charcoal">
                       {appointment.consultation_type.name}
                       {appointment.consultation_type.price_cents != null && (
-                        <span className="text-warmgray ml-2">
+                        <span className="text-stone ml-2">
                           {(appointment.consultation_type.price_cents / 100).toFixed(0)}€
                         </span>
                       )}
@@ -216,10 +216,10 @@ export function AppointmentDetail({
 
                 {/* Date / Time */}
                 <div className="flex items-center gap-3 text-sm text-charcoal">
-                  <Clock className="h-4 w-4 text-warmgray" />
+                  <Clock className="h-4 w-4 text-stone" />
                   <div>
                     <div>{dateTimeFormatter.format(new Date(appointment.starts_at))}</div>
-                    <div className="text-warmgray">
+                    <div className="text-stone">
                       {timeFormatter.format(new Date(appointment.starts_at))} - {timeFormatter.format(new Date(appointment.ends_at))}
                     </div>
                   </div>
@@ -236,7 +236,7 @@ export function AppointmentDetail({
                     href={appointment.video_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-teal hover:underline"
+                    className="text-sm text-sage hover:underline"
                   >
                     Ouvrir le lien visio
                   </a>
@@ -245,7 +245,7 @@ export function AppointmentDetail({
                 {/* Notes */}
                 {appointment.notes_internal && (
                   <div>
-                    <div className="text-xs font-medium text-warmgray uppercase tracking-wide mb-1">
+                    <div className="text-xs font-medium text-stone uppercase tracking-wide mb-1">
                       Notes internes
                     </div>
                     <div className="text-sm text-charcoal bg-neutral-50 p-3 rounded-lg whitespace-pre-wrap">

@@ -53,12 +53,12 @@ export function ActivationCodeModal({
         </div>
 
         {/* Code display */}
-        <div className="bg-teal/5 rounded-xl p-6 border border-teal/20">
-          <p className="text-sm text-warmgray text-center mb-3">
+        <div className="bg-sage-light/50 rounded-xl p-6 border border-sage/20">
+          <p className="text-sm text-stone text-center mb-3">
             Code d&apos;activation
           </p>
           <div className="flex items-center justify-center gap-3">
-            <span className="font-mono text-4xl font-bold tracking-[0.3em] text-teal-dark select-all">
+            <span className="font-mono text-4xl font-bold tracking-[0.3em] text-sage-dark select-all">
               {code}
             </span>
             <button
@@ -67,7 +67,7 @@ export function ActivationCodeModal({
                 'p-2 rounded-lg transition-all',
                 copied
                   ? 'bg-sage/20 text-sage'
-                  : 'hover:bg-teal/10 text-teal-dark'
+                  : 'hover:bg-sage-light text-sage-dark'
               )}
               title="Copier le code"
             >
@@ -82,15 +82,15 @@ export function ActivationCodeModal({
 
         {/* Email info */}
         <div className="flex items-center gap-3 p-4 bg-neutral-50 rounded-lg">
-          <Mail className="h-5 w-5 text-warmgray" />
+          <Mail className="h-5 w-5 text-stone" />
           <div>
             <p className="text-sm text-charcoal font-medium">Email envoye a</p>
-            <p className="text-sm text-teal-dark">{consultantEmail}</p>
+            <p className="text-sm text-sage-dark">{consultantEmail}</p>
           </div>
         </div>
 
         {/* Instructions */}
-        <p className="text-sm text-warmgray text-center">
+        <p className="text-sm text-stone text-center">
           Le consultant peut utiliser ce code pour activer son compte dans l&apos;application mobile.
           Vous pouvez lui transmettre directement si besoin.
         </p>

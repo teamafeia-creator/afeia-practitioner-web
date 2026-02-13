@@ -108,7 +108,7 @@ export function BookingStepDate({
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="p-2 rounded-lg hover:bg-teal/10 transition-colors"
+          className="p-2 rounded-lg hover:bg-sage-light transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-charcoal" />
         </button>
@@ -116,7 +116,7 @@ export function BookingStepDate({
           <h2 className="text-lg font-semibold text-charcoal">
             Choisissez une date
           </h2>
-          <p className="text-sm text-warmgray">{consultationTypeName}</p>
+          <p className="text-sm text-stone">{consultationTypeName}</p>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export function BookingStepDate({
         <div className="flex justify-end">
           <button
             onClick={handleConfirmSlot}
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-br from-teal to-teal-deep px-6 py-3 text-sm font-medium text-white hover:shadow-teal-glow transition-all"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-br from-sage to-sage-dark px-6 py-3 text-sm font-medium text-white hover:shadow-teal-glow transition-all"
           >
             Continuer
           </button>

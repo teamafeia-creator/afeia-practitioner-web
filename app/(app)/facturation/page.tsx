@@ -146,54 +146,54 @@ export default function FacturationPage() {
                   Exporter
                 </Button>
                 {showExportMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-teal/10 py-1 z-50">
-                    <div className="px-3 py-1.5 text-xs font-medium text-warmgray uppercase tracking-wider">
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-divider py-1 z-50">
+                    <div className="px-3 py-1.5 text-xs font-medium text-stone uppercase tracking-wider">
                       CSV
                     </div>
                     <button
                       onClick={() => handleExportCSV('month')}
-                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-sage-light/50 flex items-center gap-2"
                     >
-                      <FileSpreadsheet className="h-3.5 w-3.5 text-warmgray" />
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-stone" />
                       Mois en cours
                     </button>
                     <button
                       onClick={() => handleExportCSV('quarter')}
-                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-sage-light/50 flex items-center gap-2"
                     >
-                      <FileSpreadsheet className="h-3.5 w-3.5 text-warmgray" />
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-stone" />
                       Trimestre
                     </button>
                     <button
                       onClick={() => handleExportCSV('year')}
-                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-sage-light/50 flex items-center gap-2"
                     >
-                      <FileSpreadsheet className="h-3.5 w-3.5 text-warmgray" />
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-stone" />
                       Annee
                     </button>
-                    <div className="border-t border-teal/10 my-1" />
-                    <div className="px-3 py-1.5 text-xs font-medium text-warmgray uppercase tracking-wider">
+                    <div className="border-t border-divider my-1" />
+                    <div className="px-3 py-1.5 text-xs font-medium text-stone uppercase tracking-wider">
                       Recapitulatif PDF
                     </div>
                     <button
                       onClick={() => handleExportPDF('month')}
-                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-sage-light/50 flex items-center gap-2"
                     >
-                      <FileText className="h-3.5 w-3.5 text-warmgray" />
+                      <FileText className="h-3.5 w-3.5 text-stone" />
                       Mensuel
                     </button>
                     <button
                       onClick={() => handleExportPDF('quarter')}
-                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-sage-light/50 flex items-center gap-2"
                     >
-                      <FileText className="h-3.5 w-3.5 text-warmgray" />
+                      <FileText className="h-3.5 w-3.5 text-stone" />
                       Trimestriel
                     </button>
                     <button
                       onClick={() => handleExportPDF('year')}
-                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-teal/5 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-sage-light/50 flex items-center gap-2"
                     >
-                      <FileText className="h-3.5 w-3.5 text-warmgray" />
+                      <FileText className="h-3.5 w-3.5 text-stone" />
                       Annuel
                     </button>
                   </div>
@@ -224,11 +224,11 @@ export default function FacturationPage() {
 
       {!settingsConfigured && !invoicesLoading && (
         <div className="glass-card rounded-lg p-6 text-center">
-          <Settings className="h-10 w-10 text-warmgray/50 mx-auto mb-3" />
+          <Settings className="h-10 w-10 text-stone/50 mx-auto mb-3" />
           <h3 className="font-medium text-charcoal mb-1">
             Configurez votre facturation
           </h3>
-          <p className="text-sm text-warmgray mb-4">
+          <p className="text-sm text-stone mb-4">
             Renseignez votre SIRET et vos informations legales pour commencer a
             facturer.
           </p>

@@ -140,11 +140,11 @@ export function LinkQuestionnaireModal({
 
         {/* Questionnaire info */}
         {questionnaireInfo && (
-          <div className="text-sm text-warmgray bg-teal-light/30 rounded-sm p-3 border border-teal/10">
+          <div className="text-sm text-stone bg-sage-light/30 rounded-sm p-3 border border-divider">
             <span className="font-medium text-charcoal">Questionnaire de :</span>{' '}
             {questionnaireInfo.firstName} {questionnaireInfo.lastName}
             {questionnaireInfo.email && (
-              <span className="text-warmgray"> ({questionnaireInfo.email})</span>
+              <span className="text-stone"> ({questionnaireInfo.email})</span>
             )}
           </div>
         )}
@@ -157,13 +157,13 @@ export function LinkQuestionnaireModal({
         )}
 
         {/* Consultant list */}
-        <div className="max-h-[300px] overflow-y-auto rounded-sm border border-teal/15">
+        <div className="max-h-[300px] overflow-y-auto rounded-sm border border-divider">
           {loading ? (
-            <div className="p-4 text-center text-warmgray">
+            <div className="p-4 text-center text-stone">
               Chargement des consultants...
             </div>
           ) : filteredConsultants.length === 0 ? (
-            <div className="p-4 text-center text-warmgray">
+            <div className="p-4 text-center text-stone">
               {search ? 'Aucun consultant trouvé.' : 'Aucun consultant disponible.'}
             </div>
           ) : (
@@ -178,8 +178,8 @@ export function LinkQuestionnaireModal({
                     key={consultant.id}
                     type="button"
                     onClick={() => setSelectedConsultantId(consultant.id)}
-                    className={`w-full p-3 text-left transition hover:bg-teal/5 ${
-                      isSelected ? 'bg-teal/10 ring-2 ring-teal ring-inset' : ''
+                    className={`w-full p-3 text-left transition hover:bg-sage-light/50 ${
+                      isSelected ? 'bg-sage-light ring-2 ring-sage ring-inset' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -195,13 +195,13 @@ export function LinkQuestionnaireModal({
                             </Badge>
                           )}
                         </div>
-                        <div className="text-xs text-warmgray truncate">
+                        <div className="text-xs text-stone truncate">
                           {consultant.email}
                           {consultant.city && ` • ${consultant.city}`}
                         </div>
                       </div>
                       {isSelected && (
-                        <div className="text-teal">
+                        <div className="text-sage">
                           <svg
                             className="w-5 h-5"
                             fill="currentColor"
@@ -225,7 +225,7 @@ export function LinkQuestionnaireModal({
 
         {/* Selected consultant summary */}
         {selectedConsultant && (
-          <div className="text-sm text-charcoal bg-teal/10 rounded-sm p-3 border border-teal/20">
+          <div className="text-sm text-charcoal bg-sage-light rounded-sm p-3 border border-sage/20">
             Consultant selectionne : <strong>{getDisplayName(selectedConsultant)}</strong>
           </div>
         )}

@@ -229,24 +229,29 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="space-y-8"
+    >
       <Toaster />
 
       {/* Welcome Header with nature background */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.4 }}
       >
         <div className="relative rounded-2xl overflow-hidden border border-divider shadow-card">
           {/* Nature background overlay */}
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: 'url(https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&q=80&auto=format&fit=crop)',
+              backgroundImage: 'url(/images/nature-hero.svg)',
             }}
           />
-          <div className="absolute inset-0 bg-cream/85" />
+          <div className="absolute inset-0 bg-cream/75" />
           <div className="relative px-6 py-8 md:px-8 md:py-10">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -528,7 +533,11 @@ export default function DashboardPage() {
 
           {/* Quick Stats */}
           {!statsLoading && (
-            <section>
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+            >
               <h2 className="text-xl font-semibold font-serif text-charcoal mb-4" style={{ letterSpacing: '-0.02em' }}>
                 Statistiques rapides
               </h2>
@@ -558,10 +567,10 @@ export default function DashboardPage() {
                   color="#5B8C6E"
                 />
               </div>
-            </section>
+            </motion.section>
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

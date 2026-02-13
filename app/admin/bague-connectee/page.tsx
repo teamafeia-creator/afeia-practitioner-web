@@ -191,7 +191,7 @@ export default function AdminBagueConnecteePage() {
                         <td className="px-5 py-3">
                           <Link
                             href={`/admin/practitioners/${row.practitioner_id}`}
-                            className="group inline-flex items-center gap-1 text-sm text-slate-700 hover:text-teal-700"
+                            className="group inline-flex items-center gap-1 text-sm text-slate-700 hover:text-sage-700"
                           >
                             {p?.full_name ?? '\u2014'}
                             <ExternalLink className="h-3 w-3 opacity-0 transition group-hover:opacity-100" />

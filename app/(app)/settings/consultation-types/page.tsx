@@ -188,7 +188,7 @@ export default function ConsultationTypesPage() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push('/settings')}
-          className="p-2 rounded-lg hover:bg-white/50 transition-colors text-warmgray"
+          className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -205,9 +205,9 @@ export default function ConsultationTypesPage() {
       </div>
 
       {loading ? (
-        <div className="glass-card p-8 text-center text-warmgray">Chargement...</div>
+        <div className="glass-card p-8 text-center text-stone">Chargement...</div>
       ) : types.length === 0 ? (
-        <div className="glass-card p-8 text-center text-warmgray">
+        <div className="glass-card p-8 text-center text-stone">
           Aucun type de seance configure.
         </div>
       ) : (
@@ -221,14 +221,14 @@ export default function ConsultationTypesPage() {
                 <button
                   onClick={() => handleMoveUp(index)}
                   disabled={index === 0}
-                  className="text-warmgray hover:text-charcoal disabled:opacity-30 p-0.5"
+                  className="text-stone hover:text-charcoal disabled:opacity-30 p-0.5"
                 >
                   <GripVertical className="h-4 w-4 rotate-180" />
                 </button>
                 <button
                   onClick={() => handleMoveDown(index)}
                   disabled={index === types.length - 1}
-                  className="text-warmgray hover:text-charcoal disabled:opacity-30 p-0.5"
+                  className="text-stone hover:text-charcoal disabled:opacity-30 p-0.5"
                 >
                   <GripVertical className="h-4 w-4" />
                 </button>
@@ -241,7 +241,7 @@ export default function ConsultationTypesPage() {
 
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-charcoal">{ct.name}</div>
-                <div className="text-sm text-warmgray">
+                <div className="text-sm text-stone">
                   {ct.duration_minutes} min
                   {ct.price_cents != null && ` · ${(ct.price_cents / 100).toFixed(0)}€`}
                   {ct.buffer_minutes > 0 && ` · Buffer ${ct.buffer_minutes} min`}
@@ -255,20 +255,20 @@ export default function ConsultationTypesPage() {
                   title={ct.is_active ? 'Desactiver' : 'Reactiver'}
                 >
                   {ct.is_active ? (
-                    <ToggleRight className="h-5 w-5 text-teal" />
+                    <ToggleRight className="h-5 w-5 text-sage" />
                   ) : (
-                    <ToggleLeft className="h-5 w-5 text-warmgray" />
+                    <ToggleLeft className="h-5 w-5 text-stone" />
                   )}
                 </button>
                 <button
                   onClick={() => openEdit(ct)}
-                  className="p-2 rounded-lg hover:bg-white/50 transition-colors text-warmgray hover:text-charcoal"
+                  className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone hover:text-charcoal"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(ct)}
-                  className="p-2 rounded-lg hover:bg-red-50 transition-colors text-warmgray hover:text-red-500"
+                  className="p-2 rounded-lg hover:bg-red-50 transition-colors text-stone hover:text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -319,14 +319,14 @@ export default function ConsultationTypesPage() {
           </div>
 
           <div>
-            <span className="text-[13px] font-medium text-warmgray">Couleur</span>
+            <span className="text-[13px] font-medium text-stone">Couleur</span>
             <div className="flex gap-2 mt-2">
               {COLOR_OPTIONS.map((c) => (
                 <button
                   key={c}
                   onClick={() => setForm((f) => ({ ...f, color: c }))}
                   className={`w-8 h-8 rounded-full transition-all ${
-                    form.color === c ? 'ring-2 ring-offset-2 ring-teal scale-110' : 'hover:scale-105'
+                    form.color === c ? 'ring-2 ring-offset-2 ring-sage scale-110' : 'hover:scale-105'
                   }`}
                   style={{ backgroundColor: c }}
                 />

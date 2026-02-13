@@ -32,11 +32,11 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
   };
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-sable/30 rounded-xl">
+    <div className="flex items-center gap-4 p-4 bg-cream/60 rounded-xl">
       {/* Icône */}
       <div className="shrink-0 p-2 bg-white rounded-lg shadow-sm">
         <svg
-          className="h-6 w-6 text-marine"
+          className="h-6 w-6 text-charcoal"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -58,9 +58,9 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
             {getInvoiceStatusLabel(invoice.status)}
           </Badge>
         </div>
-        <p className="text-sm text-marine">{formatDate(invoice.invoice_date)}</p>
+        <p className="text-sm text-charcoal">{formatDate(invoice.invoice_date)}</p>
         {invoice.description && (
-          <p className="text-xs text-warmgray truncate">{invoice.description}</p>
+          <p className="text-xs text-stone truncate">{invoice.description}</p>
         )}
       </div>
 
@@ -70,7 +70,7 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
           {formatPrice(invoice.amount_total, invoice.currency)}
         </p>
         {invoice.amount_tax > 0 && (
-          <p className="text-xs text-marine">
+          <p className="text-xs text-charcoal">
             dont TVA: {formatPrice(invoice.amount_tax, invoice.currency)}
           </p>
         )}
@@ -152,7 +152,7 @@ export default function InvoicesPage() {
         />
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-sable/50 rounded-xl" />
+            <div key={i} className="h-20 bg-cream/80 rounded-xl" />
           ))}
         </div>
       </PageShell>
@@ -177,7 +177,7 @@ export default function InvoicesPage() {
           <div className="grid gap-4 sm:grid-cols-2 mb-8">
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm text-marine">Total payé (cette année)</p>
+                <p className="text-sm text-charcoal">Total payé (cette année)</p>
                 <p className="text-2xl font-bold text-charcoal">
                   {formatPrice(currentYearTotal)}
                 </p>
@@ -185,7 +185,7 @@ export default function InvoicesPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm text-marine">Total payé (tout temps)</p>
+                <p className="text-sm text-charcoal">Total payé (tout temps)</p>
                 <p className="text-2xl font-bold text-charcoal">
                   {formatPrice(totalPaid)}
                 </p>

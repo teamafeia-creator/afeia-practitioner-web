@@ -11,7 +11,7 @@ export function InvoiceNumberDisplay({
 }) {
   if (!numero) {
     return (
-      <span className={cn('text-sm text-warmgray italic', className)}>
+      <span className={cn('text-sm text-stone italic', className)}>
         Brouillon
       </span>
     );

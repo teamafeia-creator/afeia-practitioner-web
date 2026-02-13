@@ -287,7 +287,7 @@ export default function DocumentsPage() {
               <Button variant="secondary" onClick={handlePickFile} disabled={uploading}>
                 Ajouter un document
               </Button>
-              <span className="text-xs text-warmgray">{selectedFileLabel}</span>
+              <span className="text-xs text-stone">{selectedFileLabel}</span>
             </div>
             <Button
               variant="primary"
@@ -308,11 +308,11 @@ export default function DocumentsPage() {
         </CardHeader>
         <CardContent>
           {loadingDocuments ? (
-            <p className="text-sm text-warmgray">Chargement des documents...</p>
+            <p className="text-sm text-stone">Chargement des documents...</p>
           ) : documents.length === 0 ? (
-            <p className="text-sm text-marine">Aucun document pour le moment.</p>
+            <p className="text-sm text-charcoal">Aucun document pour le moment.</p>
           ) : (
-            <ul className="divide-y divide-teal/10">
+            <ul className="divide-y divide-divider">
               {documents.map((document) => {
                 const isViewing = actionState?.id === document.path && actionState?.type === 'view';
                 const isDeleting = actionState?.id === document.path && actionState?.type === 'delete';
@@ -323,7 +323,7 @@ export default function DocumentsPage() {
                     className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal/10 text-teal">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sage-light text-sage">
                         <svg
                           viewBox="0 0 24 24"
                           fill="none"
@@ -341,7 +341,7 @@ export default function DocumentsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-charcoal">{document.displayName}</p>
-                        <p className="text-xs text-warmgray">
+                        <p className="text-xs text-stone">
                           {document.createdAt ? dateFormatter.format(document.createdAt) : 'Date inconnue'}
                         </p>
                       </div>

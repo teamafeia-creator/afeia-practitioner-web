@@ -94,7 +94,7 @@ export function BookingStepContact({
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="p-2 rounded-lg hover:bg-teal/10 transition-colors"
+          className="p-2 rounded-lg hover:bg-sage-light transition-colors"
         >
           <ArrowLeft className="h-5 w-5 text-charcoal" />
         </button>
@@ -102,7 +102,7 @@ export function BookingStepContact({
           <h2 className="text-lg font-semibold text-charcoal">
             Vos coordonnees
           </h2>
-          <p className="text-sm text-warmgray">
+          <p className="text-sm text-stone">
             {consultationTypeName} — {dateFormatted} a {timeFormatted}
           </p>
         </div>
@@ -111,27 +111,27 @@ export function BookingStepContact({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-[13px] font-medium text-warmgray mb-1">
+            <label className="block text-[13px] font-medium text-stone mb-1">
               Nom *
             </label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full rounded-lg border border-teal/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+              className="w-full rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
               placeholder="Dupont"
             />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
           </div>
           <div>
-            <label className="block text-[13px] font-medium text-warmgray mb-1">
+            <label className="block text-[13px] font-medium text-stone mb-1">
               Prenom *
             </label>
             <input
               type="text"
               value={form.first_name}
               onChange={(e) => setForm(prev => ({ ...prev, first_name: e.target.value }))}
-              className="w-full rounded-lg border border-teal/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+              className="w-full rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
               placeholder="Marie"
             />
             {errors.first_name && <p className="mt-1 text-xs text-red-500">{errors.first_name}</p>}
@@ -139,41 +139,41 @@ export function BookingStepContact({
         </div>
 
         <div>
-          <label className="block text-[13px] font-medium text-warmgray mb-1">
+          <label className="block text-[13px] font-medium text-stone mb-1">
             Email *
           </label>
           <input
             type="email"
             value={form.email}
             onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
-            className="w-full rounded-lg border border-teal/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+            className="w-full rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
             placeholder="marie@exemple.fr"
           />
           {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
         </div>
 
         <div>
-          <label className="block text-[13px] font-medium text-warmgray mb-1">
+          <label className="block text-[13px] font-medium text-stone mb-1">
             Telephone *
           </label>
           <input
             type="tel"
             value={form.phone}
             onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
-            className="w-full rounded-lg border border-teal/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+            className="w-full rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
             placeholder="06 12 34 56 78"
           />
           {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
         </div>
 
         <div>
-          <label className="block text-[13px] font-medium text-warmgray mb-1">
+          <label className="block text-[13px] font-medium text-stone mb-1">
             Motif de la consultation (optionnel)
           </label>
           <textarea
             value={form.reason}
             onChange={(e) => setForm(prev => ({ ...prev, reason: e.target.value }))}
-            className="w-full min-h-[80px] rounded-lg border border-teal/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/10"
+            className="w-full min-h-[80px] rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
             placeholder="Decrivez brievement la raison de votre visite..."
           />
         </div>
@@ -185,9 +185,9 @@ export function BookingStepContact({
               type="checkbox"
               checked={form.consent_rgpd}
               onChange={(e) => setForm(prev => ({ ...prev, consent_rgpd: e.target.checked }))}
-              className="mt-1 h-4 w-4 rounded border-teal/30 text-teal focus:ring-teal/50"
+              className="mt-1 h-4 w-4 rounded border-sage/30 text-sage focus:ring-sage/50"
             />
-            <span className="text-xs text-warmgray leading-relaxed">
+            <span className="text-xs text-stone leading-relaxed">
               J&apos;accepte que mes donnees soient traitees par {practitionerName} via AFEIA
               pour la gestion de mon rendez-vous. *
             </span>
@@ -197,7 +197,7 @@ export function BookingStepContact({
           {hasCancellationPolicy && (
             <>
               {cancellationPolicyText && (
-                <div className="rounded-lg bg-warmgray/5 p-3 text-xs text-warmgray">
+                <div className="rounded-lg bg-stone/5 p-3 text-xs text-stone">
                   {cancellationPolicyText}
                 </div>
               )}
@@ -206,9 +206,9 @@ export function BookingStepContact({
                   type="checkbox"
                   checked={form.consent_cancellation}
                   onChange={(e) => setForm(prev => ({ ...prev, consent_cancellation: e.target.checked }))}
-                  className="mt-1 h-4 w-4 rounded border-teal/30 text-teal focus:ring-teal/50"
+                  className="mt-1 h-4 w-4 rounded border-sage/30 text-sage focus:ring-sage/50"
                 />
-                <span className="text-xs text-warmgray leading-relaxed">
+                <span className="text-xs text-stone leading-relaxed">
                   J&apos;ai lu et j&apos;accepte la politique d&apos;annulation. *
                 </span>
               </label>
@@ -228,7 +228,7 @@ export function BookingStepContact({
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-lg bg-gradient-to-br from-teal to-teal-deep px-6 py-3 text-sm font-medium text-white hover:shadow-teal-glow transition-all disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-br from-sage to-sage-dark px-6 py-3 text-sm font-medium text-white hover:shadow-teal-glow transition-all disabled:opacity-50"
         >
           {submitting ? 'Reservation en cours...' : 'Confirmer mon rendez-vous'}
         </button>

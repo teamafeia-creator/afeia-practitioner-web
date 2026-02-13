@@ -54,7 +54,7 @@ function TrendIcon({ trend, className }: { trend: Trend; className?: string }) {
     case 'down':
       return <TrendingDown className={className ?? 'w-4 h-4 text-gold'} />;
     default:
-      return <Minus className={className ?? 'w-4 h-4 text-warmgray'} />;
+      return <Minus className={className ?? 'w-4 h-4 text-stone'} />;
   }
 }
 
@@ -65,11 +65,11 @@ function SignalIcon({ signal }: { signal: Signal }) {
   const colorMap: Record<string, string> = {
     urgent: 'text-red-500',
     attention: 'text-gold',
-    info: 'text-teal',
+    info: 'text-sage',
     positive: 'text-sage',
   };
 
-  return <Icon className={`w-5 h-5 ${colorMap[signal.severity] ?? 'text-warmgray'}`} />;
+  return <Icon className={`w-5 h-5 ${colorMap[signal.severity] ?? 'text-stone'}`} />;
 }
 
 function getStatusLine(summary: ConsultantSummary): string {
@@ -137,7 +137,7 @@ export function ConsultantCard({ summary, onActionComplete }: ConsultantCardProp
                 <h3 className="text-base font-semibold text-charcoal">
                   {consultant.name}
                 </h3>
-                <p className="text-sm text-warmgray mt-0.5">
+                <p className="text-sm text-stone mt-0.5">
                   {getStatusLine(summary)}
                 </p>
               </div>
@@ -151,15 +151,15 @@ export function ConsultantCard({ summary, onActionComplete }: ConsultantCardProp
 
         {/* Stats hebdomadaires */}
         <div className="mb-3 flex flex-wrap gap-3 text-sm">
-          <div className="flex items-center gap-1.5 text-warmgray">
+          <div className="flex items-center gap-1.5 text-stone">
             <span>Humeur</span>
             <TrendIcon trend={lastWeekStats.moodTrend} />
           </div>
-          <div className="flex items-center gap-1.5 text-warmgray">
+          <div className="flex items-center gap-1.5 text-stone">
             <span>Energie</span>
             <TrendIcon trend={lastWeekStats.energyTrend} />
           </div>
-          <div className="flex items-center gap-1.5 text-warmgray">
+          <div className="flex items-center gap-1.5 text-stone">
             <span>Adhesion {Math.round(lastWeekStats.averageAdherence * 100)}%</span>
             <TrendIcon trend={lastWeekStats.adherenceTrend} />
           </div>
@@ -167,7 +167,7 @@ export function ConsultantCard({ summary, onActionComplete }: ConsultantCardProp
 
         {/* Donnees bague connectee (si Premium) */}
         {bagueConnecteeStats && (
-          <div className="mb-3 text-sm text-warmgray space-y-1">
+          <div className="mb-3 text-sm text-stone space-y-1">
             <div className="flex items-center gap-2">
               <Moon className="w-3.5 h-3.5" />
               <span>Sommeil : {bagueConnecteeStats.averageSleep.toFixed(1)}h</span>
@@ -224,7 +224,7 @@ export function ConsultantCard({ summary, onActionComplete }: ConsultantCardProp
           </Button>
 
           {nextConsultFormatted && (
-            <span className="text-xs px-2.5 py-1 bg-teal/8 text-teal rounded border border-teal/15 inline-flex items-center gap-1">
+            <span className="text-xs px-2.5 py-1 bg-teal/8 text-sage rounded border border-divider inline-flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               RDV le {nextConsultFormatted}
             </span>

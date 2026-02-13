@@ -82,7 +82,7 @@ export default function AgendaPage() {
   if (authLoading) {
     return (
       <div className="space-y-6">
-        <div className="glass-card p-8 text-center text-warmgray">Chargement...</div>
+        <div className="glass-card p-8 text-center text-stone">Chargement...</div>
       </div>
     );
   }
@@ -119,7 +119,7 @@ export default function AgendaPage() {
       {/* Floating mobile button */}
       <button
         onClick={handleCreateNew}
-        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-teal text-white shadow-lg flex items-center justify-center hover:bg-teal-deep transition-colors"
+        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-sage text-white shadow-lg flex items-center justify-center hover:bg-sage-deep transition-colors"
       >
         <Plus className="w-6 h-6" />
       </button>

@@ -214,7 +214,7 @@ export default function CreatePlanPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-stone">
         Chargement...
       </div>
     );
@@ -223,7 +223,7 @@ export default function CreatePlanPage() {
   if (!consultant) {
     return (
       <div className="space-y-4">
-        <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4 text-sm text-marine">
+        <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4 text-sm text-charcoal">
           {error || 'Consultant introuvable.'}
         </div>
         <Button variant="secondary" onClick={() => router.push('/consultants')}>
@@ -238,9 +238,9 @@ export default function CreatePlanPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-charcoal">Créer un conseillancier</h1>
-          <p className="text-sm text-warmgray">
+          <p className="text-sm text-stone">
             Pour{' '}
-            <Link href={`/consultants/${consultantId}`} className="text-teal hover:underline">
+            <Link href={`/consultants/${consultantId}`} className="text-sage hover:underline">
               {consultant.name}
             </Link>
           </p>
@@ -278,12 +278,12 @@ export default function CreatePlanPage() {
             required
           />
           <div>
-            <label className="mb-1 block text-xs font-medium text-warmgray">Description</label>
+            <label className="mb-1 block text-xs font-medium text-stone">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description generale du plan..."
-              className="w-full rounded-xl border border-black/10 bg-white p-3 text-sm focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/30"
+              className="w-full rounded-xl border border-black/10 bg-white p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
               rows={3}
             />
           </div>
@@ -331,12 +331,12 @@ export default function CreatePlanPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {recommendations.map((rec, idx) => (
-            <div key={idx} className="rounded-xl bg-sable p-4 space-y-3">
+            <div key={idx} className="rounded-xl bg-cream p-4 space-y-3">
               <div className="flex gap-3">
                 <select
                   value={rec.category}
                   onChange={(e) => updateRecommendation(idx, 'category', e.target.value)}
-                  className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-teal focus:outline-none"
+                  className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-sage focus:outline-none"
                 >
                   <option value="">Categorie...</option>
                   <option value="Alimentation">Alimentation</option>
@@ -362,7 +362,7 @@ export default function CreatePlanPage() {
                 value={rec.details}
                 onChange={(e) => updateRecommendation(idx, 'details', e.target.value)}
                 placeholder="Details et explications..."
-                className="w-full rounded-xl border border-black/10 bg-white p-3 text-sm focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/30"
+                className="w-full rounded-xl border border-black/10 bg-white p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
                 rows={2}
               />
             </div>
@@ -382,7 +382,7 @@ export default function CreatePlanPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {supplements.map((supp, idx) => (
-            <div key={idx} className="rounded-xl bg-sable p-4 space-y-3">
+            <div key={idx} className="rounded-xl bg-cream p-4 space-y-3">
               <div className="flex gap-3">
                 <Input
                   value={supp.name}
@@ -422,7 +422,7 @@ export default function CreatePlanPage() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes supplementaires pour le consultant..."
-            className="w-full rounded-xl border border-black/10 bg-white p-3 text-sm focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/30"
+            className="w-full rounded-xl border border-black/10 bg-white p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
             rows={4}
           />
         </CardContent>

@@ -172,7 +172,7 @@ export default function QuestionnairesPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-stone">
         Chargement des questionnaires…
       </div>
     );
@@ -205,9 +205,9 @@ export default function QuestionnairesPage() {
       />
 
       {/* Info banner */}
-      <div className="glass-card bg-teal-light/30 p-4 text-sm text-charcoal">
-        <p className="font-medium text-teal">Comment ca marche ?</p>
-        <p className="mt-1 text-warmgray">
+      <div className="glass-card bg-sage-light/30 p-4 text-sm text-charcoal">
+        <p className="font-medium text-sage">Comment ca marche ?</p>
+        <p className="mt-1 text-stone">
           Partagez le lien public avec vos consultants. Ils peuvent remplir le questionnaire avant leur
           premiere consultation. Creez ensuite leur dossier consultant en un clic.
         </p>
@@ -237,7 +237,7 @@ export default function QuestionnairesPage() {
                   {getStatusBadge(q.status)}
                 </div>
 
-                <div className="space-y-1 text-sm text-warmgray">
+                <div className="space-y-1 text-sm text-stone">
                   <p>
                     <span className="text-charcoal">{q.email}</span>
                     {q.phone && (
@@ -248,7 +248,7 @@ export default function QuestionnairesPage() {
                   </p>
                   <p>Soumis le {formatDate(q.created_at)}</p>
                   {q.linked_at && (
-                    <p className="text-teal">Associé le {formatDate(q.linked_at)}</p>
+                    <p className="text-sage">Associé le {formatDate(q.linked_at)}</p>
                   )}
                 </div>
               </div>

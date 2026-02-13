@@ -98,10 +98,10 @@ export function UpgradeModal({
               </h2>
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg hover:bg-sable/50 transition-colors"
+                className="p-1 rounded-lg hover:bg-cream/80 transition-colors"
               >
                 <svg
-                  className="h-5 w-5 text-marine"
+                  className="h-5 w-5 text-charcoal"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -119,24 +119,24 @@ export function UpgradeModal({
             {isPremium ? (
               // Gestion de l'abonnement existant
               <div className="space-y-4">
-                <p className="text-sm text-marine">
+                <p className="text-sm text-charcoal">
                   Vous êtes actuellement abonné au plan Premium. Utilisez le portail de facturation pour :
                 </p>
-                <ul className="text-sm text-marine space-y-2">
+                <ul className="text-sm text-charcoal space-y-2">
                   <li className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-4 w-4 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     Mettre à jour vos informations de paiement
                   </li>
                   <li className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-4 w-4 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     Consulter l&apos;historique de vos paiements
                   </li>
                   <li className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-4 w-4 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     Modifier votre cycle de facturation
@@ -150,14 +150,14 @@ export function UpgradeModal({
               // Upgrade vers Premium
               <>
                 {/* Sélection du cycle */}
-                <div className="flex rounded-xl bg-sable/50 p-1 mb-6">
+                <div className="flex rounded-xl bg-cream/80 p-1 mb-6">
                   <button
                     onClick={() => setSelectedCycle('monthly')}
                     className={cn(
                       'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-colors',
                       selectedCycle === 'monthly'
                         ? 'bg-white text-charcoal shadow-sm'
-                        : 'text-marine hover:text-charcoal'
+                        : 'text-charcoal hover:text-charcoal'
                     )}
                   >
                     Mensuel
@@ -168,7 +168,7 @@ export function UpgradeModal({
                       'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-colors relative',
                       selectedCycle === 'yearly'
                         ? 'bg-white text-charcoal shadow-sm'
-                        : 'text-marine hover:text-charcoal'
+                        : 'text-charcoal hover:text-charcoal'
                     )}
                   >
                     Annuel
@@ -189,12 +189,12 @@ export function UpgradeModal({
                           ? premiumPlan.price_monthly
                           : premiumPlan.price_yearly
                       )}
-                      <span className="text-lg font-normal text-marine">
+                      <span className="text-lg font-normal text-charcoal">
                         /{selectedCycle === 'monthly' ? 'mois' : 'an'}
                       </span>
                     </p>
                     {selectedCycle === 'yearly' && (
-                      <p className="text-sm text-teal mt-1">
+                      <p className="text-sm text-sage mt-1">
                         Soit {formatPrice(premiumPlan.price_yearly / 12)}/mois
                       </p>
                     )}
@@ -203,7 +203,7 @@ export function UpgradeModal({
 
                 {/* Fonctionnalités */}
                 {premiumPlan && (
-                  <div className="mb-6 p-4 bg-sable/30 rounded-xl">
+                  <div className="mb-6 p-4 bg-cream/60 rounded-xl">
                     <h3 className="text-sm font-medium text-charcoal mb-3">
                       Inclus dans Premium
                     </h3>
@@ -213,7 +213,7 @@ export function UpgradeModal({
 
                 {/* Erreur */}
                 {error && (
-                  <div className="mb-4 p-3 bg-aubergine/10 text-aubergine text-sm rounded-lg">
+                  <div className="mb-4 p-3 bg-terracotta/10 text-terracotta text-sm rounded-lg">
                     {error}
                   </div>
                 )}
@@ -223,7 +223,7 @@ export function UpgradeModal({
                   {loading ? 'Redirection...' : `S'abonner - ${getBillingCycleLabel(selectedCycle)}`}
                 </Button>
 
-                <p className="text-xs text-center text-marine mt-4">
+                <p className="text-xs text-center text-charcoal mt-4">
                   Paiement sécurisé par Stripe. Annulez à tout moment.
                 </p>
               </>

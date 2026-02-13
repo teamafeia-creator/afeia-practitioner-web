@@ -36,7 +36,7 @@ export function MorningReviewHeader({ practitionerName, urgentCount }: MorningRe
       <h1 className="text-2xl md:text-3xl font-light text-charcoal">
         {greeting}{practitionerName ? `, ${practitionerName}` : ''}
       </h1>
-      <p className="text-warmgray mt-1 capitalize">{today}</p>
+      <p className="text-stone mt-1 capitalize">{today}</p>
 
       {urgentCount > 0 && (
         <motion.div

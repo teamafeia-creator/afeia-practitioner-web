@@ -38,7 +38,7 @@ function TrendIcon({ trend }: { trend: Trend }) {
     case 'down':
       return <TrendingDown className="w-4 h-4 text-gold" />;
     default:
-      return <Minus className="w-4 h-4 text-warmgray" />;
+      return <Minus className="w-4 h-4 text-stone" />;
   }
 }
 
@@ -84,7 +84,7 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
     return (
       <Modal isOpen onClose={onClose} title="Revue guidee" size="lg">
         <div className="text-center py-8">
-          <p className="text-warmgray">Aucun consultant ne necessite d&apos;attention particuliere.</p>
+          <p className="text-stone">Aucun consultant ne necessite d&apos;attention particuliere.</p>
           <Button variant="primary" onClick={onClose} className="mt-4">
             Fermer
           </Button>
@@ -120,13 +120,13 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
                 className="w-4 h-4 rounded-full"
                 style={{ backgroundColor: ATTENTION_COLORS[attentionLevel] }}
               />
-              <span className="text-sm font-medium text-warmgray">
+              <span className="text-sm font-medium text-stone">
                 {currentIndex + 1}/{priorityConsultants.length}
               </span>
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-warmgray hover:text-charcoal hover:bg-neutral-100 transition-colors"
+              className="p-1 rounded-lg text-stone hover:text-charcoal hover:bg-neutral-100 transition-colors"
               aria-label="Fermer"
             >
               <X className="w-5 h-5" />
@@ -157,15 +157,15 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
               {/* Stats detaillees */}
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="bg-neutral-50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-warmgray mb-1">Humeur</p>
+                  <p className="text-xs text-stone mb-1">Humeur</p>
                   <TrendIcon trend={lastWeekStats.moodTrend} />
                 </div>
                 <div className="bg-neutral-50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-warmgray mb-1">Energie</p>
+                  <p className="text-xs text-stone mb-1">Energie</p>
                   <TrendIcon trend={lastWeekStats.energyTrend} />
                 </div>
                 <div className="bg-neutral-50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-warmgray mb-1">Adhesion</p>
+                  <p className="text-xs text-stone mb-1">Adhesion</p>
                   <div className="flex items-center justify-center gap-1">
                     <span className="text-sm font-semibold text-charcoal">
                       {Math.round(lastWeekStats.averageAdherence * 100)}%
@@ -180,7 +180,7 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="bg-neutral-50 rounded-lg p-3">
                     <div className="flex items-center gap-2">
-                      <Moon className="w-4 h-4 text-warmgray" />
+                      <Moon className="w-4 h-4 text-stone" />
                       <span className="text-sm text-charcoal">
                         Sommeil : {bagueConnecteeStats.averageSleep.toFixed(1)}h
                       </span>
@@ -189,7 +189,7 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
                   </div>
                   <div className="bg-neutral-50 rounded-lg p-3">
                     <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-warmgray" />
+                      <Heart className="w-4 h-4 text-stone" />
                       <span className="text-sm text-charcoal">
                         HRV : {bagueConnecteeStats.averageHRV.toFixed(0)} ms
                       </span>
@@ -201,11 +201,11 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
 
               {/* Signal / Suggestion */}
               {primarySignal && (
-                <div className="bg-teal/5 border border-teal/15 rounded-lg p-4 mb-4">
-                  <h3 className="font-medium text-teal mb-1 text-sm">Suggestion</h3>
+                <div className="bg-sage-light/50 border border-divider rounded-lg p-4 mb-4">
+                  <h3 className="font-medium text-sage mb-1 text-sm">Suggestion</h3>
                   <p className="text-sm text-charcoal">{primarySignal.message}</p>
                   {suggestedActions[0] && suggestedActions[0].type !== 'open_dossier' && (
-                    <p className="text-sm text-teal mt-2">
+                    <p className="text-sm text-sage mt-2">
                       &rarr; {suggestedActions[0].description}
                     </p>
                   )}
@@ -254,7 +254,7 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
             <button
               onClick={handlePrev}
               disabled={isFirst}
-              className="text-sm text-warmgray hover:text-charcoal disabled:opacity-30 flex items-center gap-1 transition-colors"
+              className="text-sm text-stone hover:text-charcoal disabled:opacity-30 flex items-center gap-1 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
               Precedent

@@ -119,7 +119,7 @@ export default function ConsultationPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-stone">
         Chargement de la consultation…
       </div>
     );
@@ -129,7 +129,7 @@ export default function ConsultationPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold">Consultation introuvable</h1>
-        <p className="text-sm text-warmgray">Vérifiez l&apos;identifiant ou revenez à la liste des consultants.</p>
+        <p className="text-sm text-stone">Vérifiez l&apos;identifiant ou revenez à la liste des consultants.</p>
         <Button variant="secondary" onClick={() => router.push('/consultants')}>Retour consultants</Button>
       </div>
     );
@@ -155,9 +155,9 @@ export default function ConsultationPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-charcoal">Consultation</h1>
-          <div className="mt-1 text-sm text-warmgray">
+          <div className="mt-1 text-sm text-stone">
             {consultant ? (
-              <Link className="text-teal hover:underline" href={`/consultants/${consultant.id}`}>{consultant.name}</Link>
+              <Link className="text-sage hover:underline" href={`/consultants/${consultant.id}`}>{consultant.name}</Link>
             ) : (
               <span>Consultant inconnu</span>
             )}
@@ -199,10 +199,10 @@ export default function ConsultationPage() {
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[280px] w-full rounded-2xl border border-black/10 bg-white p-3 text-sm text-charcoal placeholder:text-warmgray focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/30"
+                className="min-h-[280px] w-full rounded-2xl border border-black/10 bg-white p-3 text-sm text-charcoal placeholder:text-stone focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
                 placeholder="Saisissez vos observations, questions clés, hypothèses (non médicales), et éléments validés avec le client..."
               />
-              <p className="mt-2 text-xs text-warmgray">
+              <p className="mt-2 text-xs text-stone">
                 Rappel éthique : pas de diagnostic, pas d&apos;interprétation médicale. Utilisez un ton neutre et factuel.
               </p>
             </CardContent>
@@ -214,9 +214,9 @@ export default function ConsultationPage() {
             </CardHeader>
             <CardContent>
               {ai ? (
-                <pre className="whitespace-pre-wrap rounded-2xl bg-sable p-3 text-sm text-marine ring-1 ring-black/5">{ai}</pre>
+                <pre className="whitespace-pre-wrap rounded-2xl bg-cream p-3 text-sm text-charcoal ring-1 ring-black/5">{ai}</pre>
               ) : (
-                <div className="rounded-2xl bg-sable p-3 text-sm text-warmgray ring-1 ring-black/5">
+                <div className="rounded-2xl bg-cream p-3 text-sm text-stone ring-1 ring-black/5">
                   Cliquez sur « Générer résumé IA » pour obtenir une proposition. Vous gardez toujours le contrôle.
                 </div>
               )}
@@ -231,19 +231,19 @@ export default function ConsultationPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <div className="text-xs text-warmgray">Motif</div>
+                <div className="text-xs text-stone">Motif</div>
                 <div className="text-sm text-charcoal">{motif}</div>
               </div>
               <div>
-                <div className="text-xs text-warmgray">Objectifs</div>
+                <div className="text-xs text-stone">Objectifs</div>
                 <div className="text-sm text-charcoal">{objectifs}</div>
               </div>
               <div>
-                <div className="text-xs text-warmgray">Dernière entrée journal</div>
+                <div className="text-xs text-stone">Dernière entrée journal</div>
                 <div className="text-sm text-charcoal">{lastJournalEntry}</div>
               </div>
               <div className="rounded-2xl bg-white ring-1 ring-black/5 p-3">
-                <div className="text-xs text-warmgray">Prochaine action</div>
+                <div className="text-xs text-stone">Prochaine action</div>
                 <div className="mt-1 text-sm text-charcoal">
                   {consultant?.is_premium ? 'Analyser la semaine bague connectée et ajuster le plan.' : 'Finaliser les objectifs mesurables.'}
                 </div>

@@ -45,7 +45,7 @@ export function ContraindicationValidationModal({
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <X className="h-5 w-5 text-warmgray" />
+            <X className="h-5 w-5 text-stone" />
           </button>
         </div>
 
@@ -72,7 +72,7 @@ export function ContraindicationValidationModal({
               type="checkbox"
               checked={acknowledged}
               onChange={(e) => setAcknowledged(e.target.checked)}
-              className="mt-0.5 rounded border-gray-300 text-teal focus:ring-teal/30"
+              className="mt-0.5 rounded border-gray-300 text-sage focus:ring-sage/30"
             />
             <span className="text-sm text-charcoal">
               Je confirme avoir pris connaissance de ces alertes et j&apos;assume la responsabilite de mes recommandations.

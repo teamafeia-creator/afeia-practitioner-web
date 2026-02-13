@@ -124,7 +124,7 @@ export default function QuestionnaireDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-warmgray">
+      <div className="flex min-h-[60vh] items-center justify-center text-sm text-stone">
         Chargement du questionnaire…
       </div>
     );
@@ -181,23 +181,23 @@ export default function QuestionnaireDetailPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <div className="text-xs text-warmgray">Nom complet</div>
+            <div className="text-xs text-stone">Nom complet</div>
             <div className="text-sm font-medium text-charcoal">
               {questionnaire.first_name} {questionnaire.last_name}
             </div>
           </div>
           <div>
-            <div className="text-xs text-warmgray">Email</div>
+            <div className="text-xs text-stone">Email</div>
             <div className="text-sm font-medium text-charcoal">{questionnaire.email}</div>
           </div>
           <div>
-            <div className="text-xs text-warmgray">Téléphone</div>
+            <div className="text-xs text-stone">Téléphone</div>
             <div className="text-sm font-medium text-charcoal">
               {questionnaire.phone || 'Non renseigné'}
             </div>
           </div>
           <div>
-            <div className="text-xs text-warmgray">Date de soumission</div>
+            <div className="text-xs text-stone">Date de soumission</div>
             <div className="text-sm font-medium text-charcoal">
               {formatDate(questionnaire.created_at)}
             </div>
@@ -206,8 +206,8 @@ export default function QuestionnaireDetailPage() {
 
         {questionnaire.status === 'linked_to_consultant' && questionnaire.linked_at && (
           <div className="mt-4 pt-4 border-t border-black/5">
-            <div className="text-xs text-warmgray">Associé au consultant le</div>
-            <div className="text-sm font-medium text-teal">
+            <div className="text-xs text-stone">Associé au consultant le</div>
+            <div className="text-sm font-medium text-sage">
               {formatDate(questionnaire.linked_at)}
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function QuestionnaireDetailPage() {
                 <h3 className="font-medium text-charcoal">{section.title}</h3>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
-                    hasResponses ? 'bg-teal/10 text-teal' : 'bg-warmgray/10 text-warmgray'
+                    hasResponses ? 'bg-sage-light text-sage' : 'bg-stone/10 text-stone'
                   }`}
                 >
                   {hasResponses ? 'Rempli' : 'Non rempli'}
@@ -243,14 +243,14 @@ export default function QuestionnaireDetailPage() {
 
                     return (
                       <div key={question.key} className="border-b border-black/5 pb-3 last:border-0">
-                        <div className="text-xs text-warmgray mb-1">{question.label}</div>
+                        <div className="text-xs text-stone mb-1">{question.label}</div>
                         <div className="text-sm text-charcoal whitespace-pre-wrap">{answer}</div>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-warmgray italic">Aucune réponse pour cette section.</p>
+                <p className="text-sm text-stone italic">Aucune réponse pour cette section.</p>
               )}
             </Card>
           );

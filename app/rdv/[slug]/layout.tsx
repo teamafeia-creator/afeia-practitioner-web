@@ -10,17 +10,17 @@ export default function BookingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sable to-white">
+    <div className="min-h-screen bg-gradient-to-b from-cream to-white">
       <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
         {children}
       </div>
-      <footer className="border-t border-teal/10 py-6 text-center text-xs text-warmgray">
+      <footer className="border-t border-divider py-6 text-center text-xs text-stone">
         <span>Powered by </span>
         <a
           href="https://afeia.fr"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-teal hover:underline"
+          className="text-sage hover:underline"
         >
           AFEIA
         </a>

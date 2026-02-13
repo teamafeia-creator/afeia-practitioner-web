@@ -283,11 +283,11 @@ export default function BookingSettingsPage() {
               checked={form.booking_enabled}
               onChange={(e) => setForm(prev => ({ ...prev, booking_enabled: e.target.checked }))}
               disabled={!canEnable && !form.booking_enabled}
-              className="h-5 w-5 rounded border-teal/30 text-teal focus:ring-teal/50"
+              className="h-5 w-5 rounded border-sage/30 text-sage focus:ring-sage/50"
             />
             <div>
               <span className="text-sm font-medium text-charcoal">Activer la prise de RDV en ligne</span>
-              <p className="text-xs text-warmgray">
+              <p className="text-xs text-stone">
                 Vos consultants pourront prendre RDV depuis votre page publique.
               </p>
             </div>
@@ -299,22 +299,22 @@ export default function BookingSettingsPage() {
                 <AlertCircle className="h-4 w-4 text-gold" />
                 Conditions requises pour activer :
               </div>
-              <ul className="text-xs text-warmgray space-y-1 ml-6">
-                <li className={validation.hasSlug ? 'text-teal' : ''}>
+              <ul className="text-xs text-stone space-y-1 ml-6">
+                <li className={validation.hasSlug ? 'text-sage' : ''}>
                   {validation.hasSlug ? '\u2713' : '\u2717'} Slug personnalise defini
                 </li>
-                <li className={validation.hasConsultationTypes ? 'text-teal' : ''}>
+                <li className={validation.hasConsultationTypes ? 'text-sage' : ''}>
                   {validation.hasConsultationTypes ? '\u2713' : '\u2717'} Au moins un type de consultation reservable en ligne{' '}
                   {!validation.hasConsultationTypes && (
-                    <button onClick={() => router.push('/settings/consultation-types')} className="text-teal underline">
+                    <button onClick={() => router.push('/settings/consultation-types')} className="text-sage underline">
                       Configurer
                     </button>
                   )}
                 </li>
-                <li className={validation.hasAvailability ? 'text-teal' : ''}>
+                <li className={validation.hasAvailability ? 'text-sage' : ''}>
                   {validation.hasAvailability ? '\u2713' : '\u2717'} Horaires de disponibilite configures{' '}
                   {!validation.hasAvailability && (
-                    <button onClick={() => router.push('/settings/availability')} className="text-teal underline">
+                    <button onClick={() => router.push('/settings/availability')} className="text-sage underline">
                       Configurer
                     </button>
                   )}
@@ -351,23 +351,23 @@ export default function BookingSettingsPage() {
             {form.booking_slug && (
               <div className="mt-2 flex items-center gap-2">
                 {slugChecking ? (
-                  <span className="text-xs text-warmgray">Verification...</span>
+                  <span className="text-xs text-stone">Verification...</span>
                 ) : slugAvailable === true ? (
-                  <span className="text-xs text-teal flex items-center gap-1">
+                  <span className="text-xs text-sage flex items-center gap-1">
                     <Check className="h-3 w-3" /> Disponible
                   </span>
                 ) : slugAvailable === false ? (
-                  <span className="text-xs text-aubergine">Ce slug est deja utilise</span>
+                  <span className="text-xs text-terracotta">Ce slug est deja utilise</span>
                 ) : null}
               </div>
             )}
           </div>
 
           {bookingUrl && (
-            <div className="flex items-center gap-2 rounded-lg bg-sable/50 p-3">
+            <div className="flex items-center gap-2 rounded-lg bg-cream/80 p-3">
               <span className="text-sm text-charcoal truncate flex-1">{bookingUrl}</span>
               <Button variant="ghost" size="sm" onClick={copyLink}>
-                {copied ? <Check className="h-4 w-4 text-teal" /> : <Copy className="h-4 w-4" />}
+                {copied ? <Check className="h-4 w-4 text-sage" /> : <Copy className="h-4 w-4" />}
               </Button>
               <Button
                 variant="ghost"
@@ -388,7 +388,7 @@ export default function BookingSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-[13px] font-medium text-warmgray mb-1">
+            <label className="block text-[13px] font-medium text-stone mb-1">
               Texte d'introduction
             </label>
             <Textarea
@@ -432,7 +432,7 @@ export default function BookingSettingsPage() {
             <option value="48">48 heures</option>
           </Select>
           <div>
-            <label className="block text-[13px] font-medium text-warmgray mb-1">
+            <label className="block text-[13px] font-medium text-stone mb-1">
               Texte personnalise
             </label>
             <Textarea

@@ -22,25 +22,25 @@ export function InvoiceDetail({ invoice }: Props) {
         <CardContent>
           <dl className="space-y-3">
             <div className="flex justify-between">
-              <dt className="text-sm text-warmgray">Numero</dt>
+              <dt className="text-sm text-stone">Numero</dt>
               <dd>
                 <InvoiceNumberDisplay numero={invoice.numero} />
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-sm text-warmgray">Statut</dt>
+              <dt className="text-sm text-stone">Statut</dt>
               <dd>
                 <InvoiceStatusBadge status={invoice.status} />
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-sm text-warmgray">Date emission</dt>
+              <dt className="text-sm text-stone">Date emission</dt>
               <dd className="text-sm text-charcoal">
                 {formatDate(invoice.date_emission)}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-sm text-warmgray">Description</dt>
+              <dt className="text-sm text-stone">Description</dt>
               <dd className="text-sm text-charcoal text-right max-w-[200px]">
                 {invoice.description}
               </dd>
@@ -63,20 +63,20 @@ export function InvoiceDetail({ invoice }: Props) {
         <CardContent>
           <dl className="space-y-3">
             <div className="flex justify-between">
-              <dt className="text-sm text-warmgray">Moyen de paiement</dt>
+              <dt className="text-sm text-stone">Moyen de paiement</dt>
               <dd>
                 <PaymentMethodBadge method={invoice.payment_method} />
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-sm text-warmgray">Date de paiement</dt>
+              <dt className="text-sm text-stone">Date de paiement</dt>
               <dd className="text-sm text-charcoal">
                 {formatDate(invoice.payment_date)}
               </dd>
             </div>
             {invoice.payment_notes && (
               <div>
-                <dt className="text-sm text-warmgray mb-1">Notes</dt>
+                <dt className="text-sm text-stone mb-1">Notes</dt>
                 <dd className="text-sm text-charcoal bg-neutral-50 rounded p-2">
                   {invoice.payment_notes}
                 </dd>
@@ -97,13 +97,13 @@ export function InvoiceDetail({ invoice }: Props) {
               {invoice.practitioner_snapshot.prenom}{' '}
               {invoice.practitioner_snapshot.nom}
             </dd>
-            <dd className="text-sm text-warmgray">
+            <dd className="text-sm text-stone">
               {invoice.practitioner_snapshot.adresse}
             </dd>
-            <dd className="text-sm text-warmgray">
+            <dd className="text-sm text-stone">
               SIRET : {invoice.practitioner_snapshot.siret}
             </dd>
-            <dd className="text-xs text-warmgray italic">
+            <dd className="text-xs text-stone italic">
               {invoice.practitioner_snapshot.mention_tva}
             </dd>
           </dl>
@@ -121,11 +121,11 @@ export function InvoiceDetail({ invoice }: Props) {
               {invoice.consultant_snapshot.prenom}{' '}
               {invoice.consultant_snapshot.nom}
             </dd>
-            <dd className="text-sm text-warmgray">
+            <dd className="text-sm text-stone">
               {invoice.consultant_snapshot.email}
             </dd>
             {invoice.consultant_snapshot.adresse && (
-              <dd className="text-sm text-warmgray">
+              <dd className="text-sm text-stone">
                 {invoice.consultant_snapshot.adresse}
               </dd>
             )}

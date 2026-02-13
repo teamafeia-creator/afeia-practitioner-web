@@ -231,7 +231,7 @@ export default function AdminBillingPage() {
                             href={`/admin/practitioners/${row.practitioner_id}`}
                             className="group flex flex-col"
                           >
-                            <span className="text-sm font-medium text-slate-800 group-hover:text-teal-700">
+                            <span className="text-sm font-medium text-slate-800 group-hover:text-sage-700">
                               {practitioner?.full_name ?? row.practitioner_id.slice(0, 8)}
                             </span>
                             <span className="text-xs text-slate-500">

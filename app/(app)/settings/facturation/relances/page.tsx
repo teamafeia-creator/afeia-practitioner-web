@@ -97,7 +97,7 @@ export default function ReminderSettingsPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Relances automatiques" />
-        <div className="glass-card rounded-lg p-8 text-center text-warmgray">
+        <div className="glass-card rounded-lg p-8 text-center text-stone">
           Chargement...
         </div>
       </div>
@@ -134,18 +134,18 @@ export default function ReminderSettingsPage() {
                 type="checkbox"
                 checked={relancesAuto}
                 onChange={(e) => setRelancesAuto(e.target.checked)}
-                className="rounded border-teal/30 text-teal focus:ring-teal/30 h-5 w-5"
+                className="rounded border-sage/30 text-sage focus:ring-sage/30 h-5 w-5"
               />
               <div>
                 <span className="text-sm font-medium text-charcoal flex items-center gap-2">
                   {relancesAuto ? (
-                    <Bell className="h-4 w-4 text-teal" />
+                    <Bell className="h-4 w-4 text-sage" />
                   ) : (
-                    <BellOff className="h-4 w-4 text-warmgray" />
+                    <BellOff className="h-4 w-4 text-stone" />
                   )}
                   Activer les relances automatiques
                 </span>
-                <p className="text-xs text-warmgray mt-0.5">
+                <p className="text-xs text-stone mt-0.5">
                   Un email de rappel sera envoye automatiquement aux consultants pour les factures impayees.
                 </p>
               </div>
@@ -165,7 +165,7 @@ export default function ReminderSettingsPage() {
                     type="checkbox"
                     checked={delaiJ7}
                     onChange={(e) => setDelaiJ7(e.target.checked)}
-                    className="rounded border-teal/30 text-teal focus:ring-teal/30"
+                    className="rounded border-sage/30 text-sage focus:ring-sage/30"
                   />
                   <span className="text-sm text-charcoal">
                     Relance a J+7 (7 jours apres emission)
@@ -177,7 +177,7 @@ export default function ReminderSettingsPage() {
                     type="checkbox"
                     checked={delaiJ15}
                     onChange={(e) => setDelaiJ15(e.target.checked)}
-                    className="rounded border-teal/30 text-teal focus:ring-teal/30"
+                    className="rounded border-sage/30 text-sage focus:ring-sage/30"
                   />
                   <span className="text-sm text-charcoal">
                     Relance a J+15 (15 jours apres emission)
@@ -189,7 +189,7 @@ export default function ReminderSettingsPage() {
                     type="checkbox"
                     checked={delaiJ30}
                     onChange={(e) => setDelaiJ30(e.target.checked)}
-                    className="rounded border-teal/30 text-teal focus:ring-teal/30"
+                    className="rounded border-sage/30 text-sage focus:ring-sage/30"
                   />
                   <span className="text-sm text-charcoal">
                     Relance a J+30 (30 jours apres emission)
@@ -203,7 +203,7 @@ export default function ReminderSettingsPage() {
                 <CardTitle>Templates d&apos;email personnalises</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-xs text-warmgray">
+                <p className="text-xs text-stone">
                   Personnalisez le contenu des emails de relance. Laissez vide pour utiliser le template par defaut.
                   Variables disponibles : {'{nom_consultant}'}, {'{prenom_consultant}'}, {'{numero_facture}'}, {'{montant}'}, {'{date_emission}'}.
                 </p>
@@ -216,7 +216,7 @@ export default function ReminderSettingsPage() {
                       onChange={(e) => setTemplateJ7(e.target.value)}
                       className="min-h-[80px]"
                     />
-                    <span className="text-[13px] font-medium text-warmgray block mt-1">
+                    <span className="text-[13px] font-medium text-stone block mt-1">
                       Email de relance J+7
                     </span>
                   </div>
@@ -230,7 +230,7 @@ export default function ReminderSettingsPage() {
                       onChange={(e) => setTemplateJ15(e.target.value)}
                       className="min-h-[80px]"
                     />
-                    <span className="text-[13px] font-medium text-warmgray block mt-1">
+                    <span className="text-[13px] font-medium text-stone block mt-1">
                       Email de relance J+15
                     </span>
                   </div>
@@ -244,7 +244,7 @@ export default function ReminderSettingsPage() {
                       onChange={(e) => setTemplateJ30(e.target.value)}
                       className="min-h-[80px]"
                     />
-                    <span className="text-[13px] font-medium text-warmgray block mt-1">
+                    <span className="text-[13px] font-medium text-stone block mt-1">
                       Email de relance J+30
                     </span>
                   </div>

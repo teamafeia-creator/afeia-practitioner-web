@@ -31,7 +31,7 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <p className="text-marine mb-4">Aucun abonnement actif</p>
+          <p className="text-charcoal mb-4">Aucun abonnement actif</p>
           <Button onClick={() => setShowUpgradeModal(true)}>
             Choisir un plan
           </Button>
@@ -67,11 +67,11 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
                     ? plan.price_monthly
                     : plan.price_yearly
                 )}
-                <span className="text-base font-normal text-marine">
+                <span className="text-base font-normal text-charcoal">
                   /{subscription.billing_cycle === 'monthly' ? 'mois' : 'an'}
                 </span>
               </p>
-              <p className="text-sm text-marine mt-1">
+              <p className="text-sm text-charcoal mt-1">
                 Facturation {getBillingCycleLabel(subscription.billing_cycle).toLowerCase()}
               </p>
             </div>
@@ -80,7 +80,7 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
           {isFree && (
             <div>
               <p className="text-3xl font-bold text-charcoal">Gratuit</p>
-              <p className="text-sm text-marine mt-1">
+              <p className="text-sm text-charcoal mt-1">
                 Plan de base pour commencer
               </p>
             </div>
@@ -88,16 +88,16 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
 
           {/* Description */}
           {plan.description && (
-            <p className="text-sm text-marine">{plan.description}</p>
+            <p className="text-sm text-charcoal">{plan.description}</p>
           )}
 
           {/* Fonctionnalités */}
           <SubscriptionFeatures features={plan.features} />
 
           {/* Informations période */}
-          <div className="pt-4 border-t border-sable/50 space-y-2 text-sm">
+          <div className="pt-4 border-t border-divider/50 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-marine">Période en cours</span>
+              <span className="text-charcoal">Période en cours</span>
               <span className="font-medium text-charcoal">
                 {formatDate(subscription.current_period_start)} - {formatDate(subscription.current_period_end)}
               </span>
@@ -111,7 +111,7 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
               </div>
             )}
             {subscription.trial_end && new Date(subscription.trial_end) > new Date() && (
-              <div className="flex justify-between text-teal">
+              <div className="flex justify-between text-sage">
                 <span>Période d&apos;essai</span>
                 <span className="font-medium">
                   Jusqu&apos;au {formatDate(subscription.trial_end)}
@@ -139,7 +139,7 @@ export function SubscriptionCard({ subscription, plans, onSubscriptionUpdate }: 
                   <Button
                     onClick={() => setShowCancelDialog(true)}
                     variant="ghost"
-                    className="w-full text-aubergine hover:text-aubergine hover:bg-aubergine/5 sm:w-auto"
+                    className="w-full text-terracotta hover:text-terracotta hover:bg-terracotta/5 sm:w-auto"
                   >
                     Annuler
                   </Button>

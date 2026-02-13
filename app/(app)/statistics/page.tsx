@@ -14,7 +14,7 @@ import { Calendar, Users, Activity, RefreshCw, Banknote, BookOpen } from 'lucide
 import type { PeriodKey } from '@/lib/types/stats';
 import { getPeriodRange } from '@/lib/types/stats';
 
-const CHART_COLORS = ['#2A8080', '#5BA6A6', '#7BBFBF', '#85004F', '#FF9A3D', '#40464F'];
+const CHART_COLORS = ['#5B8C6E', '#7BAE7F', '#C4856C', '#D4A060', '#7EB0D4', '#D4738B'];
 
 const shortDateFormatter = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
@@ -34,7 +34,7 @@ export default function StatisticsPage() {
   if (authLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-warmgray">Chargement...</div>
+        <div className="text-stone">Chargement...</div>
       </div>
     );
   }
@@ -67,8 +67,8 @@ export default function StatisticsPage() {
         className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
       >
         <div>
-          <h2 className="text-xl font-semibold text-charcoal tracking-tight">Statistiques</h2>
-          <p className="text-sm text-warmgray mt-1">Vue d&apos;ensemble de votre activite</p>
+          <h2 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>Statistiques</h2>
+          <p className="text-sm text-stone mt-1">Vue d&apos;ensemble de votre activite</p>
         </div>
         <PeriodSelector value={period} onChange={setPeriod} />
       </motion.div>
@@ -77,7 +77,7 @@ export default function StatisticsPage() {
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-100 p-5 h-28 animate-pulse" />
+            <div key={i} className="bg-white rounded-xl border border-divider p-5 h-28 animate-pulse" />
           ))}
         </div>
       ) : (
@@ -120,8 +120,8 @@ export default function StatisticsPage() {
         <h3 className="text-lg font-semibold text-charcoal mb-4">Activite</h3>
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Sessions per week */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
-            <h4 className="text-sm font-medium text-warmgray mb-4">Seances par semaine (12 semaines)</h4>
+          <div className="bg-white rounded-xl border border-divider p-5">
+            <h4 className="text-sm font-medium text-stone mb-4">Seances par semaine (12 semaines)</h4>
             {sessionsChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={sessionsChartData}>
@@ -132,32 +132,32 @@ export default function StatisticsPage() {
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke="#2A8080"
+                    stroke="#5B8C6E"
                     strokeWidth={2}
-                    dot={{ fill: '#2A8080', r: 4 }}
+                    dot={{ fill: '#5B8C6E', r: 4 }}
                     name="Seances"
                   />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[250px] text-sm text-warmgray">
+              <div className="flex items-center justify-center h-[250px] text-sm text-stone">
                 Aucune donnee pour cette periode
               </div>
             )}
           </div>
 
           {/* Conseillanciers stats */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
-            <h4 className="text-sm font-medium text-warmgray mb-4">Conseillanciers</h4>
+          <div className="bg-white rounded-xl border border-divider p-5">
+            <h4 className="text-sm font-medium text-stone mb-4">Conseillanciers</h4>
             <div className="flex items-center justify-center gap-8 h-[250px]">
               <div className="text-center">
-                <div className="text-4xl font-bold text-teal">{stats.carePlansCount}</div>
-                <div className="text-sm text-warmgray mt-1">Crees</div>
+                <div className="text-4xl font-bold text-sage">{stats.carePlansCount}</div>
+                <div className="text-sm text-stone mt-1">Crees</div>
               </div>
               <div className="h-16 w-px bg-gray-200" />
               <div className="text-center">
-                <div className="text-4xl font-bold text-aubergine">{stats.carePlansShared}</div>
-                <div className="text-sm text-warmgray mt-1">Partages</div>
+                <div className="text-4xl font-bold text-terracotta">{stats.carePlansShared}</div>
+                <div className="text-sm text-stone mt-1">Partages</div>
               </div>
             </div>
           </div>
@@ -170,28 +170,28 @@ export default function StatisticsPage() {
           <h3 className="text-lg font-semibold text-charcoal mb-4">Financier</h3>
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Revenue chart */}
-            <div className="bg-white rounded-xl border border-gray-100 p-5">
-              <h4 className="text-sm font-medium text-warmgray mb-4">CA mensuel (12 mois)</h4>
+            <div className="bg-white rounded-xl border border-divider p-5">
+              <h4 className="text-sm font-medium text-stone mb-4">CA mensuel (12 mois)</h4>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={revenueChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#8C8680" />
                   <YAxis tick={{ fontSize: 11 }} stroke="#8C8680" />
                   <Tooltip formatter={(value: number) => [`${value.toFixed(0)} €`, 'CA']} />
-                  <Bar dataKey="total" fill="#2A8080" radius={[4, 4, 0, 0]} name="CA" />
+                  <Bar dataKey="total" fill="#5B8C6E" radius={[4, 4, 0, 0]} name="CA" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* URSSAF reminder */}
             {quarterRevenue > 0 && (
-              <div className="bg-white rounded-xl border border-gray-100 p-5">
-                <h4 className="text-sm font-medium text-warmgray mb-4">Declaration URSSAF</h4>
+              <div className="bg-white rounded-xl border border-divider p-5">
+                <h4 className="text-sm font-medium text-stone mb-4">Declaration URSSAF</h4>
                 <div className="flex flex-col items-center justify-center h-[250px]">
                   <div className="text-4xl font-bold text-charcoal">
                     {(quarterRevenue / 100).toFixed(0)} €
                   </div>
-                  <p className="text-sm text-warmgray mt-3 text-center max-w-xs">
+                  <p className="text-sm text-stone mt-3 text-center max-w-xs">
                     Rappel : montant a declarer a l&apos;URSSAF pour le trimestre en cours
                   </p>
                 </div>
@@ -206,8 +206,8 @@ export default function StatisticsPage() {
         <h3 className="text-lg font-semibold text-charcoal mb-4">Engagement</h3>
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Top concerns pie chart */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
-            <h4 className="text-sm font-medium text-warmgray mb-4">Motifs de consultation principaux</h4>
+          <div className="bg-white rounded-xl border border-divider p-5">
+            <h4 className="text-sm font-medium text-stone mb-4">Motifs de consultation principaux</h4>
             {stats.topConcerns.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -232,15 +232,15 @@ export default function StatisticsPage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[250px] text-sm text-warmgray">
+              <div className="flex items-center justify-center h-[250px] text-sm text-stone">
                 Aucun motif renseigne
               </div>
             )}
           </div>
 
           {/* Journal fill rate */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
-            <h4 className="text-sm font-medium text-warmgray mb-4">Taux moyen de remplissage journal</h4>
+          <div className="bg-white rounded-xl border border-divider p-5">
+            <h4 className="text-sm font-medium text-stone mb-4">Taux moyen de remplissage journal</h4>
             <div className="flex flex-col items-center justify-center h-[250px]">
               <div className="relative h-40 w-40">
                 <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
@@ -253,7 +253,7 @@ export default function StatisticsPage() {
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    stroke="#2A8080"
+                    stroke="#5B8C6E"
                     strokeWidth="3"
                     strokeDasharray={`${stats.avgJournalFillRate}, 100`}
                     strokeLinecap="round"
@@ -263,7 +263,7 @@ export default function StatisticsPage() {
                   <span className="text-3xl font-bold text-charcoal">{stats.avgJournalFillRate}%</span>
                 </div>
               </div>
-              <p className="text-sm text-warmgray mt-3">
+              <p className="text-sm text-stone mt-3">
                 Sur les 30 derniers jours
               </p>
             </div>

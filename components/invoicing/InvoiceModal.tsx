@@ -171,9 +171,9 @@ export function InvoiceModal({
             type="checkbox"
             checked={createAsDraft}
             onChange={(e) => setCreateAsDraft(e.target.checked)}
-            className="rounded border-teal/30 text-teal focus:ring-teal/30"
+            className="rounded border-sage/30 text-sage focus:ring-sage/30"
           />
-          <span className="text-sm text-warmgray">
+          <span className="text-sm text-stone">
             Enregistrer comme brouillon
           </span>
         </label>

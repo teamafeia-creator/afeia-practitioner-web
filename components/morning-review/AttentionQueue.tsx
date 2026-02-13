@@ -30,7 +30,7 @@ export function AttentionQueue({ consultantsSummary, onStartGuidedReview, onActi
           <CheckCircle className="w-6 h-6 text-sage" />
         </div>
         <h3 className="text-lg font-semibold text-charcoal">Tout va bien !</h3>
-        <p className="text-warmgray mt-2">
+        <p className="text-stone mt-2">
           Aucun consultant ne necessite votre attention particuliere aujourd&apos;hui.
         </p>
       </motion.div>
@@ -50,7 +50,7 @@ export function AttentionQueue({ consultantsSummary, onStartGuidedReview, onActi
         </h2>
         <button
           onClick={onStartGuidedReview}
-          className="text-sm text-teal hover:text-teal-deep font-medium whitespace-nowrap"
+          className="text-sm text-sage hover:text-sage-deep font-medium whitespace-nowrap"
         >
           Commencer la revue guidee &rarr;
         </button>

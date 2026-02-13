@@ -134,12 +134,12 @@ export function BlockLibrarySidebar({
         <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
           <div>
             <h3 className="text-sm font-semibold text-charcoal">Insérer un bloc</h3>
-            <p className="text-xs text-warmgray">{sectionLabel}</p>
+            <p className="text-xs text-stone">{sectionLabel}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-warmgray hover:bg-neutral-100 transition-colors"
+            className="rounded-lg p-1.5 text-stone hover:bg-neutral-100 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -148,13 +148,13 @@ export function BlockLibrarySidebar({
         {/* Search */}
         <div className="border-b border-neutral-100 px-4 py-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-warmgray" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone" />
             <input
               type="text"
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Rechercher un bloc..."
-              className="w-full rounded-lg border border-teal/15 bg-sable-light py-2 pl-9 pr-3 text-sm text-charcoal placeholder:text-warmgray/60 focus:border-teal/30 focus:outline-none focus:ring-2 focus:ring-teal/10"
+              className="w-full rounded-lg border border-divider bg-cream py-2 pl-9 pr-3 text-sm text-charcoal placeholder:text-stone/60 focus:border-sage/30 focus:outline-none focus:ring-2 focus:ring-sage/10"
             />
           </div>
         </div>
@@ -168,8 +168,8 @@ export function BlockLibrarySidebar({
               className={cn(
                 'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors',
                 activeMotif === null
-                  ? 'bg-teal text-white'
-                  : 'bg-teal/5 text-teal hover:bg-teal/10'
+                  ? 'bg-sage text-white'
+                  : 'bg-sage-light/50 text-sage hover:bg-sage-light'
               )}
             >
               Tous
@@ -182,8 +182,8 @@ export function BlockLibrarySidebar({
                 className={cn(
                   'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors whitespace-nowrap',
                   activeMotif === motif
-                    ? 'bg-teal text-white'
-                    : 'bg-teal/5 text-teal hover:bg-teal/10'
+                    ? 'bg-sage text-white'
+                    : 'bg-sage-light/50 text-sage hover:bg-sage-light'
                 )}
               >
                 {MOTIF_LABELS[motif]}
@@ -196,11 +196,11 @@ export function BlockLibrarySidebar({
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-teal border-t-transparent" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-sage border-t-transparent" />
             </div>
           ) : blocks.length === 0 ? (
             <div className="py-12 text-center">
-              <p className="text-sm text-warmgray">Aucun bloc trouvé pour cette section.</p>
+              <p className="text-sm text-stone">Aucun bloc trouvé pour cette section.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -220,18 +220,18 @@ export function BlockLibrarySidebar({
 
         {/* Preview panel */}
         {selectedBlock && (
-          <div className="border-t border-neutral-100 bg-sable-light px-4 py-3">
+          <div className="border-t border-neutral-100 bg-cream px-4 py-3">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-semibold text-charcoal">{selectedBlock.title}</h4>
               <button
                 type="button"
                 onClick={() => onInsert(selectedBlock.content)}
-                className="rounded-md bg-teal px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-teal-deep"
+                className="rounded-md bg-sage px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-sage-deep"
               >
                 Insérer
               </button>
             </div>
-            <div className="max-h-32 overflow-y-auto rounded-md bg-white p-2 text-xs text-charcoal whitespace-pre-line border border-teal/10">
+            <div className="max-h-32 overflow-y-auto rounded-md bg-white p-2 text-xs text-charcoal whitespace-pre-line border border-divider">
               {selectedBlock.content}
             </div>
           </div>

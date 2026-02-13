@@ -41,8 +41,8 @@ function CardIcon({ brand }: { brand: string | null }) {
 
   // Icône générique pour les autres cartes
   return (
-    <div className="w-10 h-6 bg-sable rounded flex items-center justify-center">
-      <svg className="w-5 h-5 text-marine" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="w-10 h-6 bg-cream rounded flex items-center justify-center">
+      <svg className="w-5 h-5 text-charcoal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -70,7 +70,7 @@ export function PaymentMethodCard({ paymentMethods }: PaymentMethodCardProps) {
           <CardTitle>Moyen de paiement</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-marine">Aucun moyen de paiement enregistré</p>
+          <p className="text-sm text-charcoal">Aucun moyen de paiement enregistré</p>
         </CardContent>
       </Card>
     );
@@ -86,14 +86,14 @@ export function PaymentMethodCard({ paymentMethods }: PaymentMethodCardProps) {
           {paymentMethods.map((pm) => (
             <li
               key={pm.id}
-              className="flex items-center gap-3 p-3 bg-sable/30 rounded-xl"
+              className="flex items-center gap-3 p-3 bg-cream/60 rounded-xl"
             >
               {pm.type === 'card' ? (
                 <CardIcon brand={pm.card_brand} />
               ) : pm.type === 'sepa_debit' ? (
                 <SepaIcon />
               ) : (
-                <div className="w-10 h-6 bg-sable rounded" />
+                <div className="w-10 h-6 bg-cream rounded" />
               )}
 
               <div className="flex-1 min-w-0">
@@ -102,7 +102,7 @@ export function PaymentMethodCard({ paymentMethods }: PaymentMethodCardProps) {
                     <p className="text-sm font-medium text-charcoal">
                       {formatCardBrand(pm.card_brand)} •••• {pm.card_last4}
                     </p>
-                    <p className="text-xs text-marine">
+                    <p className="text-xs text-charcoal">
                       Expire {formatCardExpiry(pm.card_exp_month, pm.card_exp_year)}
                     </p>
                   </>
@@ -112,7 +112,7 @@ export function PaymentMethodCard({ paymentMethods }: PaymentMethodCardProps) {
                     <p className="text-sm font-medium text-charcoal">
                       SEPA •••• {pm.sepa_last4}
                     </p>
-                    <p className="text-xs text-marine">Prélèvement automatique</p>
+                    <p className="text-xs text-charcoal">Prélèvement automatique</p>
                   </>
                 )}
               </div>

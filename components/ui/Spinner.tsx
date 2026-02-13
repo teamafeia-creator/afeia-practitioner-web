@@ -94,7 +94,7 @@ export function PulseDots({ color = 'teal', className }: PulseDotsProps) {
 
 export function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sable via-white to-teal/5 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-cream via-white to-sage/5 flex flex-col items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -105,7 +105,7 @@ export function LoadingScreen() {
         <motion.div
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-teal to-teal-deep flex items-center justify-center shadow-glow"
+          className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-sage to-sage-dark flex items-center justify-center shadow-glow"
         >
           <span className="text-3xl font-bold text-white">A</span>
         </motion.div>

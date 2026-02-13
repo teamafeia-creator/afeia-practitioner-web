@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
             <Image src="/afeia_symbol.svg" alt="AFEIA" width={32} height={32} />
           </div>
-          <p className="text-xs uppercase tracking-[0.4em] text-teal-200/70">AFEIA</p>
+          <p className="text-xs uppercase tracking-[0.4em] text-sage-200/70">AFEIA</p>
           <h1 className="mt-2 text-2xl font-semibold">Connexion Administrateur AFEIA</h1>
           <p className="mt-2 text-sm text-slate-300">
             Accès sécurisé réservé à l&apos;équipe AFEIA.
@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
                       placeholder="team.afeia@gmail.com"
                       autoComplete="email"
                       required
-                      className="w-full rounded-xl border border-white/10 bg-slate-950/60 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/40"
+                      className="w-full rounded-xl border border-white/10 bg-slate-950/60 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-400/40"
                     />
                   </div>
                 </label>
@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
                       placeholder="••••••"
                       autoComplete="current-password"
                       required
-                      className="w-full rounded-xl border border-white/10 bg-slate-950/60 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/40"
+                      className="w-full rounded-xl border border-white/10 bg-slate-950/60 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-400/40"
                     />
                   </div>
                 </label>

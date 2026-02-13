@@ -76,7 +76,7 @@ export function MiniCalendar({
         <button
           onClick={() => onChangeMonth('prev')}
           disabled={!canGoPrev}
-          className="p-2 rounded-lg hover:bg-teal/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+          className="p-2 rounded-lg hover:bg-sage-light disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
         >
           <ChevronLeft className="h-5 w-5 text-charcoal" />
         </button>
@@ -86,7 +86,7 @@ export function MiniCalendar({
         <button
           onClick={() => onChangeMonth('next')}
           disabled={!canGoNext}
-          className="p-2 rounded-lg hover:bg-teal/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+          className="p-2 rounded-lg hover:bg-sage-light disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
         >
           <ChevronRight className="h-5 w-5 text-charcoal" />
         </button>
@@ -97,7 +97,7 @@ export function MiniCalendar({
         {DAY_NAMES.map((name) => (
           <div
             key={name}
-            className="text-center text-[11px] font-medium text-warmgray py-1"
+            className="text-center text-[11px] font-medium text-stone py-1"
           >
             {name}
           </div>
@@ -126,12 +126,12 @@ export function MiniCalendar({
               className={`
                 h-10 rounded-lg text-sm font-medium transition-all
                 ${isSelected
-                  ? 'bg-teal text-white shadow-sm'
+                  ? 'bg-sage text-white shadow-sm'
                   : isAvailable && !isPast
-                    ? 'bg-teal/10 text-teal hover:bg-teal/20'
-                    : 'text-warmgray/40'
+                    ? 'bg-sage-light text-sage hover:bg-sage-light'
+                    : 'text-stone/40'
                 }
-                ${isToday && !isSelected ? 'ring-1 ring-teal/30' : ''}
+                ${isToday && !isSelected ? 'ring-1 ring-sage/30' : ''}
                 ${isDisabled && !isSelected ? 'cursor-default' : 'cursor-pointer'}
               `}
             >
@@ -142,7 +142,7 @@ export function MiniCalendar({
       </div>
 
       {loading && (
-        <div className="text-center text-xs text-warmgray">
+        <div className="text-center text-xs text-stone">
           Chargement des disponibilites...
         </div>
       )}

@@ -21,16 +21,16 @@ export function TabsPills<T extends string>({
             className={cn(
               'whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition duration-200',
               active === tab
-                ? 'bg-teal/10 text-teal shadow-sm ring-1 ring-teal/20'
-                : 'text-warmgray hover:bg-sable/60 hover:text-marine'
+                ? 'bg-sage-light text-sage shadow-sm ring-1 ring-sage/20'
+                : 'text-stone hover:bg-cream/60 hover:text-charcoal'
             )}
           >
             {tab}
           </button>
         ))}
       </div>
-      <div className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-sable/70 to-transparent sm:hidden" />
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-sable/70 to-transparent sm:hidden" />
+      <div className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-cream/70 to-transparent sm:hidden" />
+      <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-cream/70 to-transparent sm:hidden" />
     </div>
   );
 }

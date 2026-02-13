@@ -37,7 +37,7 @@ function FilterSection({ title, children }: { title: string; children: React.Rea
         className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-charcoal hover:bg-gray-50 transition-colors"
       >
         {title}
-        <ChevronDown className={cn('h-4 w-4 text-warmgray transition-transform', open && 'rotate-180')} />
+        <ChevronDown className={cn('h-4 w-4 text-stone transition-transform', open && 'rotate-180')} />
       </button>
       {open && <div className="px-4 pb-3">{children}</div>}
     </div>
@@ -67,7 +67,7 @@ function CheckboxGroup({
                 onChange(values.filter((v) => v !== opt.value));
               }
             }}
-            className="rounded border-gray-300 text-teal focus:ring-teal/30"
+            className="rounded border-gray-300 text-sage focus:ring-sage/30"
           />
           <span className="text-charcoal">{opt.label}</span>
         </label>
@@ -93,7 +93,7 @@ function RadioGroup({
             type="radio"
             checked={value === opt.value}
             onChange={() => onChange(value === opt.value ? null : opt.value)}
-            className="border-gray-300 text-teal focus:ring-teal/30"
+            className="border-gray-300 text-sage focus:ring-sage/30"
           />
           <span className="text-charcoal">{opt.label}</span>
         </label>
@@ -220,18 +220,18 @@ export function ConsultantFilterBar({
     <div className="space-y-3">
       {/* Search bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-warmgray" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher un consultant..."
-          className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/30"
+          className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:border-sage focus:ring-1 focus:ring-sage/30"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-warmgray hover:text-charcoal"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone hover:text-charcoal"
           >
             <X className="h-4 w-4" />
           </button>
@@ -248,13 +248,13 @@ export function ConsultantFilterBar({
             <button className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors',
               activeFilterCount > 0
-                ? 'border-teal bg-teal/5 text-teal'
+                ? 'border-sage bg-sage-light/50 text-sage'
                 : 'border-gray-200 text-charcoal hover:border-gray-300'
             )}>
               <Filter className="h-3.5 w-3.5" />
               Filtrer
               {activeFilterCount > 0 && (
-                <span className="ml-1 bg-teal text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="ml-1 bg-sage text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
@@ -340,7 +340,7 @@ export function ConsultantFilterBar({
         {activeFilterCount > 0 && (
           <button
             onClick={clearFilters}
-            className="text-xs text-warmgray hover:text-charcoal underline"
+            className="text-xs text-stone hover:text-charcoal underline"
           >
             Effacer tout
           </button>
@@ -357,7 +357,7 @@ export function ConsultantFilterBar({
           trigger={
             <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 text-charcoal hover:border-gray-300 transition-colors">
               Trier : {SORT_LABELS[sortOption.field]}
-              <ChevronDown className="h-3.5 w-3.5 text-warmgray" />
+              <ChevronDown className="h-3.5 w-3.5 text-stone" />
             </button>
           }
           className="min-w-[200px]"
@@ -375,12 +375,12 @@ export function ConsultantFilterBar({
                 }}
                 className={cn(
                   'w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors',
-                  sortOption.field === field ? 'text-teal font-medium' : 'text-charcoal'
+                  sortOption.field === field ? 'text-sage font-medium' : 'text-charcoal'
                 )}
               >
                 {label}
                 {sortOption.field === field && (
-                  <span className="ml-1 text-xs text-warmgray">
+                  <span className="ml-1 text-xs text-stone">
                     {sortOption.order === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
@@ -390,7 +390,7 @@ export function ConsultantFilterBar({
         </Popover>
 
         {/* Result count */}
-        <span className="text-xs text-warmgray whitespace-nowrap">
+        <span className="text-xs text-stone whitespace-nowrap">
           {resultCount} consultant{resultCount !== 1 ? 's' : ''}
         </span>
       </div>

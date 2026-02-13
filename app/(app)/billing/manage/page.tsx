@@ -71,14 +71,14 @@ export default function ManageSubscriptionPage() {
 
       {/* Sélection du cycle de facturation */}
       <div className="flex justify-center mb-8">
-        <div className="inline-flex rounded-xl bg-sable/50 p-1">
+        <div className="inline-flex rounded-xl bg-cream/80 p-1">
           <button
             onClick={() => setSelectedCycle('monthly')}
             className={cn(
               'py-2 px-6 text-sm font-medium rounded-lg transition-colors',
               selectedCycle === 'monthly'
                 ? 'bg-white text-charcoal shadow-sm'
-                : 'text-marine hover:text-charcoal'
+                : 'text-charcoal hover:text-charcoal'
             )}
           >
             Mensuel
@@ -89,7 +89,7 @@ export default function ManageSubscriptionPage() {
               'py-2 px-6 text-sm font-medium rounded-lg transition-colors relative',
               selectedCycle === 'yearly'
                 ? 'bg-white text-charcoal shadow-sm'
-                : 'text-marine hover:text-charcoal'
+                : 'text-charcoal hover:text-charcoal'
             )}
           >
             Annuel
@@ -106,7 +106,7 @@ export default function ManageSubscriptionPage() {
       <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
         {/* Plan Gratuit */}
         {freePlan && (
-          <Card className={cn(!isPremium && 'ring-2 ring-teal')}>
+          <Card className={cn(!isPremium && 'ring-2 ring-sage')}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{freePlan.display_name}</CardTitle>
@@ -116,13 +116,13 @@ export default function ManageSubscriptionPage() {
             <CardContent className="space-y-6">
               <div>
                 <p className="text-3xl font-bold text-charcoal">Gratuit</p>
-                <p className="text-sm text-marine mt-1">{freePlan.description}</p>
+                <p className="text-sm text-charcoal mt-1">{freePlan.description}</p>
               </div>
 
               <SubscriptionFeatures features={freePlan.features} />
 
               {isPremium && (
-                <p className="text-sm text-marine italic">
+                <p className="text-sm text-charcoal italic">
                   Vous avez déjà un plan supérieur
                 </p>
               )}
@@ -132,7 +132,7 @@ export default function ManageSubscriptionPage() {
 
         {/* Plan Premium */}
         {premiumPlan && (
-          <Card className={cn(isPremium && 'ring-2 ring-aubergine')}>
+          <Card className={cn(isPremium && 'ring-2 ring-terracotta')}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{premiumPlan.display_name}</CardTitle>
@@ -147,16 +147,16 @@ export default function ManageSubscriptionPage() {
                       ? premiumPlan.price_monthly
                       : premiumPlan.price_yearly
                   )}
-                  <span className="text-base font-normal text-marine">
+                  <span className="text-base font-normal text-charcoal">
                     /{selectedCycle === 'monthly' ? 'mois' : 'an'}
                   </span>
                 </p>
                 {selectedCycle === 'yearly' && (
-                  <p className="text-sm text-teal mt-1">
+                  <p className="text-sm text-sage mt-1">
                     Soit {formatPrice(premiumPlan.price_yearly / 12)}/mois
                   </p>
                 )}
-                <p className="text-sm text-marine mt-1">{premiumPlan.description}</p>
+                <p className="text-sm text-charcoal mt-1">{premiumPlan.description}</p>
               </div>
 
               <SubscriptionFeatures features={premiumPlan.features} />
@@ -192,23 +192,23 @@ export default function ManageSubscriptionPage() {
             <CardContent>
               <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm text-marine">Plan</dt>
+                  <dt className="text-sm text-charcoal">Plan</dt>
                   <dd className="font-medium text-charcoal">{currentPlan?.display_name}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-marine">Cycle de facturation</dt>
+                  <dt className="text-sm text-charcoal">Cycle de facturation</dt>
                   <dd className="font-medium text-charcoal">
                     {getBillingCycleLabel(subscription.billing_cycle)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-marine">Début de la période</dt>
+                  <dt className="text-sm text-charcoal">Début de la période</dt>
                   <dd className="font-medium text-charcoal">
                     {formatDate(subscription.current_period_start)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-marine">Prochain renouvellement</dt>
+                  <dt className="text-sm text-charcoal">Prochain renouvellement</dt>
                   <dd className="font-medium text-charcoal">
                     {subscription.cancel_at_period_end
                       ? 'Annulé'

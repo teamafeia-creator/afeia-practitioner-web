@@ -55,9 +55,9 @@ export function CancelSubscriptionDialog({
           <CardContent className="p-6">
             {/* Icône d'alerte */}
             <div className="flex justify-center mb-4">
-              <div className="p-3 rounded-full bg-aubergine/10">
+              <div className="p-3 rounded-full bg-terracotta/10">
                 <svg
-                  className="h-8 w-8 text-aubergine"
+                  className="h-8 w-8 text-terracotta"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -78,7 +78,7 @@ export function CancelSubscriptionDialog({
             </h2>
 
             {/* Description */}
-            <div className="text-sm text-marine text-center mb-6 space-y-3">
+            <div className="text-sm text-charcoal text-center mb-6 space-y-3">
               <p>
                 Êtes-vous sûr de vouloir annuler votre abonnement Premium ?
               </p>
@@ -89,37 +89,37 @@ export function CancelSubscriptionDialog({
                 </span>
                 .
               </p>
-              <p className="text-xs text-warmgray">
+              <p className="text-xs text-stone">
                 Après cette date, votre compte passera automatiquement au plan gratuit avec des fonctionnalités limitées.
               </p>
             </div>
 
             {/* Ce que vous perdrez */}
-            <div className="mb-6 p-4 bg-sable/50 rounded-xl">
+            <div className="mb-6 p-4 bg-cream/80 rounded-xl">
               <h3 className="text-sm font-medium text-charcoal mb-2">
                 Ce que vous perdrez :
               </h3>
-              <ul className="text-sm text-marine space-y-1.5">
+              <ul className="text-sm text-charcoal space-y-1.5">
                 <li className="flex items-center gap-2">
-                  <svg className="h-4 w-4 text-aubergine" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-4 w-4 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   Consultants illimités
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="h-4 w-4 text-aubergine" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-4 w-4 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   Intégration bague connectée (sommeil, HRV, activité)
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="h-4 w-4 text-aubergine" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-4 w-4 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   Plans personnalisés avancés
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="h-4 w-4 text-aubergine" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-4 w-4 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   Support prioritaire
@@ -129,7 +129,7 @@ export function CancelSubscriptionDialog({
 
             {/* Erreur */}
             {error && (
-              <div className="mb-4 p-3 bg-aubergine/10 text-aubergine text-sm rounded-lg text-center">
+              <div className="mb-4 p-3 bg-terracotta/10 text-terracotta text-sm rounded-lg text-center">
                 {error}
               </div>
             )}

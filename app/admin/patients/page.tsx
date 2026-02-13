@@ -355,7 +355,7 @@ export default function AdminPatientsPage() {
                       {patient.practitioner_id ? (
                         <button
                           onClick={() => router.push(`/admin/practitioners/${patient.practitioner_id}`)}
-                          className="text-sm text-teal-600 hover:text-teal-700 hover:underline"
+                          className="text-sm text-sage-600 hover:text-sage-700 hover:underline"
                         >
                           {patient.practitioner_name ?? 'Praticien'}
                         </button>

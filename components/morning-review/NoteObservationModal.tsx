@@ -37,14 +37,14 @@ export function NoteObservationModal({ consultantName, consultantId, onClose, on
       size="md"
     >
       <div>
-        <p className="text-sm text-warmgray mb-3">
+        <p className="text-sm text-stone mb-3">
           Cette note sera ajoutee a vos observations privees pour ce consultant.
         </p>
 
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full h-32 p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-teal/30 focus:border-teal text-sm resize-none"
+          className="w-full h-32 p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-sage/30 focus:border-sage text-sm resize-none"
           placeholder="Votre observation..."
           autoFocus
         />

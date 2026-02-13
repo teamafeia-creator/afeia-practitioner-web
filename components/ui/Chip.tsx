@@ -13,8 +13,8 @@ interface ChipProps {
 
 const variantStyles: Record<string, string> = {
   default: 'bg-gray-100 text-gray-700 border-gray-200',
-  teal: 'bg-teal/10 text-teal border-teal/20',
-  aubergine: 'bg-aubergine/10 text-aubergine border-aubergine/20',
+  teal: 'bg-sage-light text-sage border-sage/20',
+  aubergine: 'bg-terracotta/10 text-terracotta border-aubergine/20',
   gold: 'bg-amber-50 text-amber-700 border-amber-200',
 };
 

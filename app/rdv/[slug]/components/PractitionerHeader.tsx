@@ -11,7 +11,7 @@ export function PractitionerHeader({
   return (
     <div className="text-center space-y-3 mb-8">
       {/* Avatar placeholder */}
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-teal to-teal-deep text-white text-xl font-semibold">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-sage to-sage-dark text-white text-xl font-semibold">
         {getInitials(practitioner.full_name)}
       </div>
 
@@ -22,16 +22,16 @@ export function PractitionerHeader({
       </div>
 
       {(practitioner.booking_address || practitioner.booking_phone) && (
-        <div className="flex flex-col items-center gap-1 text-sm text-warmgray">
+        <div className="flex flex-col items-center gap-1 text-sm text-stone">
           {practitioner.booking_address && (
             <div className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-teal flex-shrink-0" />
+              <MapPin className="h-3.5 w-3.5 text-sage flex-shrink-0" />
               <span>{practitioner.booking_address}</span>
             </div>
           )}
           {practitioner.booking_phone && (
             <div className="flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5 text-teal flex-shrink-0" />
+              <Phone className="h-3.5 w-3.5 text-sage flex-shrink-0" />
               <span>{practitioner.booking_phone}</span>
             </div>
           )}
@@ -39,7 +39,7 @@ export function PractitionerHeader({
       )}
 
       {practitioner.booking_intro_text && (
-        <p className="text-sm text-warmgray italic max-w-md mx-auto">
+        <p className="text-sm text-stone italic max-w-md mx-auto">
           {practitioner.booking_intro_text}
         </p>
       )}

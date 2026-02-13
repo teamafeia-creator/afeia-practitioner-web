@@ -113,7 +113,7 @@ export function ContraindicationInlineAlert({ alert, onAcknowledge, compact }: C
             )}
             <button
               onClick={onAcknowledge}
-              className="text-xs font-medium text-teal hover:text-teal-deep flex items-center gap-1"
+              className="text-xs font-medium text-sage hover:text-sage-deep flex items-center gap-1"
             >
               <Check className="h-3 w-3" />
               J&apos;ai pris note

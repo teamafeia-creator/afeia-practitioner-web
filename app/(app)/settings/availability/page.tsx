@@ -198,7 +198,7 @@ export default function AvailabilityPage() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push('/settings')}
-          className="p-2 rounded-lg hover:bg-white/50 transition-colors text-warmgray"
+          className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -209,14 +209,14 @@ export default function AvailabilityPage() {
       </div>
 
       {loading ? (
-        <div className="glass-card p-8 text-center text-warmgray">Chargement...</div>
+        <div className="glass-card p-8 text-center text-stone">Chargement...</div>
       ) : (
         <>
           {/* Weekly schedule */}
           <div className="glass-card p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-charcoal flex items-center gap-2">
-                <Clock className="h-4 w-4 text-teal" />
+                <Clock className="h-4 w-4 text-sage" />
                 Horaires hebdomadaires
               </h3>
               <Button variant="primary" size="sm" onClick={handleSaveSchedule} loading={saving}>
@@ -232,13 +232,13 @@ export default function AvailabilityPage() {
                       onClick={() => toggleDay(dayIndex)}
                       className={`w-5 h-5 rounded flex items-center justify-center text-xs transition-colors ${
                         week[dayIndex].active
-                          ? 'bg-teal text-white'
+                          ? 'bg-sage text-white'
                           : 'bg-neutral-200 text-neutral-400'
                       }`}
                     >
                       {week[dayIndex].active ? '✓' : ''}
                     </button>
-                    <span className={`text-sm font-medium ${week[dayIndex].active ? 'text-charcoal' : 'text-warmgray'}`}>
+                    <span className={`text-sm font-medium ${week[dayIndex].active ? 'text-charcoal' : 'text-stone'}`}>
                       {dayName}
                     </span>
                   </div>
@@ -256,7 +256,7 @@ export default function AvailabilityPage() {
                               <option key={t} value={t}>{t}</option>
                             ))}
                           </Select>
-                          <span className="text-warmgray text-sm">-</span>
+                          <span className="text-stone text-sm">-</span>
                           <Select
                             value={slot.end_time}
                             onChange={(e) => updateSlot(dayIndex, slotIndex, 'end_time', e.target.value)}
@@ -268,7 +268,7 @@ export default function AvailabilityPage() {
                           </Select>
                           <button
                             onClick={() => removeSlot(dayIndex, slotIndex)}
-                            className="p-1 text-warmgray hover:text-red-500 transition-colors"
+                            className="p-1 text-stone hover:text-red-500 transition-colors"
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -276,13 +276,13 @@ export default function AvailabilityPage() {
                       ))}
                       <button
                         onClick={() => addSlot(dayIndex)}
-                        className="text-xs text-teal hover:text-teal-deep transition-colors flex items-center gap-1"
+                        className="text-xs text-sage hover:text-sage-deep transition-colors flex items-center gap-1"
                       >
                         <Plus className="h-3 w-3" /> Ajouter une plage
                       </button>
                     </div>
                   ) : (
-                    <span className="text-sm text-warmgray italic">Non disponible</span>
+                    <span className="text-sm text-stone italic">Non disponible</span>
                   )}
                 </div>
               ))}
@@ -293,7 +293,7 @@ export default function AvailabilityPage() {
           <div className="glass-card p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-charcoal flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-teal" />
+                <Calendar className="h-4 w-4 text-sage" />
                 Indisponibilites & exceptions
               </h3>
               <Button
@@ -307,7 +307,7 @@ export default function AvailabilityPage() {
             </div>
 
             {overrides.length === 0 ? (
-              <p className="text-sm text-warmgray">Aucune exception configuree.</p>
+              <p className="text-sm text-stone">Aucune exception configuree.</p>
             ) : (
               <div className="space-y-2">
                 {overrides.map((ovr) => (
@@ -316,9 +316,9 @@ export default function AvailabilityPage() {
                       <div className="text-sm font-medium text-charcoal">
                         {dateFormatter.format(new Date(ovr.date + 'T00:00:00'))}
                       </div>
-                      <div className="text-xs text-warmgray">
+                      <div className="text-xs text-stone">
                         {ovr.is_available ? (
-                          <span className="text-teal">Disponible exceptionnellement</span>
+                          <span className="text-sage">Disponible exceptionnellement</span>
                         ) : (
                           <span className="text-red-500">Indisponible</span>
                         )}
@@ -329,7 +329,7 @@ export default function AvailabilityPage() {
                     </div>
                     <button
                       onClick={() => handleDeleteOverride(ovr.id)}
-                      className="p-2 text-warmgray hover:text-red-500 transition-colors"
+                      className="p-2 text-stone hover:text-red-500 transition-colors"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -358,12 +358,12 @@ export default function AvailabilityPage() {
           />
 
           <div>
-            <span className="text-[13px] font-medium text-warmgray">Type</span>
+            <span className="text-[13px] font-medium text-stone">Type</span>
             <div className="flex gap-3 mt-2">
               <button
                 onClick={() => setOverrideForm((f) => ({ ...f, is_available: false }))}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  !overrideForm.is_available ? 'bg-red-100 text-red-700 ring-1 ring-red-200' : 'bg-neutral-100 text-warmgray'
+                  !overrideForm.is_available ? 'bg-red-100 text-red-700 ring-1 ring-red-200' : 'bg-neutral-100 text-stone'
                 }`}
               >
                 Indisponible
@@ -371,7 +371,7 @@ export default function AvailabilityPage() {
               <button
                 onClick={() => setOverrideForm((f) => ({ ...f, is_available: true }))}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  overrideForm.is_available ? 'bg-teal/10 text-teal ring-1 ring-teal/20' : 'bg-neutral-100 text-warmgray'
+                  overrideForm.is_available ? 'bg-sage-light text-sage ring-1 ring-sage/20' : 'bg-neutral-100 text-stone'
                 }`}
               >
                 Disponible exceptionnellement
@@ -380,12 +380,12 @@ export default function AvailabilityPage() {
           </div>
 
           <div>
-            <span className="text-[13px] font-medium text-warmgray">Duree</span>
+            <span className="text-[13px] font-medium text-stone">Duree</span>
             <div className="flex gap-3 mt-2">
               <button
                 onClick={() => setOverrideForm((f) => ({ ...f, all_day: true }))}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  overrideForm.all_day ? 'bg-teal/10 text-teal ring-1 ring-teal/20' : 'bg-neutral-100 text-warmgray'
+                  overrideForm.all_day ? 'bg-sage-light text-sage ring-1 ring-sage/20' : 'bg-neutral-100 text-stone'
                 }`}
               >
                 Toute la journee
@@ -393,7 +393,7 @@ export default function AvailabilityPage() {
               <button
                 onClick={() => setOverrideForm((f) => ({ ...f, all_day: false }))}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  !overrideForm.all_day ? 'bg-teal/10 text-teal ring-1 ring-teal/20' : 'bg-neutral-100 text-warmgray'
+                  !overrideForm.all_day ? 'bg-sage-light text-sage ring-1 ring-sage/20' : 'bg-neutral-100 text-stone'
                 }`}
               >
                 Creneau specifique

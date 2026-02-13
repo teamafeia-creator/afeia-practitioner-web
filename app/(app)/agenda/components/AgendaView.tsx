@@ -160,7 +160,7 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
     <div className="relative">
       {loading && (
         <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
-          <div className="text-warmgray text-sm">Chargement...</div>
+          <div className="text-stone text-sm">Chargement...</div>
         </div>
       )}
       <div className="agenda-calendar-wrapper">

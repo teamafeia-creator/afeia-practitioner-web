@@ -37,13 +37,13 @@ const FAQS = [
 ];
 
 const actionBase =
-  'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/30 focus-visible:ring-offset-2 focus-visible:ring-offset-sable/40';
+  'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage/30 focus-visible:ring-offset-2 focus-visible:ring-offset-cream';
 
 const actionVariants = {
   primary:
-    'bg-teal text-white shadow-[0_10px_26px_rgba(42,128,128,0.18)] hover:bg-teal-deep',
+    'bg-sage text-white shadow-[0_10px_26px_rgba(42,128,128,0.18)] hover:bg-sage-deep',
   secondary:
-    'border border-teal/30 bg-white text-teal shadow-sm hover:border-teal/50 hover:bg-teal/5'
+    'border border-sage/30 bg-white text-sage shadow-sm hover:border-sage/50 hover:bg-sage-light/50'
 };
 
 export default function BagueConnecteeLearnMorePage() {
@@ -54,14 +54,14 @@ export default function BagueConnecteeLearnMorePage() {
         subtitle="Suivi biométrique intelligent au service de la naturopathie."
       />
 
-      <section className="rounded-3xl border border-sable/60 bg-white/70 p-6 md:p-8">
+      <section className="rounded-3xl border border-divider/60 bg-white/70 p-6 md:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-warmgray">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone">
               Bague connectée
             </p>
             <h1 className="text-3xl font-semibold text-charcoal md:text-4xl">Bague connectée x AFEIA</h1>
-            <p className="text-sm text-marine md:text-base">
+            <p className="text-sm text-charcoal md:text-base">
               Une lecture douce des signaux du corps pour enrichir votre accompagnement, sans
               surcharger le consultant ni les consultations.
             </p>
@@ -80,7 +80,7 @@ export default function BagueConnecteeLearnMorePage() {
       <section id="comprendre-bague-connectee" className="space-y-5">
         <div>
           <h2 className="text-lg font-semibold text-charcoal">Ce que mesure la bague connectée</h2>
-          <p className="text-sm text-marine">
+          <p className="text-sm text-charcoal">
             Des indicateurs pensés pour comprendre l&apos;équilibre global, pas pour médicaliser la pratique.
           </p>
         </div>
@@ -88,28 +88,28 @@ export default function BagueConnecteeLearnMorePage() {
           {METRICS.map((metric) => (
             <div
               key={metric.title}
-              className="rounded-2xl border border-sable/60 bg-white/80 p-4 shadow-sm"
+              className="rounded-2xl border border-divider/60 bg-white/80 p-4 shadow-sm"
             >
               <h3 className="text-sm font-semibold text-charcoal">{metric.title}</h3>
-              <p className="mt-2 text-sm text-marine">{metric.description}</p>
+              <p className="mt-2 text-sm text-charcoal">{metric.description}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="space-y-3 rounded-2xl border border-sable/60 bg-white/80 p-6">
+        <div className="space-y-3 rounded-2xl border border-divider/60 bg-white/80 p-6">
           <h2 className="text-lg font-semibold text-charcoal">Pourquoi c&apos;est utile en naturopathie</h2>
-          <ul className="space-y-2 text-sm text-marine">
+          <ul className="space-y-2 text-sm text-charcoal">
             <li>• Objectiver les ressentis du consultant avec des repères simples.</li>
             <li>• Suivre les effets des recommandations semaine après semaine.</li>
             <li>• Détecter les déséquilibres avant qu&apos;ils ne s&apos;installent.</li>
             <li>• Affiner l&apos;accompagnement grâce à des tendances fiables.</li>
           </ul>
         </div>
-        <div className="space-y-3 rounded-2xl border border-sable/60 bg-white/80 p-6">
+        <div className="space-y-3 rounded-2xl border border-divider/60 bg-white/80 p-6">
           <h2 className="text-lg font-semibold text-charcoal">Pour les professionnels</h2>
-          <ul className="space-y-2 text-sm text-marine">
+          <ul className="space-y-2 text-sm text-charcoal">
             <li>• Données exploitables directement dans le suivi consultant.</li>
             <li>• Vision long terme pour repérer les cycles et ajuster les plans.</li>
             <li>• Approche basée sur des tendances, jamais sur un diagnostic médical.</li>
@@ -117,9 +117,9 @@ export default function BagueConnecteeLearnMorePage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-sable/60 bg-white/80 p-6">
+      <section className="rounded-2xl border border-divider/60 bg-white/80 p-6">
         <h2 className="text-lg font-semibold text-charcoal">Confidentialité</h2>
-        <p className="mt-2 text-sm text-marine">
+        <p className="mt-2 text-sm text-charcoal">
           Les données sont partagées uniquement avec le consentement du consultant. Le praticien dispose
           d&apos;une lecture seule, centrée sur les tendances utiles à l&apos;accompagnement, dans le respect de
           la vie privée.
@@ -130,9 +130,9 @@ export default function BagueConnecteeLearnMorePage() {
         <h2 className="text-lg font-semibold text-charcoal">FAQ</h2>
         <div className="grid gap-4 md:grid-cols-2">
           {FAQS.map((item) => (
-            <div key={item.question} className="rounded-2xl border border-sable/60 bg-white/80 p-4">
+            <div key={item.question} className="rounded-2xl border border-divider/60 bg-white/80 p-4">
               <h3 className="text-sm font-semibold text-charcoal">{item.question}</h3>
-              <p className="mt-2 text-sm text-marine">{item.answer}</p>
+              <p className="mt-2 text-sm text-charcoal">{item.answer}</p>
             </div>
           ))}
         </div>
