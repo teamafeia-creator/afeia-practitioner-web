@@ -41,6 +41,12 @@
       ]
     }
   ],
+  "crons": [
+    {
+      "path": "/api/waitlist/cleanup",
+      "schedule": "0 3 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/welcome",

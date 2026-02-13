@@ -440,3 +440,37 @@ export type AIGenerationLog = {
   error_message: string | null;
   created_at: string;
 };
+
+// ============================================
+// WAITLIST / ALERTE DESISTEMENT
+// ============================================
+
+export type TimeOfDayPreference = 'morning' | 'afternoon' | 'evening' | 'any';
+
+export type WaitlistEntry = {
+  id: string;
+  practitioner_id: string;
+  consultation_type_id: string | null;
+  email: string;
+  first_name: string;
+  phone: string | null;
+  preferred_time_of_day: TimeOfDayPreference;
+  preferred_days: number[];
+  notified_at: string | null;
+  notified_for_slot: string | null;
+  fulfilled_at: string | null;
+  expires_at: string;
+  created_at: string;
+  // Joined relation
+  consultation_type?: { name: string } | null;
+};
+
+export type WaitlistInsert = {
+  practitioner_id: string;
+  consultation_type_id?: string | null;
+  email: string;
+  first_name: string;
+  phone?: string | null;
+  preferred_time_of_day: TimeOfDayPreference;
+  preferred_days: number[];
+};

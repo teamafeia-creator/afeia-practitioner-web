@@ -9,6 +9,7 @@ import { AgendaView } from './components/AgendaView';
 import { AppointmentForm } from './components/AppointmentForm';
 import { AppointmentDetail } from './components/AppointmentDetail';
 import { rescheduleAppointment } from '@/lib/queries/appointments';
+import { triggerWaitlistNotification } from '@/lib/waitlist-trigger';
 import { showToast } from '@/components/ui/Toaster';
 import type { Appointment, LocationType } from '@/lib/types';
 
@@ -71,6 +72,8 @@ export default function AgendaPage() {
           video_link: appointment.video_link,
           notes_internal: appointment.notes_internal,
         });
+        // Fire-and-forget: notify waitlist entries about the old freed slot
+        triggerWaitlistNotification(editAppointment.id);
         showToast.success('Seance reportee');
       } catch {
         // The appointment was already created, just refresh
