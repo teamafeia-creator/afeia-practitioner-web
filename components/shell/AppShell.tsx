@@ -43,6 +43,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
       { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
+      { href: '/bibliotheque', label: 'Bibliothèque', icon: Library },
     ]
   },
   {

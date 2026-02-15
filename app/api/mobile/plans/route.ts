@@ -53,6 +53,73 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
+    // Fetch resource assignments for all plans
+    const planIds = (plans ?? []).map((p) => p.id);
+    let assignmentsByPlan: Record<string, any[]> = {};
+    if (planIds.length > 0) {
+      const { data: assignments } = await getSupabaseAdmin()
+        .from('resource_assignments')
+        .select(`
+          id,
+          resource_id,
+          plan_section_key,
+          message,
+          read_at,
+          sent_at,
+          resource:educational_resources(
+            id,
+            title,
+            summary,
+            content_type,
+            category
+          )
+        `)
+        .in('consultant_plan_id', planIds);
+
+      for (const a of assignments ?? []) {
+        // Group by plan — we need to re-query with plan id info
+        // Since the assignment has consultant_plan_id, we'll query per plan
+      }
+
+      // Re-fetch with plan id included
+      const { data: assignmentsWithPlan } = await getSupabaseAdmin()
+        .from('resource_assignments')
+        .select(`
+          id,
+          resource_id,
+          consultant_plan_id,
+          plan_section_key,
+          message,
+          read_at,
+          sent_at,
+          resource:educational_resources(
+            id,
+            title,
+            summary,
+            content_type,
+            category
+          )
+        `)
+        .in('consultant_plan_id', planIds);
+
+      for (const a of assignmentsWithPlan ?? []) {
+        const pid = a.consultant_plan_id;
+        if (!pid) continue;
+        if (!assignmentsByPlan[pid]) assignmentsByPlan[pid] = [];
+        assignmentsByPlan[pid].push({
+          resource_id: a.resource_id,
+          title: (a.resource as any)?.title ?? null,
+          summary: (a.resource as any)?.summary ?? null,
+          content_type: (a.resource as any)?.content_type ?? null,
+          category: (a.resource as any)?.category ?? null,
+          plan_section_key: a.plan_section_key,
+          message: a.message,
+          read_at: a.read_at,
+          sent_at: a.sent_at,
+        });
+      }
+    }
+
     const formattedPlans = plans?.map((plan) => ({
       id: plan.id,
       version: plan.version,
@@ -66,6 +133,7 @@ export async function GET(request: NextRequest) {
         name: (plan.practitioner as any).full_name,
         email: (plan.practitioner as any).email,
       } : null,
+      linked_resources: assignmentsByPlan[plan.id] ?? [],
     })) || [];
 
     return NextResponse.json({

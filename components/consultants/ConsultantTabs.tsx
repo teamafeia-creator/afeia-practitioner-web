@@ -38,6 +38,9 @@ import { supabase } from '../../lib/supabase';
 import { BlockInsertButton } from '../blocks/BlockInsertButton';
 import { SaveAsBlockButton } from '../blocks/SaveAsBlockButton';
 import { TemplateSelector } from '../blocks/TemplateSelector';
+import { ResourceInsertButton } from '../resources/ResourceInsertButton';
+import { ResourcePicker } from '../resources/ResourcePicker';
+import { assignResourceToConsultant } from '../../lib/queries/resources';
 import { GenerateButton } from '../ai/GenerateButton';
 import { SectionSuggestButton } from '../ai/SectionSuggestButton';
 import { MedicalAlertBanner } from '../ai/MedicalAlertBanner';
@@ -65,6 +68,7 @@ import {
   Eye,
   Droplets,
   Wind,
+  Paperclip,
 } from 'lucide-react';
 import type {
   AnamnesisAnswers,
@@ -471,6 +475,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   const [messages, setMessages] = useState<Message[]>(consultant.messages ?? []);
   const [messageText, setMessageText] = useState('');
   const [messageLoading, setMessageLoading] = useState(false);
+  const [messageResourcePickerOpen, setMessageResourcePickerOpen] = useState(false);
   const [anamnesisEditing, setAnamnesisEditing] = useState(false);
   const [anamnesisSaving, setAnamnesisSaving] = useState(false);
   const [anamnesisAnswers, setAnamnesisAnswers] = useState<Record<string, string>>(
@@ -1404,6 +1409,15 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            {(consultantState.journal_entries?.length ?? 0) >= 7 && (
+              <Button
+                variant="secondary"
+                onClick={() => window.open(`/consultation/${consultant.id}/bilan`, '_blank')}
+              >
+                <BarChart3 className="mr-1 h-4 w-4" />
+                Bilan visuel
+              </Button>
+            )}
             <Button
               variant="secondary"
               onClick={() => {
@@ -3300,6 +3314,19 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                                         }));
                                       }}
                                     />
+                                    <ResourceInsertButton
+                                      consultantId={consultant.id}
+                                      consultantPlanId={activePlan?.id}
+                                      sectionKey={field.key}
+                                      onInsert={(text) => {
+                                        setPlanForm((prev) => ({
+                                          ...prev,
+                                          [field.key]: prev[field.key]
+                                            ? prev[field.key] + '\n' + text
+                                            : text,
+                                        }));
+                                      }}
+                                    />
                                   </div>
                                 )}
                               </div>
@@ -3519,7 +3546,15 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 onChange={(event) => setMessageText(event.target.value)}
                 rows={4}
               />
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setMessageResourcePickerOpen(true)}
+                  className="inline-flex items-center gap-1 rounded-md border border-dashed border-terracotta/30 px-2 py-1.5 text-xs font-medium text-terracotta transition-colors hover:border-terracotta/50 hover:bg-terracotta/5"
+                >
+                  <Paperclip className="h-3.5 w-3.5" />
+                  Fiche
+                </button>
                 <Button
                   variant="primary"
                   onClick={handleSendMessage}
@@ -3528,6 +3563,19 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                   Envoyer
                 </Button>
               </div>
+              {messageResourcePickerOpen && (
+                <ResourcePicker
+                  onSelect={async (resource) => {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.user?.id) {
+                      await assignResourceToConsultant(resource.id, consultant.id, session.user.id);
+                    }
+                    setMessageText((prev) => prev ? prev + '\n📚 Fiche : ' + resource.title : '📚 Fiche : ' + resource.title);
+                    setMessageResourcePickerOpen(false);
+                  }}
+                  onClose={() => setMessageResourcePickerOpen(false)}
+                />
+              )}
             </div>
           </CardContent>
         </Card>
