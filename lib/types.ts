@@ -676,6 +676,78 @@ export type ConsultantIrisPhoto = {
   updated_at: string;
 };
 
+// ============================================
+// CYCLE TRACKING
+// ============================================
+
+export type CyclePhase = 'menstrual' | 'follicular' | 'ovulation' | 'luteal_early' | 'luteal_late';
+
+export type FlowIntensity = 'spotting' | 'light' | 'medium' | 'heavy';
+export type CervicalMucus = 'dry' | 'sticky' | 'creamy' | 'egg_white' | 'watery';
+export type CycleRegularity = 'regular' | 'somewhat_irregular' | 'irregular' | 'absent';
+
+export type SymptomKey =
+  | 'cramps'
+  | 'bloating'
+  | 'headache'
+  | 'breast_tenderness'
+  | 'mood_swings'
+  | 'fatigue'
+  | 'acne'
+  | 'cravings'
+  | 'insomnia'
+  | 'water_retention'
+  | 'back_pain'
+  | 'nausea'
+  | 'libido_high';
+
+export type CyclePhaseRange = {
+  phase: CyclePhase;
+  start: Date;
+  end: Date;
+};
+
+export type CycleProfile = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  is_tracking: boolean;
+  average_cycle_length: number;
+  average_period_length: number;
+  cycle_regularity: CycleRegularity;
+  contraception: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CycleEntry = {
+  id: string;
+  consultant_id: string;
+  date: string;
+  is_period: boolean;
+  flow_intensity: FlowIntensity | null;
+  period_pain: number | null;
+  symptom_cramps: boolean;
+  symptom_bloating: boolean;
+  symptom_headache: boolean;
+  symptom_breast_tenderness: boolean;
+  symptom_mood_swings: boolean;
+  symptom_fatigue: boolean;
+  symptom_acne: boolean;
+  symptom_cravings: boolean;
+  symptom_insomnia: boolean;
+  symptom_water_retention: boolean;
+  symptom_back_pain: boolean;
+  symptom_nausea: boolean;
+  symptom_libido_high: boolean;
+  symptom_cervical_mucus: CervicalMucus | null;
+  temperature: number | null;
+  notes: string | null;
+  source: 'consultant' | 'practitioner';
+  created_at: string;
+};
+
 // Types enrichis (avec relations)
 export type ConsultantWithDetails = Consultant & {
   anamnese?: Anamnese;
@@ -704,6 +776,8 @@ export type ConsultantWithDetails = Consultant & {
   journal_indicators?: JournalIndicator[];
   observance_items?: ObservanceItem[];
   observance_logs_recent?: ObservanceLog[];
+  cycle_profile?: CycleProfile | null;
+  cycle_entries?: CycleEntry[];
 };
 
 export type ConsultantDrawing = {
