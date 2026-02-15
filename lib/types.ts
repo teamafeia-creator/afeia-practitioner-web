@@ -867,3 +867,90 @@ export type WaitlistInsert = {
   preferred_time_of_day: TimeOfDayPreference;
   preferred_days: number[];
 };
+
+// ============================================
+// EDUCATIONAL RESOURCES (Bibliothèque éducative)
+// ============================================
+
+export type ResourceCategory =
+  | 'alimentation'
+  | 'hydratation'
+  | 'phytotherapie'
+  | 'aromatherapie'
+  | 'respiration'
+  | 'activite_physique'
+  | 'sommeil'
+  | 'gestion_stress'
+  | 'detox'
+  | 'digestion'
+  | 'immunite'
+  | 'peau'
+  | 'feminin'
+  | 'general';
+
+export type ResourceContentType = 'article' | 'pdf' | 'image' | 'video_link';
+
+export type ResourceSource = 'afeia' | 'practitioner';
+
+export type EducationalResource = {
+  id: string;
+  practitioner_id: string | null;
+  title: string;
+  slug: string | null;
+  summary: string | null;
+  content_type: ResourceContentType;
+  content_markdown: string | null;
+  file_path: string | null;
+  file_name: string | null;
+  video_url: string | null;
+  thumbnail_path: string | null;
+  category: ResourceCategory;
+  tags: string[];
+  source: ResourceSource;
+  is_published: boolean;
+  read_time_minutes: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ResourceAssignment = {
+  id: string;
+  resource_id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  consultant_plan_id: string | null;
+  plan_section_key: string | null;
+  message: string | null;
+  read_at: string | null;
+  sent_at: string;
+  resource?: EducationalResource;
+};
+
+// ============================================
+// BILAN VISUEL (Consultation presentation)
+// ============================================
+
+export type SlideType =
+  | 'synthese'
+  | 'energie_humeur'
+  | 'sommeil_hrv'
+  | 'transit'
+  | 'observance'
+  | 'correlations'
+  | 'recommandations';
+
+export type CorrelationVariable =
+  | 'sommeil'
+  | 'energie'
+  | 'humeur'
+  | 'hrv'
+  | 'activite'
+  | 'bristol'
+  | 'observance';
+
+export type CorrelationConfig = {
+  variableA: CorrelationVariable;
+  conditionA: 'lt' | 'gt' | 'eq';
+  thresholdA: number;
+  variableB: CorrelationVariable;
+};
