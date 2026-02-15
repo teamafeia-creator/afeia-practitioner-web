@@ -179,6 +179,7 @@ import { ContraindicationBanner } from '../care-plan/ContraindicationBanner';
 import { ContraindicationValidationModal } from '../care-plan/ContraindicationValidationModal';
 import { DrawingGallery } from '../drawings/DrawingGallery';
 import { TemplatePicker } from '../drawings/TemplatePicker';
+import { ExcalidrawErrorBoundary } from '../drawings/ExcalidrawErrorBoundary';
 import type { TemplateType, ExcalidrawData } from '../drawings/types';
 import {
   createDrawing,
@@ -4194,13 +4195,15 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               className="!max-w-[95vw] !h-[90vh]"
             >
               <div className="-m-5 h-[90vh]">
-                <DrawingCanvas
-                  templateType={selectedTemplate}
-                  initialData={activeDrawing?.excalidraw_data}
-                  title={activeDrawing?.title ?? ''}
-                  onSave={handleSaveDrawing}
-                  onClose={() => setShowDrawingCanvas(false)}
-                />
+                <ExcalidrawErrorBoundary onClose={() => setShowDrawingCanvas(false)}>
+                  <DrawingCanvas
+                    templateType={selectedTemplate}
+                    initialData={activeDrawing?.excalidraw_data}
+                    title={activeDrawing?.title ?? ''}
+                    onSave={handleSaveDrawing}
+                    onClose={() => setShowDrawingCanvas(false)}
+                  />
+                </ExcalidrawErrorBoundary>
               </div>
             </Modal>
           )}

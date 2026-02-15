@@ -30,6 +30,20 @@ export function DrawingGallery({ drawings, onOpen, onDelete, onCreate, onExportP
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('[DrawingGallery] mounted, drawings count:', drawings.length);
+    if (drawings.length > 0) {
+      console.log('[DrawingGallery] first drawing:', {
+        id: drawings[0].id,
+        template: drawings[0].template_type,
+        hasExcalidrawData: !!drawings[0].excalidraw_data,
+        hasSnapshot: !!drawings[0].snapshot_path,
+        elementsCount: drawings[0].excalidraw_data?.elements?.length ?? 0,
+        filesCount: Object.keys(drawings[0].excalidraw_data?.files ?? {}).length,
+      });
+    }
+  }, [drawings]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadUrls() {

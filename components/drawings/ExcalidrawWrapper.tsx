@@ -17,11 +17,31 @@ async function loadTemplateSvgAsDataUrl(templateType: TemplateType): Promise<str
 
   try {
     const resp = await fetch(config.file);
+    if (!resp.ok) {
+      console.error(`[ExcalidrawWrapper] SVG template fetch failed: ${resp.status} for ${config.file}`);
+      return null;
+    }
     const svgText = await resp.text();
+    if (!svgText.includes('<svg')) {
+      console.error('[ExcalidrawWrapper] Invalid SVG content for', config.file);
+      return null;
+    }
     const blob = new Blob([svgText], { type: 'image/svg+xml' });
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        if (result && result.startsWith('data:')) {
+          resolve(result);
+        } else {
+          console.error('[ExcalidrawWrapper] Invalid data URL for', config.file);
+          resolve(null);
+        }
+      };
+      reader.onerror = () => {
+        console.error('[ExcalidrawWrapper] FileReader error for', config.file);
+        resolve(null);
+      };
       reader.readAsDataURL(blob);
     });
   } catch (err) {
@@ -47,13 +67,39 @@ const ExcalidrawWrapper = forwardRef<any, ExcalidrawWrapperProps>(
 
       async function prepare() {
         if (initialData) {
+          let files = initialData.files || {};
+
+          // Check if the template image element references a file that is missing from data
+          const templateFileId = `template-${templateType}`;
+          const hasTemplateElement = initialData.elements?.some(
+            (el: any) => el.type === 'image' && el.fileId === templateFileId
+          );
+
+          if (hasTemplateElement && (!files[templateFileId] || !files[templateFileId].dataURL)) {
+            console.warn('[ExcalidrawWrapper] Reloading missing template SVG data for', templateType);
+            const dataUrl = await loadTemplateSvgAsDataUrl(templateType);
+            if (cancelled) return;
+            if (dataUrl) {
+              files = {
+                ...files,
+                [templateFileId]: {
+                  id: templateFileId,
+                  mimeType: 'image/svg+xml',
+                  dataURL: dataUrl,
+                  created: Date.now(),
+                  lastRetrieved: Date.now(),
+                },
+              };
+            }
+          }
+
           setSceneData({
             elements: initialData.elements || [],
             appState: {
               viewBackgroundColor: '#ffffff',
               ...initialData.appState,
             },
-            files: initialData.files || {},
+            files,
           });
           setLoading(false);
           return;
