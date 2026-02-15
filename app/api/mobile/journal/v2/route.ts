@@ -6,7 +6,7 @@ import { normalizeMood } from '@/lib/journal-constants';
 export async function GET(request: NextRequest) {
   const consultantId = await resolveConsultantId(request);
   if (!consultantId) {
-    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    return NextResponse.json({ message:'Non autorisé' }, { status: 401 });
   }
 
   const supabase = getSupabaseAdmin();
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         .order('date', { ascending: false });
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ message: error.message }, { status: 500 });
       }
 
       return NextResponse.json({ entries: entries || [] });
@@ -57,14 +57,14 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error('[mobile/journal/v2] GET error:', err);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json({ message:'Erreur serveur' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   const consultantId = await resolveConsultantId(request);
   if (!consultantId) {
-    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    return NextResponse.json({ message:'Non autorisé' }, { status: 401 });
   }
 
   const supabase = getSupabaseAdmin();
@@ -103,12 +103,12 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('[mobile/journal/v2] POST error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ message: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ entry: data });
   } catch (err) {
     console.error('[mobile/journal/v2] POST error:', err);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json({ message:'Erreur serveur' }, { status: 500 });
   }
 }

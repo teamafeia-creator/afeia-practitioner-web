@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
         status,
         content,
         shared_at,
+        viewed_at,
         created_at,
         updated_at,
         practitioner:practitioners(
@@ -126,6 +127,7 @@ export async function GET(request: NextRequest) {
       status: plan.status,
       content: plan.content,
       sharedAt: plan.shared_at,
+      viewedAt: plan.viewed_at,
       createdAt: plan.created_at,
       updatedAt: plan.updated_at,
       practitioner: plan.practitioner ? {
@@ -189,13 +191,13 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Update the plan status to viewed (if it was shared but not yet viewed)
-    // Note: We might want to add a 'viewed' status or viewed_at timestamp
-    // For now, we'll just update the updated_at timestamp to track viewing
+    // Set viewed_at to mark the plan as seen by the consultant
+    const now = new Date().toISOString();
     const { error: updateError } = await getSupabaseAdmin()
       .from('consultant_plans')
       .update({
-        updated_at: new Date().toISOString(),
+        viewed_at: now,
+        updated_at: now,
       })
       .eq('id', planId);
 
