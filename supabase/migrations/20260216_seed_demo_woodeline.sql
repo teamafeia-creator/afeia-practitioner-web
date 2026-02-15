@@ -60,7 +60,7 @@ BEGIN
   -- ============================================
   -- ÉTAPE 1 : CONSULTANTS (12)
   -- ============================================
-  INSERT INTO consultants (id, practitioner_id, email, name, first_name, last_name, phone, city, age, date_of_birth, consultation_reason, status, is_premium, activated, activated_at, circular_enabled, created_at) VALUES
+  INSERT INTO consultants (id, practitioner_id, email, name, first_name, last_name, phone, city, age, date_of_birth, consultation_reason, status, is_premium, activated, activated_at, bague_connectee_enabled, created_at) VALUES
   (v_c1,  v_practitioner_id, 'sophie.martin@example.com',     'Sophie Martin',     'Sophie',      'Martin',     '06 12 34 56 78', 'Paris',       38, '1987-06-15', 'Syndrome du côlon irritable, stress professionnel intense, troubles du sommeil',          'premium',  true,  true,  NOW()-INTERVAL '6 months',  true,  NOW()-INTERVAL '7 months'),
   (v_c2,  v_practitioner_id, 'thomas.dubois@example.com',     'Thomas Dubois',     'Thomas',      'Dubois',     '06 23 45 67 89', 'Chamonix',    32, '1993-03-22', 'Optimisation nutrition sportive trail/ultra, préparation UTMB',                          'premium',  true,  true,  NOW()-INTERVAL '5 months',  true,  NOW()-INTERVAL '6 months'),
   (v_c3,  v_practitioner_id, 'emilie.laurent@example.com',    'Émilie Laurent',    'Émilie',      'Laurent',    '06 34 56 78 90', 'Nantes',      30, '1995-11-08', 'Post-partum 6 mois, fatigue intense, carences fer et vitamine D, allaitement',           'standard', false, true,  NOW()-INTERVAL '4 months',  false, NOW()-INTERVAL '5 months'),
@@ -1039,7 +1039,7 @@ BEGIN
   ON CONFLICT (consultant_id, version) DO NOTHING;
 
   -- Isabelle Fontaine (c11) – Détox & optimisation (AI-generated plan)
-  INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, ai_model, ai_generation_date, created_at)
+  INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
   VALUES ('d0000000-0000-4000-a000-00000000000b', v_c11, v_practitioner_id, 1, 'shared', $cp11${
     "message_accueil": "Isabelle, voici votre programme d optimisation détox et vitalité, adapté à votre excellent niveau de base en tant que professeure de yoga.",
     "duree_programme": "2 mois",
@@ -1067,7 +1067,7 @@ BEGIN
     "suivi_entre_temps": "Journal de bord. Partager les ressentis pendant la cure détox (crises de détox normales les 3-4 premiers jours).",
     "message_cloture": "Isabelle, avec votre niveau de conscience corporelle et votre discipline, cette cure va donner d excellents résultats. Écoutez votre corps et n hésitez pas à ralentir si nécessaire.",
     "notes_libres": "Consultante experte, très autonome. Ne pas infantiliser. Proposer des approches avancées. Excellent potentiel de résultats rapides vu le terrain de base."
-  }$cp11$::jsonb, NOW()-INTERVAL '3 months', true, 'claude-sonnet-4-5-20250929', NOW()-INTERVAL '3 months', NOW()-INTERVAL '3 months')
+  }$cp11$::jsonb, NOW()-INTERVAL '3 months', true, NOW()-INTERVAL '3 months')
   ON CONFLICT (consultant_id, version) DO NOTHING;
 
   -- Robert Durand (c12) – Prévention cardiovasculaire
@@ -1677,7 +1677,7 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- ============================================
 
   -- Subscription plan (Premium)
-  INSERT INTO subscription_plans (id, name, display_name, description, price_monthly, price_yearly, features, max_patients, circular_integration, is_active, created_at)
+  INSERT INTO subscription_plans (id, name, display_name, description, price_monthly, price_yearly, features, max_patients, bague_connectee_integration, is_active, created_at)
   VALUES (gen_random_uuid(), 'premium', 'Premium', 'Accès complet à toutes les fonctionnalités AFEIA, incluant l intégration Circular et le nombre illimité de consultants.', 49.90, 499.00,
     '["Consultants illimités", "Messagerie sécurisée", "Conseillancier IA", "Journal enrichi", "Intégration Circular (wearables)", "Ressources éducatives", "Export PDF", "Support prioritaire"]'::jsonb,
     NULL, true, true, NOW()-INTERVAL '12 months')
