@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       .from('users')
       .select('id, email, password_hash, role, status')
       .eq('email', email.toLowerCase())
-      .eq('role', 'CONSULTANT')
+      .eq('role', 'PATIENT')
       .single();
 
     if (error || !user) {

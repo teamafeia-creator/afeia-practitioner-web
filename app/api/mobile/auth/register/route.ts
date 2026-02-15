@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         id: userId,
         email: email.toLowerCase(),
         password_hash: passwordHash,
-        role: 'CONSULTANT',
+        role: 'PATIENT',
         status: 'ACTIVE',
         created_at: new Date().toISOString(),
       });
