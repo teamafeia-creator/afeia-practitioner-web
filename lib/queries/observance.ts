@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import type { ObservanceItem, ObservanceLog, ObservanceSummary, ObservanceCategoryRate, ObservanceCategory } from '../types';
+import type { ObservanceItem, ObservanceLog, ObservanceSummary, ObservanceCategoryRate, ObservanceCategory, ObservanceFrequency } from '../types';
 
 type SupabaseErrorLike = {
   message?: string;
