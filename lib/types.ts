@@ -517,6 +517,75 @@ export type ConsultantRelationship = {
   };
 };
 
+// ============================================
+// BILAN DE TERRAIN (Naturopathic terrain assessment)
+// ============================================
+
+export type ConstitutionType = 'sanguin' | 'lymphatique' | 'bilieux' | 'nerveux';
+export type DiatheseType = 'allergique_mn' | 'hyposthenique_mn_cu' | 'dystonique_mn_co' | 'anergique_cu_au_ag' | 'desadaptation_zn_cu' | 'desadaptation_zn_ni_co';
+export type SurchargeLevel = 'absent' | 'leger' | 'modere' | 'important';
+export type EmunctoryStatus = 'fonctionnel' | 'ralenti' | 'surcharge' | 'bloque';
+export type EmunctoryStatusPeau = 'fonctionnel' | 'reactif' | 'surcharge' | 'bloque';
+export type EmunctoryStatusPoumons = 'fonctionnel' | 'sous_exploite' | 'surcharge' | 'bloque';
+export type VitalityLevel = 'haute' | 'moyenne' | 'basse' | 'epuisee';
+export type IrisEye = 'left' | 'right';
+export type IrisAnnotationType = 'point' | 'circle' | 'text';
+
+export type IrisAnnotation = {
+  type: IrisAnnotationType;
+  x: number;
+  y: number;
+  radius?: number;
+  label: string;
+  color: string;
+};
+
+export type ConsultantTerrain = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  constitution: ConstitutionType | null;
+  constitution_secondary: ConstitutionType | null;
+  temperament_description: string | null;
+  temperament_notes: string | null;
+  diathese_menetrier: DiatheseType | null;
+  diathese_notes: string | null;
+  diathese_date: string | null;
+  surcharge_acides: SurchargeLevel | null;
+  surcharge_colles: SurchargeLevel | null;
+  surcharge_cristaux: SurchargeLevel | null;
+  surcharges_notes: string | null;
+  emunctoire_foie: EmunctoryStatus | null;
+  emunctoire_foie_notes: string | null;
+  emunctoire_intestins: EmunctoryStatus | null;
+  emunctoire_intestins_notes: string | null;
+  emunctoire_reins: EmunctoryStatus | null;
+  emunctoire_reins_notes: string | null;
+  emunctoire_peau: EmunctoryStatusPeau | null;
+  emunctoire_peau_notes: string | null;
+  emunctoire_poumons: EmunctoryStatusPoumons | null;
+  emunctoire_poumons_notes: string | null;
+  force_vitale: VitalityLevel | null;
+  force_vitale_notes: string | null;
+  bilan_date: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConsultantIrisPhoto = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  eye: IrisEye;
+  photo_path: string;
+  thumbnail_path: string | null;
+  annotations: IrisAnnotation[];
+  notes: string | null;
+  taken_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 // Types enrichis (avec relations)
 export type ConsultantWithDetails = Consultant & {
   anamnese?: Anamnese;
@@ -540,6 +609,8 @@ export type ConsultantWithDetails = Consultant & {
   allergies_structured?: AllergyEntry[];
   current_treatments?: CurrentTreatmentEntry[];
   relationships?: ConsultantRelationship[];
+  terrain?: ConsultantTerrain | null;
+  iris_photos?: ConsultantIrisPhoto[];
 };
 
 export type ConsultantDrawing = {
