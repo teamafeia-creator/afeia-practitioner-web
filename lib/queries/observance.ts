@@ -165,7 +165,7 @@ export async function getObservanceLogs(
       created_at: row.created_at as string,
       label: item?.label as string | undefined,
       category: item?.category as ObservanceCategory | undefined,
-      frequency: item?.frequency as string | undefined,
+      frequency: item?.frequency as ObservanceFrequency | undefined,
     };
   });
 }
