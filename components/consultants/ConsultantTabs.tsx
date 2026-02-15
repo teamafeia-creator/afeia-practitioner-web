@@ -61,6 +61,10 @@ import {
   Search,
   Link2,
   X,
+  Leaf,
+  Eye,
+  Droplets,
+  Wind,
 } from 'lucide-react';
 import type {
   AnamnesisAnswers,
@@ -75,7 +79,42 @@ import type {
   AllergyEntry,
   CurrentTreatmentEntry,
   ConsultantRelationship,
+  ConsultantTerrain,
+  ConsultantIrisPhoto,
+  IrisAnnotation,
+  IrisEye,
+  VitalityLevel,
+  SurchargeLevel,
+  ConstitutionType,
+  DiatheseType,
 } from '../../lib/types';
+import { upsertTerrain, updateIrisPhotoAnnotations, deleteIrisPhoto } from '../../lib/queries/terrain';
+import {
+  CONSTITUTIONS,
+  CONSTITUTION_MAP,
+  DIATHESES,
+  DIATHESE_MAP,
+  SURCHARGE_LEVELS,
+  SURCHARGE_LEVEL_MAP,
+  SURCHARGE_TYPES,
+  EMUNCTORY_STATUSES,
+  EMUNCTORY_STATUSES_PEAU,
+  EMUNCTORY_STATUSES_POUMONS,
+  EMUNCTORY_STATUS_MAP,
+  EMUNCTORY_STATUS_PEAU_MAP,
+  EMUNCTORY_STATUS_POUMONS_MAP,
+  EMUNCTORIES,
+  VITALITY_LEVELS,
+  VITALITY_LEVEL_MAP,
+  EYE_LABELS,
+  getEmunctoryHexColor,
+} from '../../lib/terrain-constants';
+import { EmunctoryDiagram } from '../terrain/EmunctoryDiagram';
+import { SurchargeGauge } from '../terrain/SurchargeGauge';
+import { VitalityIndicator } from '../terrain/VitalityIndicator';
+import { IrisViewer } from '../terrain/IrisViewer';
+import { IrisComparison } from '../terrain/IrisComparison';
+import { IrisUploader } from '../terrain/IrisUploader';
 import {
   createMedicalHistoryEntry,
   updateMedicalHistoryEntry,
@@ -141,6 +180,7 @@ const TABS = [
   T.tabDossierMedical,
   T.tabRendezVous,
   T.tabAnamnese,
+  T.tabBilanTerrain,
   T.tabBagueConnectee,
   T.tabJournal,
   T.tabNotesSeance,
@@ -157,6 +197,7 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
   [T.tabDossierMedical]: { title: T.tabDossierMedical, description: T.descDossierMedical },
   [T.tabRendezVous]: { title: T.tabRendezVous, description: T.descRendezVous },
   [T.tabAnamnese]: { title: T.tabAnamnese, description: T.descAnamnese },
+  [T.tabBilanTerrain]: { title: T.tabBilanTerrain, description: T.descBilanTerrain },
   [T.tabBagueConnectee]: { title: T.tabBagueConnectee, description: T.descBagueConnectee },
   [T.tabJournal]: { title: T.tabJournal, description: T.descJournal },
   [T.tabNotesSeance]: { title: T.tabNotesSeance, description: T.descNotesSeance },
@@ -173,6 +214,7 @@ const SIDEBAR_GROUPS = [
       { tab: T.tabProfil as Tab, label: 'Synthese', icon: User },
       { tab: T.tabDossierMedical as Tab, label: 'Dossier medical', icon: Heart },
       { tab: T.tabAnamnese as Tab, label: 'Anamnese', icon: ClipboardList },
+      { tab: T.tabBilanTerrain as Tab, label: 'Bilan de terrain', icon: Leaf },
     ],
   },
   {
@@ -365,6 +407,37 @@ function renderInsight(insight: WearableInsight) {
   );
 }
 
+function IrisPhotoThumbnail({ photo, size }: { photo: ConsultantIrisPhoto; size: 'large' | 'small' }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const { data } = await supabase.storage
+        .from('iris-photos')
+        .createSignedUrl(photo.photo_path, 300);
+      if (!cancelled && data?.signedUrl) setUrl(data.signedUrl);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [photo.photo_path]);
+
+  if (size === 'small') {
+    return url ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={url} alt="" className="h-[60px] w-[60px] object-cover" draggable={false} />
+    ) : (
+      <div className="h-[60px] w-[60px] bg-cream flex items-center justify-center text-[9px] text-stone">...</div>
+    );
+  }
+
+  return url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt="" className="w-full h-auto max-h-[300px] object-contain" draggable={false} />
+  ) : (
+    <div className="h-[200px] flex items-center justify-center text-xs text-stone">Chargement...</div>
+  );
+}
+
 export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetails }) {
   const router = useRouter();
   const [consultantState, setConsultantState] = useState<ConsultantWithDetails>(consultant);
@@ -468,6 +541,15 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   const [consultantSearch, setConsultantSearch] = useState('');
   const [consultantSearchResults, setConsultantSearchResults] = useState<{ id: string; name: string; first_name?: string; last_name?: string }[]>([]);
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  // ─── Terrain states ──────────────────────────
+  const [terrainEditing, setTerrainEditing] = useState(false);
+  const [terrainSaving, setTerrainSaving] = useState(false);
+  const [terrainData, setTerrainData] = useState<Partial<ConsultantTerrain>>({});
+  const [irisPhotos, setIrisPhotos] = useState<ConsultantIrisPhoto[]>(consultant.iris_photos ?? []);
+  const [irisViewerPhoto, setIrisViewerPhoto] = useState<ConsultantIrisPhoto | null>(null);
+  const [irisCompareEye, setIrisCompareEye] = useState<IrisEye | null>(null);
+  const [showIrisUploader, setShowIrisUploader] = useState(false);
 
   // Extract substance names from plan content for contraindication checking
   const substanceNamesFromPlan = useMemo(() => {
@@ -623,6 +705,9 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     setAllergiesStructured(consultant.allergies_structured ?? []);
     setCurrentTreatments(consultant.current_treatments ?? []);
     setRelationships(consultant.relationships ?? []);
+    setTerrainData(consultant.terrain ?? {});
+    setIrisPhotos(consultant.iris_photos ?? []);
+    setTerrainEditing(false);
     setProfileEditing(false);
     setAnamnesisEditing(false);
     setJournalEditing(false);
@@ -799,6 +884,99 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       });
     } finally {
       setAnamnesisSaving(false);
+    }
+  }
+
+  // ─── Terrain handlers ──────────────────────────
+
+  async function handleSaveTerrain() {
+    setTerrainSaving(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const practitionerId = session?.session?.user?.id;
+      if (!practitionerId) throw new Error('Session invalide.');
+
+      const updated = await upsertTerrain(consultant.id, practitionerId, terrainData);
+      if (!updated) throw new Error('Impossible d\'enregistrer le bilan de terrain.');
+
+      setConsultantState((prev) => ({ ...prev, terrain: updated }));
+      setTerrainEditing(false);
+      setToast({
+        title: 'Bilan de terrain enregistré',
+        description: 'Les données ont été mises à jour.',
+        variant: 'success'
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur de sauvegarde',
+        description: error instanceof Error ? error.message : 'Impossible d\'enregistrer le bilan.',
+        variant: 'error'
+      });
+    } finally {
+      setTerrainSaving(false);
+    }
+  }
+
+  function handleIrisUploadComplete(photo: ConsultantIrisPhoto) {
+    setIrisPhotos((prev) => [photo, ...prev]);
+    setConsultantState((prev) => ({
+      ...prev,
+      iris_photos: [photo, ...(prev.iris_photos ?? [])]
+    }));
+    setShowIrisUploader(false);
+    setToast({
+      title: 'Photo importée',
+      description: 'La photo d\'iris a été ajoutée.',
+      variant: 'success'
+    });
+  }
+
+  async function handleIrisSaveAnnotations(photo: ConsultantIrisPhoto, annotations: IrisAnnotation[], notes: string) {
+    try {
+      const updated = await updateIrisPhotoAnnotations(photo.id, annotations, notes);
+      if (!updated) throw new Error('Échec de la sauvegarde.');
+
+      setIrisPhotos((prev) =>
+        prev.map((p) => (p.id === photo.id ? updated : p))
+      );
+      setConsultantState((prev) => ({
+        ...prev,
+        iris_photos: (prev.iris_photos ?? []).map((p) => (p.id === photo.id ? updated : p))
+      }));
+      setIrisViewerPhoto(null);
+      setToast({
+        title: 'Annotations sauvegardées',
+        variant: 'success'
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Impossible de sauvegarder.',
+        variant: 'error'
+      });
+    }
+  }
+
+  async function handleDeleteIrisPhoto(photo: ConsultantIrisPhoto) {
+    try {
+      const success = await deleteIrisPhoto(photo.id, photo.photo_path);
+      if (!success) throw new Error('Échec de la suppression.');
+
+      setIrisPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+      setConsultantState((prev) => ({
+        ...prev,
+        iris_photos: (prev.iris_photos ?? []).filter((p) => p.id !== photo.id)
+      }));
+      setToast({
+        title: 'Photo supprimée',
+        variant: 'success'
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Impossible de supprimer.',
+        variant: 'error'
+      });
     }
   }
 
@@ -2039,6 +2217,481 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </Card>
       )}
 
+      {/* ═══════════════════════════════════════════════
+          BILAN DE TERRAIN
+          ═══════════════════════════════════════════════ */}
+      {tab === T.tabBilanTerrain && (
+        <div className="space-y-4">
+          <Card className={cn(terrainEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Leaf className="h-4 w-4 text-sage" />
+                  <h2 className="text-sm font-semibold">Bilan de terrain</h2>
+                </div>
+                {!terrainEditing ? (
+                  <Button variant="secondary" onClick={() => setTerrainEditing(true)}>
+                    Modifier
+                  </Button>
+                ) : null}
+              </div>
+              {terrainEditing ? <EditBanner label="Pensez à sauvegarder le bilan." /> : null}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-8">
+
+                {/* Section 0 — Force vitale */}
+                <div className="border border-divider rounded-xl p-4 space-y-3">
+                  <VitalityIndicator
+                    level={(terrainData.force_vitale as VitalityLevel) ?? null}
+                    notes={terrainData.force_vitale_notes ?? undefined}
+                    date={terrainData.bilan_date ?? undefined}
+                    editing={terrainEditing}
+                    onLevelChange={(level) => setTerrainData((prev) => ({ ...prev, force_vitale: level }))}
+                  />
+                  {terrainEditing && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <Input
+                          label="Date du bilan"
+                          type="date"
+                          value={terrainData.bilan_date ?? ''}
+                          onChange={(e) => setTerrainData((prev) => ({ ...prev, bilan_date: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Textarea
+                          value={terrainData.force_vitale_notes ?? ''}
+                          onChange={(e) => setTerrainData((prev) => ({ ...prev, force_vitale_notes: e.target.value }))}
+                          placeholder="Notes sur la force vitale..."
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Section 1 — Constitution, Tempérament & Diathèse */}
+                <div className="border border-divider rounded-xl p-4 space-y-4">
+                  <h3 className="text-sm font-semibold text-charcoal">Constitution, Tempérament & Diathèse</h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Constitution primaire */}
+                    <div className="space-y-1">
+                      <span className="text-xs text-warmgray">Constitution</span>
+                      {terrainEditing ? (
+                        <Select
+                          value={terrainData.constitution ?? ''}
+                          onChange={(e) => setTerrainData((prev) => ({ ...prev, constitution: (e.target.value || null) as ConstitutionType | null }))}
+                        >
+                          <option value="">Non renseigné</option>
+                          {CONSTITUTIONS.map((c) => (
+                            <option key={c.value} value={c.value}>{c.label} — {c.description}</option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <div className="text-sm">
+                          {terrainData.constitution ? (
+                            <span className={cn('inline-flex items-center rounded-2xl px-3 py-1 text-xs font-medium border', CONSTITUTION_MAP[terrainData.constitution as ConstitutionType]?.color)}>
+                              {CONSTITUTION_MAP[terrainData.constitution as ConstitutionType]?.label}
+                            </span>
+                          ) : (
+                            <span className="italic text-stone">Non renseigné</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Constitution secondaire */}
+                    <div className="space-y-1">
+                      <span className="text-xs text-warmgray">Constitution secondaire</span>
+                      {terrainEditing ? (
+                        <Select
+                          value={terrainData.constitution_secondary ?? ''}
+                          onChange={(e) => setTerrainData((prev) => ({ ...prev, constitution_secondary: (e.target.value || null) as ConstitutionType | null }))}
+                        >
+                          <option value="">Aucune</option>
+                          {CONSTITUTIONS.map((c) => (
+                            <option key={c.value} value={c.value}>{c.label}</option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <div className="text-sm">
+                          {terrainData.constitution_secondary ? (
+                            <span className={cn('inline-flex items-center rounded-2xl px-3 py-1 text-xs font-medium border', CONSTITUTION_MAP[terrainData.constitution_secondary as ConstitutionType]?.color)}>
+                              {CONSTITUTION_MAP[terrainData.constitution_secondary as ConstitutionType]?.label}
+                            </span>
+                          ) : (
+                            <span className="italic text-stone">—</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tempérament */}
+                    <div className="space-y-1 sm:col-span-2">
+                      <span className="text-xs text-warmgray">Tempérament</span>
+                      {terrainEditing ? (
+                        <Textarea
+                          value={terrainData.temperament_description ?? ''}
+                          onChange={(e) => setTerrainData((prev) => ({ ...prev, temperament_description: e.target.value }))}
+                          placeholder="Ex: neuro-arthritique, sanguin-bilieux..."
+                          rows={2}
+                        />
+                      ) : (
+                        <div className="text-sm text-charcoal whitespace-pre-line">
+                          {terrainData.temperament_description || <span className="italic text-stone">Non renseigné</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Diathèse de Ménétrier */}
+                    <div className="space-y-1">
+                      <span className="text-xs text-warmgray">Diathèse de Ménétrier</span>
+                      {terrainEditing ? (
+                        <Select
+                          value={terrainData.diathese_menetrier ?? ''}
+                          onChange={(e) => setTerrainData((prev) => ({ ...prev, diathese_menetrier: (e.target.value || null) as DiatheseType | null }))}
+                        >
+                          <option value="">Non renseigné</option>
+                          {DIATHESES.map((d) => (
+                            <option key={d.value} value={d.value}>{d.label} — {d.description}</option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <div className="text-sm">
+                          {terrainData.diathese_menetrier ? (
+                            <Badge variant="default">{DIATHESE_MAP[terrainData.diathese_menetrier as DiatheseType]?.label}</Badge>
+                          ) : (
+                            <span className="italic text-stone">Non renseigné</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Diathèse date */}
+                    <div className="space-y-1">
+                      <span className="text-xs text-warmgray">Date d&apos;évaluation diathèse</span>
+                      {terrainEditing ? (
+                        <Input
+                          type="date"
+                          value={terrainData.diathese_date ?? ''}
+                          onChange={(e) => setTerrainData((prev) => ({ ...prev, diathese_date: e.target.value }))}
+                        />
+                      ) : (
+                        <div className="text-sm text-charcoal">
+                          {terrainData.diathese_date ? formatDate(terrainData.diathese_date) : <span className="italic text-stone">—</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Notes diathèse */}
+                    {(terrainEditing || terrainData.diathese_notes) && (
+                      <div className="space-y-1 sm:col-span-2">
+                        <span className="text-xs text-warmgray">Notes</span>
+                        {terrainEditing ? (
+                          <Textarea
+                            value={terrainData.diathese_notes ?? ''}
+                            onChange={(e) => setTerrainData((prev) => ({ ...prev, diathese_notes: e.target.value }))}
+                            placeholder="Observations sur la diathèse..."
+                            rows={2}
+                          />
+                        ) : (
+                          <div className="text-sm text-charcoal whitespace-pre-line">{terrainData.diathese_notes}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Section 2 — Surcharges humorales */}
+                <div className="border border-divider rounded-xl p-4 space-y-4">
+                  <h3 className="text-sm font-semibold text-charcoal">Surcharges humorales</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {SURCHARGE_TYPES.map((s) => (
+                      <SurchargeGauge
+                        key={s.key}
+                        label={s.label}
+                        level={(terrainData[s.key] as SurchargeLevel) ?? null}
+                        editing={terrainEditing}
+                        onChange={(level) => setTerrainData((prev) => ({ ...prev, [s.key]: level }))}
+                      />
+                    ))}
+                  </div>
+                  {(terrainEditing || terrainData.surcharges_notes) && (
+                    <div className="space-y-1">
+                      <span className="text-xs text-warmgray">Notes</span>
+                      {terrainEditing ? (
+                        <Textarea
+                          value={terrainData.surcharges_notes ?? ''}
+                          onChange={(e) => setTerrainData((prev) => ({ ...prev, surcharges_notes: e.target.value }))}
+                          placeholder="Observations sur les surcharges..."
+                          rows={2}
+                        />
+                      ) : (
+                        <div className="text-sm text-charcoal whitespace-pre-line">{terrainData.surcharges_notes}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Section 3 — Bilan des émonctoires */}
+                <div className="border border-divider rounded-xl p-4 space-y-4">
+                  <h3 className="text-sm font-semibold text-charcoal">Bilan des émonctoires</h3>
+
+                  {/* SVG Diagram */}
+                  <div className="flex justify-center">
+                    <EmunctoryDiagram
+                      statuses={{
+                        foie: (terrainData.emunctoire_foie as any) ?? null,
+                        intestins: (terrainData.emunctoire_intestins as any) ?? null,
+                        reins: (terrainData.emunctoire_reins as any) ?? null,
+                        peau: (terrainData.emunctoire_peau as any) ?? null,
+                        poumons: (terrainData.emunctoire_poumons as any) ?? null,
+                      }}
+                      editing={terrainEditing}
+                      onStatusChange={(organ, newStatus) => {
+                        const fieldMap: Record<string, string> = {
+                          foie: 'emunctoire_foie',
+                          intestins: 'emunctoire_intestins',
+                          reins: 'emunctoire_reins',
+                          peau: 'emunctoire_peau',
+                          poumons: 'emunctoire_poumons',
+                        };
+                        setTerrainData((prev) => ({ ...prev, [fieldMap[organ]]: newStatus }));
+                      }}
+                    />
+                  </div>
+
+                  {/* Emunctory cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {EMUNCTORIES.map((em) => {
+                      const statusVal = (terrainData as Record<string, any>)[em.fieldStatus] as string | null;
+                      const notesVal = (terrainData as Record<string, any>)[em.fieldNotes] as string | null;
+                      const statusOptions = em.key === 'peau' ? EMUNCTORY_STATUSES_PEAU : em.key === 'poumons' ? EMUNCTORY_STATUSES_POUMONS : EMUNCTORY_STATUSES;
+                      const statusInfo = em.key === 'peau'
+                        ? (statusVal ? EMUNCTORY_STATUS_PEAU_MAP[statusVal as keyof typeof EMUNCTORY_STATUS_PEAU_MAP] : null)
+                        : em.key === 'poumons'
+                        ? (statusVal ? EMUNCTORY_STATUS_POUMONS_MAP[statusVal as keyof typeof EMUNCTORY_STATUS_POUMONS_MAP] : null)
+                        : (statusVal ? EMUNCTORY_STATUS_MAP[statusVal as keyof typeof EMUNCTORY_STATUS_MAP] : null);
+
+                      return (
+                        <div key={em.key} className="rounded-lg bg-white/60 p-3 border border-divider space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-charcoal">{em.label}</span>
+                            {statusInfo ? (
+                              <span className={cn('text-xs font-medium', statusInfo.color)}>{statusInfo.label}</span>
+                            ) : (
+                              <span className="text-xs italic text-stone">Non évalué</span>
+                            )}
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-cream overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{
+                                width: statusVal ? (statusVal === 'fonctionnel' ? '100%' : statusVal === 'ralenti' || statusVal === 'reactif' || statusVal === 'sous_exploite' ? '66%' : statusVal === 'surcharge' ? '33%' : '10%') : '0%',
+                                backgroundColor: getEmunctoryHexColor(statusVal),
+                              }}
+                            />
+                          </div>
+                          {terrainEditing && (
+                            <>
+                              <Select
+                                value={statusVal ?? ''}
+                                onChange={(e) => setTerrainData((prev) => ({ ...prev, [em.fieldStatus]: e.target.value || null }))}
+                              >
+                                <option value="">Non évalué</option>
+                                {statusOptions.map((s) => (
+                                  <option key={s.value} value={s.value}>{s.label}</option>
+                                ))}
+                              </Select>
+                              <Textarea
+                                value={notesVal ?? ''}
+                                onChange={(e) => setTerrainData((prev) => ({ ...prev, [em.fieldNotes]: e.target.value }))}
+                                placeholder={`Notes ${em.label.toLowerCase()}...`}
+                                rows={2}
+                              />
+                            </>
+                          )}
+                          {!terrainEditing && notesVal && (
+                            <p className="text-xs text-stone whitespace-pre-line">{notesVal}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Section 4 — Iridologie */}
+                <div className="border border-divider rounded-xl p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-charcoal flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-sage" />
+                      Iridologie
+                    </h3>
+                    <Button variant="secondary" onClick={() => setShowIrisUploader(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      Importer une photo
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(['right', 'left'] as IrisEye[]).map((eyeSide) => {
+                      const eyePhotos = irisPhotos.filter((p) => p.eye === eyeSide);
+                      const latestPhoto = eyePhotos[0] ?? null;
+
+                      return (
+                        <div key={eyeSide} className="space-y-3">
+                          <h4 className="text-xs font-medium text-charcoal">{EYE_LABELS[eyeSide]}</h4>
+
+                          {latestPhoto ? (
+                            <div className="space-y-2">
+                              <div className="relative rounded-lg border border-divider overflow-hidden bg-cream">
+                                <IrisPhotoThumbnail photo={latestPhoto} size="large" />
+                                <div className="absolute bottom-2 left-2 right-2 flex gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => setIrisViewerPhoto(latestPhoto)}
+                                    className="flex-1 bg-white/90 text-charcoal text-xs font-medium py-1.5 rounded-lg hover:bg-white transition"
+                                  >
+                                    Voir / Annoter
+                                  </button>
+                                  {eyePhotos.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setIrisCompareEye(eyeSide)}
+                                      className="bg-white/90 text-charcoal text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-white transition"
+                                    >
+                                      Comparer
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Timeline of previous photos */}
+                              {eyePhotos.length > 1 && (
+                                <div className="flex gap-1.5 overflow-x-auto pb-1">
+                                  {eyePhotos.map((p) => (
+                                    <button
+                                      key={p.id}
+                                      type="button"
+                                      onClick={() => setIrisViewerPhoto(p)}
+                                      className={cn(
+                                        'flex-shrink-0 rounded-md border overflow-hidden',
+                                        p.id === latestPhoto.id ? 'border-sage ring-1 ring-sage/30' : 'border-divider'
+                                      )}
+                                    >
+                                      <IrisPhotoThumbnail photo={p} size="small" />
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <EmptyState
+                              icon={<Eye className="h-8 w-8 text-sage" />}
+                              title="Aucune photo"
+                              description="Importez une photo pour commencer l'analyse iridologique."
+                              size="sm"
+                              action={
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => setShowIrisUploader(true)}
+                                >
+                                  Importer
+                                </Button>
+                              }
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Save / Cancel buttons */}
+              {terrainEditing && (
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <Button
+                    variant="primary"
+                    onClick={handleSaveTerrain}
+                    loading={terrainSaving}
+                    disabled={terrainSaving}
+                  >
+                    Enregistrer le bilan
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setTerrainData(consultantState.terrain ?? {});
+                      setTerrainEditing(false);
+                    }}
+                    disabled={terrainSaving}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              )}
+
+              {/* Link to Conseillancier */}
+              <div className="mt-6 rounded-lg bg-cream/60 border border-divider p-3 flex items-center justify-between">
+                <p className="text-xs text-stone">
+                  Ce bilan de terrain guide les recommandations du conseillancier.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setTab(T.tabConseillancier as Tab)}
+                  className="text-xs text-sage font-medium hover:underline whitespace-nowrap ml-2"
+                >
+                  Voir le conseillancier →
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Iris Viewer Modal */}
+          {irisViewerPhoto && (
+            <IrisViewer
+              photo={irisViewerPhoto}
+              onSave={(annotations, notes) => handleIrisSaveAnnotations(irisViewerPhoto, annotations, notes)}
+              onClose={() => setIrisViewerPhoto(null)}
+            />
+          )}
+
+          {/* Iris Upload Modal */}
+          {showIrisUploader && (
+            <Modal
+              isOpen={showIrisUploader}
+              onClose={() => setShowIrisUploader(false)}
+              title="Importer une photo d'iris"
+              size="md"
+            >
+              <IrisUploader
+                consultantId={consultant.id}
+                practitionerId={consultantState.practitioner_id}
+                onUploadComplete={handleIrisUploadComplete}
+              />
+            </Modal>
+          )}
+
+          {/* Iris Comparison Modal */}
+          {irisCompareEye && (
+            <Modal
+              isOpen={!!irisCompareEye}
+              onClose={() => setIrisCompareEye(null)}
+              title={`Comparaison — ${EYE_LABELS[irisCompareEye]}`}
+              size="xl"
+            >
+              <IrisComparison
+                photos={irisPhotos.filter((p) => p.eye === irisCompareEye)}
+                eye={irisCompareEye}
+              />
+            </Modal>
+          )}
+        </div>
+      )}
+
       {tab === T.tabBagueConnectee && (
         <Card>
           <CardHeader>
@@ -2383,6 +3036,54 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
 
       {tab === T.tabConseillancier && (
         <div className="space-y-4">
+          {/* Terrain summary banner */}
+          {consultantState.terrain && (consultantState.terrain.constitution || consultantState.terrain.diathese_menetrier || consultantState.terrain.force_vitale) && (
+            <div className="bg-sage/5 border border-sage/20 rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-charcoal flex items-center gap-1.5">
+                  <Leaf className="h-3.5 w-3.5 text-sage" />
+                  Terrain du consultant
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setTab(T.tabBilanTerrain as Tab)}
+                  className="text-xs text-sage font-medium hover:underline"
+                >
+                  Voir le bilan complet →
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {consultantState.terrain.constitution && (
+                  <span className={cn('inline-flex items-center rounded-2xl px-2.5 py-0.5 text-[11px] font-medium border', CONSTITUTION_MAP[consultantState.terrain.constitution]?.color)}>
+                    {CONSTITUTION_MAP[consultantState.terrain.constitution]?.label}
+                  </span>
+                )}
+                {consultantState.terrain.diathese_menetrier && (
+                  <Badge variant="default">
+                    {DIATHESE_MAP[consultantState.terrain.diathese_menetrier]?.label}
+                  </Badge>
+                )}
+                {consultantState.terrain.force_vitale && (
+                  <span className={cn('inline-flex items-center rounded-2xl px-2.5 py-0.5 text-[11px] font-medium', VITALITY_LEVEL_MAP[consultantState.terrain.force_vitale]?.color)}>
+                    FV: {VITALITY_LEVEL_MAP[consultantState.terrain.force_vitale]?.label}
+                  </span>
+                )}
+                {/* Critical emunctories */}
+                {EMUNCTORIES.filter((em) => {
+                  const val = (consultantState.terrain as Record<string, any>)?.[em.fieldStatus];
+                  return val === 'surcharge' || val === 'bloque';
+                }).map((em) => {
+                  const val = (consultantState.terrain as Record<string, any>)?.[em.fieldStatus];
+                  return (
+                    <Badge key={em.key} variant={val === 'bloque' ? 'urgent' : 'warning'}>
+                      {em.label}: {val === 'bloque' ? 'Bloqué' : 'Surchargé'}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {medicalAlerts.length > 0 && (
             <MedicalAlertBanner alerts={medicalAlerts} />
           )}

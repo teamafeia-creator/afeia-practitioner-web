@@ -80,6 +80,10 @@ export const T = {
   labelComplete: 'Complet',
   tabAteliers: 'Ateliers',
 
+  // ─── Bilan de terrain ──────────────────────────
+  tabBilanTerrain: 'Bilan de terrain',
+  descBilanTerrain: 'Constitution, tempérament, diathèse, émonctoires, surcharges et iridologie.',
+
   // ─── Dossier médical (onglet enrichi) ──────────
   tabDossierMedical: 'Dossier médical',
   descDossierMedical: 'Antécédents, allergies et intolérances, traitements en cours.',

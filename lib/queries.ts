@@ -266,7 +266,9 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     medicalHistoryResult,
     allergiesResult,
     currentTreatmentsResult,
-    relationshipsResult
+    relationshipsResult,
+    terrainResult,
+    irisPhotosResult
   ] = await Promise.all([
     supabase.from('anamneses').select('*').eq('consultant_id', id).single(),
     supabase.from('consultations').select('*').eq('consultant_id', id).order('date', { ascending: false }),
@@ -285,7 +287,9 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     supabase.from('medical_history').select('*').eq('consultant_id', id).order('created_at', { ascending: false }),
     supabase.from('allergies').select('*').eq('consultant_id', id).order('created_at', { ascending: false }),
     supabase.from('current_treatments').select('*').eq('consultant_id', id).order('created_at', { ascending: false }),
-    supabase.from('consultant_relationships').select(`*, related_consultant:consultants!consultant_relationships_related_consultant_id_fkey(id, name, first_name, last_name)`).eq('consultant_id', id).order('created_at', { ascending: false })
+    supabase.from('consultant_relationships').select(`*, related_consultant:consultants!consultant_relationships_related_consultant_id_fkey(id, name, first_name, last_name)`).eq('consultant_id', id).order('created_at', { ascending: false }),
+    supabase.from('consultant_terrain').select('*').eq('consultant_id', id).maybeSingle(),
+    supabase.from('consultant_iris_photos').select('*').eq('consultant_id', id).order('taken_at', { ascending: false })
   ]);
 
   // Handle plan -> versions -> sections (dependent chain, but eliminate N+1)
@@ -355,7 +359,9 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     medical_history: medicalHistoryResult.data || [],
     allergies_structured: allergiesResult.data || [],
     current_treatments: currentTreatmentsResult.data || [],
-    relationships: relationshipsResult.data || []
+    relationships: relationshipsResult.data || [],
+    terrain: terrainResult.data || null,
+    iris_photos: irisPhotosResult.data || []
   };
 }
 
