@@ -341,17 +341,107 @@ export type ConsultantPlan = {
   updated_at: string;
 };
 
+// ─── Journal enrichi types ──────────────────────────
+
+export type BristolType = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type MoodLevel = 'tres_bien' | 'bien' | 'neutre' | 'moyen' | 'mauvais';
+export type ExerciseIntensity = 'leger' | 'modere' | 'intense';
+export type IndicatorValueType = 'boolean' | 'number' | 'scale_1_5' | 'text';
+export type IndicatorCategory = 'hydratation' | 'alimentation' | 'respiration' | 'mouvement' | 'phytotherapie' | 'complement' | 'sommeil' | 'custom';
+export type ObservanceCategory = 'alimentation' | 'hydratation' | 'phytotherapie' | 'complement' | 'aromatologie' | 'hydrologie' | 'activite' | 'respiration' | 'sommeil' | 'equilibre_psycho' | 'technique_manuelle' | 'autre';
+export type ObservanceFrequency = 'daily' | 'weekly' | 'as_needed';
+
+export type CustomIndicatorValue = {
+  indicator_id: string;
+  value: boolean | number | string;
+  notes?: string;
+};
+
+export type JournalIndicator = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  label: string;
+  category: IndicatorCategory;
+  value_type: IndicatorValueType;
+  unit?: string | null;
+  target_value?: string | null;
+  source_plan_id?: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type ObservanceItem = {
+  id: string;
+  consultant_plan_id: string;
+  practitioner_id: string;
+  consultant_id: string;
+  label: string;
+  category: ObservanceCategory;
+  frequency: ObservanceFrequency;
+  weekly_target?: number | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type ObservanceLog = {
+  id: string;
+  observance_item_id: string;
+  consultant_id: string;
+  date: string;
+  done: boolean;
+  notes?: string | null;
+  created_at: string;
+  // Joined fields
+  label?: string;
+  category?: ObservanceCategory;
+  frequency?: ObservanceFrequency;
+};
+
+export type ObservanceCategoryRate = {
+  category: ObservanceCategory;
+  rate: number;
+  itemCount: number;
+};
+
+export type ObservanceSummary = {
+  globalRate: number;
+  categories: ObservanceCategoryRate[];
+  period: { start: string; end: string };
+};
+
 export type JournalEntry = {
   id: string;
   consultant_id: string;
   date: string;
-  mood?: '🙂' | '😐' | '🙁';
-  energy?: 'Bas' | 'Moyen' | 'Élevé';
+  // Legacy fields (kept for retrocompatibility)
+  mood?: string;
+  energy?: string;
   text?: string;
   adherence_hydratation: boolean;
   adherence_respiration: boolean;
   adherence_mouvement: boolean;
   adherence_plantes: boolean;
+  // Enriched fields
+  practitioner_id?: string | null;
+  sleep_quality?: number | null;
+  stress_level?: number | null;
+  energy_level?: number | null;
+  bristol_type?: number | null;
+  bristol_frequency?: number | null;
+  transit_notes?: string | null;
+  hydration_liters?: number | null;
+  hydration_type?: string | null;
+  hydration_notes?: string | null;
+  exercise_type?: string | null;
+  exercise_duration_minutes?: number | null;
+  exercise_intensity?: ExerciseIntensity | null;
+  exercise_notes?: string | null;
+  custom_indicators?: CustomIndicatorValue[];
+  source?: 'practitioner' | 'consultant' | 'mobile';
+  updated_at?: string;
   created_at: string;
 };
 
@@ -611,6 +701,9 @@ export type ConsultantWithDetails = Consultant & {
   relationships?: ConsultantRelationship[];
   terrain?: ConsultantTerrain | null;
   iris_photos?: ConsultantIrisPhoto[];
+  journal_indicators?: JournalIndicator[];
+  observance_items?: ObservanceItem[];
+  observance_logs_recent?: ObservanceLog[];
 };
 
 export type ConsultantDrawing = {

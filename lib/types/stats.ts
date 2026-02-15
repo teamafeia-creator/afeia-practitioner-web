@@ -13,6 +13,9 @@ export interface PractitionerStats {
   carePlansCount: number;
   carePlansShared: number;
   topConcerns: { concern: string; count: number }[];
+  avgObservanceRate: number;
+  lowObservanceConsultants: Array<{ consultant_id: string; name: string; rate: number }>;
+  inactiveJournalConsultants: Array<{ consultant_id: string; name: string; last_entry_date: string | null }>;
 }
 
 export type PeriodKey = 'this_week' | 'this_month' | 'this_quarter' | 'this_year' | 'custom';

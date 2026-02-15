@@ -15,6 +15,8 @@ import {
   Plus,
   RefreshCw,
   Banknote,
+  Activity,
+  BookOpen,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
@@ -578,6 +580,113 @@ export default function DashboardPage() {
                   label="CA mensuel"
                   color="#5B8C6E"
                 />
+              </div>
+            </motion.section>
+          )}
+
+          {/* Suivi des programmes */}
+          {!statsLoading && (stats.avgObservanceRate > 0 || stats.avgJournalFillRate > 0 || stats.lowObservanceConsultants.length > 0 || stats.inactiveJournalConsultants.length > 0) && (
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.3 }}
+            >
+              <h2 className="text-xl font-semibold font-serif text-charcoal mb-4" style={{ letterSpacing: '-0.02em' }}>
+                Suivi des programmes
+              </h2>
+              <div className="bg-white border border-divider rounded-xl p-5 shadow-card space-y-4">
+                {/* Observance rate bar */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2 text-sm font-medium text-charcoal">
+                      <Activity className="h-4 w-4 text-sage" />
+                      Observance globale
+                    </div>
+                    <span className="text-sm font-semibold" style={{
+                      color: stats.avgObservanceRate >= 75 ? '#7BAE7F' : stats.avgObservanceRate >= 50 ? '#D4A060' : '#D4738B'
+                    }}>
+                      {stats.avgObservanceRate}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 bg-divider rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${stats.avgObservanceRate}%`,
+                        backgroundColor: stats.avgObservanceRate >= 75 ? '#7BAE7F' : stats.avgObservanceRate >= 50 ? '#D4A060' : '#D4738B',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Journal fill rate bar */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2 text-sm font-medium text-charcoal">
+                      <BookOpen className="h-4 w-4 text-sage" />
+                      Remplissage journal
+                    </div>
+                    <span className="text-sm font-semibold" style={{
+                      color: stats.avgJournalFillRate >= 75 ? '#7BAE7F' : stats.avgJournalFillRate >= 50 ? '#D4A060' : '#D4738B'
+                    }}>
+                      {stats.avgJournalFillRate}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 bg-divider rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${stats.avgJournalFillRate}%`,
+                        backgroundColor: stats.avgJournalFillRate >= 75 ? '#7BAE7F' : stats.avgJournalFillRate >= 50 ? '#D4A060' : '#D4738B',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Alerts section */}
+                {(stats.lowObservanceConsultants.length > 0 || stats.inactiveJournalConsultants.length > 0) && (
+                  <div className="pt-3 border-t border-divider">
+                    <h3 className="flex items-center gap-1.5 text-sm font-semibold text-charcoal mb-3">
+                      <AlertTriangle className="h-4 w-4 text-gold" />
+                      Alertes
+                    </h3>
+                    <div className="space-y-1.5">
+                      {stats.lowObservanceConsultants.map((c) => (
+                        <button
+                          key={c.consultant_id}
+                          onClick={() => router.push(`/consultants/${c.consultant_id}`)}
+                          className="w-full text-left flex items-center justify-between p-2 rounded-lg hover:bg-cream transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Avatar name={c.name} size="sm" />
+                            <span className="text-sm text-charcoal">{c.name}</span>
+                          </div>
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{
+                            backgroundColor: c.rate < 25 ? '#D4738B20' : '#D4A06020',
+                            color: c.rate < 25 ? '#D4738B' : '#D4A060',
+                          }}>
+                            Obs. {c.rate}%
+                          </span>
+                        </button>
+                      ))}
+                      {stats.inactiveJournalConsultants.map((c) => (
+                        <button
+                          key={c.consultant_id}
+                          onClick={() => router.push(`/consultants/${c.consultant_id}`)}
+                          className="w-full text-left flex items-center justify-between p-2 rounded-lg hover:bg-cream transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Avatar name={c.name} size="sm" />
+                            <span className="text-sm text-charcoal">{c.name}</span>
+                          </div>
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-stone/10 text-stone">
+                            Journal inactif
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.section>
           )}
