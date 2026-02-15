@@ -412,7 +412,7 @@ status IN ('pending', 'accepted', 'cancelled', 'expired')
 | Colonne | Type | Contraintes | Description |
 |---------|------|-------------|-------------|
 | `id` | uuid | PK, DEFAULT gen_random_uuid() | Identifiant unique |
-| `patient_id` | uuid | NOT NULL, FK -> consultants(id) | Consultant |
+| `consultant_id` | uuid | NOT NULL, FK -> consultants(id) | Consultant |
 | `consultant_user_id` | uuid | NOT NULL | ID du compte utilisateur |
 | `created_at` | timestamptz | NOT NULL, DEFAULT now() | Date de creation |
 
