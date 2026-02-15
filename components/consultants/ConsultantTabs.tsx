@@ -69,6 +69,9 @@ import {
   Droplets,
   Wind,
   Paperclip,
+  Settings,
+  Dumbbell,
+  Moon,
 } from 'lucide-react';
 import type {
   AnamnesisAnswers,
@@ -91,8 +94,26 @@ import type {
   SurchargeLevel,
   ConstitutionType,
   DiatheseType,
+  JournalIndicator,
+  ObservanceItem,
+  ObservanceLog,
+  ObservanceSummary,
+  CustomIndicatorValue,
+  BristolType,
+  ExerciseIntensity,
+  CycleProfile,
+  CycleEntry,
 } from '../../lib/types';
 import { upsertTerrain, updateIrisPhotoAnnotations, deleteIrisPhoto } from '../../lib/queries/terrain';
+import { upsertCycleProfile } from '../../lib/queries/cycle';
+import { CYCLE_PHASES, CYCLE_REGULARITY_LABELS, FLOW_LABELS } from '../../lib/cycle-constants';
+import { identifyCycleStarts, getCycleContext, calculateAverageCycleLength, getCycleDay as getCycleDayUtil, getCyclePhaseForDay, buildPhaseMap } from '../../lib/cycle-utils';
+import { CyclePhaseBadge } from '../cycle/CyclePhaseBadge';
+import { CycleCalendar } from '../cycle/CycleCalendar';
+import { CycleOverlayChart } from '../cycle/CycleOverlayChart';
+import { SymptomGrid } from '../cycle/SymptomGrid';
+import { CycleCorrelationTable } from '../cycle/CycleCorrelationTable';
+import { CycleProfileEditor } from '../cycle/CycleProfileEditor';
 import {
   CONSTITUTIONS,
   CONSTITUTION_MAP,
@@ -119,6 +140,24 @@ import { VitalityIndicator } from '../terrain/VitalityIndicator';
 import { IrisViewer } from '../terrain/IrisViewer';
 import { IrisComparison } from '../terrain/IrisComparison';
 import { IrisUploader } from '../terrain/IrisUploader';
+import { MOOD_OPTIONS, normalizeMood, EXERCISE_INTENSITIES } from '../../lib/journal-constants';
+import { BristolScale } from '../journal/BristolScale';
+import { IndicatorDisplay } from '../journal/IndicatorDisplay';
+import { IndicatorForm } from '../journal/IndicatorForm';
+import { ObservanceChart } from '../journal/ObservanceChart';
+import { TransitTimeline } from '../journal/TransitTimeline';
+import { ObservanceGeneratorModal } from '../journal/ObservanceGeneratorModal';
+import { upsertJournalEntryV2, getTransitHistory } from '../../lib/queries/journal';
+import {
+  createJournalIndicator,
+  updateJournalIndicator,
+  deleteJournalIndicator,
+} from '../../lib/queries/journal';
+import {
+  bulkCreateObservanceItems,
+  deleteObservanceItem,
+  calculateObservanceRates,
+} from '../../lib/queries/observance';
 import {
   createMedicalHistoryEntry,
   updateMedicalHistoryEntry,
@@ -185,6 +224,7 @@ const TABS = [
   T.tabRendezVous,
   T.tabAnamnese,
   T.tabBilanTerrain,
+  T.tabCycle,
   T.tabBagueConnectee,
   T.tabJournal,
   T.tabNotesSeance,
@@ -202,6 +242,7 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
   [T.tabRendezVous]: { title: T.tabRendezVous, description: T.descRendezVous },
   [T.tabAnamnese]: { title: T.tabAnamnese, description: T.descAnamnese },
   [T.tabBilanTerrain]: { title: T.tabBilanTerrain, description: T.descBilanTerrain },
+  [T.tabCycle]: { title: T.tabCycle, description: T.descCycle },
   [T.tabBagueConnectee]: { title: T.tabBagueConnectee, description: T.descBagueConnectee },
   [T.tabJournal]: { title: T.tabJournal, description: T.descJournal },
   [T.tabNotesSeance]: { title: T.tabNotesSeance, description: T.descNotesSeance },
@@ -227,6 +268,7 @@ const SIDEBAR_GROUPS = [
       { tab: T.tabConseillancier as Tab, label: 'Conseillancier', icon: FileText },
       { tab: T.tabRendezVous as Tab, label: 'Rendez-vous', icon: Calendar },
       { tab: T.tabJournal as Tab, label: 'Journal', icon: BookOpen },
+      { tab: T.tabCycle as Tab, label: 'Cycle', icon: Moon, cycleOnly: true },
     ],
   },
   {
@@ -326,7 +368,19 @@ function areJournalEntriesEqual(
     Boolean(first.adherence_hydratation) === Boolean(second.adherence_hydratation) &&
     Boolean(first.adherence_respiration) === Boolean(second.adherence_respiration) &&
     Boolean(first.adherence_mouvement) === Boolean(second.adherence_mouvement) &&
-    Boolean(first.adherence_plantes) === Boolean(second.adherence_plantes)
+    Boolean(first.adherence_plantes) === Boolean(second.adherence_plantes) &&
+    (first.sleep_quality ?? null) === (second.sleep_quality ?? null) &&
+    (first.stress_level ?? null) === (second.stress_level ?? null) &&
+    (first.energy_level ?? null) === (second.energy_level ?? null) &&
+    (first.bristol_type ?? null) === (second.bristol_type ?? null) &&
+    (first.bristol_frequency ?? null) === (second.bristol_frequency ?? null) &&
+    (first.transit_notes ?? '') === (second.transit_notes ?? '') &&
+    (first.hydration_liters ?? null) === (second.hydration_liters ?? null) &&
+    (first.hydration_type ?? '') === (second.hydration_type ?? '') &&
+    (first.exercise_type ?? '') === (second.exercise_type ?? '') &&
+    (first.exercise_duration_minutes ?? null) === (second.exercise_duration_minutes ?? null) &&
+    (first.exercise_intensity ?? null) === (second.exercise_intensity ?? null) &&
+    JSON.stringify(first.custom_indicators ?? []) === JSON.stringify(second.custom_indicators ?? [])
   );
 }
 
@@ -349,7 +403,22 @@ function buildJournalForm(entry?: JournalEntry): Partial<JournalEntry> {
     adherence_hydratation: entry?.adherence_hydratation ?? false,
     adherence_respiration: entry?.adherence_respiration ?? false,
     adherence_mouvement: entry?.adherence_mouvement ?? false,
-    adherence_plantes: entry?.adherence_plantes ?? false
+    adherence_plantes: entry?.adherence_plantes ?? false,
+    sleep_quality: entry?.sleep_quality ?? null,
+    stress_level: entry?.stress_level ?? null,
+    energy_level: entry?.energy_level ?? null,
+    bristol_type: entry?.bristol_type ?? null,
+    bristol_frequency: entry?.bristol_frequency ?? null,
+    transit_notes: entry?.transit_notes ?? null,
+    hydration_liters: entry?.hydration_liters ?? null,
+    hydration_type: entry?.hydration_type ?? null,
+    hydration_notes: entry?.hydration_notes ?? null,
+    exercise_type: entry?.exercise_type ?? null,
+    exercise_duration_minutes: entry?.exercise_duration_minutes ?? null,
+    exercise_intensity: entry?.exercise_intensity ?? null,
+    exercise_notes: entry?.exercise_notes ?? null,
+    custom_indicators: entry?.custom_indicators ?? [],
+    source: entry?.source ?? 'practitioner',
   };
 }
 
@@ -484,6 +553,17 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   const [journalEditing, setJournalEditing] = useState(false);
   const [journalSaving, setJournalSaving] = useState(false);
   const [journalForm, setJournalForm] = useState<Partial<JournalEntry>>({});
+  // ─── Enriched journal states ─────────────────────
+  const [journalIndicators, setJournalIndicators] = useState<JournalIndicator[]>(consultant.journal_indicators ?? []);
+  const [observanceItems, setObservanceItems] = useState<ObservanceItem[]>(consultant.observance_items ?? []);
+  const [observanceLogsRecent, setObservanceLogsRecent] = useState<ObservanceLog[]>(consultant.observance_logs_recent ?? []);
+  const [observanceSummary, setObservanceSummary] = useState<ObservanceSummary | null>(null);
+  const [showIndicatorForm, setShowIndicatorForm] = useState(false);
+  const [editingIndicator, setEditingIndicator] = useState<JournalIndicator | null>(null);
+  const [showObservanceGenerator, setShowObservanceGenerator] = useState(false);
+  const [transitHistory, setTransitHistory] = useState<Array<{ date: string; bristol_type: number }>>([]);
+  const [indicatorSaving, setIndicatorSaving] = useState(false);
+  const [observanceGenerating, setObservanceGenerating] = useState(false);
   const [noteEditing, setNoteEditing] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteContent, setNoteContent] = useState(consultant.practitioner_note?.content ?? '');
@@ -555,6 +635,92 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   const [irisViewerPhoto, setIrisViewerPhoto] = useState<ConsultantIrisPhoto | null>(null);
   const [irisCompareEye, setIrisCompareEye] = useState<IrisEye | null>(null);
   const [showIrisUploader, setShowIrisUploader] = useState(false);
+
+  // ─── Cycle states ──────────────────────────
+  const [cycleProfileEditing, setCycleProfileEditing] = useState(false);
+  const [cycleActivating, setCycleActivating] = useState(false);
+  const [cycleCalendarMonth, setCycleCalendarMonth] = useState(new Date().getMonth());
+  const [cycleCalendarYear, setCycleCalendarYear] = useState(new Date().getFullYear());
+
+  const cycleProfile = consultantState.cycle_profile ?? null;
+  const cycleEntries = useMemo(() => consultantState.cycle_entries ?? [], [consultantState.cycle_entries]);
+  const cycleIsTracking = cycleProfile?.is_tracking === true;
+
+  const cycleContext = useMemo(() => {
+    if (!cycleIsTracking || !cycleProfile) return null;
+    return getCycleContext(
+      cycleEntries,
+      cycleProfile.average_cycle_length,
+      cycleProfile.average_period_length
+    );
+  }, [cycleIsTracking, cycleProfile, cycleEntries]);
+
+  const cycleStarts = useMemo(() => identifyCycleStarts(cycleEntries), [cycleEntries]);
+
+  const cycleHistory = useMemo(() => {
+    if (cycleStarts.length < 1) return [];
+    const history: { start: Date; length: number | null; periodDays: number; symptomCount: number }[] = [];
+    for (let i = 0; i < cycleStarts.length; i++) {
+      const start = cycleStarts[i];
+      const next = cycleStarts[i + 1] ?? null;
+      const length = next ? Math.round((next.getTime() - start.getTime()) / 86_400_000) : null;
+      const startStr = start.toISOString().slice(0, 10);
+      const endStr = next ? next.toISOString().slice(0, 10) : '9999-12-31';
+      const cycleE = cycleEntries.filter((e) => e.date >= startStr && e.date < endStr);
+      const periodDays = cycleE.filter((e) => e.is_period).length;
+      const symptomCount = cycleE.reduce((acc, e) => {
+        let count = 0;
+        if (e.symptom_cramps) count++;
+        if (e.symptom_bloating) count++;
+        if (e.symptom_headache) count++;
+        if (e.symptom_breast_tenderness) count++;
+        if (e.symptom_mood_swings) count++;
+        if (e.symptom_fatigue) count++;
+        if (e.symptom_acne) count++;
+        if (e.symptom_cravings) count++;
+        if (e.symptom_insomnia) count++;
+        if (e.symptom_water_retention) count++;
+        if (e.symptom_back_pain) count++;
+        if (e.symptom_nausea) count++;
+        if (e.symptom_libido_high) count++;
+        return acc + count;
+      }, 0);
+      history.push({ start, length, periodDays, symptomCount });
+    }
+    return history.reverse().slice(0, 12);
+  }, [cycleStarts, cycleEntries]);
+
+  async function handleActivateCycleTracking() {
+    setCycleActivating(true);
+    try {
+      const result = await upsertCycleProfile(consultant.id, consultantState.practitioner_id, {
+        is_tracking: true,
+      });
+      if (result) {
+        setConsultantState((prev) => ({ ...prev, cycle_profile: result }));
+        setToast({ title: 'Suivi du cycle activé', variant: 'success' });
+      }
+    } catch {
+      setToast({ title: 'Erreur lors de l\'activation', variant: 'error' });
+    } finally {
+      setCycleActivating(false);
+    }
+  }
+
+  async function handleSaveCycleProfile(data: Partial<CycleProfile>) {
+    const result = await upsertCycleProfile(
+      consultant.id,
+      consultantState.practitioner_id,
+      data
+    );
+    if (result) {
+      setConsultantState((prev) => ({ ...prev, cycle_profile: result }));
+      setCycleProfileEditing(false);
+      setToast({ title: 'Profil du cycle mis à jour', variant: 'success' });
+    } else {
+      setToast({ title: 'Erreur', variant: 'error' });
+    }
+  }
 
   // Extract substance names from plan content for contraindication checking
   const substanceNamesFromPlan = useMemo(() => {
@@ -713,11 +879,23 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     setTerrainData(consultant.terrain ?? {});
     setIrisPhotos(consultant.iris_photos ?? []);
     setTerrainEditing(false);
+    setJournalIndicators(consultant.journal_indicators ?? []);
+    setObservanceItems(consultant.observance_items ?? []);
+    setObservanceLogsRecent(consultant.observance_logs_recent ?? []);
     setProfileEditing(false);
     setAnamnesisEditing(false);
     setJournalEditing(false);
     setNoteEditing(false);
   }, [consultant]);
+
+  // Load transit history and observance summary
+  useEffect(() => {
+    if (!consultant.id) return;
+    getTransitHistory(consultant.id, 30).then(setTransitHistory).catch(() => {});
+    if ((consultant.observance_items ?? []).length > 0) {
+      calculateObservanceRates(consultant.id, 7).then(setObservanceSummary).catch(() => {});
+    }
+  }, [consultant.id, consultant.observance_items]);
 
   useEffect(() => {
     setPlanForm(initialPlanContent);
@@ -991,10 +1169,12 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     try {
       const saved = await upsertJournalEntry(consultant.id, {
         ...journalForm,
-        date: journalForm.date
+        date: journalForm.date,
+        practitioner_id: consultant.practitioner_id,
+        source: 'practitioner',
       });
       if (!saved) {
-        throw new Error('Impossible d’enregistrer le journal.');
+        throw new Error('Impossible d\u2019enregistrer le journal.');
       }
       setConsultantState((prev) => {
         const otherEntries = (prev.journal_entries ?? []).filter((entry) => entry.id !== saved.id);
@@ -1007,6 +1187,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       });
       setJournalForm(buildJournalForm(saved));
       setJournalEditing(false);
+      // Refresh transit history
+      getTransitHistory(consultant.id, 30).then(setTransitHistory).catch(() => {});
       setToast({
         title: 'Journal enregistré',
         description: 'Les informations ont été mises à jour.',
@@ -1015,11 +1197,72 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
     } catch (error) {
       setToast({
         title: 'Erreur de sauvegarde',
-        description: error instanceof Error ? error.message : 'Impossible d’enregistrer le journal.',
+        description: error instanceof Error ? error.message : 'Impossible d\u2019enregistrer le journal.',
         variant: 'error'
       });
     } finally {
       setJournalSaving(false);
+    }
+  }
+
+  async function handleSaveIndicator(data: { label: string; category: string; value_type: string; unit?: string; target_value?: string }) {
+    setIndicatorSaving(true);
+    try {
+      if (editingIndicator) {
+        const updated = await updateJournalIndicator(editingIndicator.id, data as Partial<JournalIndicator>);
+        if (updated) {
+          setJournalIndicators((prev) => prev.map((ind) => ind.id === updated.id ? updated : ind));
+        }
+      } else {
+        const created = await createJournalIndicator({
+          consultant_id: consultant.id,
+          practitioner_id: consultant.practitioner_id,
+          label: data.label,
+          category: data.category as JournalIndicator['category'],
+          value_type: data.value_type as JournalIndicator['value_type'],
+          unit: data.unit ?? null,
+          target_value: data.target_value ?? null,
+          sort_order: journalIndicators.length,
+          is_active: true,
+        });
+        if (created) {
+          setJournalIndicators((prev) => [...prev, created]);
+        }
+      }
+      setShowIndicatorForm(false);
+      setEditingIndicator(null);
+      setToast({ title: 'Indicateur sauvegardé', variant: 'success' });
+    } catch {
+      setToast({ title: 'Erreur', description: 'Impossible de sauvegarder l\u2019indicateur.', variant: 'error' });
+    } finally {
+      setIndicatorSaving(false);
+    }
+  }
+
+  async function handleDeleteIndicator(id: string) {
+    try {
+      await deleteJournalIndicator(id);
+      setJournalIndicators((prev) => prev.filter((ind) => ind.id !== id));
+      setToast({ title: 'Indicateur supprimé', variant: 'success' });
+    } catch {
+      setToast({ title: 'Erreur', description: 'Impossible de supprimer l\u2019indicateur.', variant: 'error' });
+    }
+  }
+
+  async function handleGenerateObservance(items: Array<Omit<ObservanceItem, 'id' | 'created_at'>>) {
+    setObservanceGenerating(true);
+    try {
+      const created = await bulkCreateObservanceItems(items);
+      setObservanceItems((prev) => [...prev, ...created]);
+      setShowObservanceGenerator(false);
+      if (created.length > 0) {
+        calculateObservanceRates(consultant.id, 7).then(setObservanceSummary).catch(() => {});
+      }
+      setToast({ title: `${created.length} items d'observance créés`, variant: 'success' });
+    } catch {
+      setToast({ title: 'Erreur', description: 'Impossible de générer la checklist.', variant: 'error' });
+    } finally {
+      setObservanceGenerating(false);
     }
   }
 
@@ -1403,6 +1646,9 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 <Badge variant={isPremium ? 'premium' : 'standard'}>
                   {isPremium ? 'Premium' : 'Standard'}
                 </Badge>
+                {cycleIsTracking && cycleContext ? (
+                  <CyclePhaseBadge phase={cycleContext.phase} cycleDay={cycleContext.cycleDay} compact />
+                ) : null}
                 {consultantState.age ? <span>{consultantState.age} ans</span> : null}
                 {consultantState.city ? <span>· {consultantState.city}</span> : null}
               </div>
@@ -1458,7 +1704,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                   {group.label}
                 </div>
                 <div className="space-y-0.5">
-                  {group.items.map((item) => {
+                  {group.items.filter((item) => !(item as any).cycleOnly || consultantState.cycle_profile?.is_tracking).map((item) => {
                     const isActive = tab === item.tab;
                     const Icon = item.icon;
                     return (
@@ -1799,6 +2045,40 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          {/* ─── Card Suivi du cycle menstruel ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold">Suivi du cycle menstruel</h2>
+                  <p className="text-xs text-stone">Activez le suivi du cycle pour ce consultant.</p>
+                </div>
+                {cycleIsTracking ? (
+                  <Badge variant="active">Actif</Badge>
+                ) : null}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {cycleIsTracking ? (
+                <div className="flex items-center gap-3 text-sm text-charcoal">
+                  <Moon className="h-4 w-4 text-violet-500" />
+                  <span>Le suivi du cycle est activé. Accédez à l&apos;onglet <strong>Cycle</strong> pour les détails.</span>
+                  <Button variant="secondary" onClick={() => setTab(T.tabCycle as Tab)}>
+                    Voir le cycle
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-stone">
+                    Le suivi du cycle menstruel permet de corréler les symptômes, l&apos;énergie et les données de sommeil/HRV avec les phases du cycle. Activez-le pour afficher l&apos;onglet Cycle et les indicateurs de phase dans le journal et la bague connectée.
+                  </p>
+                  <Button variant="primary" onClick={handleActivateCycleTracking} loading={cycleActivating}>
+                    Activer le suivi du cycle
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -2706,6 +2986,179 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </div>
       )}
 
+      {/* ═══════════════ CYCLE TAB ═══════════════ */}
+      {tab === T.tabCycle && cycleIsTracking && cycleProfile && (
+        <div className="space-y-4">
+          {/* ─── Section 1: Profil du cycle (compact) ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold">Profil du cycle</h2>
+                {!cycleProfileEditing && (
+                  <Button variant="secondary" onClick={() => setCycleProfileEditing(true)}>
+                    Modifier
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {cycleProfileEditing ? (
+                <CycleProfileEditor
+                  profile={cycleProfile}
+                  onSave={handleSaveCycleProfile}
+                  onCancel={() => setCycleProfileEditing(false)}
+                />
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {cycleContext ? (
+                      <CyclePhaseBadge phase={cycleContext.phase} cycleDay={cycleContext.cycleDay} />
+                    ) : (
+                      <span className="text-xs text-stone italic">Aucun cycle identifié</span>
+                    )}
+                    {cycleContext && (
+                      <span className="text-xs text-stone">
+                        Prochaines règles estimées : ~{cycleContext.nextPeriod.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                        {' '}(dans {Math.max(0, Math.round((cycleContext.nextPeriod.getTime() - Date.now()) / 86_400_000))} jours)
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Durée moyenne</p>
+                      <p className="mt-1 text-sm text-charcoal">{cycleProfile.average_cycle_length} jours</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Durée des règles</p>
+                      <p className="mt-1 text-sm text-charcoal">{cycleProfile.average_period_length} jours</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Régularité</p>
+                      <p className="mt-1 text-sm text-charcoal">{CYCLE_REGULARITY_LABELS[cycleProfile.cycle_regularity]}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Contraception</p>
+                      <p className="mt-1 text-sm text-charcoal">{cycleProfile.contraception || <span className="italic text-stone">Non renseigné</span>}</p>
+                    </div>
+                  </div>
+                  {cycleProfile.notes && (
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Notes</p>
+                      <p className="mt-1 text-sm text-charcoal whitespace-pre-line">{cycleProfile.notes}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 2: Calendrier du cycle ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Calendrier du cycle</h2>
+            </CardHeader>
+            <CardContent>
+              <CycleCalendar
+                entries={cycleEntries}
+                cycleProfile={cycleProfile}
+                month={cycleCalendarMonth}
+                year={cycleCalendarYear}
+                onMonthChange={(m, y) => { setCycleCalendarMonth(m); setCycleCalendarYear(y); }}
+              />
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 3: Symptômes du cycle en cours ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Symptômes du cycle en cours</h2>
+            </CardHeader>
+            <CardContent>
+              <SymptomGrid entries={cycleEntries} cycleProfile={cycleProfile} />
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 4: Superposition cycle × données ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Superposition cycle × données de suivi</h2>
+              <p className="text-xs text-stone">Sélectionnez 1 ou 2 variables pour les superposer aux phases du cycle.</p>
+            </CardHeader>
+            <CardContent>
+              <CycleOverlayChart
+                entries={cycleEntries}
+                cycleProfile={cycleProfile}
+                journalEntries={journalEntries}
+                wearableSummaries={wearableSummaries}
+              />
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 5: Corrélations ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Corrélations par phase</h2>
+              <p className="text-xs text-stone">Moyennes des indicateurs de suivi par phase du cycle.</p>
+            </CardHeader>
+            <CardContent>
+              <CycleCorrelationTable
+                entries={cycleEntries}
+                cycleProfile={cycleProfile}
+                journalEntries={journalEntries}
+                wearableSummaries={wearableSummaries}
+              />
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 6: Historique des cycles ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Historique des cycles</h2>
+            </CardHeader>
+            <CardContent>
+              {cycleHistory.length === 0 ? (
+                <EmptyState
+                  icon="inbox"
+                  title="Aucun cycle identifié"
+                  description="Les cycles apparaîtront lorsque le consultant aura logué ses règles."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {cycleStarts.length >= 2 && (
+                    <div className="flex items-center gap-4 text-xs text-stone">
+                      <span>Durée moyenne calculée : <strong className="text-charcoal">{calculateAverageCycleLength(cycleStarts)} jours</strong></span>
+                      <span>Cycles identifiés : <strong className="text-charcoal">{cycleStarts.length}</strong></span>
+                    </div>
+                  )}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-stone text-xs">
+                          <th className="py-2">Début</th>
+                          <th className="py-2">Durée cycle</th>
+                          <th className="py-2">Jours de règles</th>
+                          <th className="py-2">Symptômes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cycleHistory.map((cycle, i) => (
+                          <tr key={i} className="border-t border-black/5">
+                            <td className="py-2">{cycle.start.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                            <td className="py-2">{cycle.length != null ? `${cycle.length} jours` : 'En cours'}</td>
+                            <td className="py-2">{cycle.periodDays} jours</td>
+                            <td className="py-2">{cycle.symptomCount}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {tab === T.tabBagueConnectee && (
         <Card>
           <CardHeader>
@@ -2715,6 +3168,53 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             </div>
           </CardHeader>
           <CardContent>
+            {/* Cycle phase bar overlay */}
+            {cycleIsTracking && cycleContext && wearableSummaries.length > 0 && (
+              <div className="mb-4 rounded-lg bg-white/60 p-3 border border-divider">
+                <p className="text-[10px] uppercase tracking-wide text-stone mb-2">Phases du cycle (60 derniers jours)</p>
+                <div className="flex h-4 rounded-full overflow-hidden">
+                  {(() => {
+                    const end = new Date();
+                    const start = new Date();
+                    start.setDate(start.getDate() - 60);
+                    const pm = buildPhaseMap(
+                      cycleStarts,
+                      cycleProfile!.average_cycle_length,
+                      cycleProfile!.average_period_length,
+                      start,
+                      end
+                    );
+                    const days: { date: string; phase: string }[] = [];
+                    const d = new Date(start);
+                    while (d <= end) {
+                      const key = d.toISOString().slice(0, 10);
+                      const info = pm.get(key);
+                      if (info) days.push({ date: key, phase: info.phase });
+                      d.setDate(d.getDate() + 1);
+                    }
+                    // Group consecutive same-phase days
+                    const bands: { phase: string; count: number }[] = [];
+                    for (const day of days) {
+                      const last = bands[bands.length - 1];
+                      if (last && last.phase === day.phase) { last.count++; }
+                      else { bands.push({ phase: day.phase, count: 1 }); }
+                    }
+                    const total = days.length;
+                    return bands.map((band, i) => {
+                      const meta = CYCLE_PHASES[band.phase as keyof typeof CYCLE_PHASES];
+                      return (
+                        <div
+                          key={i}
+                          style={{ width: `${(band.count / total) * 100}%`, backgroundColor: meta?.color || '#ccc' }}
+                          className="h-full opacity-60"
+                          title={meta?.label}
+                        />
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
             {!isPremium ? (
               <div className="relative overflow-hidden rounded-lg border border-dashed border-sage/20 bg-sage-light/50 p-6 text-sm text-charcoal">
                 <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-sage shadow-soft">
@@ -2801,186 +3301,415 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       )}
 
       {tab === 'Journal' && (
-        <Card className={cn(journalEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
-          <CardHeader>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold">Journal</h2>
-              {!journalEditing ? (
-                <Button variant="secondary" onClick={() => setJournalEditing(true)}>
-                  Modifier
-                </Button>
-              ) : null}
-            </div>
-            {journalEditing ? <EditBanner label="Enregistrez vos modifications du journal." /> : null}
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="rounded-lg bg-white/60 p-5 border border-divider">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-charcoal">Dernière entrée</p>
+        <div className="space-y-4">
+          {/* ─── Section 1: Synthèse du jour ───── */}
+          <Card className={cn(journalEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold">Journal enrichi</h2>
                   <span className="text-xs text-stone">
-                    {journalForm.date ? formatDate(journalForm.date) : '—'}
+                    {journalForm.date ? formatDate(journalForm.date) : 'Aucune entrée'}
                   </span>
                 </div>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-stone">Humeur</p>
-                    {journalEditing ? (
-                      <Select
-                        className="mt-2"
-                        value={journalForm.mood ?? ''}
-                        onChange={(event) =>
-                          setJournalForm((prev) => ({ ...prev, mood: event.target.value as JournalEntry['mood'] }))
-                        }
-                      >
-                        <option value="">Selectionner</option>
-                        <option value="Positif">Positif</option>
-                        <option value="Neutre">Neutre</option>
-                        <option value="Negatif">Negatif</option>
-                      </Select>
-                    ) : (
-                      <p className="mt-2 text-sm">{renderValue(journalForm.mood)}</p>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-stone">Énergie</p>
-                    {journalEditing ? (
-                      <Select
-                        className="mt-2"
-                        value={journalForm.energy ?? ''}
-                        onChange={(event) =>
-                          setJournalForm((prev) => ({
-                            ...prev,
-                            energy: event.target.value as JournalEntry['energy']
-                          }))
-                        }
-                      >
-                        <option value="">Sélectionner</option>
-                        <option value="Bas">Bas</option>
-                        <option value="Moyen">Moyen</option>
-                        <option value="Élevé">Élevé</option>
-                      </Select>
-                    ) : (
-                      <p className="mt-2 text-sm">{renderValue(journalForm.energy)}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-xs uppercase tracking-wide text-stone">Notes du consultant</p>
-                  {journalEditing ? (
-                    <Textarea
-                      className="mt-2"
-                      value={journalForm.text ?? ''}
-                      onChange={(event) => setJournalForm((prev) => ({ ...prev, text: event.target.value }))}
-                      placeholder="Ressenti, événements marquants..."
-                      rows={4}
-                    />
-                  ) : (
-                    <p className="mt-2 text-sm whitespace-pre-line break-words">
-                      {renderValue(journalForm.text)}
-                    </p>
-                  )}
-                </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {(
-                    [
-                      { key: 'adherence_hydratation', label: 'Hydratation' },
-                      { key: 'adherence_respiration', label: 'Respiration' },
-                      { key: 'adherence_mouvement', label: 'Mouvement' },
-                      { key: 'adherence_plantes', label: 'Plantes' }
-                    ] as const
-                  ).map((item) => (
-                    <div key={item.key} className="flex items-center justify-between rounded-sm bg-cream/80 px-3 py-2">
-                      <span className="text-xs text-stone">{item.label}</span>
-                      {journalEditing ? (
-                        <Select
-                          value={journalForm[item.key] ? 'Oui' : 'Non'}
-                          onChange={(event) =>
-                            setJournalForm((prev) => ({
-                              ...prev,
-                              [item.key]: event.target.value === 'Oui'
-                            }))
-                          }
-                          className="max-w-[120px] text-xs"
-                        >
-                          <option value="Oui">Oui</option>
-                          <option value="Non">Non</option>
-                        </Select>
-                      ) : (
-                        <span className="text-xs font-medium text-charcoal">
-                          {journalForm[item.key] ? 'Oui' : 'Non'}
-                        </span>
+                <div className="flex gap-2">
+                  {!journalEditing ? (
+                    <>
+                      <Button variant="secondary" onClick={() => setJournalEditing(true)}>
+                        Modifier
+                      </Button>
+                      {!journalForm.id && (
+                        <Button variant="primary" onClick={() => { setJournalForm(buildJournalForm(undefined)); setJournalEditing(true); }}>
+                          Nouvelle entrée
+                        </Button>
                       )}
-                    </div>
-                  ))}
+                    </>
+                  ) : null}
                 </div>
               </div>
-
-              {journalEditing ? (
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="primary"
-                    onClick={handleSaveJournal}
-                    loading={journalSaving}
-                    disabled={!isJournalDirty || journalSaving}
-                  >
-                    Enregistrer
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setJournalForm(initialJournal);
-                      setJournalEditing(false);
-                    }}
-                    disabled={journalSaving}
-                  >
-                    Annuler
-                  </Button>
-                </div>
-              ) : null}
-
-              <div className="space-y-3">
-                <p className="text-xs uppercase tracking-wide text-stone">Historique</p>
-                {journalEntries.length === 0 ? (
-                  <EmptyState
-                    icon="documents"
-                    title="Aucune entree de journal"
-                    description="Commencez un suivi quotidien en ajoutant une premiere note."
-                    action={
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          setJournalForm(buildJournalForm(undefined));
-                          setJournalEditing(true);
-                        }}
-                      >
-                        Ajouter une entree
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <div className="grid gap-3">
-                    {journalEntries.map((entry) => (
-                      <div key={entry.id} className="rounded-lg bg-white/60 p-4 border border-divider">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
-                          <div className="flex items-center gap-2 text-sm">
-                            {renderValue(entry.mood)}
-                            {renderValue(entry.energy)}
-                          </div>
-                        </div>
-                        <p className="mt-2 text-sm whitespace-pre-line break-words">
-                          {renderValue(entry.text)}
-                        </p>
-                        <div className="mt-3">{renderAdherence(entry)}</div>
+              {journalEditing ? <EditBanner label="Enregistrez vos modifications du journal." /> : null}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-5">
+                {/* Mood + Energy/Sleep/Stress row */}
+                <div className="grid gap-4 md:grid-cols-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone mb-2">Humeur</p>
+                    {journalEditing ? (
+                      <div className="flex gap-1">
+                        {MOOD_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setJournalForm((prev) => ({ ...prev, mood: opt.value }))}
+                            className={cn(
+                              'flex flex-col items-center p-1.5 rounded-lg border transition-all text-center min-w-[40px]',
+                              normalizeMood(journalForm.mood) === opt.value
+                                ? 'border-sage bg-sage-light ring-1 ring-sage/30'
+                                : 'border-divider hover:border-sage/30'
+                            )}
+                            title={opt.label}
+                          >
+                            <span className="text-lg">{opt.emoji}</span>
+                            <span className="text-[9px] text-stone">{opt.label}</span>
+                          </button>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{MOOD_OPTIONS.find((m) => m.value === normalizeMood(journalForm.mood))?.emoji ?? '😐'}</span>
+                        <span className="text-sm text-charcoal">{MOOD_OPTIONS.find((m) => m.value === normalizeMood(journalForm.mood))?.label ?? 'Neutre'}</span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Energy /10 */}
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone mb-2">Énergie /10</p>
+                    {journalEditing ? (
+                      <input type="range" min={1} max={10} value={journalForm.energy_level ?? 5}
+                        onChange={(e) => setJournalForm((prev) => ({ ...prev, energy_level: parseInt(e.target.value) }))}
+                        className="w-full accent-sage"
+                      />
+                    ) : (
+                      <Badge variant={journalForm.energy_level && journalForm.energy_level >= 7 ? 'success' : 'info'}>
+                        {journalForm.energy_level ?? '—'} / 10
+                      </Badge>
+                    )}
+                  </div>
+                  {/* Sleep /10 */}
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone mb-2">Sommeil /10</p>
+                    {journalEditing ? (
+                      <input type="range" min={1} max={10} value={journalForm.sleep_quality ?? 5}
+                        onChange={(e) => setJournalForm((prev) => ({ ...prev, sleep_quality: parseInt(e.target.value) }))}
+                        className="w-full accent-sage"
+                      />
+                    ) : (
+                      <Badge variant={journalForm.sleep_quality && journalForm.sleep_quality >= 7 ? 'success' : 'info'}>
+                        {journalForm.sleep_quality ?? '—'} / 10
+                      </Badge>
+                    )}
+                  </div>
+                  {/* Stress /10 */}
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-stone mb-2">Stress /10</p>
+                    {journalEditing ? (
+                      <input type="range" min={1} max={10} value={journalForm.stress_level ?? 5}
+                        onChange={(e) => setJournalForm((prev) => ({ ...prev, stress_level: parseInt(e.target.value) }))}
+                        className="w-full accent-terracotta"
+                      />
+                    ) : (
+                      <Badge variant={journalForm.stress_level && journalForm.stress_level <= 3 ? 'success' : journalForm.stress_level && journalForm.stress_level >= 7 ? 'attention' : 'info'}>
+                        {journalForm.stress_level ?? '—'} / 10
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Transit Bristol */}
+                <div className="rounded-lg bg-white/60 p-4 border border-divider">
+                  <p className="text-xs uppercase tracking-wide text-stone mb-3">Transit (échelle de Bristol)</p>
+                  <BristolScale
+                    value={(journalForm.bristol_type as BristolType) ?? null}
+                    onChange={(type) => journalEditing && setJournalForm((prev) => ({ ...prev, bristol_type: type }))}
+                    readonly={!journalEditing}
+                    size="md"
+                  />
+                  {journalEditing && (
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <div>
+                        <label className="text-xs text-stone">Fréquence (selles/jour)</label>
+                        <Input type="number" min={0} max={10}
+                          value={journalForm.bristol_frequency ?? ''}
+                          onChange={(e) => setJournalForm((prev) => ({ ...prev, bristol_frequency: parseInt(e.target.value) || null }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-stone">Notes transit</label>
+                        <Input
+                          value={journalForm.transit_notes ?? ''}
+                          onChange={(e) => setJournalForm((prev) => ({ ...prev, transit_notes: e.target.value }))}
+                          placeholder="Ballonnements, douleurs..."
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hydration + Exercise */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-lg bg-white/60 p-4 border border-divider">
+                    <p className="text-xs uppercase tracking-wide text-stone mb-2 flex items-center gap-1">
+                      <Droplets className="h-3.5 w-3.5" /> Hydratation
+                    </p>
+                    {journalEditing ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Input type="number" step="0.1" min={0} max={5}
+                            value={journalForm.hydration_liters ?? ''}
+                            onChange={(e) => setJournalForm((prev) => ({ ...prev, hydration_liters: parseFloat(e.target.value) || null }))}
+                            className="w-20"
+                          />
+                          <span className="text-xs text-stone">litres</span>
+                        </div>
+                        <Input placeholder="Type (eau, tisane...)"
+                          value={journalForm.hydration_type ?? ''}
+                          onChange={(e) => setJournalForm((prev) => ({ ...prev, hydration_type: e.target.value }))}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-charcoal">{journalForm.hydration_liters ?? '—'} L</span>
+                        {journalForm.hydration_type && <span className="text-xs text-stone">({journalForm.hydration_type})</span>}
+                      </div>
+                    )}
+                  </div>
+                  <div className="rounded-lg bg-white/60 p-4 border border-divider">
+                    <p className="text-xs uppercase tracking-wide text-stone mb-2 flex items-center gap-1">
+                      <Dumbbell className="h-3.5 w-3.5" /> Exercice
+                    </p>
+                    {journalEditing ? (
+                      <div className="space-y-2">
+                        <Input placeholder="Type (marche, yoga...)"
+                          value={journalForm.exercise_type ?? ''}
+                          onChange={(e) => setJournalForm((prev) => ({ ...prev, exercise_type: e.target.value }))}
+                        />
+                        <div className="flex gap-2">
+                          <div className="flex items-center gap-1">
+                            <Input type="number" min={0}
+                              value={journalForm.exercise_duration_minutes ?? ''}
+                              onChange={(e) => setJournalForm((prev) => ({ ...prev, exercise_duration_minutes: parseInt(e.target.value) || null }))}
+                              className="w-16"
+                            />
+                            <span className="text-xs text-stone">min</span>
+                          </div>
+                          <Select value={journalForm.exercise_intensity ?? ''}
+                            onChange={(e) => setJournalForm((prev) => ({ ...prev, exercise_intensity: (e.target.value || null) as ExerciseIntensity | null }))}
+                            className="text-xs flex-1"
+                          >
+                            <option value="">Intensité</option>
+                            {EXERCISE_INTENSITIES.map((i) => <option key={i.value} value={i.value}>{i.label}</option>)}
+                          </Select>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-charcoal">
+                        {journalForm.exercise_type ? (
+                          <span>{journalForm.exercise_type} {journalForm.exercise_duration_minutes ? `— ${journalForm.exercise_duration_minutes} min` : ''} {journalForm.exercise_intensity ? `(${EXERCISE_INTENSITIES.find((i) => i.value === journalForm.exercise_intensity)?.label ?? ''})` : ''}</span>
+                        ) : <span className="italic text-stone">Non renseigné</span>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-stone mb-2">Notes</p>
+                  {journalEditing ? (
+                    <Textarea value={journalForm.text ?? ''}
+                      onChange={(e) => setJournalForm((prev) => ({ ...prev, text: e.target.value }))}
+                      placeholder="Ressenti, événements marquants..."
+                      rows={3}
+                    />
+                  ) : (
+                    <p className="text-sm whitespace-pre-line break-words">{renderValue(journalForm.text)}</p>
+                  )}
+                </div>
+
+                {/* Save/Cancel buttons */}
+                {journalEditing && (
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="primary" onClick={handleSaveJournal} loading={journalSaving} disabled={!isJournalDirty || journalSaving}>
+                      Enregistrer
+                    </Button>
+                    <Button variant="secondary" onClick={() => { setJournalForm(initialJournal); setJournalEditing(false); }} disabled={journalSaving}>
+                      Annuler
+                    </Button>
                   </div>
                 )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 2: Indicateurs personnalisés ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold">Indicateurs de suivi</h2>
+                <Button variant="secondary" size="sm" onClick={() => { setEditingIndicator(null); setShowIndicatorForm(true); }}>
+                  <Settings className="h-3.5 w-3.5 mr-1" /> Personnaliser
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {journalIndicators.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-sm text-stone mb-3">Configurez des indicateurs personnalisés pour suivre les habitudes de votre consultant.</p>
+                  <Button variant="secondary" onClick={() => { setEditingIndicator(null); setShowIndicatorForm(true); }}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter un indicateur
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {journalIndicators.map((indicator) => {
+                    const cv = (journalForm.custom_indicators ?? []).find((ci) => ci.indicator_id === indicator.id) ?? null;
+                    return (
+                      <div key={indicator.id} className="flex items-center gap-1">
+                        <div className="flex-1">
+                          <IndicatorDisplay
+                            indicator={indicator}
+                            value={cv}
+                            onChange={journalEditing ? (val) => {
+                              setJournalForm((prev) => {
+                                const existing = prev.custom_indicators ?? [];
+                                const filtered = existing.filter((ci) => ci.indicator_id !== indicator.id);
+                                return { ...prev, custom_indicators: [...filtered, val] };
+                              });
+                            } : undefined}
+                            readonly={!journalEditing}
+                          />
+                        </div>
+                        {!journalEditing && (
+                          <button
+                            onClick={() => handleDeleteIndicator(indicator.id)}
+                            className="p-1 text-stone hover:text-rose transition-colors"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 3: Observance du conseillancier ───── */}
+          {observanceItems.length > 0 && observanceSummary ? (
+            <Card>
+              <CardHeader>
+                <h2 className="text-sm font-semibold">Observance du programme</h2>
+              </CardHeader>
+              <CardContent>
+                <ObservanceChart summary={observanceSummary} />
+              </CardContent>
+            </Card>
+          ) : (
+            plans.some((p) => p.status === 'shared') && (
+              <Card>
+                <CardContent className="text-center py-6">
+                  <p className="text-sm text-stone mb-3">Générez la checklist d&apos;observance depuis le conseillancier partagé.</p>
+                  <Button variant="secondary" onClick={() => setShowObservanceGenerator(true)}>
+                    Générer la checklist d&apos;observance
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          )}
+
+          {/* ─── Section 5: Historique ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Historique</h2>
+            </CardHeader>
+            <CardContent>
+              {/* Transit Timeline */}
+              {transitHistory.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs uppercase tracking-wide text-stone mb-2">Transit — 30 derniers jours</p>
+                  <TransitTimeline data={transitHistory} days={30} />
+                </div>
+              )}
+
+              {journalEntries.length === 0 ? (
+                <EmptyState
+                  icon="documents"
+                  title="Aucune entrée de journal"
+                  description="Commencez un suivi quotidien en ajoutant une première note."
+                  action={
+                    <Button variant="secondary" onClick={() => { setJournalForm(buildJournalForm(undefined)); setJournalEditing(true); }}>
+                      Ajouter une entrée
+                    </Button>
+                  }
+                />
+              ) : (
+                <div className="grid gap-3">
+                  {journalEntries.slice(0, 20).map((entry) => {
+                    const moodInfo = MOOD_OPTIONS.find((m) => m.value === normalizeMood(entry.mood));
+                    // Compute cycle phase badge for this journal entry
+                    let entryPhase = null as { phase: import('../../lib/types').CyclePhase; cycleDay: number } | null;
+                    if (cycleIsTracking && cycleProfile && cycleStarts.length > 0) {
+                      const entryDate = new Date(entry.date);
+                      let relevantStart: Date | null = null;
+                      for (let si = cycleStarts.length - 1; si >= 0; si--) {
+                        if (cycleStarts[si].getTime() <= entryDate.getTime()) { relevantStart = cycleStarts[si]; break; }
+                      }
+                      if (relevantStart) {
+                        const day = getCycleDayUtil(entry.date, relevantStart);
+                        const phase = getCyclePhaseForDay(day, cycleProfile.average_cycle_length, cycleProfile.average_period_length);
+                        entryPhase = { phase, cycleDay: day };
+                      }
+                    }
+                    return (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        onClick={() => { setJournalForm(buildJournalForm(entry)); }}
+                        className="w-full text-left rounded-lg bg-white/60 p-4 border border-divider hover:bg-cream/50 transition-colors"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
+                            {entryPhase && <CyclePhaseBadge phase={entryPhase.phase} cycleDay={entryPhase.cycleDay} compact />}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {moodInfo && <span title={moodInfo.label}>{moodInfo.emoji}</span>}
+                            {entry.energy_level != null && <Badge variant="info">E {entry.energy_level}</Badge>}
+                            {entry.bristol_type != null && (
+                              <Badge variant={entry.bristol_type >= 3 && entry.bristol_type <= 4 ? 'success' : 'attention'}>
+                                B{entry.bristol_type}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        {entry.text && <p className="mt-1 text-xs text-stone truncate">{entry.text}</p>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Modals */}
+          {showIndicatorForm && (
+            <IndicatorForm
+              isOpen={showIndicatorForm}
+              onClose={() => { setShowIndicatorForm(false); setEditingIndicator(null); }}
+              onSave={handleSaveIndicator}
+              editingIndicator={editingIndicator}
+              saving={indicatorSaving}
+            />
+          )}
+          {showObservanceGenerator && (() => {
+            const sharedPlan = plans.find((p) => p.status === 'shared');
+            return sharedPlan ? (
+              <ObservanceGeneratorModal
+                plan={sharedPlan}
+                consultantId={consultant.id}
+                practitionerId={consultant.practitioner_id}
+                existingItems={observanceItems}
+                onGenerate={handleGenerateObservance}
+                onClose={() => setShowObservanceGenerator(false)}
+                saving={observanceGenerating}
+              />
+            ) : null;
+          })()}
+        </div>
       )}
 
       {tab === T.tabNotesSeance && (
@@ -3098,6 +3827,44 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             </div>
           )}
 
+          {/* Observance summary card at top of Conseillancier tab */}
+          {observanceItems.length > 0 && observanceSummary && (
+            <Card>
+              <CardContent className="py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div>
+                      <p className="text-xs font-semibold text-charcoal">Observance</p>
+                      <p className="text-[10px] text-stone">7 derniers jours</p>
+                    </div>
+                    <div className="flex-1 max-w-[200px]">
+                      <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className={cn('h-full rounded-full transition-all',
+                            observanceSummary.globalRate >= 75 ? 'bg-sage' : observanceSummary.globalRate >= 50 ? 'bg-terracotta' : 'bg-rose'
+                          )}
+                          style={{ width: `${observanceSummary.globalRate}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className={cn('text-sm font-bold',
+                      observanceSummary.globalRate >= 75 ? 'text-sage' : observanceSummary.globalRate >= 50 ? 'text-terracotta' : 'text-rose'
+                    )}>
+                      {observanceSummary.globalRate}%
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setTab('Journal' as Tab)}>
+                      Voir le détail
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => setShowObservanceGenerator(true)}>
+                      Gérer la checklist
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           {medicalAlerts.length > 0 && (
             <MedicalAlertBanner alerts={medicalAlerts} />
           )}
