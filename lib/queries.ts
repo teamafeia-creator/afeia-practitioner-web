@@ -247,6 +247,11 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
   }
   console.log('[consultants] fetch detail success', { consultantId: id });
 
+  // Compute 30-day threshold for recent observance logs
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().slice(0, 10);
+
   // Run all independent queries in parallel
   const [
     anameseResult,
@@ -268,7 +273,10 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     currentTreatmentsResult,
     relationshipsResult,
     terrainResult,
-    irisPhotosResult
+    irisPhotosResult,
+    journalIndicatorsResult,
+    observanceItemsResult,
+    observanceLogsResult
   ] = await Promise.all([
     supabase.from('anamneses').select('*').eq('consultant_id', id).single(),
     supabase.from('consultations').select('*').eq('consultant_id', id).order('date', { ascending: false }),
@@ -289,7 +297,10 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     supabase.from('current_treatments').select('*').eq('consultant_id', id).order('created_at', { ascending: false }),
     supabase.from('consultant_relationships').select(`*, related_consultant:consultants!consultant_relationships_related_consultant_id_fkey(id, name, first_name, last_name)`).eq('consultant_id', id).order('created_at', { ascending: false }),
     supabase.from('consultant_terrain').select('*').eq('consultant_id', id).maybeSingle(),
-    supabase.from('consultant_iris_photos').select('*').eq('consultant_id', id).order('taken_at', { ascending: false })
+    supabase.from('consultant_iris_photos').select('*').eq('consultant_id', id).order('taken_at', { ascending: false }),
+    supabase.from('consultant_journal_indicators').select('*').eq('consultant_id', id).eq('is_active', true).order('sort_order'),
+    supabase.from('plan_observance_items').select('*').eq('consultant_id', id).eq('is_active', true).order('category').order('sort_order'),
+    supabase.from('plan_observance_logs').select('*').eq('consultant_id', id).gte('date', thirtyDaysAgoStr).order('date', { ascending: false })
   ]);
 
   // Handle plan -> versions -> sections (dependent chain, but eliminate N+1)
@@ -361,7 +372,10 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     current_treatments: currentTreatmentsResult.data || [],
     relationships: relationshipsResult.data || [],
     terrain: terrainResult.data || null,
-    iris_photos: irisPhotosResult.data || []
+    iris_photos: irisPhotosResult.data || [],
+    journal_indicators: journalIndicatorsResult.data || [],
+    observance_items: observanceItemsResult.data || [],
+    observance_logs_recent: observanceLogsResult.data || []
   };
 }
 
@@ -640,19 +654,40 @@ export async function upsertJournalEntry(
   consultantId: string,
   entry: Partial<JournalEntry> & { date: string }
 ): Promise<JournalEntry | null> {
+  const payload: Record<string, unknown> = {
+    mood: entry.mood ?? null,
+    energy: entry.energy ?? null,
+    text: entry.text ?? null,
+    adherence_hydratation: entry.adherence_hydratation ?? false,
+    adherence_respiration: entry.adherence_respiration ?? false,
+    adherence_mouvement: entry.adherence_mouvement ?? false,
+    adherence_plantes: entry.adherence_plantes ?? false,
+    date: entry.date,
+    updated_at: new Date().toISOString(),
+  };
+
+  // Include enriched fields if present
+  if (entry.sleep_quality !== undefined) payload.sleep_quality = entry.sleep_quality;
+  if (entry.stress_level !== undefined) payload.stress_level = entry.stress_level;
+  if (entry.energy_level !== undefined) payload.energy_level = entry.energy_level;
+  if (entry.bristol_type !== undefined) payload.bristol_type = entry.bristol_type;
+  if (entry.bristol_frequency !== undefined) payload.bristol_frequency = entry.bristol_frequency;
+  if (entry.transit_notes !== undefined) payload.transit_notes = entry.transit_notes;
+  if (entry.hydration_liters !== undefined) payload.hydration_liters = entry.hydration_liters;
+  if (entry.hydration_type !== undefined) payload.hydration_type = entry.hydration_type;
+  if (entry.hydration_notes !== undefined) payload.hydration_notes = entry.hydration_notes;
+  if (entry.exercise_type !== undefined) payload.exercise_type = entry.exercise_type;
+  if (entry.exercise_duration_minutes !== undefined) payload.exercise_duration_minutes = entry.exercise_duration_minutes;
+  if (entry.exercise_intensity !== undefined) payload.exercise_intensity = entry.exercise_intensity;
+  if (entry.exercise_notes !== undefined) payload.exercise_notes = entry.exercise_notes;
+  if (entry.custom_indicators !== undefined) payload.custom_indicators = entry.custom_indicators;
+  if (entry.source !== undefined) payload.source = entry.source;
+  if (entry.practitioner_id !== undefined) payload.practitioner_id = entry.practitioner_id;
+
   if (entry.id) {
     const { data, error } = await supabase
       .from('journal_entries')
-      .update({
-        mood: entry.mood ?? null,
-        energy: entry.energy ?? null,
-        text: entry.text ?? null,
-        adherence_hydratation: entry.adherence_hydratation ?? false,
-        adherence_respiration: entry.adherence_respiration ?? false,
-        adherence_mouvement: entry.adherence_mouvement ?? false,
-        adherence_plantes: entry.adherence_plantes ?? false,
-        date: entry.date
-      })
+      .update(payload)
       .eq('id', entry.id)
       .eq('consultant_id', consultantId)
       .select()
@@ -669,14 +704,7 @@ export async function upsertJournalEntry(
     .from('journal_entries')
     .insert({
       consultant_id: consultantId,
-      date: entry.date,
-      mood: entry.mood ?? null,
-      energy: entry.energy ?? null,
-      text: entry.text ?? null,
-      adherence_hydratation: entry.adherence_hydratation ?? false,
-      adherence_respiration: entry.adherence_respiration ?? false,
-      adherence_mouvement: entry.adherence_mouvement ?? false,
-      adherence_plantes: entry.adherence_plantes ?? false
+      ...payload
     })
     .select()
     .single();
