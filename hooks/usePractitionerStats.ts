@@ -115,7 +115,6 @@ export function usePractitionerStats(periodKey: PeriodKey = 'this_month') {
           activeConsultants: raw.active_consultants ?? 0,
           totalConsultants: raw.total_consultants ?? 0,
           retentionRate: raw.retention_rate ?? 0,
-          avgJournalFillRate: raw.avg_journal_fill_rate ?? 0,
           revenue: raw.revenue ?? 0,
           sessionsByWeek: raw.sessions_by_week ?? [],
           revenueByMonth: raw.revenue_by_month ?? [],
