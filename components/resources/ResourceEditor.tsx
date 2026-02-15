@@ -77,8 +77,11 @@ export function ResourceEditor({
           label="Catégorie"
           value={form.category}
           onChange={(e) => update('category', e.target.value)}
-          options={CATEGORY_OPTIONS}
-        />
+        >
+          {CATEGORY_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </Select>
       </div>
 
       <Textarea
