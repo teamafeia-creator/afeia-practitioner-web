@@ -85,7 +85,7 @@ function getAppointmentName(appointment: Appointment): string {
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useRequireAuth('/login');
-  const { stats, loading: statsLoading } = usePractitionerStats('this_month');
+  const { stats, loading: statsLoading, reload } = usePractitionerStats('this_month');
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
   const [recentWithoutNotes, setRecentWithoutNotes] = useState<Appointment[]>([]);
   const [recontactConsultants, setRecontactConsultants] = useState<AlertConsultant[]>([]);
@@ -210,6 +210,44 @@ export default function DashboardPage() {
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
+
+  // Rafraîchir quand l'onglet redevient visible (retour depuis page consultant, etc.)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isAuthenticated && user) {
+        loadDashboardData();
+        reload();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [loadDashboardData, isAuthenticated, user, reload]);
+
+  // Écouter les changements en temps réel sur la table consultants (activation, etc.)
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const channel = supabase
+      .channel('dashboard-consultants')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'consultants',
+          filter: `practitioner_id=eq.${user.id}`,
+        },
+        () => {
+          loadDashboardData();
+          reload();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, user, loadDashboardData, reload]);
 
   const todayLabel = useMemo(() => dateFormatter.format(new Date()), []);
 
