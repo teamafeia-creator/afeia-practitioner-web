@@ -49,396 +49,394 @@ DECLARE
 
 BEGIN
   -- ============================================
-  -- ÉTAPE 0 : Récupérer l'ID de Woodeline
+  -- ÉTAPE 0 : Récupérer l ID de Woodeline
   -- ============================================
   SELECT id INTO v_practitioner_id FROM practitioners WHERE email = 'pwoodeline@gmail.com';
   IF v_practitioner_id IS NULL THEN
-    RAISE EXCEPTION 'Praticienne pwoodeline@gmail.com introuvable. Créez le compte d''abord.';
+    RAISE EXCEPTION 'Praticienne pwoodeline@gmail.com introuvable. Créez le compte d abord.';
   END IF;
   RAISE NOTICE 'Praticienne trouvée : %', v_practitioner_id;
 
   -- ============================================
   -- ÉTAPE 1 : CONSULTANTS (12)
   -- ============================================
-  INSERT INTO consultants (id, practitioner_id, email, name, first_name, last_name, phone, city, age, date_of_birth, consultation_reason, main_concern, status, is_premium, activated, activated_at, circular_enabled, created_at) VALUES
-  (v_c1,  v_practitioner_id, 'marie.dupont@example.com',    'Marie Dupont',    'Marie',   'Dupont',   '06 12 34 56 78', 'Paris',       42, '1983-09-15', 'Fatigue chronique persistante depuis 2 ans, troubles du sommeil',       'Fatigue chronique',    'premium',  true,  true,  NOW()-INTERVAL '3 months',  true,  NOW()-INTERVAL '4 months'),
-  (v_c2,  v_practitioner_id, 'lucas.bernard@example.com',   'Lucas Bernard',   'Lucas',   'Bernard',  '06 23 45 67 89', 'Lyon',        35, '1990-03-22', 'Stress professionnel intense, migraines récurrentes',                  'Stress et migraines',  'standard', false, true,  NOW()-INTERVAL '3 months',  false, NOW()-INTERVAL '3.5 months'),
-  (v_c3,  v_practitioner_id, 'sophie.martin@example.com',   'Sophie Martin',   'Sophie',  'Martin',   '06 34 56 78 90', 'Bordeaux',    28, '1997-07-08', 'Troubles digestifs récurrents, SIBO suspecté',                         'Troubles digestifs',   'premium',  true,  true,  NOW()-INTERVAL '2.5 months', false, NOW()-INTERVAL '3 months'),
-  (v_c4,  v_practitioner_id, 'antoine.lefevre@example.com', 'Antoine Lefevre', 'Antoine', 'Lefevre',  '06 45 67 89 01', 'Marseille',   51, '1974-11-30', 'Douleurs articulaires chroniques, inflammation systémique',            'Douleurs articulaires','standard', false, true,  NOW()-INTERVAL '3.5 months', false, NOW()-INTERVAL '4 months'),
-  (v_c5,  v_practitioner_id, 'camille.moreau@example.com',  'Camille Moreau',  'Camille', 'Moreau',   '06 56 78 90 12', 'Nantes',      33, '1992-05-14', 'SPM sévère, déséquilibre hormonal, irritabilité prémenstruelle',       'SPM hormonal',         'premium',  true,  true,  NOW()-INTERVAL '3 months',  true,  NOW()-INTERVAL '3.5 months'),
-  (v_c6,  v_practitioner_id, 'thomas.petit@example.com',    'Thomas Petit',    'Thomas',  'Petit',    '06 67 89 01 23', 'Toulouse',    45, '1980-08-25', 'Surpoids persistant, résistance à l''insuline suspectée',              'Surpoids',             'standard', false, false, NULL,                        false, NOW()-INTERVAL '2 months'),
-  (v_c7,  v_practitioner_id, 'emilie.roux@example.com',     'Émilie Roux',     'Émilie',  'Roux',     '06 78 90 12 34', 'Strasbourg',  38, '1987-12-03', 'Eczéma chronique récidivant, terrain allergique',                      'Eczéma chronique',     'premium',  true,  true,  NOW()-INTERVAL '3.5 months', true,  NOW()-INTERVAL '4 months'),
-  (v_c8,  v_practitioner_id, 'julien.garcia@example.com',   'Julien Garcia',   'Julien',  'Garcia',   '06 89 01 23 45', 'Montpellier', 29, '1996-02-18', 'Anxiété généralisée, troubles du sommeil',                             'Anxiété',              'standard', false, true,  NOW()-INTERVAL '2 months',  false, NOW()-INTERVAL '2.5 months'),
-  (v_c9,  v_practitioner_id, 'chloe.laurent@example.com',   'Chloé Laurent',   'Chloé',   'Laurent',  '06 90 12 34 56', 'Lille',       55, '1970-06-20', 'Ménopause, bouffées de chaleur, troubles de l''humeur',                'Ménopause',            'standard', false, false, NULL,                        false, NOW()-INTERVAL '6 weeks'),
-  (v_c10, v_practitioner_id, 'maxime.fournier@example.com', 'Maxime Fournier', 'Maxime',  'Fournier', '06 01 23 45 67', 'Rennes',      40, '1985-10-12', 'Épuisement surrénalien post-burnout, fatigue extrême',                 'Burnout',              'premium',  true,  true,  NOW()-INTERVAL '2.5 months', true,  NOW()-INTERVAL '3 months'),
-  (v_c11, v_practitioner_id, 'lea.girard@example.com',      'Léa Girard',      'Léa',     'Girard',   '06 12 45 78 90', 'Nice',        24, '2001-04-07', 'Acné hormonale persistante, alimentation déséquilibrée',               'Acné hormonale',       'standard', false, true,  NOW()-INTERVAL '1.5 months', false, NOW()-INTERVAL '2 months'),
-  (v_c12, v_practitioner_id, 'pierre.dubois@example.com',   'Pierre Dubois',   'Pierre',  'Dubois',   '06 23 56 89 01', 'Dijon',       62, '1963-01-28', 'Prévention cardiovasculaire, cholestérol élevé, HTA limite',           'Cardiovasculaire',     'premium',  true,  true,  NOW()-INTERVAL '3.5 months', true,  NOW()-INTERVAL '4 months')
+  INSERT INTO consultants (id, practitioner_id, email, name, first_name, last_name, phone, city, age, date_of_birth, consultation_reason, status, is_premium, activated, activated_at, circular_enabled, created_at) VALUES
+  (v_c1,  v_practitioner_id, 'sophie.martin@example.com',     'Sophie Martin',     'Sophie',      'Martin',     '06 12 34 56 78', 'Paris',       38, '1987-06-15', 'Syndrome du côlon irritable, stress professionnel intense, troubles du sommeil',          'premium',  true,  true,  NOW()-INTERVAL '6 months',  true,  NOW()-INTERVAL '7 months'),
+  (v_c2,  v_practitioner_id, 'thomas.dubois@example.com',     'Thomas Dubois',     'Thomas',      'Dubois',     '06 23 45 67 89', 'Chamonix',    32, '1993-03-22', 'Optimisation nutrition sportive trail/ultra, préparation UTMB',                          'premium',  true,  true,  NOW()-INTERVAL '5 months',  true,  NOW()-INTERVAL '6 months'),
+  (v_c3,  v_practitioner_id, 'emilie.laurent@example.com',    'Émilie Laurent',    'Émilie',      'Laurent',    '06 34 56 78 90', 'Nantes',      30, '1995-11-08', 'Post-partum 6 mois, fatigue intense, carences fer et vitamine D, allaitement',           'standard', false, true,  NOW()-INTERVAL '4 months',  false, NOW()-INTERVAL '5 months'),
+  (v_c4,  v_practitioner_id, 'jeanpierre.moreau@example.com', 'Jean-Pierre Moreau','Jean-Pierre', 'Moreau',     '06 45 67 89 01', 'Tours',       68, '1957-09-30', 'Confort prostatique (HBP débutante), sommeil fragmenté, prévention cardiovasculaire',     'standard', false, true,  NOW()-INTERVAL '7 months',  false, NOW()-INTERVAL '8 months'),
+  (v_c5,  v_practitioner_id, 'nathalie.petit@example.com',    'Nathalie Petit',    'Nathalie',    'Petit',      '06 56 78 90 12', 'Lyon',        52, '1973-05-14', 'Ménopause : bouffées de chaleur 8-10x/jour, sueurs nocturnes, pas de THS souhaité',      'premium',  true,  true,  NOW()-INTERVAL '6 months',  false, NOW()-INTERVAL '7 months'),
+  (v_c6,  v_practitioner_id, 'lucas.bernard@example.com',     'Lucas Bernard',     'Lucas',       'Bernard',    '06 67 89 01 23', 'Bordeaux',    17, '2008-08-25', 'Acné inflammatoire modérée à sévère, alimentation très industrielle',                    'standard', false, true,  NOW()-INTERVAL '3 months',  false, NOW()-INTERVAL '4 months'),
+  (v_c7,  v_practitioner_id, 'celine.roux@example.com',       'Céline Roux',       'Céline',      'Roux',       '06 78 90 12 34', 'Strasbourg',  45, '1980-12-03', 'Fibromyalgie diagnostiquée depuis 3 ans, douleurs diffuses, fatigue chronique',          'premium',  true,  true,  NOW()-INTERVAL '8 months',  true,  NOW()-INTERVAL '9 months'),
+  (v_c8,  v_practitioner_id, 'marc.lefebvre@example.com',     'Marc Lefebvre',     'Marc',        'Lefebvre',   '06 89 01 23 45', 'Toulouse',    44, '1981-02-18', 'RGO chronique sous IPP depuis 2 ans, surpoids (IMC 28.5), sevrage souhaité',             'standard', false, true,  NOW()-INTERVAL '4 months',  false, NOW()-INTERVAL '5 months'),
+  (v_c9,  v_practitioner_id, 'amina.benali@example.com',      'Amina Benali',      'Amina',       'Benali',     '06 90 12 34 56', 'Montpellier', 22, '2003-06-20', 'Migraines cataméniales 3-4x/mois, stress examens, abus de caféine',                     'standard', false, true,  NOW()-INTERVAL '2 months',  false, NOW()-INTERVAL '3 months'),
+  (v_c10, v_practitioner_id, 'philippe.garnier@example.com',  'Philippe Garnier',  'Philippe',    'Garnier',    '06 01 23 45 67', 'Rennes',      48, '1977-10-12', 'Eczéma chronique mains et avant-bras (artisan boulanger), fatigue matinale',             'premium',  true,  true,  NOW()-INTERVAL '5 months',  false, NOW()-INTERVAL '6 months'),
+  (v_c11, v_practitioner_id, 'isabelle.fontaine@example.com', 'Isabelle Fontaine', 'Isabelle',    'Fontaine',   '06 12 45 78 90', 'Nice',        41, '1984-04-07', 'Détox hépatique et optimisation micronutritionnelle (professeure de yoga)',               'standard', false, true,  NOW()-INTERVAL '3 months',  true,  NOW()-INTERVAL '4 months'),
+  (v_c12, v_practitioner_id, 'robert.durand@example.com',     'Robert Durand',     'Robert',      'Durand',     '06 23 56 89 01', 'Dijon',       70, '1955-01-28', 'Cholestérol LDL 1.85g/L, HTA limite 140/85, prévention cardiovasculaire (ATCD familiaux)','premium',  true,  true,  NOW()-INTERVAL '4 months',  true,  NOW()-INTERVAL '5 months')
   ON CONFLICT (id) DO NOTHING;
-
 
   -- ============================================
   -- ÉTAPE 2 : CONSULTANT_ANAMNESIS (12)
   -- ============================================
 
-  -- Marie Dupont — Fatigue chronique
+  -- Sophie Martin (c1) — SII + stress
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c1, v_practitioner_id, $a1${
-    "general_profession": "Cadre marketing dans une agence, rythme intense, 50h/semaine",
-    "general_antecedents": "Hypothyroïdie d'Hashimoto diagnostiquée en 2019, Levothyrox 75µg",
-    "general_traitements": "Levothyrox 75µg le matin, magnésium bisglycinate 300mg le soir",
-    "profil_temperament": "Perfectionniste, anxieuse, hyperactive mentalement",
-    "profil_emotions": "Anxiété, frustration liée à la fatigue, baisse de confiance en soi",
-    "motif_principal": "Fatigue chronique depuis 2 ans, non améliorée par le repos",
-    "motif_objectifs": "Retrouver de l'énergie stable, améliorer la qualité du sommeil, mieux gérer le stress",
-    "alimentation_habitudes": "Petit-déjeuner sucré (céréales, jus d'orange), déjeuner rapide (sandwich), dîner tardif vers 21h",
+    "general_profession": "Cadre supérieure en marketing digital, rythme intense (50h/semaine), open space bruyant",
+    "general_antecedents": "SII diagnostiqué en 2021. Appendicectomie à 15 ans. Terrain anxieux familial (mère sous anxiolytiques)",
+    "general_traitements": "Smecta en SOS, Spasfon occasionnel, magnésium en cure",
+    "profil_temperament": "Perfectionniste, hyperactive mentalement, besoin de contrôle, rapide dans ses gestes et sa parole",
+    "profil_emotions": "Anxiété latente, ruminations nocturnes, sentiment de ne jamais en faire assez, irritabilité en période de surcharge",
+    "motif_principal": "Troubles digestifs chroniques (ballonnements quotidiens, transit alternant diarrhée/constipation) aggravés par le stress professionnel",
+    "motif_objectifs": "Retrouver un confort digestif au quotidien, mieux gérer le stress, améliorer la qualité du sommeil",
+    "alimentation_habitudes": "Repas pris rapidement devant l écran, souvent sandwich le midi, cuisine maison le soir mais fatiguée",
     "alimentation_hydratation": "Insuffisante",
-    "alimentation_ecarts": "Grignotage sucré en fin d'après-midi, 2-3 cafés/jour, vin 2-3 soirs/semaine",
-    "digestion_symptomes": "Ballonnements quotidiens après le déjeuner, reflux gastrique le soir",
+    "alimentation_ecarts": "Café 4-5 tasses/jour, grignotage sucré en fin d après-midi (chocolat, biscuits), verre de vin le soir pour décompresser",
+    "digestion_symptomes": "Ballonnements quotidiens post-prandiaux, gaz abondants, douleurs abdominales en barre, alternance diarrhée-constipation",
     "digestion_transit": "Variable",
-    "digestion_tolérances": "Suspecte le gluten (ventre gonflé après pain/pâtes)",
-    "sommeil_qualite": "Endormissement difficile (ruminations), réveils entre 3h-4h, non reposée le matin",
+    "digestion_tolérances": "Sensibilité au gluten (non cœliaque), produits laitiers mal tolérés, légumineuses provoquent des gaz importants",
+    "sommeil_qualite": "Endormissement difficile (45 min), ruminations, réveil à 4h du matin fréquent, non réparateur",
     "energie_niveau": "Bas",
-    "activite_pratique": "Yoga 1x/semaine quand elle trouve le temps, marche urbaine quotidienne",
-    "activite_posture": "Assise 8-10h/jour devant l'ordinateur, tensions cervicales fréquentes",
+    "activite_pratique": "Très peu : marche occasionnelle le week-end, ancien yoga abandonné par manque de temps",
+    "activite_posture": "Assise 8-10h/jour, tensions cervicales et lombaires, bruxisme nocturne",
     "stress_niveau": "Élevé",
-    "stress_gestion": "Aucune technique particulière, tendance à tout intérioriser",
-    "elimination_peau": "Teint terne, cernes marqués, peau déshydratée",
+    "stress_gestion": "Aucune technique en place, se réfugie dans le travail ou le vin le soir",
+    "elimination_peau": "Teint terne, cernes marquées, peau sèche et réactive",
     "elimination_transpiration": "Normale",
-    "femme_cycle": "Régulier 28 jours, flux moyen 4 jours, SPM léger (irritabilité J-3)",
-    "femme_contraception": "Aucune (stérilet cuivre retiré en 2022)",
-    "mode_vie_habitudes": "Écrans le soir jusqu'à 23h, peu de temps en nature, rythme soutenu",
-    "mode_vie_environnement": "Appartement parisien, exposition au bruit, peu d'aération",
-    "question_ouverte": "Je voudrais vraiment retrouver l'énergie que j'avais avant. Je me sens épuisée en permanence et ça affecte ma vie personnelle."
-  }$a1$::jsonb, 1, 'manual', NOW()-INTERVAL '4 months', NOW()-INTERVAL '3 months')
+    "femme_cycle": "Régulier 28 jours, SPM léger (irritabilité J-3), flux normal",
+    "femme_contraception": "DIU cuivre depuis 3 ans, bien toléré",
+    "mode_vie_habitudes": "Sédentaire, écrans le soir jusqu à 23h, peu de temps en nature",
+    "mode_vie_environnement": "Appartement parisien, open space bruyant au travail, transports en commun 1h/jour",
+    "question_ouverte": "J ai l impression que mon ventre est mon baromètre émotionnel. Dès que je suis stressée, tout se dérègle. J ai essayé plein de choses mais rien ne tient dans la durée. J ai besoin d un cadre et d un suivi régulier."
+  }$a1$::jsonb, 1, 'manual', NOW()-INTERVAL '6 months', NOW()-INTERVAL '5 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Lucas Bernard — Stress / Migraines
+  -- Thomas Dubois (c2) — Trail / nutrition sportive
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c2, v_practitioner_id, $a2${
-    "general_profession": "Développeur senior dans une startup tech, travail sous pression, deadlines fréquentes",
-    "general_antecedents": "Migraines avec aura depuis l'adolescence, 2-3 crises/mois. Bilan neurologique normal",
-    "general_traitements": "Sumatriptan en cas de crise, ibuprofène occasionnel",
-    "profil_temperament": "Intellectuel, analytique, tendance au surmenage, difficulté à décrocher",
-    "profil_emotions": "Frustration, sensation d'être débordé, irritabilité croissante",
-    "motif_principal": "Migraines de plus en plus fréquentes (4-5/mois), liées au stress professionnel",
-    "motif_objectifs": "Réduire la fréquence des migraines, mieux gérer le stress, retrouver un équilibre vie pro/perso",
-    "alimentation_habitudes": "Petit-déjeuner sauté, déjeuner devant l'écran (souvent livré), dîner correct mais tardif",
-    "alimentation_hydratation": "Insuffisante",
-    "alimentation_ecarts": "4-5 cafés/jour, snacking salé, fast-food 2x/semaine, peu de légumes",
-    "digestion_symptomes": "Brûlures d'estomac après les repas gras, pas de troubles majeurs",
+    "general_profession": "Développeur web freelance, horaires flexibles, passionné de trail et d ultra-endurance",
+    "general_antecedents": "Tendinite d Achille récurrente (2022-2023). Fracture de fatigue métatarse (2021). RAS par ailleurs",
+    "general_traitements": "Aucun traitement médicamenteux. Compléments auto-prescrits : whey protéine, BCAA",
+    "profil_temperament": "Volontaire, discipliné, compétiteur, tendance au surentraînement, analyse ses données en permanence",
+    "profil_emotions": "Stable émotionnellement. Frustration quand blessé. Besoin de dépassement et de nature",
+    "motif_principal": "Optimiser la nutrition pour performer en trail (objectif UTMB). Problèmes de crampes et de récupération",
+    "motif_objectifs": "Plan nutritionnel adapté au trail, améliorer la récupération, prévenir les blessures, optimiser les performances",
+    "alimentation_habitudes": "Mange bien mais pas adapté à l effort : trop de protéines, pas assez de glucides complexes pré-effort",
+    "alimentation_hydratation": "Moyenne",
+    "alimentation_ecarts": "Bières entre amis le samedi, pizzas post-entraînement, alimentation un peu monotone",
+    "digestion_symptomes": "Troubles digestifs uniquement à l effort (> 3h) : nausées, crampes intestinales",
     "digestion_transit": "Régulier",
-    "digestion_tolérances": "RAS",
-    "sommeil_qualite": "Endormissement tardif (minuit-1h), sommeil léger, réveil fatigué",
-    "energie_niveau": "Moyen",
-    "activite_pratique": "Course à pied 2x/semaine quand pas de migraine, sinon sédentaire",
-    "activite_posture": "Assis 10-12h/jour, tensions trapèzes et nuque importantes",
-    "stress_niveau": "Élevé",
-    "stress_gestion": "Jeux vidéo le soir pour décompresser, pas de technique de relaxation",
-    "elimination_peau": "Normale, quelques boutons liés au stress",
-    "elimination_transpiration": "Abondante lors du sport",
+    "digestion_tolérances": "RAS au quotidien. Gels énergétiques industriels mal tolérés à l effort",
+    "sommeil_qualite": "Bon en général, perturbé les veilles de course (excitation). 7-8h par nuit",
+    "energie_niveau": "Élevé",
+    "activite_pratique": "Trail 5x/semaine (80-100km/sem en charge), renforcement musculaire 2x/semaine, étirements insuffisants",
+    "activite_posture": "Bonne, position assise pour le travail mais alterner debout/assis avec bureau réglable",
+    "stress_niveau": "Faible",
+    "stress_gestion": "Le sport est sa gestion du stress. Méditation ponctuelle. Nature ++",
+    "elimination_peau": "Normale, bronzée (extérieur ++)",
+    "elimination_transpiration": "Abondante à l effort, pertes minérales importantes",
     "homme_urinaire": "RAS",
-    "homme_libido": "Baisse depuis 6 mois, liée à la fatigue",
-    "mode_vie_habitudes": "Écrans en permanence (travail + loisirs), peu de pauses, lumière bleue le soir",
-    "mode_vie_environnement": "Appartement bien situé à Lyon, bureau en open space bruyant",
-    "question_ouverte": "Les migraines gâchent ma vie. Je perds 2-3 jours par mois à cause d'elles. J'aimerais trouver une solution naturelle."
-  }$a2$::jsonb, 1, 'manual', NOW()-INTERVAL '3.5 months', NOW()-INTERVAL '2.5 months')
+    "homme_libido": "Normale, légèrement diminuée en période de grosse charge d entraînement",
+    "mode_vie_habitudes": "Vie saine, pas de tabac, alcool modéré, couché tôt en semaine",
+    "mode_vie_environnement": "Appartement à Chamonix, accès direct aux sentiers, air pur de montagne, télétravail",
+    "question_ouverte": "Je veux optimiser ma nutrition pour l UTMB cet été. J ai eu des problèmes gastriques sur ma dernière course longue et des crampes récurrentes. Je veux un plan nutritionnel personnalisé pour la préparation et la course."
+  }$a2$::jsonb, 1, 'manual', NOW()-INTERVAL '5 months', NOW()-INTERVAL '4 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Sophie Martin — Troubles digestifs / SIBO
+  -- Émilie Laurent (c3) — Post-partum / fatigue
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c3, v_practitioner_id, $a3${
-    "general_profession": "Diététicienne en milieu hospitalier, horaires décalés",
-    "general_antecedents": "Gastro-entérite sévère il y a 2 ans (voyage en Asie), symptômes digestifs depuis. Intolérances alimentaires multiples apparues progressivement",
-    "general_traitements": "IPP (oméprazole) arrêté il y a 3 mois, charbon végétal occasionnel",
-    "profil_temperament": "Consciencieuse, perfectionniste sur l'alimentation, anxieuse par rapport à sa digestion",
-    "profil_emotions": "Frustration (paradoxe d'être diététicienne avec des problèmes digestifs), anxiété sociale liée aux repas",
-    "motif_principal": "Ballonnements majeurs après chaque repas, douleurs abdominales, flatulences. Suspicion de SIBO",
-    "motif_objectifs": "Identifier les causes des troubles digestifs, retrouver un confort intestinal, élargir son alimentation",
-    "alimentation_habitudes": "Mange sainement mais de façon restrictive, évite beaucoup d'aliments par peur des symptômes",
-    "alimentation_hydratation": "Bonne",
-    "alimentation_ecarts": "Peu d'écarts mais craquages sur le sucré en période de stress",
-    "digestion_symptomes": "Ballonnements +++, flatulences, douleurs abdominales postprandiales, sensation de fermentation",
-    "digestion_transit": "Variable",
-    "digestion_tolérances": "Réagit aux FODMAPs (oignon, ail, légumineuses, pomme), au lactose, au gluten",
-    "sommeil_qualite": "Correct, parfois perturbé par les douleurs abdominales nocturnes",
-    "energie_niveau": "Moyen",
-    "activite_pratique": "Pilates 2x/semaine, marche quotidienne",
-    "activite_posture": "Debout/assise en alternance au travail, RAS",
+    "general_profession": "Graphiste freelance, en congé maternité prolongé, reprise partielle à domicile",
+    "general_antecedents": "Grossesse et accouchement normaux (voie basse). Anémie ferriprive en fin de grossesse. RAS par ailleurs",
+    "general_traitements": "Tardyferon prescrit en post-partum (mal toléré, arrêté). Vitamine D prescrite mais oubliée",
+    "profil_temperament": "Douce, empathique, culpabilise facilement, exigeante envers elle-même en tant que mère",
+    "profil_emotions": "Fatigue émotionnelle, pleurs faciles, sentiment d être dépassée, mais pas de dépression post-partum caractérisée",
+    "motif_principal": "Fatigue intense post-partum à 6 mois, carences en fer et vitamine D confirmées, allaitement en cours",
+    "motif_objectifs": "Retrouver de l énergie, corriger les carences, être accompagnée pour le sevrage de l allaitement",
+    "alimentation_habitudes": "Mange quand elle peut, souvent debout, repas rapides et peu variés par manque de temps et d énergie",
+    "alimentation_hydratation": "Insuffisante",
+    "alimentation_ecarts": "Grignotage sucré pour tenir le coup (gâteaux, chocolat), saute souvent le petit-déjeuner",
+    "digestion_symptomes": "RAS, bonne digestion",
+    "digestion_transit": "Régulier",
+    "digestion_tolérances": "Bonne tolérance générale",
+    "sommeil_qualite": "Très fragmenté (bébé se réveille encore 2-3x/nuit), non réparateur, 5h cumulées par nuit",
+    "energie_niveau": "Bas",
+    "activite_pratique": "Quasi nulle hormis portage du bébé et promenades en poussette",
+    "activite_posture": "Tensions dans les épaules et le haut du dos liées à l allaitement et au portage",
     "stress_niveau": "Modéré",
-    "stress_gestion": "Méditation guidée (Headspace) 3x/semaine",
-    "elimination_peau": "Quelques rougeurs sur les joues (rosacée légère)",
+    "stress_gestion": "Peu de temps pour soi, mari qui aide mais travaille beaucoup, mère qui vient 1x/semaine",
+    "elimination_peau": "Pâleur, chute de cheveux importante (post-partum), ongles cassants",
     "elimination_transpiration": "Normale",
-    "femme_cycle": "Régulier 30 jours, flux abondant J1-J2, douleurs légères",
-    "femme_contraception": "Pilule microdosée (Leeloo) depuis 5 ans",
-    "mode_vie_habitudes": "Bonne hygiène de vie globale, horaires décalés parfois (gardes)",
-    "mode_vie_environnement": "Colocation à Bordeaux, cuisine partagée, accès à des produits frais",
-    "question_ouverte": "J'ai l'impression que mon ventre ne digère plus rien correctement depuis mon voyage en Asie. Aidez-moi à retrouver un intestin fonctionnel."
-  }$a3$::jsonb, 1, 'manual', NOW()-INTERVAL '3 months', NOW()-INTERVAL '2 months')
+    "femme_cycle": "Pas de retour de couches (allaitement), aménorrhée de lactation",
+    "femme_contraception": "Aucune pour l instant (allaitement exclusif)",
+    "mode_vie_habitudes": "Vie centrée sur le bébé, peu de sorties, isolement social relatif",
+    "mode_vie_environnement": "Maison avec jardin à Nantes, quartier calme, bon environnement mais peu de stimulation sociale",
+    "question_ouverte": "Je suis épuisée mais je ne veux pas prendre d antidépresseurs. Mon médecin dit que c est normal la fatigue post-partum mais je sens que c est plus que ça. J ai besoin d aide pour remonter la pente et accompagner le sevrage de l allaitement."
+  }$a3$::jsonb, 1, 'manual', NOW()-INTERVAL '4 months', NOW()-INTERVAL '3 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Antoine Lefevre — Douleurs articulaires
+  -- Jean-Pierre Moreau (c4) — Prostate / sommeil / prévention
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c4, v_practitioner_id, $a4${
-    "general_profession": "Artisan menuisier, travail physique exigeant",
-    "general_antecedents": "Arthrose cervicale et lombaire diagnostiquée à 48 ans, ancien sportif (rugby). Tendinite épaule droite récurrente",
-    "general_traitements": "Anti-inflammatoires (kétoprofène) 2-3x/semaine, paracétamol quotidien",
-    "profil_temperament": "Courageux, endurant, minimise ses douleurs, peu enclin au repos",
-    "profil_emotions": "Frustration face aux limitations physiques, crainte de ne plus pouvoir travailler",
-    "motif_principal": "Douleurs articulaires quotidiennes (genoux, dos, épaule), raideur matinale, inflammation chronique",
-    "motif_objectifs": "Réduire les douleurs et l'inflammation, diminuer les anti-inflammatoires, maintenir sa capacité de travail",
-    "alimentation_habitudes": "Repas copieux et traditionnels, viande rouge 4-5x/semaine, fromage quotidien, peu de légumes",
-    "alimentation_hydratation": "Insuffisante",
-    "alimentation_ecarts": "Charcuterie, fromage, vin rouge quotidien (2 verres), bière le week-end",
-    "digestion_symptomes": "Lourdeurs digestives après les gros repas, RAS sinon",
+    "general_profession": "Retraité, ancien professeur de lycée, très actif (jardin, associations, petits-enfants)",
+    "general_antecedents": "HBP débutante (hypertrophie bénigne de la prostate). Hypertension légère traitée. Cholestérol limite",
+    "general_traitements": "Amlodipine 5mg (HTA). PSA contrôlé annuellement (normal). Pas de traitement prostatique",
+    "profil_temperament": "Calme, méthodique, curieux, aime apprendre, discipliné quand il a un plan clair",
+    "profil_emotions": "Serein dans l ensemble, légère anxiété liée à la santé (antécédents familiaux cardiovasculaires)",
+    "motif_principal": "Gêne prostatique (levers nocturnes 3x, jet faible), sommeil fragmenté, prévention cardiovasculaire",
+    "motif_objectifs": "Améliorer le confort urinaire, mieux dormir, prévenir les risques cardiovasculaires naturellement",
+    "alimentation_habitudes": "Cuisine traditionnelle française, épouse cuisine bien, repas équilibrés mais un peu riches",
+    "alimentation_hydratation": "Bonne",
+    "alimentation_ecarts": "Fromage 2x/jour, vin rouge quotidien (1 verre), pâtisseries le dimanche",
+    "digestion_symptomes": "RAS, bonne digestion",
     "digestion_transit": "Régulier",
-    "digestion_tolérances": "Aucune intolérance connue",
-    "sommeil_qualite": "Réveils nocturnes liés aux douleurs, difficulté à trouver une position confortable",
+    "digestion_tolérances": "RAS",
+    "sommeil_qualite": "Fragmenté par les levers urinaires (3x/nuit), endormissement facile mais sommeil non réparateur",
     "energie_niveau": "Moyen",
-    "activite_pratique": "Travail physique quotidien (menuiserie), marche, plus de sport depuis 5 ans",
-    "activite_posture": "Postures contraignantes au travail, port de charges lourdes",
-    "stress_niveau": "Modéré",
-    "stress_gestion": "Bricolage le week-end, temps en famille",
-    "elimination_peau": "Normale, peau sèche en hiver",
-    "elimination_transpiration": "Abondante au travail",
-    "homme_urinaire": "Levers nocturnes 1-2x (prostate à surveiller)",
-    "homme_libido": "Normale",
-    "mode_vie_habitudes": "Couché tôt/levé tôt, vie régulière, peu de loisirs",
-    "mode_vie_environnement": "Maison avec jardin à Marseille, atelier de menuiserie attenant",
-    "question_ouverte": "Les anti-inflammatoires me soulagent mais je ne veux pas en prendre toute ma vie. Je cherche des alternatives naturelles pour mes articulations."
-  }$a4$::jsonb, 1, 'manual', NOW()-INTERVAL '4 months', NOW()-INTERVAL '3 months')
+    "activite_pratique": "Jardinage quotidien (1-2h), marche 30-45 min/jour, vélo le week-end",
+    "activite_posture": "Bonne mobilité pour son âge, légère arthrose lombaire",
+    "stress_niveau": "Faible",
+    "stress_gestion": "Jardinage, lecture, vie associative, temps avec les petits-enfants",
+    "elimination_peau": "Normale pour l âge",
+    "elimination_transpiration": "Normale",
+    "homme_urinaire": "Levers nocturnes 3x, jet faible, sensation de vidange incomplète, PSA normal",
+    "homme_libido": "Diminuée avec l âge mais acceptable",
+    "mode_vie_habitudes": "Retraite active et épanouie, vie sociale riche, couple stable",
+    "mode_vie_environnement": "Maison avec grand jardin potager à Tours, quartier résidentiel calme",
+    "question_ouverte": "Les levers nocturnes me fatiguent beaucoup et empêchent ma femme de dormir aussi. L urologue dit que c est l âge mais je voudrais essayer des solutions naturelles avant les médicaments. Mon père est décédé d un infarctus à 68 ans, j ai peur de suivre le même chemin."
+  }$a4$::jsonb, 1, 'manual', NOW()-INTERVAL '7 months', NOW()-INTERVAL '6 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Camille Moreau — SPM / Hormones
+  -- Nathalie Petit (c5) — Ménopause
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c5, v_practitioner_id, $a5${
-    "general_profession": "Professeure des écoles, CE2, charge mentale importante",
-    "general_antecedents": "Endométriose légère diagnostiquée en 2020, kystes ovariens fonctionnels. Arrêt pilule il y a 2 ans",
-    "general_traitements": "Aucun traitement en cours, ibuprofène pendant les règles",
-    "profil_temperament": "Empathique, dévouée, tendance à s'oublier, sensible",
-    "profil_emotions": "Irritabilité prémenstruelle marquée, pleurs faciles en phase lutéale, anxiété cyclique",
-    "motif_principal": "SPM sévère : irritabilité, gonflement, douleurs mammaires, migraines cataméniales",
-    "motif_objectifs": "Atténuer le SPM, régulariser le cycle, gérer les douleurs menstruelles sans médicaments",
-    "alimentation_habitudes": "Repas équilibrés en général, tendance au sucré en phase prémenstruelle",
+    "general_profession": "Directrice d école primaire, poste à responsabilité, charge mentale importante",
+    "general_antecedents": "RAS jusqu à la ménopause. Pas d ATCD cancer hormono-dépendant. Ostéopénie légère à la densitométrie",
+    "general_traitements": "Aucun. Refus du THS après discussion avec le gynécologue. Souhaite une approche naturelle",
+    "profil_temperament": "Dynamique, organisée, volontaire, habituée à gérer du monde, parfois impatiente",
+    "profil_emotions": "Irritabilité nouvelle, sautes d humeur inhabituelles, sensation de perte de contrôle sur son corps",
+    "motif_principal": "Ménopause confirmée. Bouffées de chaleur 8-10x/jour (dont nocturnes), sueurs, irritabilité, sécheresse muqueuses",
+    "motif_objectifs": "Réduire les bouffées de chaleur sans THS, mieux dormir, préserver le capital osseux, retrouver sa vitalité",
+    "alimentation_habitudes": "Alimentation équilibrée, cuisine maison, repas à la cantine le midi (choix limités)",
     "alimentation_hydratation": "Moyenne",
-    "alimentation_ecarts": "Compulsions sucrées J-7 à J-1 (chocolat, gâteaux), café 2x/jour",
-    "digestion_symptomes": "Ballonnements en période prémenstruelle, constipation J-5 à J-1",
+    "alimentation_ecarts": "Café 3x/jour (déclenche parfois les bouffées), chocolat en fin de journée, vin occasionnel",
+    "digestion_symptomes": "Ballonnements légers depuis la ménopause, transit un peu ralenti",
     "digestion_transit": "Variable",
-    "digestion_tolérances": "RAS",
-    "sommeil_qualite": "Bon sauf en phase lutéale : réveils nocturnes, sueurs, sommeil agité",
+    "digestion_tolérances": "Bonne tolérance générale",
+    "sommeil_qualite": "Perturbé par les sueurs nocturnes (2-3x/nuit), réveils en nage, difficulté à se rendormir",
     "energie_niveau": "Moyen",
-    "activite_pratique": "Danse 2x/semaine, marche avec ses élèves",
-    "activite_posture": "Debout en classe, RAS",
+    "activite_pratique": "Marche rapide 3x/semaine, aquagym 1x/semaine, danse de salon le samedi",
+    "activite_posture": "Bonne, raideurs matinales légères (épaules)",
     "stress_niveau": "Modéré",
-    "stress_gestion": "Danse, discussions avec sa sœur, journal intime",
-    "elimination_peau": "Quelques boutons sur le menton en phase prémenstruelle",
-    "elimination_transpiration": "Sueurs nocturnes en phase lutéale",
-    "femme_cycle": "Irrégulier 26-35 jours depuis l'arrêt de la pilule, flux abondant J1-J3, dysménorrhée",
-    "femme_contraception": "Aucune (arrêt pilule il y a 2 ans, méthode symptothermique)",
-    "mode_vie_habitudes": "Vie bien réglée en semaine, sorties le week-end, bonne vie sociale",
-    "mode_vie_environnement": "Appartement à Nantes, quartier calme, jardin partagé",
-    "question_ouverte": "Depuis l'arrêt de la pilule, mes cycles sont un enfer. Le SPM dure parfois 10 jours. J'aimerais retrouver un équilibre hormonal naturel."
-  }$a5$::jsonb, 1, 'manual', NOW()-INTERVAL '3.5 months', NOW()-INTERVAL '2 months')
+    "stress_gestion": "Activités sociales, danse, lecture, sorties entre amies",
+    "elimination_peau": "Sécheresse cutanée accrue, rides plus marquées depuis la ménopause, cheveux plus fins",
+    "elimination_transpiration": "Excessive (bouffées de chaleur, sueurs nocturnes)",
+    "femme_cycle": "Ménopause confirmée (dernières règles il y a 14 mois)",
+    "femme_contraception": "Aucune (ménopause)",
+    "mode_vie_habitudes": "Vie active, sociable, couple stable (mari compréhensif), enfants adultes indépendants",
+    "mode_vie_environnement": "Appartement spacieux à Lyon, quartier agréable, école à 15 min à pied",
+    "question_ouverte": "Les bouffées de chaleur me gâchent la vie. En réunion, je deviens écarlate et je transpire. La nuit, je change de pyjama 2 fois. Mon gynécologue m a proposé le THS mais j ai peur des risques. Je veux essayer la voie naturelle d abord."
+  }$a5$::jsonb, 1, 'manual', NOW()-INTERVAL '6 months', NOW()-INTERVAL '5 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Thomas Petit — Surpoids / Insuline
+  -- Lucas Bernard (c6) — Acné adolescent
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c6, v_practitioner_id, $a6${
-    "general_profession": "Commercial terrain, nombreux repas d'affaires, déplacements fréquents",
-    "general_antecedents": "Diabète type 2 familial (père et frère). Glycémie à jeun 1.15 g/L. Tour de taille 102 cm",
-    "general_traitements": "Aucun traitement, surveillance glycémique annuelle",
-    "profil_temperament": "Bon vivant, sociable, difficulté à se discipliner sur l'alimentation",
-    "profil_emotions": "Culpabilité après les excès, frustration face aux régimes qui échouent",
-    "motif_principal": "Surpoids de 15 kg, résistance à l'insuline, difficultés à perdre du poids malgré les efforts",
-    "motif_objectifs": "Perdre du poids durablement, stabiliser la glycémie, éviter le diabète type 2",
-    "alimentation_habitudes": "Repas d'affaires fréquents (restaurants), portions excessives, peu de cuisine maison",
+    "general_profession": "Lycéen en Terminale S, bac dans 6 mois",
+    "general_antecedents": "RAS. Pas d allergie connue. Acné apparue à 14 ans, aggravée depuis 1 an",
+    "general_traitements": "Crème Cutacnyl (peroxyde de benzoyle) prescrite par le médecin, peu efficace. Pas d antibiotiques ni Roaccutane",
+    "profil_temperament": "Timide, complexé par son acné, passe beaucoup de temps sur les écrans, peu sportif",
+    "profil_emotions": "Manque de confiance en soi lié à l acné, évite les photos, impact sur la vie sociale",
+    "motif_principal": "Acné inflammatoire modérée à sévère (visage, dos), alimentation très déséquilibrée",
+    "motif_objectifs": "Améliorer la peau, changer progressivement l alimentation, retrouver confiance en soi",
+    "alimentation_habitudes": "Petit-déjeuner sauté, cantine le midi (frites/pizza), goûter industriel (chips, gâteaux), dîner familial le seul repas correct",
     "alimentation_hydratation": "Insuffisante",
-    "alimentation_ecarts": "Alcool 3-4 soirs/semaine (vin, apéritifs), desserts systématiques, pain en excès",
-    "digestion_symptomes": "Somnolence postprandiale, reflux occasionnel",
+    "alimentation_ecarts": "Sodas 2-3x/jour, fast-food 2-3x/semaine, chips quotidiennes, bonbons, très peu de légumes",
+    "digestion_symptomes": "RAS",
     "digestion_transit": "Régulier",
-    "digestion_tolérances": "RAS",
-    "sommeil_qualite": "Ronflements, apnée du sommeil suspectée, sommeil non réparateur",
-    "energie_niveau": "Bas",
-    "activite_pratique": "Très sédentaire, voiture pour tous les déplacements, pas de sport",
-    "activite_posture": "Assis en voiture et en réunion toute la journée",
+    "digestion_tolérances": "RAS connues",
+    "sommeil_qualite": "Se couche tard (minuit-1h) à cause des écrans (jeux vidéo, réseaux sociaux), levé difficile à 7h",
+    "energie_niveau": "Moyen",
+    "activite_pratique": "Quasi nulle. Dispensé de sport au lycée l an dernier. Joue aux jeux vidéo 3-4h/jour",
+    "activite_posture": "Avachie devant les écrans, douleurs cervicales débutantes",
     "stress_niveau": "Modéré",
-    "stress_gestion": "Repas au restaurant, télévision le soir",
-    "elimination_peau": "Peau grasse, acanthosis nigricans léger au cou",
-    "elimination_transpiration": "Abondante, surtout la nuit",
-    "homme_urinaire": "Mictions fréquentes (polyurie légère)",
-    "homme_libido": "Diminuée",
-    "mode_vie_habitudes": "Déplacements professionnels fréquents, vie sociale active mais peu de temps pour soi",
-    "mode_vie_environnement": "Maison en banlieue de Toulouse, peu de commerces à pied",
-    "question_ouverte": "J'ai essayé tous les régimes, rien ne marche durablement. Mon médecin me dit que je suis prédiabétique. Je veux changer avant qu'il ne soit trop tard."
-  }$a6$::jsonb, 1, 'manual', NOW()-INTERVAL '2 months', NOW()-INTERVAL '6 weeks')
+    "stress_gestion": "Jeux vidéo (échappatoire), quelques amis proches, mère attentive et soutenante",
+    "elimination_peau": "Acné inflammatoire visage (front, joues, menton) et dos. Peau grasse. Cicatrices naissantes",
+    "elimination_transpiration": "Normale",
+    "homme_urinaire": "RAS",
+    "homme_libido": "Non abordé (mineur)",
+    "mode_vie_habitudes": "Sédentaire, écrans excessifs, rythme décalé, peu de contact avec la nature",
+    "mode_vie_environnement": "Vit chez ses parents à Bordeaux, chambre orientée nord (peu de lumière), quartier urbain",
+    "question_ouverte": "J en ai marre d avoir des boutons, tout le monde me regarde. Ma mère m a pris ce rendez-vous. Je veux bien essayer si ça marche mais je peux pas arrêter les frites d un coup."
+  }$a6$::jsonb, 1, 'manual', NOW()-INTERVAL '3 months', NOW()-INTERVAL '2 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-
-  -- Émilie Roux — Eczéma / Allergies
+  -- Céline Roux (c7) — Fibromyalgie
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c7, v_practitioner_id, $a7${
-    "general_profession": "Graphiste freelance, travaille à domicile",
-    "general_antecedents": "Eczéma atopique depuis l'enfance, asthme allergique (acariens, pollens), rhinite chronique",
-    "general_traitements": "Dermocorticoïdes en cas de poussée, antihistaminique saisonnier (cétirizine)",
-    "profil_temperament": "Créative, sensible, introvertie, perfectionniste",
-    "profil_emotions": "Gêne sociale liée à l'eczéma visible (mains, visage), perte de confiance, frustration",
-    "motif_principal": "Poussées d'eczéma récurrentes (mains, plis des coudes, visage), peau très réactive",
-    "motif_objectifs": "Espacer les poussées, réduire les dermocorticoïdes, renforcer la barrière cutanée, identifier les triggers",
-    "alimentation_habitudes": "Alimentation variée, tendance végétarienne, beaucoup de crudités",
-    "alimentation_hydratation": "Bonne",
-    "alimentation_ecarts": "Produits laitiers quotidiens (fromage, yaourts), gluten non testé",
-    "digestion_symptomes": "Ventre sensible, quelques ballonnements après les produits laitiers",
-    "digestion_transit": "Régulier",
-    "digestion_tolérances": "Possible sensibilité aux produits laitiers de vache",
-    "sommeil_qualite": "Perturbé par les démangeaisons nocturnes, grattage inconscient",
-    "energie_niveau": "Moyen",
-    "activite_pratique": "Natation 2x/semaine (quand la peau le permet), vélo",
-    "activite_posture": "Assise devant l'ordinateur 6-8h/jour",
+    "general_profession": "Secrétaire médicale à mi-temps (aménagement pour cause de fibromyalgie), arrêts fréquents",
+    "general_antecedents": "Fibromyalgie diagnostiquée en 2022 (ACR 2010). Dépression réactionnelle en 2021. Endométriose opérée en 2018",
+    "general_traitements": "Lyrica 150mg 2x/jour, tramadol 50mg en SOS, duloxétine 60mg (antidépresseur/antidouleur)",
+    "profil_temperament": "Courageuse, volontaire malgré la douleur, perfectionniste (facteur aggravant), besoin de reconnaissance",
+    "profil_emotions": "Découragement récurrent, sentiment d incompréhension de l entourage, colère contenue, gratitude envers les soignants bienveillants",
+    "motif_principal": "Fibromyalgie : douleurs diffuses chroniques (EVA 7/10), fatigue invalidante, sommeil non réparateur, 14 points sensibles",
+    "motif_objectifs": "Réduire la douleur et la fatigue, améliorer le sommeil, regagner de l autonomie, réduire les médicaments si possible",
+    "alimentation_habitudes": "Mange correctement quand elle a l énergie de cuisiner, sinon plats préparés. Appétit variable selon la douleur",
+    "alimentation_hydratation": "Insuffisante",
+    "alimentation_ecarts": "Sucre en excès (besoin de réconfort), café pour tenir, peu de légumes les jours de crise",
+    "digestion_symptomes": "Ballonnements fréquents, sensibilité intestinale, colopathie fonctionnelle associée",
+    "digestion_transit": "Variable",
+    "digestion_tolérances": "Sensibilité au gluten et aux produits laitiers (non testée formellement)",
+    "sommeil_qualite": "Catastrophique : endormissement 1h+, réveils multiples par la douleur, 4h30 de sommeil effectif, non réparateur",
+    "energie_niveau": "Bas",
+    "activite_pratique": "Très réduite par la douleur. Quelques marches courtes les bons jours. Ancienne danseuse (abandonné)",
+    "activite_posture": "Raideurs généralisées, contractures cervicales et trapèzes permanentes",
     "stress_niveau": "Élevé",
-    "stress_gestion": "Dessin, lecture, mais peu de techniques structurées",
-    "elimination_peau": "Peau atopique, sèche, eczéma actif sur les mains et plis des coudes, visage réactif",
-    "elimination_transpiration": "Transpiration aggrave les démangeaisons",
-    "femme_cycle": "Régulier 29 jours, poussées d'eczéma plus fréquentes en phase prémenstruelle",
-    "femme_contraception": "DIU cuivre",
-    "mode_vie_habitudes": "Travaille à domicile, bonne organisation mais isolement social partiel",
-    "mode_vie_environnement": "Appartement ancien à Strasbourg (moquette dans une pièce), chat",
-    "question_ouverte": "Mon eczéma me pourrit la vie depuis l'enfance. J'aimerais comprendre pourquoi ma peau réagit autant et agir en profondeur plutôt que juste mettre de la cortisone."
-  }$a7$::jsonb, 1, 'manual', NOW()-INTERVAL '4 months', NOW()-INTERVAL '3 months')
+    "stress_gestion": "Peu de ressources : ne sort presque plus, a perdu des amis qui ne comprennent pas la maladie, chat = réconfort",
+    "elimination_peau": "Sèche, sensible, réactive aux changements de température",
+    "elimination_transpiration": "Variable, sueurs lors des poussées douloureuses",
+    "femme_cycle": "Irrégulier depuis l opération d endométriose, douleurs prémenstruelles accrues",
+    "femme_contraception": "Pilule progestative en continu",
+    "mode_vie_habitudes": "Vie réduite par la maladie, isolement social progressif, mi-temps thérapeutique",
+    "mode_vie_environnement": "Appartement au 2e étage sans ascenseur (difficile les jours de crise), Strasbourg, vit seule avec son chat",
+    "question_ouverte": "On m a dit que la naturopathie ne pouvait rien pour la fibromyalgie. Mais les médicaments m abrutissent et ne suffisent pas. Je veux essayer autre chose, même si c est long. J ai besoin de quelqu un qui me croit quand je dis que j ai mal."
+  }$a7$::jsonb, 1, 'manual', NOW()-INTERVAL '8 months', NOW()-INTERVAL '7 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Julien Garcia — Anxiété / Sommeil
+  -- Marc Lefebvre (c8) — RGO / surpoids
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c8, v_practitioner_id, $a8${
-    "general_profession": "Étudiant en master de psychologie, petit boulot le soir (serveur)",
-    "general_antecedents": "Trouble anxieux généralisé diagnostiqué à 25 ans, pas de traitement médicamenteux (refus du patient)",
-    "general_traitements": "Aucun traitement médicamenteux, tisanes ponctuelles",
-    "profil_temperament": "Sensible, empathique, ruminations mentales, difficulté à lâcher prise",
-    "profil_emotions": "Anxiété permanente, crises d'angoisse occasionnelles, sentiment d'insécurité",
-    "motif_principal": "Anxiété quotidienne invalidante, troubles du sommeil (endormissement 1-2h), fatigue résultante",
-    "motif_objectifs": "Réduire l'anxiété naturellement, améliorer le sommeil, gagner en sérénité",
-    "alimentation_habitudes": "Repas irréguliers, souvent sur le pouce entre les cours et le travail",
-    "alimentation_hydratation": "Moyenne",
-    "alimentation_ecarts": "Boissons énergisantes 1-2x/semaine, café 3x/jour, alimentation déséquilibrée par manque de temps",
-    "digestion_symptomes": "Nœud à l'estomac fréquent, nausées en cas de stress, appétit variable",
-    "digestion_transit": "Diarrhée",
-    "digestion_tolérances": "RAS",
-    "sommeil_qualite": "Endormissement très difficile (ruminations), réveils fréquents, cauchemars, non reposé",
-    "energie_niveau": "Bas",
-    "activite_pratique": "Course à pied sporadique, aimerait faire plus mais manque de motivation",
-    "activite_posture": "RAS",
+    "general_profession": "Directeur commercial régional, déplacements fréquents (2-3 jours/semaine), repas d affaires quotidiens",
+    "general_antecedents": "RGO diagnostiqué en 2023. Hernie hiatale modérée (fibroscopie). Surpoids depuis 5 ans",
+    "general_traitements": "Oméprazole 20mg/jour depuis 2 ans. Gaviscon en SOS",
+    "profil_temperament": "Dynamique, bon vivant, sociable, compétitif, du mal à se poser et à ralentir",
+    "profil_emotions": "Stressé par les objectifs commerciaux, culpabilité vis-à-vis de l alimentation et du poids, déni partiel",
+    "motif_principal": "RGO chronique sous IPP (souhaite sevrer), surpoids (IMC 28.5, prise de 12 kg en 5 ans), fatigue",
+    "motif_objectifs": "Sevrer les IPP progressivement, perdre 8-10 kg, retrouver un confort digestif sans médicaments",
+    "alimentation_habitudes": "Repas d affaires le midi (restaurant), souvent copieux avec alcool. Dîner rapide le soir. Peu de cuisiner maison en semaine",
+    "alimentation_hydratation": "Insuffisante",
+    "alimentation_ecarts": "Alcool 3-4 verres/semaine (vin au restaurant), café 4x/jour, grignotage voiture (biscuits), portions excessives",
+    "digestion_symptomes": "Remontées acides quotidiennes surtout après le dîner et en position couchée, pyrosis, éructations fréquentes",
+    "digestion_transit": "Régulier",
+    "digestion_tolérances": "Intolérance aux tomates crues, agrumes, oignons crus, vin blanc",
+    "sommeil_qualite": "Perturbé par le reflux nocturne, dort souvent surélevé, ronflements (apnée du sommeil ?)",
+    "energie_niveau": "Moyen",
+    "activite_pratique": "Quasi nulle. Ancien rugbyman. Marche un peu en déplacement. Sédentarité totale sinon.",
+    "activite_posture": "Ventre proéminent, tension dans le bas du dos, position assise voiture ++ (100km/jour en déplacement)",
     "stress_niveau": "Élevé",
-    "stress_gestion": "Écriture (journal), musique, mais insuffisant",
-    "elimination_peau": "Ongles rongés, peau des mains abîmée",
-    "elimination_transpiration": "Mains moites en situation de stress",
+    "stress_gestion": "Le sport d équipe lui manque. Compense par la nourriture et l alcool. Peu de techniques en place.",
+    "elimination_peau": "Rosacée légère (nez et joues), peau grasse",
+    "elimination_transpiration": "Abondante, surtout la nuit",
     "homme_urinaire": "RAS",
-    "homme_libido": "Diminuée par l'anxiété",
-    "mode_vie_habitudes": "Rythme décalé (cours le jour, travail le soir), peu de régularité",
-    "mode_vie_environnement": "Studio étudiant à Montpellier, bruyant, peu lumineux",
-    "question_ouverte": "L'anxiété m'empêche de vivre normalement. Je ne veux pas prendre d'anxiolytiques. Aidez-moi à trouver des solutions naturelles qui fonctionnent vraiment."
-  }$a8$::jsonb, 1, 'manual', NOW()-INTERVAL '2.5 months', NOW()-INTERVAL '5 weeks')
+    "homme_libido": "Diminuée (fatigue, surpoids, complexe)",
+    "mode_vie_habitudes": "Rythme effréné, hôtels 2-3 nuits/sem, peu de vie de famille en semaine, sport absent",
+    "mode_vie_environnement": "Maison de banlieue toulousaine, famille (femme + 2 enfants), souvent absent",
+    "question_ouverte": "Mon gastro dit que je serai sous IPP à vie. Je n accepte pas ça. J ai 44 ans, je veux me reprendre en main. Mais c est dur avec mon boulot : les repas d affaires, c est mon quotidien. J ai besoin d un plan réaliste, pas d un régime de moine."
+  }$a8$::jsonb, 1, 'manual', NOW()-INTERVAL '4 months', NOW()-INTERVAL '3 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Chloé Laurent — Ménopause
+  -- Amina Benali (c9) — Migraines étudiante
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c9, v_practitioner_id, $a9${
-    "general_profession": "Cadre RH dans une grande entreprise, poste à responsabilités",
-    "general_antecedents": "Ménopause confirmée depuis 1 an (dernières règles il y a 14 mois). Ostéopénie débutante. Cholestérol limite",
-    "general_traitements": "Refus du THS, supplémentation calcium-vitamine D prescrite par le gynécologue",
-    "profil_temperament": "Organisée, leader, habituée à tout contrôler, vit mal les changements corporels",
-    "profil_emotions": "Irritabilité, sautes d'humeur, sentiment de perte de contrôle, tristesse ponctuelle",
-    "motif_principal": "Bouffées de chaleur (8-10/jour), sueurs nocturnes, insomnie, prise de poids abdominale",
-    "motif_objectifs": "Atténuer les bouffées de chaleur, mieux dormir, stabiliser le poids, préserver le capital osseux",
-    "alimentation_habitudes": "Repas structurés mais souvent au restaurant d'entreprise, cuisine le week-end",
-    "alimentation_hydratation": "Moyenne",
-    "alimentation_ecarts": "Café 3-4x/jour, vin rouge le soir, desserts fréquents",
-    "digestion_symptomes": "RAS, digestion correcte",
+    "general_profession": "Étudiante en 3e année de droit, stage prévu au semestre prochain",
+    "general_antecedents": "Migraines depuis la puberté (15 ans), aggravées depuis l entrée en fac. Mère migraineuse également",
+    "general_traitements": "Ibuprofène 400mg en crise (2-3x/mois), triptan prescrit mais non utilisé (peur des effets secondaires)",
+    "profil_temperament": "Studieuse, perfectionniste scolaire, anxieuse avant les examens, sociable par ailleurs",
+    "profil_emotions": "Anxiété de performance, peur de l échec, culpabilité quand migraine empêche de travailler",
+    "motif_principal": "Migraines cataméniales 3-4x/mois, aggravées par le stress des examens et la surconsommation de café",
+    "motif_objectifs": "Réduire la fréquence et l intensité des migraines, diminuer le café, mieux gérer le stress des partiels",
+    "alimentation_habitudes": "Irrégulière : saute le petit-déjeuner, mange sur le pouce à la fac, cuisine simple le soir en colocation",
+    "alimentation_hydratation": "Insuffisante",
+    "alimentation_ecarts": "Café 5x/jour, peu de fruits et légumes, fast-food 1-2x/semaine, alimentation étudiante classique (pâtes, riz)",
+    "digestion_symptomes": "Nausées pendant les crises de migraine. Sinon RAS",
     "digestion_transit": "Régulier",
-    "digestion_tolérances": "RAS",
-    "sommeil_qualite": "Réveils multiples par les bouffées de chaleur et sueurs, fatigue matinale",
-    "energie_niveau": "Bas",
-    "activite_pratique": "Marche rapide 3x/semaine, ancienne joggeuse (arrêt pour douleurs genoux)",
-    "activite_posture": "Assise au bureau, RAS",
+    "digestion_tolérances": "Pas d intolérance connue hormis le chocolat qui peut déclencher des migraines",
+    "sommeil_qualite": "Variable : bon en période normale, très perturbé avant les examens (insomnie d endormissement)",
+    "energie_niveau": "Moyen",
+    "activite_pratique": "Yoga 1x/semaine avec une amie, marche pour aller à la fac (20 min), pas de sport régulier",
+    "activite_posture": "Position penchée sur les livres, cervicalgies fréquentes, bureau non ergonomique",
     "stress_niveau": "Élevé",
-    "stress_gestion": "Lecture, jardinage le week-end",
-    "elimination_peau": "Peau plus sèche depuis la ménopause, rides accentuées",
-    "elimination_transpiration": "Sueurs nocturnes abondantes, bouffées de chaleur diurnes",
-    "femme_cycle": "Ménopause confirmée, dernières règles il y a 14 mois",
-    "femme_contraception": "Plus nécessaire",
-    "mode_vie_habitudes": "Vie structurée, couple stable, enfants adultes, peu de temps pour soi",
-    "mode_vie_environnement": "Grande maison à Lille, jardin, cadre agréable",
-    "question_ouverte": "Mon gynécologue me propose un traitement hormonal mais j'ai peur des effets secondaires. Existe-t-il des solutions naturelles efficaces ?"
-  }$a9$::jsonb, 1, 'manual', NOW()-INTERVAL '6 weeks', NOW()-INTERVAL '4 weeks')
+    "stress_gestion": "Appels à la mère, yoga ponctuel, quelques soirées avec les amis. Pas de technique formelle.",
+    "elimination_peau": "Normale, quelques boutons prémenstruels",
+    "elimination_transpiration": "Normale",
+    "femme_cycle": "Régulier 30 jours, SPM marqué (migraines J-2 et J1, douleurs pelviennes), flux abondant J1-J2",
+    "femme_contraception": "Pilule œstroprogestative (Leeloo) depuis 3 ans",
+    "mode_vie_habitudes": "Vie étudiante classique, colocation, sorties le week-end, écrans le soir",
+    "mode_vie_environnement": "Colocation à Montpellier, 3 colocataires, environnement parfois bruyant, fac à 20 min à pied",
+    "question_ouverte": "Les migraines me font rater des cours et des partiels. J ai peur que ça impacte mes résultats. Le médecin me donne juste des médicaments mais ça ne règle pas le problème de fond. Ma mère est naturopathe et m a conseillé de venir vous voir."
+  }$a9$::jsonb, 1, 'manual', NOW()-INTERVAL '2 months', NOW()-INTERVAL '6 weeks')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Maxime Fournier — Burnout / Surrénales
+  -- Philippe Garnier (c10) — Eczéma / fatigue (artisan boulanger)
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c10, v_practitioner_id, $a10${
-    "general_profession": "Directeur de projet en cabinet de conseil, en arrêt maladie depuis 2 mois (burnout)",
-    "general_antecedents": "Burnout sévère avec arrêt de travail. Phase 3 de Selye. Cortisol salivaire effondré le matin. Bilan thyroïdien normal",
-    "general_traitements": "Anxiolytique léger (hydroxyzine) au coucher, en cours de sevrage",
-    "profil_temperament": "Ambitieux, hyper-responsable, incapable de dire non, tendance au surmenage",
-    "profil_emotions": "Épuisement émotionnel total, apathie, perte de sens, crises de larmes",
-    "motif_principal": "Fatigue extrême (incapable de faire les courses), brouillard mental, hypotension, vertiges au lever",
-    "motif_objectifs": "Reconstruire l'énergie progressivement, soutenir les surrénales, retrouver un équilibre sans rechute",
-    "alimentation_habitudes": "Appétit très faible, saute souvent des repas, alimentation appauvrie",
+    "general_profession": "Artisan boulanger, propriétaire de sa boulangerie, levé à 2h30 du matin, 6 jours/semaine",
+    "general_antecedents": "Eczéma depuis l enfance, aggravé par le métier (contact farine). Terrain atopique. Asthme léger dans l enfance (résolu)",
+    "general_traitements": "Dermocorticoïdes en poussée (bétaméthasone crème). Cétirizine 10mg en SOS. Émollients quotidiens",
+    "profil_temperament": "Travailleur acharné, passionné par son métier, stoïque face à la douleur, peu de plaintes",
+    "profil_emotions": "Frustration vis-à-vis de l eczéma (impact professionnel), fierté de son métier malgré les difficultés",
+    "motif_principal": "Eczéma chronique des mains et avant-bras (contact professionnel au gluten), fatigue matinale intense (horaires décalés)",
+    "motif_objectifs": "Améliorer l eczéma malgré l exposition professionnelle, retrouver de l énergie, mieux gérer les horaires décalés",
+    "alimentation_habitudes": "Petit-déjeuner à 2h30 (café + viennoiserie maison), repas chaud à 11h, dîner à 19h, cuisine simple et traditionnelle",
     "alimentation_hydratation": "Insuffisante",
-    "alimentation_ecarts": "Sucre pour tenir le coup, café pour se réveiller (3-4/jour malgré la fatigue)",
-    "digestion_symptomes": "Nausées matinales, perte d'appétit, digestion lente",
-    "digestion_transit": "Constipation",
-    "digestion_tolérances": "RAS",
-    "sommeil_qualite": "Dort 10-12h mais sommeil non réparateur, réveils nocturnes fréquents",
+    "alimentation_ecarts": "Goûte quotidiennement sa production (pain, viennoiseries), bière le soir pour décompresser, peu de légumes",
+    "digestion_symptomes": "Ballonnements après les repas contenant du gluten (quotidien professionnel), gaz abondants",
+    "digestion_transit": "Variable",
+    "digestion_tolérances": "Sensibilité probable au gluten (impossible à éviter professionnellement), produits laitiers ok",
+    "sommeil_qualite": "Couché à 20h30, levé à 2h30. 6h de sommeil. Qualité correcte mais insuffisante. Sieste de 20 min après le déjeuner",
     "energie_niveau": "Bas",
-    "activite_pratique": "Incapable de faire du sport actuellement, marche courte (15 min) quand l'énergie le permet",
-    "activite_posture": "Alité ou en position semi-allongée une grande partie de la journée",
-    "stress_niveau": "Élevé",
-    "stress_gestion": "Aucune capacité à gérer le stress actuellement, système nerveux à plat",
-    "elimination_peau": "Teint gris, cernes creusés, peau terne et flasque",
-    "elimination_transpiration": "Diminuée (hypoactivité surrénalienne)",
+    "activite_pratique": "Le travail physique au fournil suffit (debout, port de charges). Marche le dimanche (jour de repos)",
+    "activite_posture": "Debout longtemps, port de charges (sacs de farine 25kg), bras tendus devant le four",
+    "stress_niveau": "Modéré",
+    "stress_gestion": "Peu de temps libre. Marche le dimanche. Regarde le foot. Famille = soutien.",
+    "elimination_peau": "Eczéma craquelé des mains et avant-bras, plaques inflammatoires rouges, prurit intense, peau très sèche",
+    "elimination_transpiration": "Abondante au fournil (chaleur du four)",
     "homme_urinaire": "RAS",
-    "homme_libido": "Absente depuis le burnout",
-    "mode_vie_habitudes": "En arrêt maladie, passe beaucoup de temps chez lui, isolement progressif",
-    "mode_vie_environnement": "Appartement à Rennes, vit seul depuis la séparation (3 mois), peu d'entourage proche",
-    "question_ouverte": "Je suis au fond du trou. Mon médecin parle de dépression mais je sais que c'est physique. Mon corps a lâché. J'ai besoin de reconstruire petit à petit."
-  }$a10$::jsonb, 1, 'manual', NOW()-INTERVAL '3 months', NOW()-INTERVAL '2 months')
+    "homme_libido": "Diminuée par la fatigue",
+    "mode_vie_habitudes": "Rythme décalé (couché 20h30, levé 2h30), peu de vie sociale en semaine, dimanche en famille",
+    "mode_vie_environnement": "Maison à Rennes, boulangerie attenante, environnement fariné, bonne aération du fournil",
+    "question_ouverte": "Mon eczéma me fait honte devant les clients. J ai les mains rouges et craquelées en permanence. Le dermato me dit de changer de métier mais c est ma vie, ma passion. Il doit bien y avoir un moyen d améliorer ça sans tout arrêter."
+  }$a10$::jsonb, 1, 'manual', NOW()-INTERVAL '5 months', NOW()-INTERVAL '4 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Léa Girard — Acné hormonale
+  -- Isabelle Fontaine (c11) — Détox / optimisation
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c11, v_practitioner_id, $a11${
-    "general_profession": "Étudiante en école de commerce, vie sociale active",
-    "general_antecedents": "Acné depuis l'adolescence, traitée par Roaccutane à 17 ans (récidive après). Pilule Diane 35 de 16 à 22 ans (arrêt récent)",
-    "general_traitements": "Crème topique adapalène + peroxyde de benzoyle, zinc prescrit par le dermatologue",
-    "profil_temperament": "Sociable, extravertie, mais complexée par sa peau, manque de confiance",
-    "profil_emotions": "Impact psychologique fort de l'acné, évite les photos, maquillage épais",
-    "motif_principal": "Acné inflammatoire kystique sur le menton, les mâchoires et le cou. Aggravation depuis l'arrêt de la pilule",
-    "motif_objectifs": "Clarifier la peau de façon durable, comprendre les causes hormonales, adapter l'alimentation",
-    "alimentation_habitudes": "Alimentation étudiante : rapide, souvent industrielle, pâtes/riz, peu de légumes",
-    "alimentation_hydratation": "Insuffisante",
-    "alimentation_ecarts": "Fast-food 3x/semaine, sodas, produits laitiers abondants, sucre quotidien",
-    "digestion_symptomes": "Ballonnements fréquents, pas d'autres symptômes",
+    "general_profession": "Professeure de yoga indépendante, 4-5 cours par jour, formatrice yoga prénatal le week-end",
+    "general_antecedents": "RAS. Excellente santé de base. Végétarienne depuis 10 ans (pas végan). Pratiquante de yoga depuis 15 ans",
+    "general_traitements": "Aucun médicament. Compléments : spiruline, vitamine B12, huile de lin",
+    "profil_temperament": "Calme, intuitive, à l écoute de son corps, disciplinée, en recherche permanente d optimisation",
+    "profil_emotions": "Stable, pratique méditative quotidienne, bonne gestion émotionnelle, empathique",
+    "motif_principal": "Pas de pathologie. Souhaite une cure détox hépatique printanière et optimiser sa micronutrition",
+    "motif_objectifs": "Cure détox hépatique complète, optimisation micronutritionnelle, introduction de super-aliments ciblés",
+    "alimentation_habitudes": "Végétarienne bio, cuisine maison quotidienne, aliments complets et non transformés, mange en pleine conscience",
+    "alimentation_hydratation": "Bonne",
+    "alimentation_ecarts": "Chocolat noir quotidien (85%), vin bio occasionnel en société, fromage de chèvre régulier",
+    "digestion_symptomes": "RAS, excellente digestion",
     "digestion_transit": "Régulier",
-    "digestion_tolérances": "RAS",
-    "sommeil_qualite": "Coucher tardif (1h-2h), lever difficile, rythme décalé",
-    "energie_niveau": "Moyen",
-    "activite_pratique": "Fitness en salle 3x/semaine, danse le week-end",
-    "activite_posture": "RAS",
-    "stress_niveau": "Modéré",
-    "stress_gestion": "Sorties entre amis, sport, réseaux sociaux",
-    "elimination_peau": "Acné inflammatoire zone U (menton, mâchoires), peau grasse zone T, pores dilatés",
+    "digestion_tolérances": "Sensibilité légère aux lentilles (gaz) si non trempées",
+    "sommeil_qualite": "Excellent : endormissement en 10 min, 7h30 de sommeil, réveil naturel sans alarme, rêves lucides occasionnels",
+    "energie_niveau": "Élevé",
+    "activite_pratique": "Yoga quotidien (Ashtanga le matin, Hatha dans la journée), marche en nature 3x/semaine, nage en été",
+    "activite_posture": "Excellente souplesse et posture (yoga quotidien), proprioception très développée",
+    "stress_niveau": "Faible",
+    "stress_gestion": "Méditation quotidienne 20 min, pranayama, yoga nidra, journaling, marche en forêt",
+    "elimination_peau": "Belle peau, teint lumineux, cheveux épais. Légère sécheresse hivernale",
     "elimination_transpiration": "Normale",
-    "femme_cycle": "Irrégulier depuis l'arrêt de la pilule (32-45 jours), acné aggravée en prémenstruel",
-    "femme_contraception": "Aucune depuis 6 mois (arrêt Diane 35)",
-    "mode_vie_habitudes": "Vie étudiante, soirées fréquentes, rythme irrégulier",
-    "mode_vie_environnement": "Résidence étudiante à Nice, kitchenette limitée",
-    "question_ouverte": "J'en ai marre d'avoir de l'acné à 24 ans. Depuis que j'ai arrêté la pilule c'est pire. Mon dermato ne propose que des crèmes. Il n'y a pas de solution de fond ?"
-  }$a11$::jsonb, 1, 'manual', NOW()-INTERVAL '2 months', NOW()-INTERVAL '3 weeks')
+    "femme_cycle": "Régulier 28 jours, aucun SPM notable, flux léger et court (3 jours)",
+    "femme_contraception": "Méthode naturelle (symptothermie) depuis 5 ans",
+    "mode_vie_habitudes": "Vie saine et équilibrée, peu d écrans, coucher tôt, nature +++, communauté yoga",
+    "mode_vie_environnement": "Studio avec jardin à Nice, studio de yoga attenant, quartier calme proche de la mer",
+    "question_ouverte": "Je me sens bien globalement mais je voudrais passer un cap dans mon bien-être. J ai lu beaucoup de choses sur les cures détox et les super-aliments mais je préfère être accompagnée par une professionnelle pour ne pas faire n importe quoi. Je voudrais aussi vérifier que ma micronutrition est optimale en tant que végétarienne."
+  }$a11$::jsonb, 1, 'manual', NOW()-INTERVAL '3 months', NOW()-INTERVAL '2 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
-  -- Pierre Dubois — Cardiovasculaire / Cholestérol
+  -- Robert Durand (c12) — Prévention cardiovasculaire
   INSERT INTO consultant_anamnesis (consultant_id, naturopath_id, answers, version, source, created_at, updated_at)
   VALUES (v_c12, v_practitioner_id, $a12${
     "general_profession": "Retraité, ancien ingénieur, actif (jardinage, associations)",
-    "general_antecedents": "Hypercholestérolémie (LDL 1.85 g/L), HTA limite (140/85), surpoids léger. Antécédents familiaux : père décédé d'un infarctus à 65 ans",
-    "general_traitements": "Refus des statines pour l'instant, amlodipine 5mg pour la tension, aspirine 100mg/jour",
+    "general_antecedents": "Hypercholestérolémie (LDL 1.85 g/L), HTA limite (140/85), surpoids léger. Antécédents familiaux : père décédé d un infarctus à 65 ans",
+    "general_traitements": "Refus des statines pour l instant, amlodipine 5mg pour la tension, aspirine 100mg/jour",
     "profil_temperament": "Méthodique, curieux, ouvert aux approches complémentaires, discipliné",
     "profil_emotions": "Inquiétude liée aux antécédents familiaux, motivation forte pour agir en prévention",
     "motif_principal": "Cholestérol élevé malgré un régime, HTA limite, prévention cardiovasculaire (historique familial)",
@@ -455,13 +453,13 @@ BEGIN
     "activite_posture": "RAS, bonne mobilité pour son âge",
     "stress_niveau": "Faible",
     "stress_gestion": "Jardinage, lecture, vie associative, petit-fils",
-    "elimination_peau": "Normale pour l'âge",
+    "elimination_peau": "Normale pour l âge",
     "elimination_transpiration": "Normale",
     "homme_urinaire": "Levers nocturnes 2x, prostate surveillée (PSA normal)",
-    "homme_libido": "Diminuée avec l'âge mais acceptable",
+    "homme_libido": "Diminuée avec l âge mais acceptable",
     "mode_vie_habitudes": "Retraite active, bonne hygiène de vie, vie sociale riche",
     "mode_vie_environnement": "Maison avec grand jardin à Dijon, air de bonne qualité, potager",
-    "question_ouverte": "Mon père est mort d'un infarctus à mon âge. Je veux tout faire pour ne pas suivre le même chemin. Mon cardiologue veut me mettre sous statines mais je préférerais essayer naturellement d'abord."
+    "question_ouverte": "Mon père est mort d un infarctus à mon âge. Je veux tout faire pour ne pas suivre le même chemin. Mon cardiologue veut me mettre sous statines mais je préférerais essayer naturellement d abord."
   }$a12$::jsonb, 1, 'manual', NOW()-INTERVAL '4 months', NOW()-INTERVAL '3 months')
   ON CONFLICT (consultant_id) DO NOTHING;
 
@@ -663,7 +661,7 @@ BEGIN
     "message_cloture": "Sophie, vous avez toutes les clés en main pour retrouver un confort digestif durable. N hésitez pas à me solliciter entre nos rendez-vous. Votre corps sait se réparer quand on lui en donne les moyens !",
     "notes_libres": "Patiente très motivée et rigoureuse. Risque de perfectionnisme : rappeler l importance de la souplesse. Surveiller le stress professionnel qui est le facteur déclenchant principal."
   }$cp1$::jsonb, NOW()-INTERVAL '6 months', false, NOW()-INTERVAL '6 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Thomas Dubois (c2) – Nutrition sportive trail
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -709,7 +707,7 @@ BEGIN
     "message_cloture": "Thomas, la nutrition est votre 4e discipline en trail. Avec ce plan, vous avez tout pour performer à l UTMB. On ajustera au fur et à mesure. Bonne prépa !",
     "notes_libres": "Athlète très motivé et rigoureux. Attention au surentraînement, surveiller la HRV. Test des produits de course à faire en entraînement, jamais le jour J."
   }$cp2$::jsonb, NOW()-INTERVAL '5 months', false, NOW()-INTERVAL '5 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Émilie Laurent (c3) – Post-partum / fatigue
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -755,7 +753,7 @@ BEGIN
     "message_cloture": "Émilie, soyez indulgente avec vous-même. Vous faites un travail formidable. La fatigue est temporaire, et votre corps a besoin de temps pour se reconstituer. Je suis là pour vous accompagner.",
     "notes_libres": "Patiente fatiguée mais très motivée. Surveiller le moral (baby blues possible). Mari impliqué et soutenant. Réévaluer fer et vit D dans 2 mois."
   }$cp3$::jsonb, NOW()-INTERVAL '4 months', false, NOW()-INTERVAL '4 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Nathalie Petit (c5) – Ménopause
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -801,7 +799,7 @@ BEGIN
     "message_cloture": "Nathalie, la ménopause est un passage naturel que nous pouvons traverser en douceur avec les bons outils. Soyez patiente, les résultats s installent progressivement sur 4 à 8 semaines.",
     "notes_libres": "Patiente ouverte aux approches naturelles mais avec des attentes fortes de résultats rapides. Rassurer sur le délai d action. Pas d ATCD cancer hormono-dépendant, phytoestrogènes OK."
   }$cp5$::jsonb, NOW()-INTERVAL '6 months', false, NOW()-INTERVAL '6 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Céline Roux (c7) – Fibromyalgie
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -847,7 +845,7 @@ BEGIN
     "message_cloture": "Céline, la fibromyalgie demande de la patience mais des améliorations significatives sont possibles. Chaque petit progrès compte. Nous allons avancer ensemble, pas à pas.",
     "notes_libres": "Patiente courageuse malgré la douleur chronique. Compliance bonne. Vérifier les interactions avec Lyrica et tramadol. Objectif : réduction progressive du tramadol en accord avec le médecin traitant."
   }$cp7$::jsonb, NOW()-INTERVAL '8 months', false, NOW()-INTERVAL '8 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Jean-Pierre Moreau (c4) – Prostate & prévention
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -893,7 +891,7 @@ BEGIN
     "message_cloture": "Jean-Pierre, votre hygiène de vie est déjà excellente. Avec ces ajustements ciblés, nous pouvons encore améliorer votre confort. N oubliez pas de maintenir le suivi urologique en parallèle.",
     "notes_libres": "Patient discipliné et motivé. PSA normal – confirmer HBP simple. Coordonner avec urologue. Antécédents CV familiaux à surveiller."
   }$cp4$::jsonb, NOW()-INTERVAL '7 months', false, NOW()-INTERVAL '7 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Philippe Garnier (c10) – Eczéma & fatigue
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -939,7 +937,7 @@ BEGIN
     "message_cloture": "Philippe, votre eczéma est un signal de votre corps. Avec la bonne approche, on peut significativement l améliorer même dans votre contexte professionnel. Courage, les premiers résultats arrivent généralement dans les 4 à 6 semaines.",
     "notes_libres": "Artisan très courageux, horaires contraignants. L exposition professionnelle au gluten est le principal obstacle. Travailler sur la barrière cutanée et la perméabilité intestinale en priorité. Coordonner avec dermatologue."
   }$cp10$::jsonb, NOW()-INTERVAL '5 months', false, NOW()-INTERVAL '5 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Lucas Bernard (c6) – Acné adolescent (version 1 draft – plan en cours d élaboration)
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -972,7 +970,7 @@ BEGIN
     "message_cloture": "Lucas, la patience est la clé. Les résultats sur l acné prennent 6 à 8 semaines. Tiens bon avec les changements alimentaires, ça vaut le coup !",
     "notes_libres": "Adolescent coopératif mais alimentation très ancrée. Transition progressive obligatoire. La mère est très impliquée, bon soutien familial."
   }$cp6$::jsonb, NULL, false, NOW()-INTERVAL '3 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Marc Lefebvre (c8) – RGO & surpoids
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -1002,7 +1000,7 @@ BEGIN
     "message_cloture": "Marc, le sevrage des IPP est possible mais doit être progressif et encadré. Les résultats viennent avec la régularité. Courage pour la gestion des repas d affaires – c est votre plus grand défi !",
     "notes_libres": "Patient motivé mais contexte professionnel difficile (déplacements, repas d affaires). Le no-show est un signal : relancer et rassurer. Sevrage IPP à coordonner avec gastro-entérologue."
   }$cp8$::jsonb, NOW()-INTERVAL '4 months', false, NOW()-INTERVAL '4 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Amina Benali (c9) – Migraines étudiante
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -1038,7 +1036,7 @@ BEGIN
     "message_cloture": "Amina, les migraines ne sont pas une fatalité. Avec le magnésium, la grande camomille et les ajustements de mode de vie, on peut réduire significativement les crises. Courage pour les examens !",
     "notes_libres": "Étudiante motivée, bon niveau de compréhension. Composante hormonale des migraines (cataméniales) : suivi gynéco à coordonner si pilule. Stress examens = facteur principal."
   }$cp9$::jsonb, NOW()-INTERVAL '2 months', false, NOW()-INTERVAL '2 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Isabelle Fontaine (c11) – Détox & optimisation (AI-generated plan)
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, ai_model, ai_generation_date, created_at)
@@ -1070,7 +1068,7 @@ BEGIN
     "message_cloture": "Isabelle, avec votre niveau de conscience corporelle et votre discipline, cette cure va donner d excellents résultats. Écoutez votre corps et n hésitez pas à ralentir si nécessaire.",
     "notes_libres": "Consultante experte, très autonome. Ne pas infantiliser. Proposer des approches avancées. Excellent potentiel de résultats rapides vu le terrain de base."
   }$cp11$::jsonb, NOW()-INTERVAL '3 months', true, 'claude-sonnet-4-5-20250929', NOW()-INTERVAL '3 months', NOW()-INTERVAL '3 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Robert Durand (c12) – Prévention cardiovasculaire
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -1102,23 +1100,13 @@ BEGIN
     "message_cloture": "Robert, votre motivation est votre meilleur atout. Les études montrent que le régime méditerranéen réduit le risque cardiovasculaire de 30%. Avec les compléments ciblés, vous avez toutes les chances de ramener votre cholestérol dans les normes. On fait le point après le prochain bilan sanguin.",
     "notes_libres": "Patient très motivé par la prévention (ATCD familial père). Cardiologue informé de l approche naturopathique. Objectif : éviter les statines. Si LDL ne baisse pas sous 1.40 en 3 mois, discuter levure de riz rouge ou accepter les statines."
   }$cp12$::jsonb, NOW()-INTERVAL '4 months', false, NOW()-INTERVAL '4 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- ============================================
   -- Step 6 : Prescriptions & Prescription Items
   -- ============================================
-  INSERT INTO prescriptions (id, consultant_id, practitioner_id, name, notes, start_date, end_date, created_at) VALUES
-    (v_pres1,  v_c1,  v_practitioner_id, 'Protocole SII – Phase 1',           'Probiotiques, L-glutamine, magnésium. Réévaluer à M+1.',                   (NOW()-INTERVAL '6 months')::date, (NOW()-INTERVAL '3 months')::date, NOW()-INTERVAL '6 months'),
-    (v_pres2,  v_c2,  v_practitioner_id, 'Complémentation sportive trail',     'Magnésium, fer, oméga 3, spiruline. À maintenir pendant la préparation.',   (NOW()-INTERVAL '5 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '5 months'),
-    (v_pres3,  v_c3,  v_practitioner_id, 'Reminéralisation post-partum',       'Fer bisglycinate, vit D, magnésium, oméga 3 DHA. Compatible allaitement.',  (NOW()-INTERVAL '4 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '4 months'),
-    (v_pres4,  v_c4,  v_practitioner_id, 'Confort prostatique & sommeil',      'Saw palmetto, zinc, sélénium, magnésium.',                                  (NOW()-INTERVAL '7 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '7 months'),
-    (v_pres5,  v_c5,  v_practitioner_id, 'Accompagnement ménopause',           'Isoflavones, vit D, calcium, magnésium, huile d onagre.',                   (NOW()-INTERVAL '6 months')::date, (NOW()-INTERVAL '2 months')::date, NOW()-INTERVAL '6 months'),
-    (v_pres7,  v_c7,  v_practitioner_id, 'Anti-douleur & sommeil fibromyalgie','Magnésium forte dose, oméga 3, CoQ10, vit D, PEA.',                         (NOW()-INTERVAL '8 months')::date, (NOW()-INTERVAL '2 months')::date, NOW()-INTERVAL '8 months'),
-    (v_pres8,  v_c8,  v_practitioner_id, 'Sevrage IPP & gestion reflux',       'Lithothamne, mélatonine, DGL, probiotiques.',                               (NOW()-INTERVAL '4 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '4 months'),
-    (v_pres10, v_c10, v_practitioner_id, 'Eczéma & perméabilité intestinale',  'Probiotiques, L-glutamine, oméga 3, zinc, vit D.',                          (NOW()-INTERVAL '5 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '5 months')
-  ON CONFLICT (id) DO NOTHING;
-
-  -- Prescription Items
+  -- NOTE: prescriptions table not present in current schema, skipped.
+  -- Prescription Items (prescription_id has no FK constraint, safe to insert)
   INSERT INTO prescription_items (id, prescription_id, name, dosage, frequency, duration, instructions, created_at) VALUES
     -- Sophie (pres1)
     (v_pi_1_1,                                     v_pres1, 'Probiotiques Lactobacillus rhamnosus GG', '10 milliards UFC', '1x/jour',   90, 'Le matin à jeun avec un grand verre d eau. Commencer progressivement.',                NOW()-INTERVAL '6 months'),
@@ -1174,57 +1162,13 @@ BEGIN
     ('e1000000-0000-4000-a000-000000000035',        v_pres10, 'Vitamine D3',                        '4000 UI', '1x/jour',  120, 'Au déjeuner.',                                                      NOW()-INTERVAL '5 months')
   ON CONFLICT (id) DO NOTHING;
 
-  -- ============================================
-  -- Step 7 : Complement Tracking (14 days for active consultants c1, c5, c7, c10)
-  -- ============================================
-  -- Sophie (c1) – probiotiques et L-glutamine
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c1, v_pi_1_1, d::date, (random() > 0.1), NOW()  -- 90% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c1, v_pi_1_2, d::date, (random() > 0.15), NOW()  -- 85% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  -- Nathalie (c5) – isoflavones et vit D
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c5, v_pi_5_1, d::date, (random() > 0.05), NOW()  -- 95% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c5, v_pi_5_2, d::date, (random() > 0.1), NOW()
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  -- Céline (c7) – magnésium et oméga 3
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c7, v_pi_7_1, d::date, (random() > 0.08), NOW()  -- 92% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c7, v_pi_7_2, d::date, (random() > 0.12), NOW()
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  -- Philippe (c10) – probiotiques et L-glutamine
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c10, v_pi_10_1, d::date, (random() > 0.2), NOW()  -- 80% adherence (horaires décalés)
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c10, v_pi_10_2, d::date, (random() > 0.25), NOW()  -- 75% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
+  -- NOTE: complement_tracking requires FK to complements table (which requires case_files).
+  -- Skipped to avoid FK violations.
 
   -- ============================================
-  -- Step 8 : Messages (~62 records, 3-4 unread from consultants)
+  -- Step 7 : Messages (~62 records, 3-4 unread from consultants)
   -- ============================================
-  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read_by_practitioner) VALUES
+  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read) VALUES
     -- Sophie (c1) : conversation active
     ('f0000000-0000-4000-a000-000000000001', v_c1, 'Bonjour Woodeline, j ai commencé les probiotiques ce matin. Juste une question : est-ce normal d avoir un peu plus de ballonnements les premiers jours ?', 'Bonjour Woodeline, j ai commencé les probiotiques ce matin. Juste une question : est-ce normal d avoir un peu plus de ballonnements les premiers jours ?', 'consultant', 'consultant', NOW()-INTERVAL '6 months'+INTERVAL '2 days', NOW()-INTERVAL '6 months'+INTERVAL '2 days', true),
     ('f0000000-0000-4000-a000-000000000002', v_c1, 'Bonjour Sophie ! Oui, c est tout à fait normal. Les probiotiques peuvent provoquer une légère augmentation des ballonnements pendant 3-5 jours le temps que votre microbiote s adapte. Si ça persiste au-delà d une semaine, on ajustera la dose. Courage !', 'Bonjour Sophie ! Oui, c est tout à fait normal. Les probiotiques peuvent provoquer une légère augmentation des ballonnements pendant 3-5 jours le temps que votre microbiote s adapte. Si ça persiste au-delà d une semaine, on ajustera la dose. Courage !', 'praticien', 'practitioner', NOW()-INTERVAL '6 months'+INTERVAL '2 days'+INTERVAL '3 hours', NOW()-INTERVAL '6 months'+INTERVAL '2 days'+INTERVAL '3 hours', true),
@@ -1243,7 +1187,7 @@ BEGIN
     ('f0000000-0000-4000-a000-00000000000d', v_c2, 'Bravo Thomas ! 6h12 c est un excellent temps et zéro trouble digestif, c est la meilleure nouvelle. Repose-toi bien cette semaine, pas de course avant 5 jours minimum. On débriefera à notre prochaine consultation.', 'Bravo Thomas ! 6h12 c est un excellent temps et zéro trouble digestif, c est la meilleure nouvelle. Repose-toi bien cette semaine, pas de course avant 5 jours minimum. On débriefera à notre prochaine consultation.', 'praticien', 'practitioner', NOW()-INTERVAL '2 months'+INTERVAL '6 days'+INTERVAL '3 hours', NOW()-INTERVAL '2 months'+INTERVAL '6 days'+INTERVAL '3 hours', true)
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read_by_practitioner) VALUES
+  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read) VALUES
     -- Émilie (c3) : post-partum
     ('f0000000-0000-4000-a000-00000000000e', v_c3, 'Bonjour, j ai un doute : le fer me donne un peu mal au ventre. Est-ce que je peux le prendre au repas plutôt qu à jeun ?', 'Bonjour, j ai un doute : le fer me donne un peu mal au ventre. Est-ce que je peux le prendre au repas plutôt qu à jeun ?', 'consultant', 'consultant', NOW()-INTERVAL '4 months'+INTERVAL '5 days', NOW()-INTERVAL '4 months'+INTERVAL '5 days', true),
     ('f0000000-0000-4000-a000-00000000000f', v_c3, 'Bonjour Émilie ! Oui bien sûr, prenez-le au petit-déjeuner avec votre vitamine C. L absorption sera légèrement réduite mais la tolérance sera bien meilleure. L essentiel c est de le prendre régulièrement.', 'Bonjour Émilie ! Oui bien sûr, prenez-le au petit-déjeuner avec votre vitamine C. L absorption sera légèrement réduite mais la tolérance sera bien meilleure. L essentiel c est de le prendre régulièrement.', 'praticien', 'practitioner', NOW()-INTERVAL '4 months'+INTERVAL '5 days'+INTERVAL '2 hours', NOW()-INTERVAL '4 months'+INTERVAL '5 days'+INTERVAL '2 hours', true),
@@ -1263,7 +1207,7 @@ BEGIN
     ('f0000000-0000-4000-a000-000000000019', v_c5, 'C est formidable Nathalie ! Vous voyez que la patience paie. La sauge est effectivement aussi sédative, c est un bonus. On continue comme ça et on fait le point au prochain rendez-vous.', 'C est formidable Nathalie ! Vous voyez que la patience paie. La sauge est effectivement aussi sédative, c est un bonus. On continue comme ça et on fait le point au prochain rendez-vous.', 'praticien', 'practitioner', NOW()-INTERVAL '3 months'+INTERVAL '5 days'+INTERVAL '3 hours', NOW()-INTERVAL '3 months'+INTERVAL '5 days'+INTERVAL '3 hours', true)
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read_by_practitioner) VALUES
+  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read) VALUES
     -- Lucas (c6) : ado
     ('f0000000-0000-4000-a000-00000000001a', v_c6, 'Salut, j ai réduit les sodas à 1 par jour au lieu de 3. Mais c est dur de manger des légumes à la cantine, y a que des frites...', 'Salut, j ai réduit les sodas à 1 par jour au lieu de 3. Mais c est dur de manger des légumes à la cantine, y a que des frites...', 'consultant', 'consultant', NOW()-INTERVAL '2 months'+INTERVAL '5 days', NOW()-INTERVAL '2 months'+INTERVAL '5 days', true),
     ('f0000000-0000-4000-a000-00000000001b', v_c6, 'Bravo Lucas pour les sodas ! Pour la cantine, essaie de prendre au moins les crudités d entrée et un fruit en dessert. Et si tu peux amener un goûter maison (amandes + banane), ça sera déjà super.', 'Bravo Lucas pour les sodas ! Pour la cantine, essaie de prendre au moins les crudités d entrée et un fruit en dessert. Et si tu peux amener un goûter maison (amandes + banane), ça sera déjà super.', 'praticien', 'practitioner', NOW()-INTERVAL '2 months'+INTERVAL '5 days'+INTERVAL '4 hours', NOW()-INTERVAL '2 months'+INTERVAL '5 days'+INTERVAL '4 hours', true),
@@ -1285,7 +1229,7 @@ BEGIN
     ('f0000000-0000-4000-a000-000000000027', v_c8, 'C est honnête et c est bien de me le dire. Pour les dîners clients, on va travailler des stratégies concrètes : choisir du poisson grillé, éviter le vin blanc, manger lentement. On en parle en détail au prochain RDV. Bravo pour le kilo en moins !', 'C est honnête et c est bien de me le dire. Pour les dîners clients, on va travailler des stratégies concrètes : choisir du poisson grillé, éviter le vin blanc, manger lentement. On en parle en détail au prochain RDV. Bravo pour le kilo en moins !', 'praticien', 'practitioner', NOW()-INTERVAL '12 days'+INTERVAL '2 hours', NOW()-INTERVAL '12 days'+INTERVAL '2 hours', true)
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read_by_practitioner) VALUES
+  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read) VALUES
     -- Amina (c9) : étudiante
     ('f0000000-0000-4000-a000-000000000028', v_c9, 'Bonjour ! J ai réduit le café à 2 par jour et j ai eu qu 1 seule migraine ce mois ! C est la première fois en 2 ans. Par contre les partiels approchent et je stresse...', 'Bonjour ! J ai réduit le café à 2 par jour et j ai eu qu 1 seule migraine ce mois ! C est la première fois en 2 ans. Par contre les partiels approchent et je stresse...', 'consultant', 'consultant', NOW()-INTERVAL '3 weeks'+INTERVAL '3 days', NOW()-INTERVAL '3 weeks'+INTERVAL '3 days', true),
     ('f0000000-0000-4000-a000-000000000029', v_c9, 'Super résultat Amina ! 1 migraine au lieu de 3-4, on est sur la bonne voie. Pour les partiels : la cohérence cardiaque 5 min avant chaque session de révision. Et surtout, ne saute pas de repas même si tu es stressée – l hypoglycémie est ton pire ennemi pour les migraines.', 'Super résultat Amina ! 1 migraine au lieu de 3-4, on est sur la bonne voie. Pour les partiels : la cohérence cardiaque 5 min avant chaque session de révision. Et surtout, ne saute pas de repas même si tu es stressée – l hypoglycémie est ton pire ennemi pour les migraines.', 'praticien', 'practitioner', NOW()-INTERVAL '3 weeks'+INTERVAL '3 days'+INTERVAL '2 hours', NOW()-INTERVAL '3 weeks'+INTERVAL '3 days'+INTERVAL '2 hours', true),
@@ -1311,58 +1255,46 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 
   -- ============================================
-  -- Step 9 : Journal Entries (14 days × 6 active consultants using generate_series)
+  -- Step 8 : Journal Entries (14 days × 6 active consultants using generate_series)
   -- ============================================
 
   -- Sophie (c1) – bonne adhésion
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level, bristol_type, bristol_frequency,
-    hydration_liters, exercise_type, exercise_duration_minutes, exercise_intensity, source, created_at)
-  SELECT v_c1, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.3 THEN 'tres_bien' WHEN random() < 0.7 THEN 'bien' ELSE 'neutre' END,
-    CASE WHEN random() < 0.4 THEN 'bien' ELSE 'neutre' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c1, d::date,
+    CASE WHEN random() < 0.3 THEN 'happy' WHEN random() < 0.7 THEN 'happy' ELSE 'neutral' END,
+    CASE WHEN random() < 0.4 THEN 'Eleve' ELSE 'Moyen' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
       WHEN 0 THEN 'Bonne journée. Transit normal, pas de ballonnements. Cohérence cardiaque faite 2x.'
       WHEN 1 THEN 'Un peu de stress au travail mais j ai fait ma respiration 4-7-8. Digestion ok.'
       ELSE 'Journée calme. Bonne énergie. J ai marché 30 min après le déjeuner.'
     END,
-    true, (random() > 0.3), true, true,
-    6 + floor(random()*3)::int, 3 + floor(random()*3)::int, 6 + floor(random()*3)::int,
-    3 + floor(random()*2)::int, 1 + floor(random()*2)::int,
-    1.2 + (random()*0.8)::numeric(3,1),
-    CASE WHEN (d::date - (NOW()-INTERVAL '14 days')::date) % 2 = 0 THEN 'Marche' ELSE 'Yoga' END,
-    CASE WHEN (d::date - (NOW()-INTERVAL '14 days')::date) % 2 = 0 THEN 30 ELSE 20 END,
-    'modere', 'consultant', NOW()
+    true, (random() > 0.3), true, true, NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Nathalie (c5) – ménopause
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level, source, created_at)
-  SELECT v_c5, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.4 THEN 'bien' WHEN random() < 0.7 THEN 'neutre' ELSE 'moyen' END,
-    CASE WHEN random() < 0.5 THEN 'bien' ELSE 'neutre' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c5, d::date,
+    CASE WHEN random() < 0.4 THEN 'happy' WHEN random() < 0.7 THEN 'neutral' ELSE 'sad' END,
+    CASE WHEN random() < 0.5 THEN 'Eleve' ELSE 'Moyen' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
       WHEN 0 THEN 'Seulement 1 bouffée de chaleur aujourd hui. Bien dormi grâce à la sauge.'
       WHEN 1 THEN '2 bouffées, une le matin et une en fin d après-midi. Moral ok.'
       WHEN 2 THEN 'Bonne journée, pas de bouffée ! Marche rapide de 40 min. Me sens en forme.'
       ELSE 'Nuit un peu perturbée par une sueur nocturne. Fatigue en matinée mais ça va mieux l après-midi.'
     END,
-    true, (random() > 0.4), true, true,
-    5 + floor(random()*4)::int, 2 + floor(random()*3)::int, 5 + floor(random()*4)::int,
-    'consultant', NOW()
+    true, (random() > 0.4), true, true, NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Céline (c7) – fibromyalgie
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level, source, created_at)
-  SELECT v_c7, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.2 THEN 'bien' WHEN random() < 0.6 THEN 'neutre' ELSE 'moyen' END,
-    CASE WHEN random() < 0.3 THEN 'neutre' ELSE 'moyen' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c7, d::date,
+    CASE WHEN random() < 0.2 THEN 'happy' WHEN random() < 0.6 THEN 'neutral' ELSE 'sad' END,
+    CASE WHEN random() < 0.3 THEN 'Moyen' ELSE 'Bas' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 5
       WHEN 0 THEN 'Douleur modérée (EVA 4). Bain aux sels d Epsom ce soir. Yoga doux 15 min.'
       WHEN 1 THEN 'Bonne journée, douleur faible (EVA 3). J ai pu faire ma marche. Technique de la cuillère respectée.'
@@ -1370,89 +1302,58 @@ BEGIN
       WHEN 3 THEN 'Mieux qu hier (EVA 4). Sommeil correct grâce au griffonia. Yoga nidra ce matin.'
       ELSE 'Journée stable (EVA 4). Gestion des cuillères ok. Marche 20 min en forêt.'
     END,
-    (random() > 0.2), (random() > 0.2), (random() > 0.4), true,
-    4 + floor(random()*4)::int, 4 + floor(random()*3)::int, 3 + floor(random()*4)::int,
-    'consultant', NOW()
+    (random() > 0.2), (random() > 0.2), (random() > 0.4), true, NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Thomas (c2) – sportif
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level,
-    exercise_type, exercise_duration_minutes, exercise_intensity, source, created_at)
-  SELECT v_c2, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.5 THEN 'tres_bien' ELSE 'bien' END,
-    CASE WHEN random() < 0.6 THEN 'tres_bien' ELSE 'bien' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c2, d::date,
+    CASE WHEN random() < 0.5 THEN 'happy' ELSE 'happy' END,
+    CASE WHEN random() < 0.6 THEN 'Eleve' ELSE 'Eleve' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
       WHEN 0 THEN 'Sortie trail 15km D+600. Bonnes sensations. Nutrition course OK. Récupération en cours.'
       WHEN 1 THEN 'Repos actif. Étirements + rouleau de massage. Spiruline 5g. HRV au top.'
       WHEN 2 THEN 'Fractionné 10x400m. Bon tempo. Hydratation bien gérée. Pas de crampe.'
       ELSE 'Sortie endurance 1h30. Zone 2 maintenue. Alimentation pré-effort bien calée.'
     END,
-    true, false, true, (random() > 0.5),
-    8 + floor(random()*2)::int, 2 + floor(random()*2)::int, 8 + floor(random()*2)::int,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
-      WHEN 0 THEN 'Trail' WHEN 1 THEN 'Stretching' WHEN 2 THEN 'Fractionné' ELSE 'Endurance'
-    END,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
-      WHEN 0 THEN 90 WHEN 1 THEN 30 WHEN 2 THEN 45 ELSE 90
-    END,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
-      WHEN 0 THEN 'modere' WHEN 1 THEN 'leger' WHEN 2 THEN 'intense' ELSE 'modere'
-    END,
-    'consultant', NOW()
+    true, false, true, (random() > 0.5), NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Philippe (c10) – eczéma
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level, source, created_at)
-  SELECT v_c10, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.3 THEN 'bien' WHEN random() < 0.6 THEN 'neutre' ELSE 'moyen' END,
-    CASE WHEN random() < 0.3 THEN 'bien' WHEN random() < 0.7 THEN 'neutre' ELSE 'moyen' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c10, d::date,
+    CASE WHEN random() < 0.3 THEN 'happy' WHEN random() < 0.6 THEN 'neutral' ELSE 'sad' END,
+    CASE WHEN random() < 0.3 THEN 'Eleve' WHEN random() < 0.7 THEN 'Moyen' ELSE 'Bas' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
       WHEN 0 THEN 'Levé 2h30 ce matin. Journée au fournil. Eczéma stable. Crème calendula appliquée matin et soir. Sieste de 20 min à 13h.'
       WHEN 1 THEN 'Légère démangeaison poignet droit. Appliqué lavande aspic. Marche 20 min après le travail.'
       ELSE 'Jour de repos. Bien dormi (7h). Mains en bon état. Cuisiné des légumes sans gluten.'
     END,
-    (random() > 0.3), (random() > 0.5), (random() > 0.3), (random() > 0.2),
-    4 + floor(random()*4)::int, 3 + floor(random()*3)::int, 4 + floor(random()*3)::int,
-    'consultant', NOW()
+    (random() > 0.3), (random() > 0.5), (random() > 0.3), (random() > 0.2), NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Isabelle (c11) – optimisation
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level,
-    exercise_type, exercise_duration_minutes, exercise_intensity, source, created_at)
-  SELECT v_c11, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.6 THEN 'tres_bien' ELSE 'bien' END,
-    CASE WHEN random() < 0.6 THEN 'tres_bien' ELSE 'bien' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c11, d::date,
+    CASE WHEN random() < 0.6 THEN 'happy' ELSE 'happy' END,
+    CASE WHEN random() < 0.6 THEN 'Eleve' ELSE 'Eleve' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
       WHEN 0 THEN 'Cours de yoga donné ce matin. Spiruline + maca au petit-déjeuner. Énergie au top. Peau lumineuse.'
       WHEN 1 THEN 'Jus vert ce matin. Balade en forêt 1h. Méditation 20 min. Je me sens en pleine forme.'
       ELSE 'Journée très productive. 2 cours de yoga donnés. Alimentation parfaite. Sommeil profond et réparateur.'
     END,
-    true, true, true, true,
-    8 + floor(random()*2)::int, 1 + floor(random()*2)::int, 8 + floor(random()*2)::int,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
-      WHEN 0 THEN 'Yoga' WHEN 1 THEN 'Marche nature' ELSE 'Yoga'
-    END,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
-      WHEN 0 THEN 75 WHEN 1 THEN 60 ELSE 90
-    END,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
-      WHEN 0 THEN 'modere' WHEN 1 THEN 'leger' ELSE 'modere'
-    END,
-    'consultant', NOW()
+    true, true, true, true, NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- ============================================
-  -- Step 10 : Notifications (15 records, 3 unread)
+  -- Step 9 : Notifications (15 records, 3 unread)
   -- ============================================
   INSERT INTO notifications (id, practitioner_id, consultant_id, title, description, level, read, created_at) VALUES
     ('f1000000-0000-4000-a000-000000000001', v_practitioner_id, v_c1, 'Nouveau message de Sophie Martin', 'Sophie a envoyé un message concernant son suivi digestif.', 'info', true, NOW()-INTERVAL '2 weeks'),
@@ -1474,7 +1375,7 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 
   -- ============================================
-  -- Step 11 : Practitioner Notes (10 consultants)
+  -- Step 10 : Practitioner Notes (10 consultants)
   -- ============================================
   INSERT INTO practitioner_notes (consultant_id, practitioner_id, content, created_at, updated_at) VALUES
     (v_c1,  v_practitioner_id, 'Sophie Martin – Cadre sup, SII stress-dépendant. Excellente évolution en 6 mois. Transit normalisé, stress mieux géré grâce à la cohérence cardiaque. Phase de consolidation. Prochaine étape : espacement des RDV (trimestriel). Patiente rigoureuse mais perfectionniste – rappeler l importance du lâcher prise.', NOW()-INTERVAL '3 weeks', NOW()-INTERVAL '3 weeks'),
@@ -1487,141 +1388,21 @@ BEGIN
     (v_c8,  v_practitioner_id, 'Marc Lefebvre – Commercial, RGO + surpoids. Sevrage IPP en cours (rechutes lors des déplacements pro). Perte de 4kg. No-show au dernier RDV (déplacement). Reprendre les stratégies de gestion des repas d affaires. Motivation fluctuante selon le contexte pro.', NOW()-INTERVAL '2 weeks', NOW()-INTERVAL '2 weeks'),
     (v_c10, v_practitioner_id, 'Philippe Garnier – Artisan boulanger, eczéma chronique. Eczéma en nette amélioration malgré l exposition professionnelle au gluten. Probiotiques + L-glutamine efficaces. Siestes bien intégrées. Contrainte majeure : horaires décalés (levé 2h30). Coordonner avec dermato.', NOW()-INTERVAL '5 weeks', NOW()-INTERVAL '5 weeks'),
     (v_c12, v_practitioner_id, 'Robert Durand – Retraité, prévention cardiovasculaire. LDL en baisse (1.85 à 1.65) en 2 mois sans statines. Cardiologue accepte de poursuivre l approche naturelle. Objectif LDL < 1.40 au prochain bilan. Bonne adhésion au régime méditerranéen. ATCD familiaux = motivation forte.', NOW()-INTERVAL '2 months', NOW()-INTERVAL '2 months')
-  ON CONFLICT (consultant_id, practitioner_id) DO NOTHING;
-
-  -- ============================================
-  -- Step 12 : Educational Resources & Assignments
-  -- ============================================
-  INSERT INTO educational_resources (id, practitioner_id, title, slug, summary, content_type, content_markdown, category, tags, source, is_published, read_time_minutes, created_at) VALUES
-    ('f2000000-0000-4000-a000-000000000001', v_practitioner_id, 'La cohérence cardiaque : guide pratique', 'coherence-cardiaque-guide', 'Tout savoir sur la cohérence cardiaque 365 : technique, bienfaits et mise en pratique au quotidien.', 'article', '# La cohérence cardiaque 365
-
-## Qu est-ce que c est ?
-La cohérence cardiaque est une technique de respiration qui synchronise le rythme cardiaque et le système nerveux autonome.
-
-## La méthode 365
-- **3** fois par jour
-- **6** respirations par minute
-- **5** minutes par séance
-
-## Comment pratiquer ?
-1. Inspirez pendant 5 secondes par le nez
-2. Expirez pendant 5 secondes par la bouche
-3. Répétez pendant 5 minutes
-
-## Bienfaits prouvés
-- Réduction du cortisol (hormone du stress) pendant 4-6 heures
-- Amélioration de la variabilité cardiaque
-- Meilleure régulation émotionnelle
-- Amélioration du sommeil et de la concentration', 'gestion_stress', ARRAY['stress', 'respiration', 'bien-être', 'sommeil'], 'practitioner', true, 5, NOW()-INTERVAL '6 months'),
-
-    ('f2000000-0000-4000-a000-000000000002', v_practitioner_id, 'Alimentation anti-inflammatoire : les bases', 'alimentation-anti-inflammatoire', 'Comprendre et adopter une alimentation qui réduit l inflammation chronique.', 'article', '# L alimentation anti-inflammatoire
-
-## Pourquoi c est important ?
-L inflammation chronique de bas grade est impliquée dans de nombreuses pathologies : troubles digestifs, douleurs articulaires, fatigue chronique, problèmes de peau.
-
-## Les piliers anti-inflammatoires
-1. **Oméga 3** : poissons gras (sardines, maquereau, saumon), graines de lin, noix
-2. **Antioxydants** : fruits rouges, légumes colorés, curcuma, thé vert
-3. **Fibres** : légumes, céréales complètes, légumineuses
-4. **Polyphénols** : huile d olive vierge, cacao cru, grenades
-
-## Aliments pro-inflammatoires à limiter
-- Sucres raffinés et farines blanches
-- Huiles végétales riches en oméga 6 (tournesol, maïs)
-- Produits ultra-transformés
-- Excès de viande rouge et charcuterie
-- Alcool en excès', 'alimentation', ARRAY['alimentation', 'inflammation', 'nutrition', 'oméga 3'], 'practitioner', true, 7, NOW()-INTERVAL '5 months'),
-
-    ('f2000000-0000-4000-a000-000000000003', v_practitioner_id, 'Le magnésium : le minéral anti-stress', 'magnesium-mineral-anti-stress', 'Pourquoi le magnésium est essentiel, comment reconnaître une carence et quelles formes choisir.', 'article', '# Le magnésium
-
-## Signes de carence
-- Crampes et spasmes musculaires
-- Fatigue chronique
-- Irritabilité et anxiété
-- Troubles du sommeil
-- Paupière qui tremble
-
-## Les meilleures formes
-- **Bisglycinate** : excellente absorption, bien toléré (RECOMMANDÉ)
-- **Citrate** : bonne absorption, léger effet laxatif
-- **Thréonate** : passe la barrière hémato-encéphalique (cognition)
-- **Oxyde** : mal absorbé, à éviter
-
-## Dosage recommandé
-300 à 400 mg/jour pour un adulte. En cas de stress ou de sport intense : jusqu à 600 mg/jour.
-
-## Aliments riches en magnésium
-Chocolat noir 70%+, amandes, noix de cajou, épinards, banane, avocat, graines de courge.', 'general', ARRAY['magnésium', 'compléments', 'stress', 'sommeil', 'minéraux'], 'practitioner', true, 6, NOW()-INTERVAL '4 months'),
-
-    ('f2000000-0000-4000-a000-000000000004', v_practitioner_id, 'Yoga doux pour la fibromyalgie', 'yoga-doux-fibromyalgie', 'Programme de yoga adapté aux personnes souffrant de fibromyalgie.', 'video_link', NULL, 'activite_physique', ARRAY['yoga', 'fibromyalgie', 'douleur', 'mobilité'], 'practitioner', true, 15, NOW()-INTERVAL '6 months'),
-
-    ('f2000000-0000-4000-a000-000000000005', v_practitioner_id, 'Guide des huiles essentielles de base', 'guide-huiles-essentielles', 'Les 5 huiles essentielles indispensables et leur utilisation en toute sécurité.', 'article', '# Les 5 huiles essentielles indispensables
-
-## 1. Lavande vraie (Lavandula angustifolia)
-Usage : relaxation, sommeil, petites brûlures, cicatrisation.
-Voie : diffusion, cutanée (pure possible), bain.
-
-## 2. Tea tree (Melaleuca alternifolia)
-Usage : antiseptique, antifongique, boutons d acné.
-Voie : cutanée locale (1 goutte pure sur le bouton).
-
-## 3. Menthe poivrée (Mentha piperita)
-Usage : nausées, maux de tête, digestion, coup de fatigue.
-Voie : 1 goutte sur les tempes ou sur un comprimé neutre.
-
-## 4. Ravintsara (Cinnamomum camphora)
-Usage : immunité, prévention hivernale, antiviral.
-Voie : cutanée (sur les poignets), diffusion.
-
-## 5. Eucalyptus citronné (Corymbia citriodora)
-Usage : anti-inflammatoire, douleurs musculaires et articulaires.
-Voie : cutanée diluée 10% dans huile végétale.
-
-## Précautions générales
-- Jamais d HE pure dans les yeux, oreilles, muqueuses
-- Test cutané au pli du coude 24h avant première utilisation
-- Interdites aux femmes enceintes/allaitantes et enfants < 7 ans (sauf avis)
-- Conserver à l abri de la lumière et de la chaleur', 'aromatherapie', ARRAY['aromathérapie', 'huiles essentielles', 'guide', 'sécurité'], 'practitioner', true, 8, NOW()-INTERVAL '3 months')
-  ON CONFLICT (slug) DO NOTHING;
-
-  -- Resource Assignments (2-3 per active consultant)
-  INSERT INTO resource_assignments (resource_id, consultant_id, practitioner_id, message, sent_at) VALUES
-    -- Sophie : cohérence cardiaque + alimentation anti-inflammatoire
-    ('f2000000-0000-4000-a000-000000000001', v_c1, v_practitioner_id, 'Sophie, voici un guide complet sur la cohérence cardiaque. Référez-vous y pour perfectionner votre technique.', NOW()-INTERVAL '6 months'),
-    ('f2000000-0000-4000-a000-000000000002', v_c1, v_practitioner_id, 'Un article sur l alimentation anti-inflammatoire qui complète votre protocole digestif.', NOW()-INTERVAL '5 months'),
-    -- Thomas : magnésium
-    ('f2000000-0000-4000-a000-000000000003', v_c2, v_practitioner_id, 'Thomas, un article sur le magnésium pour comprendre pourquoi c est crucial pour ta récupération sportive.', NOW()-INTERVAL '5 months'),
-    -- Émilie : magnésium
-    ('f2000000-0000-4000-a000-000000000003', v_c3, v_practitioner_id, 'Émilie, un article sur le magnésium pour comprendre son importance dans la récupération post-partum.', NOW()-INTERVAL '4 months'),
-    -- Nathalie : alimentation anti-inflammatoire
-    ('f2000000-0000-4000-a000-000000000002', v_c5, v_practitioner_id, 'Nathalie, l alimentation anti-inflammatoire est un pilier pour gérer les symptômes de la ménopause.', NOW()-INTERVAL '6 months'),
-    -- Céline : yoga fibromyalgie + cohérence cardiaque + magnésium
-    ('f2000000-0000-4000-a000-000000000004', v_c7, v_practitioner_id, 'Céline, cette vidéo de yoga doux est spécialement adaptée à la fibromyalgie. Allez-y très progressivement.', NOW()-INTERVAL '4 months'),
-    ('f2000000-0000-4000-a000-000000000001', v_c7, v_practitioner_id, 'La cohérence cardiaque pour vous aider avec la gestion de la douleur et le sommeil.', NOW()-INTERVAL '6 months'),
-    ('f2000000-0000-4000-a000-000000000003', v_c7, v_practitioner_id, 'Le magnésium est particulièrement important dans la fibromyalgie. Voici un guide complet.', NOW()-INTERVAL '6 months'),
-    -- Amina : cohérence cardiaque
-    ('f2000000-0000-4000-a000-000000000001', v_c9, v_practitioner_id, 'Amina, la cohérence cardiaque t aidera à gérer le stress des examens et à prévenir les migraines.', NOW()-INTERVAL '2 months'),
-    -- Philippe : huiles essentielles
-    ('f2000000-0000-4000-a000-000000000005', v_c10, v_practitioner_id, 'Philippe, un guide sur les huiles essentielles pour vous aider avec les applications sur l eczéma.', NOW()-INTERVAL '5 months'),
-    ('f2000000-0000-4000-a000-000000000002', v_c10, v_practitioner_id, 'L alimentation anti-inflammatoire est essentielle dans la prise en charge de l eczéma.', NOW()-INTERVAL '5 months'),
-    -- Isabelle : huiles essentielles
-    ('f2000000-0000-4000-a000-000000000005', v_c11, v_practitioner_id, 'Isabelle, un rappel sur les HE de base pour votre cure détox.', NOW()-INTERVAL '3 months'),
-    -- Robert : alimentation anti-inflammatoire
-    ('f2000000-0000-4000-a000-000000000002', v_c12, v_practitioner_id, 'Robert, l alimentation anti-inflammatoire rejoint le régime méditerranéen cardioprotecteur.', NOW()-INTERVAL '4 months')
   ON CONFLICT DO NOTHING;
 
-  -- ============================================
-  -- Step 13 : Wearable Summaries (30 days × 5 connected consultants)
-  -- ============================================
+  -- NOTE: educational_resources and resource_assignments tables not present in current schema, skipped.
 
-  -- Sophie (c1) – Apple Watch
+  -- ============================================
+  -- Step 11 : Wearable Summaries (30 days × 5 connected consultants)
+  -- ============================================
+  -- Sophie (c1) – Apple Watch (sleep_duration in minutes, completeness 0-100)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c1, d::date,
-    6.5 + (random()*2)::numeric(3,1),
-    65 + floor(random()*25)::numeric,
-    35 + floor(random()*20)::numeric,
-    4000 + floor(random()*4000)::numeric,
-    0.8 + (random()*0.2)::numeric(3,2),
+    390 + floor(random()*120)::int,
+    65 + floor(random()*25)::int,
+    35 + floor(random()*20)::int,
+    4000 + floor(random()*4000)::int,
+    80 + floor(random()*20)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
@@ -1629,11 +1410,11 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- Thomas (c2) – Garmin (high activity)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c2, d::date,
-    7 + (random()*2)::numeric(3,1),
-    75 + floor(random()*20)::numeric,
-    50 + floor(random()*30)::numeric,
-    8000 + floor(random()*8000)::numeric,
-    0.9 + (random()*0.1)::numeric(3,2),
+    420 + floor(random()*120)::int,
+    75 + floor(random()*20)::int,
+    50 + floor(random()*30)::int,
+    8000 + floor(random()*8000)::int,
+    90 + floor(random()*10)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
@@ -1641,11 +1422,11 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- Céline (c7) – Oura Ring (low activity due to fibro)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c7, d::date,
-    5 + (random()*3)::numeric(3,1),
-    45 + floor(random()*30)::numeric,
-    25 + floor(random()*15)::numeric,
-    2000 + floor(random()*3000)::numeric,
-    0.7 + (random()*0.3)::numeric(3,2),
+    300 + floor(random()*180)::int,
+    45 + floor(random()*30)::int,
+    25 + floor(random()*15)::int,
+    2000 + floor(random()*3000)::int,
+    70 + floor(random()*30)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
@@ -1653,11 +1434,11 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- Isabelle (c11) – Whoop (high wellness)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c11, d::date,
-    7.5 + (random()*1.5)::numeric(3,1),
-    80 + floor(random()*15)::numeric,
-    55 + floor(random()*25)::numeric,
-    6000 + floor(random()*5000)::numeric,
-    0.9 + (random()*0.1)::numeric(3,2),
+    450 + floor(random()*90)::int,
+    80 + floor(random()*15)::int,
+    55 + floor(random()*25)::int,
+    6000 + floor(random()*5000)::int,
+    90 + floor(random()*10)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
@@ -1665,17 +1446,17 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- Robert (c12) – Apple Watch (moderate activity, senior)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c12, d::date,
-    6 + (random()*2)::numeric(3,1),
-    55 + floor(random()*25)::numeric,
-    20 + floor(random()*15)::numeric,
-    3000 + floor(random()*3000)::numeric,
-    0.75 + (random()*0.2)::numeric(3,2),
+    360 + floor(random()*120)::int,
+    55 + floor(random()*25)::int,
+    20 + floor(random()*15)::int,
+    3000 + floor(random()*3000)::int,
+    75 + floor(random()*20)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
 
   -- ============================================
-  -- Step 14 : Billing (subscription_plans, subscriptions, invoices, payment_methods, billing_history)
+  -- Step 12 : Billing (subscription_plans, subscriptions, invoices, payment_methods, billing_history)
   -- ============================================
 
   -- Subscription plan (Premium)
@@ -1724,8 +1505,7 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- ============================================
   RAISE NOTICE 'Seed data for Woodeline (pwoodeline@gmail.com) inserted successfully!';
   RAISE NOTICE 'Consultants: 12, Appointments: ~42, Consultations: ~30, Plans: 10';
-  RAISE NOTICE 'Prescriptions: 8, Items: ~40, Messages: ~62, Journal entries: ~84';
-  RAISE NOTICE 'Notifications: 15, Notes: 10, Resources: 5, Assignments: 13';
-  RAISE NOTICE 'Wearable summaries: ~150, Complement tracking: ~112';
+  RAISE NOTICE 'Prescription items: ~40, Messages: ~62, Journal entries: ~84';
+  RAISE NOTICE 'Notifications: 15, Notes: 10, Wearable summaries: ~150';
 
 END $$;
