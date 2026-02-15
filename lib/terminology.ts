@@ -80,6 +80,10 @@ export const T = {
   labelComplete: 'Complet',
   tabAteliers: 'Ateliers',
 
+  // ─── Cycle menstruel ───────────────────────────
+  tabCycle: 'Cycle',
+  descCycle: 'Suivi du cycle menstruel et corrélations.',
+
   // ─── Bilan de terrain ──────────────────────────
   tabBilanTerrain: 'Bilan de terrain',
   descBilanTerrain: 'Constitution, tempérament, diathèse, émonctoires, surcharges et iridologie.',

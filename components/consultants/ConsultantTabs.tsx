@@ -67,6 +67,7 @@ import {
   Wind,
   Settings,
   Dumbbell,
+  Moon,
 } from 'lucide-react';
 import type {
   AnamnesisAnswers,
@@ -96,8 +97,19 @@ import type {
   CustomIndicatorValue,
   BristolType,
   ExerciseIntensity,
+  CycleProfile,
+  CycleEntry,
 } from '../../lib/types';
 import { upsertTerrain, updateIrisPhotoAnnotations, deleteIrisPhoto } from '../../lib/queries/terrain';
+import { upsertCycleProfile } from '../../lib/queries/cycle';
+import { CYCLE_PHASES, CYCLE_REGULARITY_LABELS, FLOW_LABELS } from '../../lib/cycle-constants';
+import { identifyCycleStarts, getCycleContext, calculateAverageCycleLength, getCycleDay as getCycleDayUtil, getCyclePhaseForDay, buildPhaseMap } from '../../lib/cycle-utils';
+import { CyclePhaseBadge } from '../cycle/CyclePhaseBadge';
+import { CycleCalendar } from '../cycle/CycleCalendar';
+import { CycleOverlayChart } from '../cycle/CycleOverlayChart';
+import { SymptomGrid } from '../cycle/SymptomGrid';
+import { CycleCorrelationTable } from '../cycle/CycleCorrelationTable';
+import { CycleProfileEditor } from '../cycle/CycleProfileEditor';
 import {
   CONSTITUTIONS,
   CONSTITUTION_MAP,
@@ -208,6 +220,7 @@ const TABS = [
   T.tabRendezVous,
   T.tabAnamnese,
   T.tabBilanTerrain,
+  T.tabCycle,
   T.tabBagueConnectee,
   T.tabJournal,
   T.tabNotesSeance,
@@ -225,6 +238,7 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
   [T.tabRendezVous]: { title: T.tabRendezVous, description: T.descRendezVous },
   [T.tabAnamnese]: { title: T.tabAnamnese, description: T.descAnamnese },
   [T.tabBilanTerrain]: { title: T.tabBilanTerrain, description: T.descBilanTerrain },
+  [T.tabCycle]: { title: T.tabCycle, description: T.descCycle },
   [T.tabBagueConnectee]: { title: T.tabBagueConnectee, description: T.descBagueConnectee },
   [T.tabJournal]: { title: T.tabJournal, description: T.descJournal },
   [T.tabNotesSeance]: { title: T.tabNotesSeance, description: T.descNotesSeance },
@@ -250,6 +264,7 @@ const SIDEBAR_GROUPS = [
       { tab: T.tabConseillancier as Tab, label: 'Conseillancier', icon: FileText },
       { tab: T.tabRendezVous as Tab, label: 'Rendez-vous', icon: Calendar },
       { tab: T.tabJournal as Tab, label: 'Journal', icon: BookOpen },
+      { tab: T.tabCycle as Tab, label: 'Cycle', icon: Moon, cycleOnly: true },
     ],
   },
   {
@@ -615,6 +630,92 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   const [irisViewerPhoto, setIrisViewerPhoto] = useState<ConsultantIrisPhoto | null>(null);
   const [irisCompareEye, setIrisCompareEye] = useState<IrisEye | null>(null);
   const [showIrisUploader, setShowIrisUploader] = useState(false);
+
+  // ─── Cycle states ──────────────────────────
+  const [cycleProfileEditing, setCycleProfileEditing] = useState(false);
+  const [cycleActivating, setCycleActivating] = useState(false);
+  const [cycleCalendarMonth, setCycleCalendarMonth] = useState(new Date().getMonth());
+  const [cycleCalendarYear, setCycleCalendarYear] = useState(new Date().getFullYear());
+
+  const cycleProfile = consultantState.cycle_profile ?? null;
+  const cycleEntries = useMemo(() => consultantState.cycle_entries ?? [], [consultantState.cycle_entries]);
+  const cycleIsTracking = cycleProfile?.is_tracking === true;
+
+  const cycleContext = useMemo(() => {
+    if (!cycleIsTracking || !cycleProfile) return null;
+    return getCycleContext(
+      cycleEntries,
+      cycleProfile.average_cycle_length,
+      cycleProfile.average_period_length
+    );
+  }, [cycleIsTracking, cycleProfile, cycleEntries]);
+
+  const cycleStarts = useMemo(() => identifyCycleStarts(cycleEntries), [cycleEntries]);
+
+  const cycleHistory = useMemo(() => {
+    if (cycleStarts.length < 1) return [];
+    const history: { start: Date; length: number | null; periodDays: number; symptomCount: number }[] = [];
+    for (let i = 0; i < cycleStarts.length; i++) {
+      const start = cycleStarts[i];
+      const next = cycleStarts[i + 1] ?? null;
+      const length = next ? Math.round((next.getTime() - start.getTime()) / 86_400_000) : null;
+      const startStr = start.toISOString().slice(0, 10);
+      const endStr = next ? next.toISOString().slice(0, 10) : '9999-12-31';
+      const cycleE = cycleEntries.filter((e) => e.date >= startStr && e.date < endStr);
+      const periodDays = cycleE.filter((e) => e.is_period).length;
+      const symptomCount = cycleE.reduce((acc, e) => {
+        let count = 0;
+        if (e.symptom_cramps) count++;
+        if (e.symptom_bloating) count++;
+        if (e.symptom_headache) count++;
+        if (e.symptom_breast_tenderness) count++;
+        if (e.symptom_mood_swings) count++;
+        if (e.symptom_fatigue) count++;
+        if (e.symptom_acne) count++;
+        if (e.symptom_cravings) count++;
+        if (e.symptom_insomnia) count++;
+        if (e.symptom_water_retention) count++;
+        if (e.symptom_back_pain) count++;
+        if (e.symptom_nausea) count++;
+        if (e.symptom_libido_high) count++;
+        return acc + count;
+      }, 0);
+      history.push({ start, length, periodDays, symptomCount });
+    }
+    return history.reverse().slice(0, 12);
+  }, [cycleStarts, cycleEntries]);
+
+  async function handleActivateCycleTracking() {
+    setCycleActivating(true);
+    try {
+      const result = await upsertCycleProfile(consultant.id, consultantState.practitioner_id, {
+        is_tracking: true,
+      });
+      if (result) {
+        setConsultantState((prev) => ({ ...prev, cycle_profile: result }));
+        setToast({ title: 'Suivi du cycle activé', variant: 'success' });
+      }
+    } catch {
+      setToast({ title: 'Erreur lors de l\'activation', variant: 'error' });
+    } finally {
+      setCycleActivating(false);
+    }
+  }
+
+  async function handleSaveCycleProfile(data: Partial<CycleProfile>) {
+    const result = await upsertCycleProfile(
+      consultant.id,
+      consultantState.practitioner_id,
+      data
+    );
+    if (result) {
+      setConsultantState((prev) => ({ ...prev, cycle_profile: result }));
+      setCycleProfileEditing(false);
+      setToast({ title: 'Profil du cycle mis à jour', variant: 'success' });
+    } else {
+      setToast({ title: 'Erreur', variant: 'error' });
+    }
+  }
 
   // Extract substance names from plan content for contraindication checking
   const substanceNamesFromPlan = useMemo(() => {
@@ -1540,6 +1641,9 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 <Badge variant={isPremium ? 'premium' : 'standard'}>
                   {isPremium ? 'Premium' : 'Standard'}
                 </Badge>
+                {cycleIsTracking && cycleContext ? (
+                  <CyclePhaseBadge phase={cycleContext.phase} cycleDay={cycleContext.cycleDay} compact />
+                ) : null}
                 {consultantState.age ? <span>{consultantState.age} ans</span> : null}
                 {consultantState.city ? <span>· {consultantState.city}</span> : null}
               </div>
@@ -1586,7 +1690,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                   {group.label}
                 </div>
                 <div className="space-y-0.5">
-                  {group.items.map((item) => {
+                  {group.items.filter((item) => !(item as any).cycleOnly || consultantState.cycle_profile?.is_tracking).map((item) => {
                     const isActive = tab === item.tab;
                     const Icon = item.icon;
                     return (
@@ -1927,6 +2031,40 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          {/* ─── Card Suivi du cycle menstruel ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold">Suivi du cycle menstruel</h2>
+                  <p className="text-xs text-stone">Activez le suivi du cycle pour ce consultant.</p>
+                </div>
+                {cycleIsTracking ? (
+                  <Badge variant="active">Actif</Badge>
+                ) : null}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {cycleIsTracking ? (
+                <div className="flex items-center gap-3 text-sm text-charcoal">
+                  <Moon className="h-4 w-4 text-violet-500" />
+                  <span>Le suivi du cycle est activé. Accédez à l&apos;onglet <strong>Cycle</strong> pour les détails.</span>
+                  <Button variant="secondary" onClick={() => setTab(T.tabCycle as Tab)}>
+                    Voir le cycle
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <p className="text-sm text-stone">
+                    Le suivi du cycle menstruel permet de corréler les symptômes, l&apos;énergie et les données de sommeil/HRV avec les phases du cycle. Activez-le pour afficher l&apos;onglet Cycle et les indicateurs de phase dans le journal et la bague connectée.
+                  </p>
+                  <Button variant="primary" onClick={handleActivateCycleTracking} loading={cycleActivating}>
+                    Activer le suivi du cycle
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -2834,6 +2972,179 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </div>
       )}
 
+      {/* ═══════════════ CYCLE TAB ═══════════════ */}
+      {tab === T.tabCycle && cycleIsTracking && cycleProfile && (
+        <div className="space-y-4">
+          {/* ─── Section 1: Profil du cycle (compact) ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold">Profil du cycle</h2>
+                {!cycleProfileEditing && (
+                  <Button variant="secondary" onClick={() => setCycleProfileEditing(true)}>
+                    Modifier
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {cycleProfileEditing ? (
+                <CycleProfileEditor
+                  profile={cycleProfile}
+                  onSave={handleSaveCycleProfile}
+                  onCancel={() => setCycleProfileEditing(false)}
+                />
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {cycleContext ? (
+                      <CyclePhaseBadge phase={cycleContext.phase} cycleDay={cycleContext.cycleDay} />
+                    ) : (
+                      <span className="text-xs text-stone italic">Aucun cycle identifié</span>
+                    )}
+                    {cycleContext && (
+                      <span className="text-xs text-stone">
+                        Prochaines règles estimées : ~{cycleContext.nextPeriod.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                        {' '}(dans {Math.max(0, Math.round((cycleContext.nextPeriod.getTime() - Date.now()) / 86_400_000))} jours)
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Durée moyenne</p>
+                      <p className="mt-1 text-sm text-charcoal">{cycleProfile.average_cycle_length} jours</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Durée des règles</p>
+                      <p className="mt-1 text-sm text-charcoal">{cycleProfile.average_period_length} jours</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Régularité</p>
+                      <p className="mt-1 text-sm text-charcoal">{CYCLE_REGULARITY_LABELS[cycleProfile.cycle_regularity]}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Contraception</p>
+                      <p className="mt-1 text-sm text-charcoal">{cycleProfile.contraception || <span className="italic text-stone">Non renseigné</span>}</p>
+                    </div>
+                  </div>
+                  {cycleProfile.notes && (
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-stone">Notes</p>
+                      <p className="mt-1 text-sm text-charcoal whitespace-pre-line">{cycleProfile.notes}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 2: Calendrier du cycle ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Calendrier du cycle</h2>
+            </CardHeader>
+            <CardContent>
+              <CycleCalendar
+                entries={cycleEntries}
+                cycleProfile={cycleProfile}
+                month={cycleCalendarMonth}
+                year={cycleCalendarYear}
+                onMonthChange={(m, y) => { setCycleCalendarMonth(m); setCycleCalendarYear(y); }}
+              />
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 3: Symptômes du cycle en cours ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Symptômes du cycle en cours</h2>
+            </CardHeader>
+            <CardContent>
+              <SymptomGrid entries={cycleEntries} cycleProfile={cycleProfile} />
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 4: Superposition cycle × données ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Superposition cycle × données de suivi</h2>
+              <p className="text-xs text-stone">Sélectionnez 1 ou 2 variables pour les superposer aux phases du cycle.</p>
+            </CardHeader>
+            <CardContent>
+              <CycleOverlayChart
+                entries={cycleEntries}
+                cycleProfile={cycleProfile}
+                journalEntries={journalEntries}
+                wearableSummaries={wearableSummaries}
+              />
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 5: Corrélations ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Corrélations par phase</h2>
+              <p className="text-xs text-stone">Moyennes des indicateurs de suivi par phase du cycle.</p>
+            </CardHeader>
+            <CardContent>
+              <CycleCorrelationTable
+                entries={cycleEntries}
+                cycleProfile={cycleProfile}
+                journalEntries={journalEntries}
+                wearableSummaries={wearableSummaries}
+              />
+            </CardContent>
+          </Card>
+
+          {/* ─── Section 6: Historique des cycles ───── */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-sm font-semibold">Historique des cycles</h2>
+            </CardHeader>
+            <CardContent>
+              {cycleHistory.length === 0 ? (
+                <EmptyState
+                  icon="inbox"
+                  title="Aucun cycle identifié"
+                  description="Les cycles apparaîtront lorsque le consultant aura logué ses règles."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {cycleStarts.length >= 2 && (
+                    <div className="flex items-center gap-4 text-xs text-stone">
+                      <span>Durée moyenne calculée : <strong className="text-charcoal">{calculateAverageCycleLength(cycleStarts)} jours</strong></span>
+                      <span>Cycles identifiés : <strong className="text-charcoal">{cycleStarts.length}</strong></span>
+                    </div>
+                  )}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-stone text-xs">
+                          <th className="py-2">Début</th>
+                          <th className="py-2">Durée cycle</th>
+                          <th className="py-2">Jours de règles</th>
+                          <th className="py-2">Symptômes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cycleHistory.map((cycle, i) => (
+                          <tr key={i} className="border-t border-black/5">
+                            <td className="py-2">{cycle.start.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                            <td className="py-2">{cycle.length != null ? `${cycle.length} jours` : 'En cours'}</td>
+                            <td className="py-2">{cycle.periodDays} jours</td>
+                            <td className="py-2">{cycle.symptomCount}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {tab === T.tabBagueConnectee && (
         <Card>
           <CardHeader>
@@ -2843,6 +3154,53 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             </div>
           </CardHeader>
           <CardContent>
+            {/* Cycle phase bar overlay */}
+            {cycleIsTracking && cycleContext && wearableSummaries.length > 0 && (
+              <div className="mb-4 rounded-lg bg-white/60 p-3 border border-divider">
+                <p className="text-[10px] uppercase tracking-wide text-stone mb-2">Phases du cycle (60 derniers jours)</p>
+                <div className="flex h-4 rounded-full overflow-hidden">
+                  {(() => {
+                    const end = new Date();
+                    const start = new Date();
+                    start.setDate(start.getDate() - 60);
+                    const pm = buildPhaseMap(
+                      cycleStarts,
+                      cycleProfile!.average_cycle_length,
+                      cycleProfile!.average_period_length,
+                      start,
+                      end
+                    );
+                    const days: { date: string; phase: string }[] = [];
+                    const d = new Date(start);
+                    while (d <= end) {
+                      const key = d.toISOString().slice(0, 10);
+                      const info = pm.get(key);
+                      if (info) days.push({ date: key, phase: info.phase });
+                      d.setDate(d.getDate() + 1);
+                    }
+                    // Group consecutive same-phase days
+                    const bands: { phase: string; count: number }[] = [];
+                    for (const day of days) {
+                      const last = bands[bands.length - 1];
+                      if (last && last.phase === day.phase) { last.count++; }
+                      else { bands.push({ phase: day.phase, count: 1 }); }
+                    }
+                    const total = days.length;
+                    return bands.map((band, i) => {
+                      const meta = CYCLE_PHASES[band.phase as keyof typeof CYCLE_PHASES];
+                      return (
+                        <div
+                          key={i}
+                          style={{ width: `${(band.count / total) * 100}%`, backgroundColor: meta?.color || '#ccc' }}
+                          className="h-full opacity-60"
+                          title={meta?.label}
+                        />
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
             {!isPremium ? (
               <div className="relative overflow-hidden rounded-lg border border-dashed border-sage/20 bg-sage-light/50 p-6 text-sm text-charcoal">
                 <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-sage shadow-soft">
@@ -3268,6 +3626,20 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 <div className="grid gap-3">
                   {journalEntries.slice(0, 20).map((entry) => {
                     const moodInfo = MOOD_OPTIONS.find((m) => m.value === normalizeMood(entry.mood));
+                    // Compute cycle phase badge for this journal entry
+                    let entryPhase = null as { phase: import('../../lib/types').CyclePhase; cycleDay: number } | null;
+                    if (cycleIsTracking && cycleProfile && cycleStarts.length > 0) {
+                      const entryDate = new Date(entry.date);
+                      let relevantStart: Date | null = null;
+                      for (let si = cycleStarts.length - 1; si >= 0; si--) {
+                        if (cycleStarts[si].getTime() <= entryDate.getTime()) { relevantStart = cycleStarts[si]; break; }
+                      }
+                      if (relevantStart) {
+                        const day = getCycleDayUtil(entry.date, relevantStart);
+                        const phase = getCyclePhaseForDay(day, cycleProfile.average_cycle_length, cycleProfile.average_period_length);
+                        entryPhase = { phase, cycleDay: day };
+                      }
+                    }
                     return (
                       <button
                         key={entry.id}
@@ -3276,7 +3648,10 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         className="w-full text-left rounded-lg bg-white/60 p-4 border border-divider hover:bg-cream/50 transition-colors"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-charcoal">{formatDate(entry.date)}</p>
+                            {entryPhase && <CyclePhaseBadge phase={entryPhase.phase} cycleDay={entryPhase.cycleDay} compact />}
+                          </div>
                           <div className="flex items-center gap-2">
                             {moodInfo && <span title={moodInfo.label}>{moodInfo.emoji}</span>}
                             {entry.energy_level != null && <Badge variant="info">E {entry.energy_level}</Badge>}

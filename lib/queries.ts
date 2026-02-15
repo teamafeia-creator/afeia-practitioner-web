@@ -276,7 +276,9 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     irisPhotosResult,
     journalIndicatorsResult,
     observanceItemsResult,
-    observanceLogsResult
+    observanceLogsResult,
+    cycleProfileResult,
+    cycleEntriesResult
   ] = await Promise.all([
     supabase.from('anamneses').select('*').eq('consultant_id', id).single(),
     supabase.from('consultations').select('*').eq('consultant_id', id).order('date', { ascending: false }),
@@ -300,7 +302,9 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     supabase.from('consultant_iris_photos').select('*').eq('consultant_id', id).order('taken_at', { ascending: false }),
     supabase.from('consultant_journal_indicators').select('*').eq('consultant_id', id).eq('is_active', true).order('sort_order'),
     supabase.from('plan_observance_items').select('*').eq('consultant_id', id).eq('is_active', true).order('category').order('sort_order'),
-    supabase.from('plan_observance_logs').select('*').eq('consultant_id', id).gte('date', thirtyDaysAgoStr).order('date', { ascending: false })
+    supabase.from('plan_observance_logs').select('*').eq('consultant_id', id).gte('date', thirtyDaysAgoStr).order('date', { ascending: false }),
+    supabase.from('cycle_profiles').select('*').eq('consultant_id', id).maybeSingle(),
+    supabase.from('cycle_entries').select('*').eq('consultant_id', id).order('date', { ascending: false }).limit(180)
   ]);
 
   // Handle plan -> versions -> sections (dependent chain, but eliminate N+1)
@@ -375,7 +379,9 @@ export async function getConsultantById(id: string): Promise<ConsultantWithDetai
     iris_photos: irisPhotosResult.data || [],
     journal_indicators: journalIndicatorsResult.data || [],
     observance_items: observanceItemsResult.data || [],
-    observance_logs_recent: observanceLogsResult.data || []
+    observance_logs_recent: observanceLogsResult.data || [],
+    cycle_profile: cycleProfileResult.data || null,
+    cycle_entries: cycleEntriesResult.data || []
   };
 }
 
