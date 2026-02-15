@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 
 type Consultant = {
   id: string;
-  full_name?: string | null;
+  name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   email?: string | null;
@@ -30,7 +30,7 @@ type LinkQuestionnaireModalProps = {
 };
 
 function getDisplayName(consultant: Consultant): string {
-  if (consultant.full_name) return consultant.full_name;
+  if (consultant.name) return consultant.name;
   const parts = [consultant.first_name, consultant.last_name].filter(Boolean);
   if (parts.length > 0) return parts.join(' ');
   return consultant.email || 'Non renseigné';
@@ -73,9 +73,9 @@ export function LinkQuestionnaireModal({
 
       const { data, error: fetchError } = await supabase
         .from('consultants')
-        .select('id, full_name, first_name, last_name, email, city, activated')
+        .select('id, name, first_name, last_name, email, city, activated')
         .eq('practitioner_id', user.id)
-        .order('full_name', { ascending: true });
+        .order('name', { ascending: true });
 
       if (fetchError) {
         console.error('Error loading consultants:', fetchError);
