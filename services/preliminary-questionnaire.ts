@@ -135,7 +135,7 @@ export async function createConsultantFromQuestionnaire(questionnaireId: string)
   // 2. Récupérer les infos du consultant créé
   const { data: consultant, error: consultantError } = await supabase
     .from('consultants')
-    .select('email, full_name, first_name, last_name')
+    .select('email, name, first_name, last_name')
     .eq('id', consultantId)
     .single();
 
@@ -154,7 +154,7 @@ export async function createConsultantFromQuestionnaire(questionnaireId: string)
   }
 
   // 4. Envoyer le code d'activation via l'API route
-  const consultantName = consultant.full_name ||
+  const consultantName = consultant.name ||
     [consultant.first_name, consultant.last_name].filter(Boolean).join(' ') ||
     'Consultant';
 

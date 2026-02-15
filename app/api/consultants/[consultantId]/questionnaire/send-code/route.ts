@@ -80,7 +80,7 @@ export async function POST(
     const createdAt = new Date(latestCode.created_at).getTime();
     if (Date.now() - createdAt < RATE_LIMIT_SECONDS * 1000) {
       return NextResponse.json(
-        { error: 'Veuillez consultanter quelques instants avant de renvoyer un code.' },
+        { error: 'Veuillez patienter quelques instants avant de renvoyer un code.' },
         { status: 429 }
       );
     }

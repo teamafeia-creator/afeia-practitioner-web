@@ -66,14 +66,16 @@ export default function QuestionnaireDetailPage() {
     if (!questionnaire) return;
     setActionLoading(true);
     try {
-      const consultantId = await createConsultantFromQuestionnaire(questionnaire.id);
+      const result = await createConsultantFromQuestionnaire(questionnaire.id);
+      const codeDisplay = result.code ? `\n\nCode OTP : ${result.code}` : '';
+      const emailDisplay = result.email ? ` (${result.email})` : '';
       setToast({
         title: 'Consultant créé',
-        description: 'Le consultant a été créé et le questionnaire associé.',
+        description: `Le consultant a été créé et le questionnaire associé.${emailDisplay}${codeDisplay}`,
         variant: 'success'
       });
       setTimeout(() => {
-        router.push(`/consultants/${consultantId}`);
+        router.push(`/consultants/${result.consultantId}`);
       }, 1000);
     } catch (err) {
       console.error('Error creating consultant:', err);
