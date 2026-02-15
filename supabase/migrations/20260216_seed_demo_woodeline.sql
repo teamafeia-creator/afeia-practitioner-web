@@ -60,19 +60,19 @@ BEGIN
   -- ============================================
   -- ÉTAPE 1 : CONSULTANTS (12)
   -- ============================================
-  INSERT INTO consultants (id, practitioner_id, email, name, first_name, last_name, phone, city, age, date_of_birth, consultation_reason, status, is_premium, activated, activated_at, created_at) VALUES
-  (v_c1,  v_practitioner_id, 'sophie.martin@example.com',     'Sophie Martin',     'Sophie',      'Martin',     '06 12 34 56 78', 'Paris',       38, '1987-06-15', 'Syndrome du côlon irritable, stress professionnel intense, troubles du sommeil',          'premium',  true,  true,  NOW()-INTERVAL '6 months',  NOW()-INTERVAL '7 months'),
-  (v_c2,  v_practitioner_id, 'thomas.dubois@example.com',     'Thomas Dubois',     'Thomas',      'Dubois',     '06 23 45 67 89', 'Chamonix',    32, '1993-03-22', 'Optimisation nutrition sportive trail/ultra, préparation UTMB',                          'premium',  true,  true,  NOW()-INTERVAL '5 months',  NOW()-INTERVAL '6 months'),
-  (v_c3,  v_practitioner_id, 'emilie.laurent@example.com',    'Émilie Laurent',    'Émilie',      'Laurent',    '06 34 56 78 90', 'Nantes',      30, '1995-11-08', 'Post-partum 6 mois, fatigue intense, carences fer et vitamine D, allaitement',           'standard', false, true,  NOW()-INTERVAL '4 months',  NOW()-INTERVAL '5 months'),
-  (v_c4,  v_practitioner_id, 'jeanpierre.moreau@example.com', 'Jean-Pierre Moreau','Jean-Pierre', 'Moreau',     '06 45 67 89 01', 'Tours',       68, '1957-09-30', 'Confort prostatique (HBP débutante), sommeil fragmenté, prévention cardiovasculaire',     'standard', false, true,  NOW()-INTERVAL '7 months',  NOW()-INTERVAL '8 months'),
-  (v_c5,  v_practitioner_id, 'nathalie.petit@example.com',    'Nathalie Petit',    'Nathalie',    'Petit',      '06 56 78 90 12', 'Lyon',        52, '1973-05-14', 'Ménopause : bouffées de chaleur 8-10x/jour, sueurs nocturnes, pas de THS souhaité',      'premium',  true,  true,  NOW()-INTERVAL '6 months',  NOW()-INTERVAL '7 months'),
-  (v_c6,  v_practitioner_id, 'lucas.bernard@example.com',     'Lucas Bernard',     'Lucas',       'Bernard',    '06 67 89 01 23', 'Bordeaux',    17, '2008-08-25', 'Acné inflammatoire modérée à sévère, alimentation très industrielle',                    'standard', false, true,  NOW()-INTERVAL '3 months',  NOW()-INTERVAL '4 months'),
-  (v_c7,  v_practitioner_id, 'celine.roux@example.com',       'Céline Roux',       'Céline',      'Roux',       '06 78 90 12 34', 'Strasbourg',  45, '1980-12-03', 'Fibromyalgie diagnostiquée depuis 3 ans, douleurs diffuses, fatigue chronique',          'premium',  true,  true,  NOW()-INTERVAL '8 months',  NOW()-INTERVAL '9 months'),
-  (v_c8,  v_practitioner_id, 'marc.lefebvre@example.com',     'Marc Lefebvre',     'Marc',        'Lefebvre',   '06 89 01 23 45', 'Toulouse',    44, '1981-02-18', 'RGO chronique sous IPP depuis 2 ans, surpoids (IMC 28.5), sevrage souhaité',             'standard', false, true,  NOW()-INTERVAL '4 months',  NOW()-INTERVAL '5 months'),
-  (v_c9,  v_practitioner_id, 'amina.benali@example.com',      'Amina Benali',      'Amina',       'Benali',     '06 90 12 34 56', 'Montpellier', 22, '2003-06-20', 'Migraines cataméniales 3-4x/mois, stress examens, abus de caféine',                     'standard', false, true,  NOW()-INTERVAL '2 months',  NOW()-INTERVAL '3 months'),
-  (v_c10, v_practitioner_id, 'philippe.garnier@example.com',  'Philippe Garnier',  'Philippe',    'Garnier',    '06 01 23 45 67', 'Rennes',      48, '1977-10-12', 'Eczéma chronique mains et avant-bras (artisan boulanger), fatigue matinale',             'premium',  true,  true,  NOW()-INTERVAL '5 months',  NOW()-INTERVAL '6 months'),
-  (v_c11, v_practitioner_id, 'isabelle.fontaine@example.com', 'Isabelle Fontaine', 'Isabelle',    'Fontaine',   '06 12 45 78 90', 'Nice',        41, '1984-04-07', 'Détox hépatique et optimisation micronutritionnelle (professeure de yoga)',               'standard', false, true,  NOW()-INTERVAL '3 months',  NOW()-INTERVAL '4 months'),
-  (v_c12, v_practitioner_id, 'robert.durand@example.com',     'Robert Durand',     'Robert',      'Durand',     '06 23 56 89 01', 'Dijon',       70, '1955-01-28', 'Cholestérol LDL 1.85g/L, HTA limite 140/85, prévention cardiovasculaire (ATCD familiaux)','premium',  true,  true,  NOW()-INTERVAL '4 months',  NOW()-INTERVAL '5 months')
+  INSERT INTO consultants (id, practitioner_id, email, name, first_name, last_name, phone, city, age, date_of_birth, consultation_reason, status, is_premium, activated, activated_at, circular_enabled, created_at) VALUES
+  (v_c1,  v_practitioner_id, 'sophie.martin@example.com',     'Sophie Martin',     'Sophie',      'Martin',     '06 12 34 56 78', 'Paris',       38, '1987-06-15', 'Syndrome du côlon irritable, stress professionnel intense, troubles du sommeil',          'premium',  true,  true,  NOW()-INTERVAL '6 months',  true,  NOW()-INTERVAL '7 months'),
+  (v_c2,  v_practitioner_id, 'thomas.dubois@example.com',     'Thomas Dubois',     'Thomas',      'Dubois',     '06 23 45 67 89', 'Chamonix',    32, '1993-03-22', 'Optimisation nutrition sportive trail/ultra, préparation UTMB',                          'premium',  true,  true,  NOW()-INTERVAL '5 months',  true,  NOW()-INTERVAL '6 months'),
+  (v_c3,  v_practitioner_id, 'emilie.laurent@example.com',    'Émilie Laurent',    'Émilie',      'Laurent',    '06 34 56 78 90', 'Nantes',      30, '1995-11-08', 'Post-partum 6 mois, fatigue intense, carences fer et vitamine D, allaitement',           'standard', false, true,  NOW()-INTERVAL '4 months',  false, NOW()-INTERVAL '5 months'),
+  (v_c4,  v_practitioner_id, 'jeanpierre.moreau@example.com', 'Jean-Pierre Moreau','Jean-Pierre', 'Moreau',     '06 45 67 89 01', 'Tours',       68, '1957-09-30', 'Confort prostatique (HBP débutante), sommeil fragmenté, prévention cardiovasculaire',     'standard', false, true,  NOW()-INTERVAL '7 months',  false, NOW()-INTERVAL '8 months'),
+  (v_c5,  v_practitioner_id, 'nathalie.petit@example.com',    'Nathalie Petit',    'Nathalie',    'Petit',      '06 56 78 90 12', 'Lyon',        52, '1973-05-14', 'Ménopause : bouffées de chaleur 8-10x/jour, sueurs nocturnes, pas de THS souhaité',      'premium',  true,  true,  NOW()-INTERVAL '6 months',  false, NOW()-INTERVAL '7 months'),
+  (v_c6,  v_practitioner_id, 'lucas.bernard@example.com',     'Lucas Bernard',     'Lucas',       'Bernard',    '06 67 89 01 23', 'Bordeaux',    17, '2008-08-25', 'Acné inflammatoire modérée à sévère, alimentation très industrielle',                    'standard', false, true,  NOW()-INTERVAL '3 months',  false, NOW()-INTERVAL '4 months'),
+  (v_c7,  v_practitioner_id, 'celine.roux@example.com',       'Céline Roux',       'Céline',      'Roux',       '06 78 90 12 34', 'Strasbourg',  45, '1980-12-03', 'Fibromyalgie diagnostiquée depuis 3 ans, douleurs diffuses, fatigue chronique',          'premium',  true,  true,  NOW()-INTERVAL '8 months',  true,  NOW()-INTERVAL '9 months'),
+  (v_c8,  v_practitioner_id, 'marc.lefebvre@example.com',     'Marc Lefebvre',     'Marc',        'Lefebvre',   '06 89 01 23 45', 'Toulouse',    44, '1981-02-18', 'RGO chronique sous IPP depuis 2 ans, surpoids (IMC 28.5), sevrage souhaité',             'standard', false, true,  NOW()-INTERVAL '4 months',  false, NOW()-INTERVAL '5 months'),
+  (v_c9,  v_practitioner_id, 'amina.benali@example.com',      'Amina Benali',      'Amina',       'Benali',     '06 90 12 34 56', 'Montpellier', 22, '2003-06-20', 'Migraines cataméniales 3-4x/mois, stress examens, abus de caféine',                     'standard', false, true,  NOW()-INTERVAL '2 months',  false, NOW()-INTERVAL '3 months'),
+  (v_c10, v_practitioner_id, 'philippe.garnier@example.com',  'Philippe Garnier',  'Philippe',    'Garnier',    '06 01 23 45 67', 'Rennes',      48, '1977-10-12', 'Eczéma chronique mains et avant-bras (artisan boulanger), fatigue matinale',             'premium',  true,  true,  NOW()-INTERVAL '5 months',  false, NOW()-INTERVAL '6 months'),
+  (v_c11, v_practitioner_id, 'isabelle.fontaine@example.com', 'Isabelle Fontaine', 'Isabelle',    'Fontaine',   '06 12 45 78 90', 'Nice',        41, '1984-04-07', 'Détox hépatique et optimisation micronutritionnelle (professeure de yoga)',               'standard', false, true,  NOW()-INTERVAL '3 months',  true,  NOW()-INTERVAL '4 months'),
+  (v_c12, v_practitioner_id, 'robert.durand@example.com',     'Robert Durand',     'Robert',      'Durand',     '06 23 56 89 01', 'Dijon',       70, '1955-01-28', 'Cholestérol LDL 1.85g/L, HTA limite 140/85, prévention cardiovasculaire (ATCD familiaux)','premium',  true,  true,  NOW()-INTERVAL '4 months',  true,  NOW()-INTERVAL '5 months')
   ON CONFLICT (id) DO NOTHING;
 
   -- ============================================
@@ -661,7 +661,7 @@ BEGIN
     "message_cloture": "Sophie, vous avez toutes les clés en main pour retrouver un confort digestif durable. N hésitez pas à me solliciter entre nos rendez-vous. Votre corps sait se réparer quand on lui en donne les moyens !",
     "notes_libres": "Patiente très motivée et rigoureuse. Risque de perfectionnisme : rappeler l importance de la souplesse. Surveiller le stress professionnel qui est le facteur déclenchant principal."
   }$cp1$::jsonb, NOW()-INTERVAL '6 months', false, NOW()-INTERVAL '6 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Thomas Dubois (c2) – Nutrition sportive trail
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -707,7 +707,7 @@ BEGIN
     "message_cloture": "Thomas, la nutrition est votre 4e discipline en trail. Avec ce plan, vous avez tout pour performer à l UTMB. On ajustera au fur et à mesure. Bonne prépa !",
     "notes_libres": "Athlète très motivé et rigoureux. Attention au surentraînement, surveiller la HRV. Test des produits de course à faire en entraînement, jamais le jour J."
   }$cp2$::jsonb, NOW()-INTERVAL '5 months', false, NOW()-INTERVAL '5 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Émilie Laurent (c3) – Post-partum / fatigue
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -753,7 +753,7 @@ BEGIN
     "message_cloture": "Émilie, soyez indulgente avec vous-même. Vous faites un travail formidable. La fatigue est temporaire, et votre corps a besoin de temps pour se reconstituer. Je suis là pour vous accompagner.",
     "notes_libres": "Patiente fatiguée mais très motivée. Surveiller le moral (baby blues possible). Mari impliqué et soutenant. Réévaluer fer et vit D dans 2 mois."
   }$cp3$::jsonb, NOW()-INTERVAL '4 months', false, NOW()-INTERVAL '4 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Nathalie Petit (c5) – Ménopause
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -799,7 +799,7 @@ BEGIN
     "message_cloture": "Nathalie, la ménopause est un passage naturel que nous pouvons traverser en douceur avec les bons outils. Soyez patiente, les résultats s installent progressivement sur 4 à 8 semaines.",
     "notes_libres": "Patiente ouverte aux approches naturelles mais avec des attentes fortes de résultats rapides. Rassurer sur le délai d action. Pas d ATCD cancer hormono-dépendant, phytoestrogènes OK."
   }$cp5$::jsonb, NOW()-INTERVAL '6 months', false, NOW()-INTERVAL '6 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Céline Roux (c7) – Fibromyalgie
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -845,7 +845,7 @@ BEGIN
     "message_cloture": "Céline, la fibromyalgie demande de la patience mais des améliorations significatives sont possibles. Chaque petit progrès compte. Nous allons avancer ensemble, pas à pas.",
     "notes_libres": "Patiente courageuse malgré la douleur chronique. Compliance bonne. Vérifier les interactions avec Lyrica et tramadol. Objectif : réduction progressive du tramadol en accord avec le médecin traitant."
   }$cp7$::jsonb, NOW()-INTERVAL '8 months', false, NOW()-INTERVAL '8 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Jean-Pierre Moreau (c4) – Prostate & prévention
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -891,7 +891,7 @@ BEGIN
     "message_cloture": "Jean-Pierre, votre hygiène de vie est déjà excellente. Avec ces ajustements ciblés, nous pouvons encore améliorer votre confort. N oubliez pas de maintenir le suivi urologique en parallèle.",
     "notes_libres": "Patient discipliné et motivé. PSA normal – confirmer HBP simple. Coordonner avec urologue. Antécédents CV familiaux à surveiller."
   }$cp4$::jsonb, NOW()-INTERVAL '7 months', false, NOW()-INTERVAL '7 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Philippe Garnier (c10) – Eczéma & fatigue
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -937,7 +937,7 @@ BEGIN
     "message_cloture": "Philippe, votre eczéma est un signal de votre corps. Avec la bonne approche, on peut significativement l améliorer même dans votre contexte professionnel. Courage, les premiers résultats arrivent généralement dans les 4 à 6 semaines.",
     "notes_libres": "Artisan très courageux, horaires contraignants. L exposition professionnelle au gluten est le principal obstacle. Travailler sur la barrière cutanée et la perméabilité intestinale en priorité. Coordonner avec dermatologue."
   }$cp10$::jsonb, NOW()-INTERVAL '5 months', false, NOW()-INTERVAL '5 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Lucas Bernard (c6) – Acné adolescent (version 1 draft – plan en cours d élaboration)
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -970,7 +970,7 @@ BEGIN
     "message_cloture": "Lucas, la patience est la clé. Les résultats sur l acné prennent 6 à 8 semaines. Tiens bon avec les changements alimentaires, ça vaut le coup !",
     "notes_libres": "Adolescent coopératif mais alimentation très ancrée. Transition progressive obligatoire. La mère est très impliquée, bon soutien familial."
   }$cp6$::jsonb, NULL, false, NOW()-INTERVAL '3 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Marc Lefebvre (c8) – RGO & surpoids
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -1000,7 +1000,7 @@ BEGIN
     "message_cloture": "Marc, le sevrage des IPP est possible mais doit être progressif et encadré. Les résultats viennent avec la régularité. Courage pour la gestion des repas d affaires – c est votre plus grand défi !",
     "notes_libres": "Patient motivé mais contexte professionnel difficile (déplacements, repas d affaires). Le no-show est un signal : relancer et rassurer. Sevrage IPP à coordonner avec gastro-entérologue."
   }$cp8$::jsonb, NOW()-INTERVAL '4 months', false, NOW()-INTERVAL '4 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Amina Benali (c9) – Migraines étudiante
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -1036,10 +1036,10 @@ BEGIN
     "message_cloture": "Amina, les migraines ne sont pas une fatalité. Avec le magnésium, la grande camomille et les ajustements de mode de vie, on peut réduire significativement les crises. Courage pour les examens !",
     "notes_libres": "Étudiante motivée, bon niveau de compréhension. Composante hormonale des migraines (cataméniales) : suivi gynéco à coordonner si pilule. Stress examens = facteur principal."
   }$cp9$::jsonb, NOW()-INTERVAL '2 months', false, NOW()-INTERVAL '2 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Isabelle Fontaine (c11) – Détox & optimisation (AI-generated plan)
-  INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
+  INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, ai_model, ai_generation_date, created_at)
   VALUES ('d0000000-0000-4000-a000-00000000000b', v_c11, v_practitioner_id, 1, 'shared', $cp11${
     "message_accueil": "Isabelle, voici votre programme d optimisation détox et vitalité, adapté à votre excellent niveau de base en tant que professeure de yoga.",
     "duree_programme": "2 mois",
@@ -1067,8 +1067,8 @@ BEGIN
     "suivi_entre_temps": "Journal de bord. Partager les ressentis pendant la cure détox (crises de détox normales les 3-4 premiers jours).",
     "message_cloture": "Isabelle, avec votre niveau de conscience corporelle et votre discipline, cette cure va donner d excellents résultats. Écoutez votre corps et n hésitez pas à ralentir si nécessaire.",
     "notes_libres": "Consultante experte, très autonome. Ne pas infantiliser. Proposer des approches avancées. Excellent potentiel de résultats rapides vu le terrain de base."
-  }$cp11$::jsonb, NOW()-INTERVAL '3 months', true, NOW()-INTERVAL '3 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  }$cp11$::jsonb, NOW()-INTERVAL '3 months', true, 'claude-sonnet-4-5-20250929', NOW()-INTERVAL '3 months', NOW()-INTERVAL '3 months')
+  ON CONFLICT (id) DO NOTHING;
 
   -- Robert Durand (c12) – Prévention cardiovasculaire
   INSERT INTO consultant_plans (id, consultant_id, practitioner_id, version, status, content, shared_at, ai_generated, created_at)
@@ -1100,23 +1100,13 @@ BEGIN
     "message_cloture": "Robert, votre motivation est votre meilleur atout. Les études montrent que le régime méditerranéen réduit le risque cardiovasculaire de 30%. Avec les compléments ciblés, vous avez toutes les chances de ramener votre cholestérol dans les normes. On fait le point après le prochain bilan sanguin.",
     "notes_libres": "Patient très motivé par la prévention (ATCD familial père). Cardiologue informé de l approche naturopathique. Objectif : éviter les statines. Si LDL ne baisse pas sous 1.40 en 3 mois, discuter levure de riz rouge ou accepter les statines."
   }$cp12$::jsonb, NOW()-INTERVAL '4 months', false, NOW()-INTERVAL '4 months')
-  ON CONFLICT (consultant_id, version) DO NOTHING;
+  ON CONFLICT (id) DO NOTHING;
 
   -- ============================================
   -- Step 6 : Prescriptions & Prescription Items
   -- ============================================
-  INSERT INTO prescriptions (id, consultant_id, practitioner_id, name, notes, start_date, end_date, created_at) VALUES
-    (v_pres1,  v_c1,  v_practitioner_id, 'Protocole SII – Phase 1',           'Probiotiques, L-glutamine, magnésium. Réévaluer à M+1.',                   (NOW()-INTERVAL '6 months')::date, (NOW()-INTERVAL '3 months')::date, NOW()-INTERVAL '6 months'),
-    (v_pres2,  v_c2,  v_practitioner_id, 'Complémentation sportive trail',     'Magnésium, fer, oméga 3, spiruline. À maintenir pendant la préparation.',   (NOW()-INTERVAL '5 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '5 months'),
-    (v_pres3,  v_c3,  v_practitioner_id, 'Reminéralisation post-partum',       'Fer bisglycinate, vit D, magnésium, oméga 3 DHA. Compatible allaitement.',  (NOW()-INTERVAL '4 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '4 months'),
-    (v_pres4,  v_c4,  v_practitioner_id, 'Confort prostatique & sommeil',      'Saw palmetto, zinc, sélénium, magnésium.',                                  (NOW()-INTERVAL '7 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '7 months'),
-    (v_pres5,  v_c5,  v_practitioner_id, 'Accompagnement ménopause',           'Isoflavones, vit D, calcium, magnésium, huile d onagre.',                   (NOW()-INTERVAL '6 months')::date, (NOW()-INTERVAL '2 months')::date, NOW()-INTERVAL '6 months'),
-    (v_pres7,  v_c7,  v_practitioner_id, 'Anti-douleur & sommeil fibromyalgie','Magnésium forte dose, oméga 3, CoQ10, vit D, PEA.',                         (NOW()-INTERVAL '8 months')::date, (NOW()-INTERVAL '2 months')::date, NOW()-INTERVAL '8 months'),
-    (v_pres8,  v_c8,  v_practitioner_id, 'Sevrage IPP & gestion reflux',       'Lithothamne, mélatonine, DGL, probiotiques.',                               (NOW()-INTERVAL '4 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '4 months'),
-    (v_pres10, v_c10, v_practitioner_id, 'Eczéma & perméabilité intestinale',  'Probiotiques, L-glutamine, oméga 3, zinc, vit D.',                          (NOW()-INTERVAL '5 months')::date, (NOW()-INTERVAL '1 month')::date,  NOW()-INTERVAL '5 months')
-  ON CONFLICT (id) DO NOTHING;
-
-  -- Prescription Items
+  -- NOTE: prescriptions table not present in current schema, skipped.
+  -- Prescription Items (prescription_id has no FK constraint, safe to insert)
   INSERT INTO prescription_items (id, prescription_id, name, dosage, frequency, duration, instructions, created_at) VALUES
     -- Sophie (pres1)
     (v_pi_1_1,                                     v_pres1, 'Probiotiques Lactobacillus rhamnosus GG', '10 milliards UFC', '1x/jour',   90, 'Le matin à jeun avec un grand verre d eau. Commencer progressivement.',                NOW()-INTERVAL '6 months'),
@@ -1172,57 +1162,13 @@ BEGIN
     ('e1000000-0000-4000-a000-000000000035',        v_pres10, 'Vitamine D3',                        '4000 UI', '1x/jour',  120, 'Au déjeuner.',                                                      NOW()-INTERVAL '5 months')
   ON CONFLICT (id) DO NOTHING;
 
-  -- ============================================
-  -- Step 7 : Complement Tracking (14 days for active consultants c1, c5, c7, c10)
-  -- ============================================
-  -- Sophie (c1) – probiotiques et L-glutamine
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c1, v_pi_1_1, d::date, (random() > 0.1), NOW()  -- 90% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c1, v_pi_1_2, d::date, (random() > 0.15), NOW()  -- 85% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  -- Nathalie (c5) – isoflavones et vit D
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c5, v_pi_5_1, d::date, (random() > 0.05), NOW()  -- 95% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c5, v_pi_5_2, d::date, (random() > 0.1), NOW()
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  -- Céline (c7) – magnésium et oméga 3
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c7, v_pi_7_1, d::date, (random() > 0.08), NOW()  -- 92% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c7, v_pi_7_2, d::date, (random() > 0.12), NOW()
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  -- Philippe (c10) – probiotiques et L-glutamine
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c10, v_pi_10_1, d::date, (random() > 0.2), NOW()  -- 80% adherence (horaires décalés)
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
-
-  INSERT INTO complement_tracking (consultant_id, complement_id, date, taken, created_at)
-  SELECT v_c10, v_pi_10_2, d::date, (random() > 0.25), NOW()  -- 75% adherence
-  FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, complement_id, date) DO NOTHING;
+  -- NOTE: complement_tracking requires FK to complements table (which requires case_files).
+  -- Skipped to avoid FK violations.
 
   -- ============================================
-  -- Step 8 : Messages (~62 records, 3-4 unread from consultants)
+  -- Step 7 : Messages (~62 records, 3-4 unread from consultants)
   -- ============================================
-  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read_by_practitioner) VALUES
+  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read) VALUES
     -- Sophie (c1) : conversation active
     ('f0000000-0000-4000-a000-000000000001', v_c1, 'Bonjour Woodeline, j ai commencé les probiotiques ce matin. Juste une question : est-ce normal d avoir un peu plus de ballonnements les premiers jours ?', 'Bonjour Woodeline, j ai commencé les probiotiques ce matin. Juste une question : est-ce normal d avoir un peu plus de ballonnements les premiers jours ?', 'consultant', 'consultant', NOW()-INTERVAL '6 months'+INTERVAL '2 days', NOW()-INTERVAL '6 months'+INTERVAL '2 days', true),
     ('f0000000-0000-4000-a000-000000000002', v_c1, 'Bonjour Sophie ! Oui, c est tout à fait normal. Les probiotiques peuvent provoquer une légère augmentation des ballonnements pendant 3-5 jours le temps que votre microbiote s adapte. Si ça persiste au-delà d une semaine, on ajustera la dose. Courage !', 'Bonjour Sophie ! Oui, c est tout à fait normal. Les probiotiques peuvent provoquer une légère augmentation des ballonnements pendant 3-5 jours le temps que votre microbiote s adapte. Si ça persiste au-delà d une semaine, on ajustera la dose. Courage !', 'praticien', 'practitioner', NOW()-INTERVAL '6 months'+INTERVAL '2 days'+INTERVAL '3 hours', NOW()-INTERVAL '6 months'+INTERVAL '2 days'+INTERVAL '3 hours', true),
@@ -1241,7 +1187,7 @@ BEGIN
     ('f0000000-0000-4000-a000-00000000000d', v_c2, 'Bravo Thomas ! 6h12 c est un excellent temps et zéro trouble digestif, c est la meilleure nouvelle. Repose-toi bien cette semaine, pas de course avant 5 jours minimum. On débriefera à notre prochaine consultation.', 'Bravo Thomas ! 6h12 c est un excellent temps et zéro trouble digestif, c est la meilleure nouvelle. Repose-toi bien cette semaine, pas de course avant 5 jours minimum. On débriefera à notre prochaine consultation.', 'praticien', 'practitioner', NOW()-INTERVAL '2 months'+INTERVAL '6 days'+INTERVAL '3 hours', NOW()-INTERVAL '2 months'+INTERVAL '6 days'+INTERVAL '3 hours', true)
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read_by_practitioner) VALUES
+  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read) VALUES
     -- Émilie (c3) : post-partum
     ('f0000000-0000-4000-a000-00000000000e', v_c3, 'Bonjour, j ai un doute : le fer me donne un peu mal au ventre. Est-ce que je peux le prendre au repas plutôt qu à jeun ?', 'Bonjour, j ai un doute : le fer me donne un peu mal au ventre. Est-ce que je peux le prendre au repas plutôt qu à jeun ?', 'consultant', 'consultant', NOW()-INTERVAL '4 months'+INTERVAL '5 days', NOW()-INTERVAL '4 months'+INTERVAL '5 days', true),
     ('f0000000-0000-4000-a000-00000000000f', v_c3, 'Bonjour Émilie ! Oui bien sûr, prenez-le au petit-déjeuner avec votre vitamine C. L absorption sera légèrement réduite mais la tolérance sera bien meilleure. L essentiel c est de le prendre régulièrement.', 'Bonjour Émilie ! Oui bien sûr, prenez-le au petit-déjeuner avec votre vitamine C. L absorption sera légèrement réduite mais la tolérance sera bien meilleure. L essentiel c est de le prendre régulièrement.', 'praticien', 'practitioner', NOW()-INTERVAL '4 months'+INTERVAL '5 days'+INTERVAL '2 hours', NOW()-INTERVAL '4 months'+INTERVAL '5 days'+INTERVAL '2 hours', true),
@@ -1261,7 +1207,7 @@ BEGIN
     ('f0000000-0000-4000-a000-000000000019', v_c5, 'C est formidable Nathalie ! Vous voyez que la patience paie. La sauge est effectivement aussi sédative, c est un bonus. On continue comme ça et on fait le point au prochain rendez-vous.', 'C est formidable Nathalie ! Vous voyez que la patience paie. La sauge est effectivement aussi sédative, c est un bonus. On continue comme ça et on fait le point au prochain rendez-vous.', 'praticien', 'practitioner', NOW()-INTERVAL '3 months'+INTERVAL '5 days'+INTERVAL '3 hours', NOW()-INTERVAL '3 months'+INTERVAL '5 days'+INTERVAL '3 hours', true)
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read_by_practitioner) VALUES
+  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read) VALUES
     -- Lucas (c6) : ado
     ('f0000000-0000-4000-a000-00000000001a', v_c6, 'Salut, j ai réduit les sodas à 1 par jour au lieu de 3. Mais c est dur de manger des légumes à la cantine, y a que des frites...', 'Salut, j ai réduit les sodas à 1 par jour au lieu de 3. Mais c est dur de manger des légumes à la cantine, y a que des frites...', 'consultant', 'consultant', NOW()-INTERVAL '2 months'+INTERVAL '5 days', NOW()-INTERVAL '2 months'+INTERVAL '5 days', true),
     ('f0000000-0000-4000-a000-00000000001b', v_c6, 'Bravo Lucas pour les sodas ! Pour la cantine, essaie de prendre au moins les crudités d entrée et un fruit en dessert. Et si tu peux amener un goûter maison (amandes + banane), ça sera déjà super.', 'Bravo Lucas pour les sodas ! Pour la cantine, essaie de prendre au moins les crudités d entrée et un fruit en dessert. Et si tu peux amener un goûter maison (amandes + banane), ça sera déjà super.', 'praticien', 'practitioner', NOW()-INTERVAL '2 months'+INTERVAL '5 days'+INTERVAL '4 hours', NOW()-INTERVAL '2 months'+INTERVAL '5 days'+INTERVAL '4 hours', true),
@@ -1283,7 +1229,7 @@ BEGIN
     ('f0000000-0000-4000-a000-000000000027', v_c8, 'C est honnête et c est bien de me le dire. Pour les dîners clients, on va travailler des stratégies concrètes : choisir du poisson grillé, éviter le vin blanc, manger lentement. On en parle en détail au prochain RDV. Bravo pour le kilo en moins !', 'C est honnête et c est bien de me le dire. Pour les dîners clients, on va travailler des stratégies concrètes : choisir du poisson grillé, éviter le vin blanc, manger lentement. On en parle en détail au prochain RDV. Bravo pour le kilo en moins !', 'praticien', 'practitioner', NOW()-INTERVAL '12 days'+INTERVAL '2 hours', NOW()-INTERVAL '12 days'+INTERVAL '2 hours', true)
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read_by_practitioner) VALUES
+  INSERT INTO messages (id, consultant_id, text, body, sender, sender_role, sent_at, created_at, read) VALUES
     -- Amina (c9) : étudiante
     ('f0000000-0000-4000-a000-000000000028', v_c9, 'Bonjour ! J ai réduit le café à 2 par jour et j ai eu qu 1 seule migraine ce mois ! C est la première fois en 2 ans. Par contre les partiels approchent et je stresse...', 'Bonjour ! J ai réduit le café à 2 par jour et j ai eu qu 1 seule migraine ce mois ! C est la première fois en 2 ans. Par contre les partiels approchent et je stresse...', 'consultant', 'consultant', NOW()-INTERVAL '3 weeks'+INTERVAL '3 days', NOW()-INTERVAL '3 weeks'+INTERVAL '3 days', true),
     ('f0000000-0000-4000-a000-000000000029', v_c9, 'Super résultat Amina ! 1 migraine au lieu de 3-4, on est sur la bonne voie. Pour les partiels : la cohérence cardiaque 5 min avant chaque session de révision. Et surtout, ne saute pas de repas même si tu es stressée – l hypoglycémie est ton pire ennemi pour les migraines.', 'Super résultat Amina ! 1 migraine au lieu de 3-4, on est sur la bonne voie. Pour les partiels : la cohérence cardiaque 5 min avant chaque session de révision. Et surtout, ne saute pas de repas même si tu es stressée – l hypoglycémie est ton pire ennemi pour les migraines.', 'praticien', 'practitioner', NOW()-INTERVAL '3 weeks'+INTERVAL '3 days'+INTERVAL '2 hours', NOW()-INTERVAL '3 weeks'+INTERVAL '3 days'+INTERVAL '2 hours', true),
@@ -1309,58 +1255,46 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 
   -- ============================================
-  -- Step 9 : Journal Entries (14 days × 6 active consultants using generate_series)
+  -- Step 8 : Journal Entries (14 days × 6 active consultants using generate_series)
   -- ============================================
 
   -- Sophie (c1) – bonne adhésion
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level, bristol_type, bristol_frequency,
-    hydration_liters, exercise_type, exercise_duration_minutes, exercise_intensity, source, created_at)
-  SELECT v_c1, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.3 THEN 'tres_bien' WHEN random() < 0.7 THEN 'bien' ELSE 'neutre' END,
-    CASE WHEN random() < 0.4 THEN 'bien' ELSE 'neutre' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c1, d::date,
+    CASE WHEN random() < 0.3 THEN 'happy' WHEN random() < 0.7 THEN 'happy' ELSE 'neutral' END,
+    CASE WHEN random() < 0.4 THEN 'Eleve' ELSE 'Moyen' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
       WHEN 0 THEN 'Bonne journée. Transit normal, pas de ballonnements. Cohérence cardiaque faite 2x.'
       WHEN 1 THEN 'Un peu de stress au travail mais j ai fait ma respiration 4-7-8. Digestion ok.'
       ELSE 'Journée calme. Bonne énergie. J ai marché 30 min après le déjeuner.'
     END,
-    true, (random() > 0.3), true, true,
-    6 + floor(random()*3)::int, 3 + floor(random()*3)::int, 6 + floor(random()*3)::int,
-    3 + floor(random()*2)::int, 1 + floor(random()*2)::int,
-    1.2 + (random()*0.8)::numeric(3,1),
-    CASE WHEN (d::date - (NOW()-INTERVAL '14 days')::date) % 2 = 0 THEN 'Marche' ELSE 'Yoga' END,
-    CASE WHEN (d::date - (NOW()-INTERVAL '14 days')::date) % 2 = 0 THEN 30 ELSE 20 END,
-    'modere', 'consultant', NOW()
+    true, (random() > 0.3), true, true, NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Nathalie (c5) – ménopause
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level, source, created_at)
-  SELECT v_c5, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.4 THEN 'bien' WHEN random() < 0.7 THEN 'neutre' ELSE 'moyen' END,
-    CASE WHEN random() < 0.5 THEN 'bien' ELSE 'neutre' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c5, d::date,
+    CASE WHEN random() < 0.4 THEN 'happy' WHEN random() < 0.7 THEN 'neutral' ELSE 'sad' END,
+    CASE WHEN random() < 0.5 THEN 'Eleve' ELSE 'Moyen' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
       WHEN 0 THEN 'Seulement 1 bouffée de chaleur aujourd hui. Bien dormi grâce à la sauge.'
       WHEN 1 THEN '2 bouffées, une le matin et une en fin d après-midi. Moral ok.'
       WHEN 2 THEN 'Bonne journée, pas de bouffée ! Marche rapide de 40 min. Me sens en forme.'
       ELSE 'Nuit un peu perturbée par une sueur nocturne. Fatigue en matinée mais ça va mieux l après-midi.'
     END,
-    true, (random() > 0.4), true, true,
-    5 + floor(random()*4)::int, 2 + floor(random()*3)::int, 5 + floor(random()*4)::int,
-    'consultant', NOW()
+    true, (random() > 0.4), true, true, NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Céline (c7) – fibromyalgie
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level, source, created_at)
-  SELECT v_c7, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.2 THEN 'bien' WHEN random() < 0.6 THEN 'neutre' ELSE 'moyen' END,
-    CASE WHEN random() < 0.3 THEN 'neutre' ELSE 'moyen' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c7, d::date,
+    CASE WHEN random() < 0.2 THEN 'happy' WHEN random() < 0.6 THEN 'neutral' ELSE 'sad' END,
+    CASE WHEN random() < 0.3 THEN 'Moyen' ELSE 'Bas' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 5
       WHEN 0 THEN 'Douleur modérée (EVA 4). Bain aux sels d Epsom ce soir. Yoga doux 15 min.'
       WHEN 1 THEN 'Bonne journée, douleur faible (EVA 3). J ai pu faire ma marche. Technique de la cuillère respectée.'
@@ -1368,89 +1302,58 @@ BEGIN
       WHEN 3 THEN 'Mieux qu hier (EVA 4). Sommeil correct grâce au griffonia. Yoga nidra ce matin.'
       ELSE 'Journée stable (EVA 4). Gestion des cuillères ok. Marche 20 min en forêt.'
     END,
-    (random() > 0.2), (random() > 0.2), (random() > 0.4), true,
-    4 + floor(random()*4)::int, 4 + floor(random()*3)::int, 3 + floor(random()*4)::int,
-    'consultant', NOW()
+    (random() > 0.2), (random() > 0.2), (random() > 0.4), true, NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Thomas (c2) – sportif
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level,
-    exercise_type, exercise_duration_minutes, exercise_intensity, source, created_at)
-  SELECT v_c2, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.5 THEN 'tres_bien' ELSE 'bien' END,
-    CASE WHEN random() < 0.6 THEN 'tres_bien' ELSE 'bien' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c2, d::date,
+    CASE WHEN random() < 0.5 THEN 'happy' ELSE 'happy' END,
+    CASE WHEN random() < 0.6 THEN 'Eleve' ELSE 'Eleve' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
       WHEN 0 THEN 'Sortie trail 15km D+600. Bonnes sensations. Nutrition course OK. Récupération en cours.'
       WHEN 1 THEN 'Repos actif. Étirements + rouleau de massage. Spiruline 5g. HRV au top.'
       WHEN 2 THEN 'Fractionné 10x400m. Bon tempo. Hydratation bien gérée. Pas de crampe.'
       ELSE 'Sortie endurance 1h30. Zone 2 maintenue. Alimentation pré-effort bien calée.'
     END,
-    true, false, true, (random() > 0.5),
-    8 + floor(random()*2)::int, 2 + floor(random()*2)::int, 8 + floor(random()*2)::int,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
-      WHEN 0 THEN 'Trail' WHEN 1 THEN 'Stretching' WHEN 2 THEN 'Fractionné' ELSE 'Endurance'
-    END,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
-      WHEN 0 THEN 90 WHEN 1 THEN 30 WHEN 2 THEN 45 ELSE 90
-    END,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 4
-      WHEN 0 THEN 'modere' WHEN 1 THEN 'leger' WHEN 2 THEN 'intense' ELSE 'modere'
-    END,
-    'consultant', NOW()
+    true, false, true, (random() > 0.5), NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Philippe (c10) – eczéma
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level, source, created_at)
-  SELECT v_c10, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.3 THEN 'bien' WHEN random() < 0.6 THEN 'neutre' ELSE 'moyen' END,
-    CASE WHEN random() < 0.3 THEN 'bien' WHEN random() < 0.7 THEN 'neutre' ELSE 'moyen' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c10, d::date,
+    CASE WHEN random() < 0.3 THEN 'happy' WHEN random() < 0.6 THEN 'neutral' ELSE 'sad' END,
+    CASE WHEN random() < 0.3 THEN 'Eleve' WHEN random() < 0.7 THEN 'Moyen' ELSE 'Bas' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
       WHEN 0 THEN 'Levé 2h30 ce matin. Journée au fournil. Eczéma stable. Crème calendula appliquée matin et soir. Sieste de 20 min à 13h.'
       WHEN 1 THEN 'Légère démangeaison poignet droit. Appliqué lavande aspic. Marche 20 min après le travail.'
       ELSE 'Jour de repos. Bien dormi (7h). Mains en bon état. Cuisiné des légumes sans gluten.'
     END,
-    (random() > 0.3), (random() > 0.5), (random() > 0.3), (random() > 0.2),
-    4 + floor(random()*4)::int, 3 + floor(random()*3)::int, 4 + floor(random()*3)::int,
-    'consultant', NOW()
+    (random() > 0.3), (random() > 0.5), (random() > 0.3), (random() > 0.2), NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- Isabelle (c11) – optimisation
-  INSERT INTO journal_entries (consultant_id, practitioner_id, date, mood, energy, text,
-    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes,
-    sleep_quality, stress_level, energy_level,
-    exercise_type, exercise_duration_minutes, exercise_intensity, source, created_at)
-  SELECT v_c11, v_practitioner_id, d::date,
-    CASE WHEN random() < 0.6 THEN 'tres_bien' ELSE 'bien' END,
-    CASE WHEN random() < 0.6 THEN 'tres_bien' ELSE 'bien' END,
+  INSERT INTO journal_entries (consultant_id, date, mood, energy, text,
+    adherence_hydratation, adherence_respiration, adherence_mouvement, adherence_plantes, created_at)
+  SELECT v_c11, d::date,
+    CASE WHEN random() < 0.6 THEN 'happy' ELSE 'happy' END,
+    CASE WHEN random() < 0.6 THEN 'Eleve' ELSE 'Eleve' END,
     CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
       WHEN 0 THEN 'Cours de yoga donné ce matin. Spiruline + maca au petit-déjeuner. Énergie au top. Peau lumineuse.'
       WHEN 1 THEN 'Jus vert ce matin. Balade en forêt 1h. Méditation 20 min. Je me sens en pleine forme.'
       ELSE 'Journée très productive. 2 cours de yoga donnés. Alimentation parfaite. Sommeil profond et réparateur.'
     END,
-    true, true, true, true,
-    8 + floor(random()*2)::int, 1 + floor(random()*2)::int, 8 + floor(random()*2)::int,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
-      WHEN 0 THEN 'Yoga' WHEN 1 THEN 'Marche nature' ELSE 'Yoga'
-    END,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
-      WHEN 0 THEN 75 WHEN 1 THEN 60 ELSE 90
-    END,
-    CASE (d::date - (NOW()-INTERVAL '14 days')::date) % 3
-      WHEN 0 THEN 'modere' WHEN 1 THEN 'leger' ELSE 'modere'
-    END,
-    'consultant', NOW()
+    true, true, true, true, NOW()
   FROM generate_series(NOW()-INTERVAL '14 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
-  ON CONFLICT (consultant_id, date) DO NOTHING;
+  ON CONFLICT DO NOTHING;
 
   -- ============================================
-  -- Step 10 : Notifications (15 records, 3 unread)
+  -- Step 9 : Notifications (15 records, 3 unread)
   -- ============================================
   INSERT INTO notifications (id, practitioner_id, consultant_id, title, description, level, read, created_at) VALUES
     ('f1000000-0000-4000-a000-000000000001', v_practitioner_id, v_c1, 'Nouveau message de Sophie Martin', 'Sophie a envoyé un message concernant son suivi digestif.', 'info', true, NOW()-INTERVAL '2 weeks'),
@@ -1472,7 +1375,7 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 
   -- ============================================
-  -- Step 11 : Practitioner Notes (10 consultants)
+  -- Step 10 : Practitioner Notes (10 consultants)
   -- ============================================
   INSERT INTO practitioner_notes (consultant_id, practitioner_id, content, created_at, updated_at) VALUES
     (v_c1,  v_practitioner_id, 'Sophie Martin – Cadre sup, SII stress-dépendant. Excellente évolution en 6 mois. Transit normalisé, stress mieux géré grâce à la cohérence cardiaque. Phase de consolidation. Prochaine étape : espacement des RDV (trimestriel). Patiente rigoureuse mais perfectionniste – rappeler l importance du lâcher prise.', NOW()-INTERVAL '3 weeks', NOW()-INTERVAL '3 weeks'),
@@ -1485,141 +1388,21 @@ BEGIN
     (v_c8,  v_practitioner_id, 'Marc Lefebvre – Commercial, RGO + surpoids. Sevrage IPP en cours (rechutes lors des déplacements pro). Perte de 4kg. No-show au dernier RDV (déplacement). Reprendre les stratégies de gestion des repas d affaires. Motivation fluctuante selon le contexte pro.', NOW()-INTERVAL '2 weeks', NOW()-INTERVAL '2 weeks'),
     (v_c10, v_practitioner_id, 'Philippe Garnier – Artisan boulanger, eczéma chronique. Eczéma en nette amélioration malgré l exposition professionnelle au gluten. Probiotiques + L-glutamine efficaces. Siestes bien intégrées. Contrainte majeure : horaires décalés (levé 2h30). Coordonner avec dermato.', NOW()-INTERVAL '5 weeks', NOW()-INTERVAL '5 weeks'),
     (v_c12, v_practitioner_id, 'Robert Durand – Retraité, prévention cardiovasculaire. LDL en baisse (1.85 à 1.65) en 2 mois sans statines. Cardiologue accepte de poursuivre l approche naturelle. Objectif LDL < 1.40 au prochain bilan. Bonne adhésion au régime méditerranéen. ATCD familiaux = motivation forte.', NOW()-INTERVAL '2 months', NOW()-INTERVAL '2 months')
-  ON CONFLICT (consultant_id, practitioner_id) DO NOTHING;
-
-  -- ============================================
-  -- Step 12 : Educational Resources & Assignments
-  -- ============================================
-  INSERT INTO educational_resources (id, practitioner_id, title, slug, summary, content_type, content_markdown, category, tags, source, is_published, read_time_minutes, created_at) VALUES
-    ('f2000000-0000-4000-a000-000000000001', v_practitioner_id, 'La cohérence cardiaque : guide pratique', 'coherence-cardiaque-guide', 'Tout savoir sur la cohérence cardiaque 365 : technique, bienfaits et mise en pratique au quotidien.', 'article', '# La cohérence cardiaque 365
-
-## Qu est-ce que c est ?
-La cohérence cardiaque est une technique de respiration qui synchronise le rythme cardiaque et le système nerveux autonome.
-
-## La méthode 365
-- **3** fois par jour
-- **6** respirations par minute
-- **5** minutes par séance
-
-## Comment pratiquer ?
-1. Inspirez pendant 5 secondes par le nez
-2. Expirez pendant 5 secondes par la bouche
-3. Répétez pendant 5 minutes
-
-## Bienfaits prouvés
-- Réduction du cortisol (hormone du stress) pendant 4-6 heures
-- Amélioration de la variabilité cardiaque
-- Meilleure régulation émotionnelle
-- Amélioration du sommeil et de la concentration', 'gestion_stress', ARRAY['stress', 'respiration', 'bien-être', 'sommeil'], 'practitioner', true, 5, NOW()-INTERVAL '6 months'),
-
-    ('f2000000-0000-4000-a000-000000000002', v_practitioner_id, 'Alimentation anti-inflammatoire : les bases', 'alimentation-anti-inflammatoire', 'Comprendre et adopter une alimentation qui réduit l inflammation chronique.', 'article', '# L alimentation anti-inflammatoire
-
-## Pourquoi c est important ?
-L inflammation chronique de bas grade est impliquée dans de nombreuses pathologies : troubles digestifs, douleurs articulaires, fatigue chronique, problèmes de peau.
-
-## Les piliers anti-inflammatoires
-1. **Oméga 3** : poissons gras (sardines, maquereau, saumon), graines de lin, noix
-2. **Antioxydants** : fruits rouges, légumes colorés, curcuma, thé vert
-3. **Fibres** : légumes, céréales complètes, légumineuses
-4. **Polyphénols** : huile d olive vierge, cacao cru, grenades
-
-## Aliments pro-inflammatoires à limiter
-- Sucres raffinés et farines blanches
-- Huiles végétales riches en oméga 6 (tournesol, maïs)
-- Produits ultra-transformés
-- Excès de viande rouge et charcuterie
-- Alcool en excès', 'alimentation', ARRAY['alimentation', 'inflammation', 'nutrition', 'oméga 3'], 'practitioner', true, 7, NOW()-INTERVAL '5 months'),
-
-    ('f2000000-0000-4000-a000-000000000003', v_practitioner_id, 'Le magnésium : le minéral anti-stress', 'magnesium-mineral-anti-stress', 'Pourquoi le magnésium est essentiel, comment reconnaître une carence et quelles formes choisir.', 'article', '# Le magnésium
-
-## Signes de carence
-- Crampes et spasmes musculaires
-- Fatigue chronique
-- Irritabilité et anxiété
-- Troubles du sommeil
-- Paupière qui tremble
-
-## Les meilleures formes
-- **Bisglycinate** : excellente absorption, bien toléré (RECOMMANDÉ)
-- **Citrate** : bonne absorption, léger effet laxatif
-- **Thréonate** : passe la barrière hémato-encéphalique (cognition)
-- **Oxyde** : mal absorbé, à éviter
-
-## Dosage recommandé
-300 à 400 mg/jour pour un adulte. En cas de stress ou de sport intense : jusqu à 600 mg/jour.
-
-## Aliments riches en magnésium
-Chocolat noir 70%+, amandes, noix de cajou, épinards, banane, avocat, graines de courge.', 'general', ARRAY['magnésium', 'compléments', 'stress', 'sommeil', 'minéraux'], 'practitioner', true, 6, NOW()-INTERVAL '4 months'),
-
-    ('f2000000-0000-4000-a000-000000000004', v_practitioner_id, 'Yoga doux pour la fibromyalgie', 'yoga-doux-fibromyalgie', 'Programme de yoga adapté aux personnes souffrant de fibromyalgie.', 'video_link', NULL, 'activite_physique', ARRAY['yoga', 'fibromyalgie', 'douleur', 'mobilité'], 'practitioner', true, 15, NOW()-INTERVAL '6 months'),
-
-    ('f2000000-0000-4000-a000-000000000005', v_practitioner_id, 'Guide des huiles essentielles de base', 'guide-huiles-essentielles', 'Les 5 huiles essentielles indispensables et leur utilisation en toute sécurité.', 'article', '# Les 5 huiles essentielles indispensables
-
-## 1. Lavande vraie (Lavandula angustifolia)
-Usage : relaxation, sommeil, petites brûlures, cicatrisation.
-Voie : diffusion, cutanée (pure possible), bain.
-
-## 2. Tea tree (Melaleuca alternifolia)
-Usage : antiseptique, antifongique, boutons d acné.
-Voie : cutanée locale (1 goutte pure sur le bouton).
-
-## 3. Menthe poivrée (Mentha piperita)
-Usage : nausées, maux de tête, digestion, coup de fatigue.
-Voie : 1 goutte sur les tempes ou sur un comprimé neutre.
-
-## 4. Ravintsara (Cinnamomum camphora)
-Usage : immunité, prévention hivernale, antiviral.
-Voie : cutanée (sur les poignets), diffusion.
-
-## 5. Eucalyptus citronné (Corymbia citriodora)
-Usage : anti-inflammatoire, douleurs musculaires et articulaires.
-Voie : cutanée diluée 10% dans huile végétale.
-
-## Précautions générales
-- Jamais d HE pure dans les yeux, oreilles, muqueuses
-- Test cutané au pli du coude 24h avant première utilisation
-- Interdites aux femmes enceintes/allaitantes et enfants < 7 ans (sauf avis)
-- Conserver à l abri de la lumière et de la chaleur', 'aromatherapie', ARRAY['aromathérapie', 'huiles essentielles', 'guide', 'sécurité'], 'practitioner', true, 8, NOW()-INTERVAL '3 months')
-  ON CONFLICT (slug) DO NOTHING;
-
-  -- Resource Assignments (2-3 per active consultant)
-  INSERT INTO resource_assignments (resource_id, consultant_id, practitioner_id, message, sent_at) VALUES
-    -- Sophie : cohérence cardiaque + alimentation anti-inflammatoire
-    ('f2000000-0000-4000-a000-000000000001', v_c1, v_practitioner_id, 'Sophie, voici un guide complet sur la cohérence cardiaque. Référez-vous y pour perfectionner votre technique.', NOW()-INTERVAL '6 months'),
-    ('f2000000-0000-4000-a000-000000000002', v_c1, v_practitioner_id, 'Un article sur l alimentation anti-inflammatoire qui complète votre protocole digestif.', NOW()-INTERVAL '5 months'),
-    -- Thomas : magnésium
-    ('f2000000-0000-4000-a000-000000000003', v_c2, v_practitioner_id, 'Thomas, un article sur le magnésium pour comprendre pourquoi c est crucial pour ta récupération sportive.', NOW()-INTERVAL '5 months'),
-    -- Émilie : magnésium
-    ('f2000000-0000-4000-a000-000000000003', v_c3, v_practitioner_id, 'Émilie, un article sur le magnésium pour comprendre son importance dans la récupération post-partum.', NOW()-INTERVAL '4 months'),
-    -- Nathalie : alimentation anti-inflammatoire
-    ('f2000000-0000-4000-a000-000000000002', v_c5, v_practitioner_id, 'Nathalie, l alimentation anti-inflammatoire est un pilier pour gérer les symptômes de la ménopause.', NOW()-INTERVAL '6 months'),
-    -- Céline : yoga fibromyalgie + cohérence cardiaque + magnésium
-    ('f2000000-0000-4000-a000-000000000004', v_c7, v_practitioner_id, 'Céline, cette vidéo de yoga doux est spécialement adaptée à la fibromyalgie. Allez-y très progressivement.', NOW()-INTERVAL '4 months'),
-    ('f2000000-0000-4000-a000-000000000001', v_c7, v_practitioner_id, 'La cohérence cardiaque pour vous aider avec la gestion de la douleur et le sommeil.', NOW()-INTERVAL '6 months'),
-    ('f2000000-0000-4000-a000-000000000003', v_c7, v_practitioner_id, 'Le magnésium est particulièrement important dans la fibromyalgie. Voici un guide complet.', NOW()-INTERVAL '6 months'),
-    -- Amina : cohérence cardiaque
-    ('f2000000-0000-4000-a000-000000000001', v_c9, v_practitioner_id, 'Amina, la cohérence cardiaque t aidera à gérer le stress des examens et à prévenir les migraines.', NOW()-INTERVAL '2 months'),
-    -- Philippe : huiles essentielles
-    ('f2000000-0000-4000-a000-000000000005', v_c10, v_practitioner_id, 'Philippe, un guide sur les huiles essentielles pour vous aider avec les applications sur l eczéma.', NOW()-INTERVAL '5 months'),
-    ('f2000000-0000-4000-a000-000000000002', v_c10, v_practitioner_id, 'L alimentation anti-inflammatoire est essentielle dans la prise en charge de l eczéma.', NOW()-INTERVAL '5 months'),
-    -- Isabelle : huiles essentielles
-    ('f2000000-0000-4000-a000-000000000005', v_c11, v_practitioner_id, 'Isabelle, un rappel sur les HE de base pour votre cure détox.', NOW()-INTERVAL '3 months'),
-    -- Robert : alimentation anti-inflammatoire
-    ('f2000000-0000-4000-a000-000000000002', v_c12, v_practitioner_id, 'Robert, l alimentation anti-inflammatoire rejoint le régime méditerranéen cardioprotecteur.', NOW()-INTERVAL '4 months')
   ON CONFLICT DO NOTHING;
 
-  -- ============================================
-  -- Step 13 : Wearable Summaries (30 days × 5 connected consultants)
-  -- ============================================
+  -- NOTE: educational_resources and resource_assignments tables not present in current schema, skipped.
 
-  -- Sophie (c1) – Apple Watch
+  -- ============================================
+  -- Step 11 : Wearable Summaries (30 days × 5 connected consultants)
+  -- ============================================
+  -- Sophie (c1) – Apple Watch (sleep_duration in minutes, completeness 0-100)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c1, d::date,
-    6.5 + (random()*2)::numeric(3,1),
-    65 + floor(random()*25)::numeric,
-    35 + floor(random()*20)::numeric,
-    4000 + floor(random()*4000)::numeric,
-    0.8 + (random()*0.2)::numeric(3,2),
+    390 + floor(random()*120)::int,
+    65 + floor(random()*25)::int,
+    35 + floor(random()*20)::int,
+    4000 + floor(random()*4000)::int,
+    80 + floor(random()*20)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
@@ -1627,11 +1410,11 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- Thomas (c2) – Garmin (high activity)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c2, d::date,
-    7 + (random()*2)::numeric(3,1),
-    75 + floor(random()*20)::numeric,
-    50 + floor(random()*30)::numeric,
-    8000 + floor(random()*8000)::numeric,
-    0.9 + (random()*0.1)::numeric(3,2),
+    420 + floor(random()*120)::int,
+    75 + floor(random()*20)::int,
+    50 + floor(random()*30)::int,
+    8000 + floor(random()*8000)::int,
+    90 + floor(random()*10)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
@@ -1639,11 +1422,11 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- Céline (c7) – Oura Ring (low activity due to fibro)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c7, d::date,
-    5 + (random()*3)::numeric(3,1),
-    45 + floor(random()*30)::numeric,
-    25 + floor(random()*15)::numeric,
-    2000 + floor(random()*3000)::numeric,
-    0.7 + (random()*0.3)::numeric(3,2),
+    300 + floor(random()*180)::int,
+    45 + floor(random()*30)::int,
+    25 + floor(random()*15)::int,
+    2000 + floor(random()*3000)::int,
+    70 + floor(random()*30)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
@@ -1651,11 +1434,11 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- Isabelle (c11) – Whoop (high wellness)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c11, d::date,
-    7.5 + (random()*1.5)::numeric(3,1),
-    80 + floor(random()*15)::numeric,
-    55 + floor(random()*25)::numeric,
-    6000 + floor(random()*5000)::numeric,
-    0.9 + (random()*0.1)::numeric(3,2),
+    450 + floor(random()*90)::int,
+    80 + floor(random()*15)::int,
+    55 + floor(random()*25)::int,
+    6000 + floor(random()*5000)::int,
+    90 + floor(random()*10)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
@@ -1663,17 +1446,17 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- Robert (c12) – Apple Watch (moderate activity, senior)
   INSERT INTO wearable_summaries (consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at)
   SELECT v_c12, d::date,
-    6 + (random()*2)::numeric(3,1),
-    55 + floor(random()*25)::numeric,
-    20 + floor(random()*15)::numeric,
-    3000 + floor(random()*3000)::numeric,
-    0.75 + (random()*0.2)::numeric(3,2),
+    360 + floor(random()*120)::int,
+    55 + floor(random()*25)::int,
+    20 + floor(random()*15)::int,
+    3000 + floor(random()*3000)::int,
+    75 + floor(random()*20)::int,
     NOW()
   FROM generate_series(NOW()-INTERVAL '30 days', NOW()-INTERVAL '1 day', INTERVAL '1 day') AS d
   ON CONFLICT DO NOTHING;
 
   -- ============================================
-  -- Step 14 : Billing (subscription_plans, subscriptions, invoices, payment_methods, billing_history)
+  -- Step 12 : Billing (subscription_plans, subscriptions, invoices, payment_methods, billing_history)
   -- ============================================
 
   -- Subscription plan (Premium)
@@ -1722,8 +1505,7 @@ Voie : cutanée diluée 10% dans huile végétale.
   -- ============================================
   RAISE NOTICE 'Seed data for Woodeline (pwoodeline@gmail.com) inserted successfully!';
   RAISE NOTICE 'Consultants: 12, Appointments: ~42, Consultations: ~30, Plans: 10';
-  RAISE NOTICE 'Prescriptions: 8, Items: ~40, Messages: ~62, Journal entries: ~84';
-  RAISE NOTICE 'Notifications: 15, Notes: 10, Resources: 5, Assignments: 13';
-  RAISE NOTICE 'Wearable summaries: ~150, Complement tracking: ~112';
+  RAISE NOTICE 'Prescription items: ~40, Messages: ~62, Journal entries: ~84';
+  RAISE NOTICE 'Notifications: 15, Notes: 10, Wearable summaries: ~150';
 
 END $$;
