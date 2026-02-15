@@ -75,10 +75,18 @@ export default function DrawingCanvas({
         }
       }
 
+      // Exclude template SVG file data from saved JSONB — templates are reloaded on open
+      const serializedFiles = files
+        ? Object.fromEntries(
+            Object.entries(JSON.parse(JSON.stringify(files)))
+              .filter(([key]) => !key.startsWith('template-'))
+          )
+        : undefined;
+
       const data: ExcalidrawData = {
         elements: JSON.parse(JSON.stringify(elements)),
         appState: cleanAppState,
-        files: files ? JSON.parse(JSON.stringify(files)) : undefined,
+        files: serializedFiles,
       };
 
       const { exportToBlob } = await import('@excalidraw/excalidraw');
