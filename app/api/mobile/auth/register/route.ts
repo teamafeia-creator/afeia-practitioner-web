@@ -98,12 +98,13 @@ export async function POST(request: NextRequest) {
         password_hash: passwordHash,
         role: 'CONSULTANT',
         status: 'ACTIVE',
+        created_at: new Date().toISOString(),
       });
 
     if (userError) {
-      console.error('Error creating user:', userError);
+      console.error('Error creating user:', userError.message, userError.details, userError.code);
       return NextResponse.json(
-        { message: 'Erreur lors de la création du compte' },
+        { message: 'Erreur lors de la création du compte utilisateur: ' + userError.message },
         { status: 500 }
       );
     }
@@ -119,9 +120,9 @@ export async function POST(request: NextRequest) {
     if (membershipError) {
       // Rollback user creation
       await getSupabaseAdmin().from('users').delete().eq('id', userId);
-      console.error('Error creating membership:', membershipError);
+      console.error('Error creating membership:', membershipError.message, membershipError.details, membershipError.code);
       return NextResponse.json(
-        { message: 'Erreur lors de la création du compte' },
+        { message: 'Erreur lors de la liaison du compte: ' + membershipError.message },
         { status: 500 }
       );
     }
@@ -209,8 +210,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error during registration:', error);
+    const errMsg = error instanceof Error ? error.message : 'Erreur inconnue';
     return NextResponse.json(
-      { message: 'Erreur lors de la création du compte' },
+      { message: 'Erreur lors de la création du compte: ' + errMsg },
       { status: 500 }
     );
   }
