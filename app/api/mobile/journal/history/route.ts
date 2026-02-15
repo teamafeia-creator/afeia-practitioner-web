@@ -1,6 +1,9 @@
 /**
  * GET /api/mobile/journal/history
  * Get journal history
+ *
+ * Now reads from `journal_entries` (unified table) instead of `daily_journals`.
+ * Supports date range filtering via startDate/endDate query params.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,7 +26,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate');
 
     let query = getSupabaseAdmin()
-      .from('daily_journals')
+      .from('journal_entries')
       .select('*')
       .eq('consultant_id', consultantId)
       .order('date', { ascending: false });
@@ -41,18 +44,27 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    const formattedEntries = entries?.map((entry) => ({
-      id: entry.id,
-      date: entry.date,
-      mood: entry.mood,
-      alimentationQuality: entry.alimentation_quality,
-      sleepQuality: entry.sleep_quality,
-      energyLevel: entry.energy_level,
-      complementsTaken: entry.complements_taken || [],
-      problemesParticuliers: entry.problemes_particuliers,
-      noteNaturopathe: entry.note_naturopathe,
-      createdAt: entry.created_at,
-    })) || [];
+    const formattedEntries = entries?.map((entry) => {
+      const customIndicators = (entry.custom_indicators as Record<string, any>) || {};
+      return {
+        id: entry.id,
+        date: entry.date,
+        mood: entry.mood,
+        text: entry.text,
+        sleepQuality: entry.sleep_quality,
+        energyLevel: entry.energy_level,
+        stressLevel: entry.stress_level,
+        alimentationQuality: customIndicators.alimentation_quality || null,
+        complementsTaken: customIndicators.complements_taken || [],
+        problemesParticuliers: entry.text,
+        bristolType: entry.bristol_type,
+        hydrationLiters: entry.hydration_liters,
+        exerciseType: entry.exercise_type,
+        customIndicators: entry.custom_indicators,
+        source: entry.source,
+        createdAt: entry.created_at,
+      };
+    }) || [];
 
     return NextResponse.json({ entries: formattedEntries });
   } catch (error) {

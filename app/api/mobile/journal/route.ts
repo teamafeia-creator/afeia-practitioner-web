@@ -1,6 +1,12 @@
 /**
- * GET/POST /api/mobile/journal
- * Get or create journal entries
+ * POST /api/mobile/journal
+ * Create or update a journal entry
+ *
+ * Now writes to `journal_entries` (unified table) instead of `daily_journals`.
+ * Maps legacy fields: alimentationQuality → custom_indicators, problemesParticuliers → text.
+ * Sets source='mobile' on every write.
+ *
+ * For the full-featured journal API, prefer /api/mobile/journal/v2.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -27,7 +33,6 @@ export async function POST(request: NextRequest) {
       energyLevel,
       complementsTaken,
       problemesParticuliers,
-      noteNaturopathe,
     } = body;
 
     if (!date || !mood || !alimentationQuality || !sleepQuality || !energyLevel) {
@@ -37,63 +42,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get case file
-    const { data: caseFile } = await getSupabaseAdmin()
-      .from('case_files')
-      .select('id')
-      .eq('consultant_id', consultantId)
-      .maybeSingle();
-
-    // Check if entry exists for this date
-    const { data: existing } = await getSupabaseAdmin()
-      .from('daily_journals')
-      .select('id')
-      .eq('consultant_id', consultantId)
-      .eq('date', date)
-      .maybeSingle();
-
-    const entryData = {
-      consultant_id: consultantId,
-      case_file_id: caseFile?.id,
-      date,
-      mood,
-      alimentation_quality: alimentationQuality,
-      sleep_quality: sleepQuality,
-      energy_level: energyLevel,
-      complements_taken: complementsTaken || [],
-      problemes_particuliers: problemesParticuliers || null,
-      note_naturopathe: noteNaturopathe || null,
-    };
-
-    let journalId;
-
-    if (existing) {
-      // Update existing
-      const { data, error } = await getSupabaseAdmin()
-        .from('daily_journals')
-        .update({
-          ...entryData,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existing.id)
-        .select('id')
-        .single();
-
-      if (error) throw error;
-      journalId = data.id;
-    } else {
-      // Create new
-      const { data, error } = await getSupabaseAdmin()
-        .from('daily_journals')
-        .insert(entryData)
-        .select('id')
-        .single();
-
-      if (error) throw error;
-      journalId = data.id;
+    // Build custom_indicators with legacy alimentation_quality + complements
+    const customIndicators: Record<string, any> = {};
+    if (alimentationQuality) {
+      customIndicators.alimentation_quality = alimentationQuality;
+    }
+    if (complementsTaken && Array.isArray(complementsTaken) && complementsTaken.length > 0) {
+      customIndicators.complements_taken = complementsTaken;
     }
 
-    return NextResponse.json({ journalId });
+    const payload = {
+      consultant_id: consultantId,
+      date,
+      mood,
+      sleep_quality: sleepQuality,
+      energy_level: energyLevel,
+      text: problemesParticuliers || null,
+      custom_indicators: Object.keys(customIndicators).length > 0 ? customIndicators : null,
+      source: 'mobile' as const,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await getSupabaseAdmin()
+      .from('journal_entries')
+      .upsert(payload, { onConflict: 'consultant_id,date' })
+      .select('id')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({ journalId: data.id });
   } catch (error) {
     console.error('Error saving journal entry:', error);
     return NextResponse.json(

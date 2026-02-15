@@ -1,35 +1,18 @@
 /**
  * GET /api/mobile/consultant/naturopathe-info
  * Get naturopathe info and consultation dates
+ *
+ * Uses the shared resolveConsultantId from lib/mobile-auth.ts
+ * (dual-strategy: custom JWT + Supabase fallback).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
-import { getBearerToken } from '@/lib/auth';
+import { resolveConsultantId } from '@/lib/mobile-auth';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-
-async function getConsultantFromToken(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  const token = getBearerToken(authHeader);
-
-  if (!token) {
-    return null;
-  }
-
-  try {
-    const { payload } = await jwtVerify(
-      token,
-      new TextEncoder().encode(process.env.JWT_SECRET)
-    );
-    return payload.consultantId as string;
-  } catch {
-    return null;
-  }
-}
 
 export async function GET(request: NextRequest) {
   try {
-    const consultantId = await getConsultantFromToken(request);
+    const consultantId = await resolveConsultantId(request);
 
     if (!consultantId) {
       return NextResponse.json(
@@ -38,13 +21,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get consultant with practitioner
-    const { data: consultant, error } = await getSupabaseAdmin()
+    const supabase = getSupabaseAdmin();
+
+    // Get consultant with practitioner (including calendly_url)
+    const { data: consultant, error } = await supabase
       .from('consultants')
       .select(`
         practitioner_id,
         practitioners:practitioner_id (
-          id, full_name, email, phone, avatar_url, specializations
+          id, full_name, email, phone, avatar_url, specializations, calendly_url
         )
       `)
       .eq('id', consultantId)
@@ -58,14 +43,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get case file for consultation dates
-    const { data: caseFile } = await getSupabaseAdmin()
+    const { data: caseFile } = await supabase
       .from('case_files')
       .select('last_consultation_date, next_consultation_date')
       .eq('consultant_id', consultantId)
       .maybeSingle();
 
     // Get last completed appointment
-    const { data: lastAppointment } = await getSupabaseAdmin()
+    const { data: lastAppointment } = await supabase
       .from('appointments')
       .select('starts_at')
       .eq('consultant_id', consultantId)
@@ -75,7 +60,7 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     // Get next scheduled appointment
-    const { data: nextAppointment } = await getSupabaseAdmin()
+    const { data: nextAppointment } = await supabase
       .from('appointments')
       .select('starts_at')
       .eq('consultant_id', consultantId)
@@ -98,6 +83,7 @@ export async function GET(request: NextRequest) {
       } : null,
       lastConsultation: lastAppointment?.starts_at || caseFile?.last_consultation_date || null,
       nextConsultation: nextAppointment?.starts_at || caseFile?.next_consultation_date || null,
+      calendlyUrl: practitioner?.calendly_url || null,
     });
   } catch (error) {
     console.error('Error getting naturopathe info:', error);

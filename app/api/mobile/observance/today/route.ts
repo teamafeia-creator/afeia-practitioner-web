@@ -5,7 +5,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin';
 export async function GET(request: NextRequest) {
   const consultantId = await resolveConsultantId(request);
   if (!consultantId) {
-    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
   }
 
   const supabase = getSupabaseAdmin();
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       .order('sort_order');
 
     if (itemsError) {
-      return NextResponse.json({ error: itemsError.message }, { status: 500 });
+      return NextResponse.json({ message: itemsError.message }, { status: 500 });
     }
 
     if (!items || items.length === 0) {
@@ -56,6 +56,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ items: result });
   } catch (err) {
     console.error('[mobile/observance/today] error:', err);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json({ message: 'Erreur serveur' }, { status: 500 });
   }
 }

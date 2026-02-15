@@ -1,6 +1,10 @@
 /**
+ * @deprecated This route reads from the `conseils` table which is no longer
+ * populated by the web dashboard. Conseils are now part of the conseillancier
+ * (consultant_plans.content). Use GET /api/mobile/plans instead.
+ *
  * GET /api/mobile/conseils
- * Get consultant's conseils from naturopathe
+ * Get consultant's conseils from naturopathe (legacy)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
