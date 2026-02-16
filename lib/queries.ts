@@ -864,39 +864,70 @@ export async function getPractitionerProfile() {
   return data;
 }
 
-export async function updatePractitionerProfile({
-  full_name,
-  email,
-  default_consultation_reason
-}: {
+export type PractitionerProfileUpdate = {
   full_name?: string | null;
   email?: string | null;
   default_consultation_reason?: string | null;
-}): Promise<void> {
+  first_name?: string | null;
+  last_name?: string | null;
+  photo_url?: string | null;
+  specialties?: string[];
+  siret?: string | null;
+  adeli_number?: string | null;
+  formations?: string | null;
+  years_experience?: number | null;
+  cabinet_address?: string | null;
+  professional_phone?: string | null;
+  website?: string | null;
+  bio?: string | null;
+};
+
+const SIRET_REGEX = /^\d{14}$/;
+
+export async function updatePractitionerProfile(
+  updates: PractitionerProfileUpdate
+): Promise<void> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
     console.error('Error fetching user:', userError);
     throw new Error('Veuillez vous reconnecter pour enregistrer votre profil.');
   }
 
-  if (email) {
-    const { error: authError } = await supabase.auth.updateUser({ email });
+  // Validate SIRET format if provided and non-empty
+  if (updates.siret && !SIRET_REGEX.test(updates.siret)) {
+    throw new Error('Le numéro SIRET doit contenir exactement 14 chiffres.');
+  }
+
+  if (updates.email) {
+    const { error: authError } = await supabase.auth.updateUser({ email: updates.email });
     if (authError) {
       console.error('Error updating practitioner auth email:', authError);
       throw new Error(describeSupabaseError(authError));
     }
   }
 
+  // Build update payload - only include fields that were explicitly provided
+  const payload: Record<string, unknown> = {
+    updated_at: new Date().toISOString()
+  };
+
+  const fields: (keyof PractitionerProfileUpdate)[] = [
+    'full_name', 'email', 'default_consultation_reason',
+    'first_name', 'last_name', 'photo_url',
+    'specialties', 'siret', 'adeli_number', 'formations',
+    'years_experience', 'cabinet_address', 'professional_phone',
+    'website', 'bio'
+  ];
+
+  for (const field of fields) {
+    if (updates[field] !== undefined) {
+      payload[field] = updates[field];
+    }
+  }
+
   const { data, error } = await supabase
     .from('practitioners')
-    .update({
-      ...(full_name !== undefined ? { full_name } : {}),
-      ...(email !== undefined ? { email } : {}),
-      ...(default_consultation_reason !== undefined
-        ? { default_consultation_reason }
-        : {}),
-      updated_at: new Date().toISOString()
-    })
+    .update(payload)
     .eq('id', userData.user.id)
     .select('id');
 
@@ -908,6 +939,31 @@ export async function updatePractitionerProfile({
   if (!data || data.length === 0) {
     throw new Error('Impossible de mettre à jour le profil.');
   }
+}
+
+export async function uploadPractitionerPhoto(file: File): Promise<string> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    throw new Error('Veuillez vous reconnecter pour uploader votre photo.');
+  }
+
+  const extension = file.name.split('.').pop() || 'jpg';
+  const filePath = `practitioners/${userData.user.id}/profile.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) {
+    console.error('Error uploading practitioner photo:', uploadError);
+    throw new Error('Impossible d\'uploader la photo de profil.');
+  }
+
+  const { data: urlData } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+
+  return urlData.publicUrl;
 }
 
 export async function upsertPractitionerNote(
