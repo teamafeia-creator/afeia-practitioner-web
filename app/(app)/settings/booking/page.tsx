@@ -95,10 +95,11 @@ export default function BookingSettingsPage() {
         });
       }
 
-      // Check validation requirements
+      // Check validation requirements (filtrer par praticien)
       const { data: types } = await supabase
         .from('consultation_types')
         .select('id')
+        .eq('practitioner_id', userData.user.id)
         .eq('is_active', true)
         .eq('is_bookable_online', true)
         .limit(1);
@@ -106,6 +107,7 @@ export default function BookingSettingsPage() {
       const { data: schedules } = await supabase
         .from('availability_schedules')
         .select('id')
+        .eq('practitioner_id', userData.user.id)
         .eq('is_active', true)
         .limit(1);
 
@@ -237,8 +239,13 @@ export default function BookingSettingsPage() {
       setValidation(prev => ({ ...prev, hasSlug: !!form.booking_slug }));
       setToast({ title: 'Configuration enregistree', variant: 'success' });
     } catch (error) {
-      console.error('Error saving booking config:', error);
-      setToast({ title: 'Erreur lors de la sauvegarde', variant: 'error' });
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error saving booking config:', message, error);
+      setToast({
+        title: 'Erreur lors de la sauvegarde',
+        description: message,
+        variant: 'error',
+      });
     } finally {
       setSaving(false);
     }
