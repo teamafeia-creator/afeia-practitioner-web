@@ -70,7 +70,7 @@ export async function requireAdminAuth(request: NextRequest): Promise<
   };
 }
 
-async function checkIsAdmin(email: string): Promise<boolean> {
+export async function checkIsAdmin(email: string): Promise<boolean> {
   const normalized = email.trim().toLowerCase();
 
   // Check env variable first

@@ -1,5 +1,43 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient, createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
+import { checkIsAdmin } from '@/lib/admin/auth';
+
+type AuthResult =
+  | { authenticated: true; userId: string; email: string | null; isAdmin: boolean }
+  | { authenticated: false };
+
+/**
+ * Authenticate from bearer token or cookie-based admin session.
+ */
+async function authenticateRequest(request: Request): Promise<AuthResult> {
+  // 1. Try bearer token auth (practitioners + admin with Supabase session)
+  const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
+  if (token) {
+    const supabaseAuth = createSupabaseAuthClient();
+    const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !authData.user) {
+      return { authenticated: false };
+    }
+    const email = authData.user.email ?? null;
+    const isAdmin = email ? await checkIsAdmin(email) : false;
+    return { authenticated: true, userId: authData.user.id, email, isAdmin };
+  }
+
+  // 2. Fall back to cookie-based admin auth
+  const cookieHeader = request.headers.get('cookie');
+  if (cookieHeader) {
+    const match = cookieHeader.match(/afeia_admin_email=([^;]+)/);
+    if (match) {
+      const cookieEmail = decodeURIComponent(match[1]);
+      const isAdmin = await checkIsAdmin(cookieEmail);
+      if (isAdmin) {
+        return { authenticated: true, userId: '', email: cookieEmail, isAdmin: true };
+      }
+    }
+  }
+
+  return { authenticated: false };
+}
 
 /**
  * GET /api/blocks/[blockId]
@@ -45,7 +83,7 @@ export async function GET(
 
 /**
  * PUT /api/blocks/[blockId]
- * Update a block (only personal blocks, not afeia_base).
+ * Update a block. Personal blocks for practitioners, afeia_base blocks for admins.
  */
 export async function PUT(
   request: Request,
@@ -53,18 +91,11 @@ export async function PUT(
 ) {
   try {
     const { blockId } = await params;
-    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
-    if (!token) {
+    const auth = await authenticateRequest(request);
+    if (!auth.authenticated) {
       return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
     }
 
-    const supabaseAuth = createSupabaseAuthClient();
-    const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
-    if (authError || !authData.user) {
-      return NextResponse.json({ error: 'Session invalide.' }, { status: 401 });
-    }
-
-    const practitionerId = authData.user.id;
     const supabase = createSupabaseAdminClient();
 
     // Check ownership and source
@@ -79,18 +110,18 @@ export async function PUT(
     }
 
     if (existing.source === 'afeia_base') {
-      return NextResponse.json(
-        { error: 'Les blocs AFEIA de base ne sont pas modifiables.' },
-        { status: 403 }
-      );
-    }
-
-    if (existing.owner_id !== practitionerId) {
+      if (!auth.isAdmin) {
+        return NextResponse.json(
+          { error: 'Les blocs AFEIA de base ne sont pas modifiables.' },
+          { status: 403 }
+        );
+      }
+    } else if (existing.owner_id !== auth.userId) {
       return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     }
 
     const body = await request.json();
-    const allowedFields = ['title', 'content', 'section', 'motifs', 'tags', 'ai_keywords'];
+    const allowedFields = ['title', 'content', 'section', 'motifs', 'tags', 'ai_keywords', 'is_archived'];
     const updateData: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
@@ -134,18 +165,11 @@ export async function DELETE(
 ) {
   try {
     const { blockId } = await params;
-    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
-    if (!token) {
+    const auth = await authenticateRequest(request);
+    if (!auth.authenticated) {
       return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
     }
 
-    const supabaseAuth = createSupabaseAuthClient();
-    const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
-    if (authError || !authData.user) {
-      return NextResponse.json({ error: 'Session invalide.' }, { status: 401 });
-    }
-
-    const practitionerId = authData.user.id;
     const supabase = createSupabaseAdminClient();
 
     // Check ownership and source
@@ -160,13 +184,13 @@ export async function DELETE(
     }
 
     if (existing.source === 'afeia_base') {
-      return NextResponse.json(
-        { error: 'Les blocs AFEIA de base ne peuvent pas être supprimés.' },
-        { status: 403 }
-      );
-    }
-
-    if (existing.owner_id !== practitionerId) {
+      if (!auth.isAdmin) {
+        return NextResponse.json(
+          { error: 'Les blocs AFEIA de base ne peuvent pas être supprimés.' },
+          { status: 403 }
+        );
+      }
+    } else if (existing.owner_id !== auth.userId) {
       return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     }
 
