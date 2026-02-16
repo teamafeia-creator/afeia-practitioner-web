@@ -97,6 +97,8 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
       setGroupSessions(groupSessionsData);
     } catch (err) {
       console.error('Error loading agenda data:', err);
+      setAppointments([]);
+      setGroupSessions([]);
     } finally {
       setLoading(false);
     }

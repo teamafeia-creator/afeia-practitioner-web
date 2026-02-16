@@ -428,6 +428,24 @@ export async function checkAppointmentConflict(
   return (data?.length ?? 0) > 0;
 }
 
+/**
+ * Link an already-created appointment as the reschedule of an old one.
+ * Marks the old appointment as 'rescheduled' and sets rescheduled_from_id on the new one.
+ */
+export async function linkReschedule(oldId: string, newId: string): Promise<void> {
+  // Mark old appointment as rescheduled
+  await supabase
+    .from('appointments')
+    .update({ status: 'rescheduled', updated_at: new Date().toISOString() })
+    .eq('id', oldId);
+
+  // Link new appointment to old one
+  await supabase
+    .from('appointments')
+    .update({ rescheduled_from_id: oldId, updated_at: new Date().toISOString() })
+    .eq('id', newId);
+}
+
 // Helper to normalize appointment data
 function normalizeAppointment(raw: Record<string, unknown>): Appointment {
   return raw as Appointment;
