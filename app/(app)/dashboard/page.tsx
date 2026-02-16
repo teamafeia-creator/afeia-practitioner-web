@@ -317,6 +317,7 @@ export default function DashboardPage() {
                 variant="secondary"
                 icon={<Calendar className="w-4 h-4" />}
                 onClick={() => router.push('/agenda')}
+                className="bg-white hover:bg-gray-50"
               >
                 Nouvelle seance
               </Button>
