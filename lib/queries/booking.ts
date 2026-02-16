@@ -44,13 +44,17 @@ export async function getPractitionerBySlug(slug: string): Promise<PractitionerP
   if (error || !practitioner) return null;
   if (!practitioner.booking_enabled) return null;
 
-  const { data: types } = await supabase
+  const { data: types, error: typesError } = await supabase
     .from('consultation_types')
     .select('id, name, duration_minutes, price_cents, color, description, buffer_minutes, sort_order, is_group, price_per_participant')
     .eq('practitioner_id', practitioner.id)
     .eq('is_active', true)
     .eq('is_bookable_online', true)
     .order('sort_order', { ascending: true });
+
+  if (typesError) {
+    console.error('Error fetching consultation types for booking page:', typesError);
+  }
 
   return {
     id: practitioner.id,
