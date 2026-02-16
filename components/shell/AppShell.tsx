@@ -43,7 +43,10 @@ const NAV_GROUPS = [
     items: [
       { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
       { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
-      { href: '/bibliotheque', label: 'Bibliothèque', icon: Library },
+      { href: '/bibliotheque', label: 'Bibliothèque', icon: Library, children: [
+        { href: '/bibliotheque', label: 'Fiches éducatives' },
+        { href: '/bibliotheque/blocs', label: 'Blocs conseillancier' },
+      ]},
     ]
   },
   {
@@ -80,6 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const helpMenuRef = useRef<HTMLDivElement>(null);
   const { unreadCount: unreadMessages } = useMessageNotifications();
   const [waitlistCount, setWaitlistCount] = useState(0);
+  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
 
   const active = useMemo(() => {
     const match = [...ALL_NAV, ...ADMIN_NAV, { href: '/settings' }].find((n) => pathname.startsWith(n.href));
@@ -199,6 +203,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     })();
   }, [checkingAuth, userEmail]);
 
+  // Auto-open submenus when pathname matches a parent with children
+  useEffect(() => {
+    NAV_GROUPS.forEach((group) => {
+      group.items.forEach((item) => {
+        if ('children' in item && item.children && pathname.startsWith(item.href)) {
+          setOpenMenus((prev) => {
+            if (prev.has(item.href)) return prev;
+            const next = new Set(prev);
+            next.add(item.href);
+            return next;
+          });
+        }
+      });
+    });
+  }, [pathname]);
+
   async function logout() {
     await supabase.auth.signOut();
     setUserEmail(null);
@@ -215,11 +235,91 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean; showWaitlistBadge?: boolean }, onClick?: () => void) => {
-    const isActive = active === item.href;
+  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean; showWaitlistBadge?: boolean; children?: { href: string; label: string }[] }, onClick?: () => void) => {
     const Icon = item.icon;
     const showBadge = item.showBadge && unreadMessages > 0;
     const showWaitlist = item.showWaitlistBadge && waitlistCount > 0;
+    const hasChildren = item.children && item.children.length > 0;
+
+    if (hasChildren) {
+      const isParentActive = pathname.startsWith(item.href);
+      const isMenuOpen = openMenus.has(item.href);
+
+      return (
+        <div key={item.href}>
+          <button
+            type="button"
+            onClick={() => {
+              setOpenMenus((prev) => {
+                const next = new Set(prev);
+                if (next.has(item.href)) {
+                  next.delete(item.href);
+                } else {
+                  next.add(item.href);
+                }
+                return next;
+              });
+            }}
+            className={cn(
+              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative',
+              isParentActive
+                ? 'text-white'
+                : 'text-sidebar-text hover:bg-sidebar-hover'
+            )}
+          >
+            {isParentActive && (
+              <motion.div
+                layoutId="sidebar-active"
+                className="absolute inset-0 bg-sidebar-active rounded-lg"
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              />
+            )}
+            <div className="relative z-10 flex w-full items-center gap-3">
+              <Icon className="h-5 w-5" />
+              <span className="flex-1 text-left">{item.label}</span>
+              <ChevronDown
+                className={cn(
+                  'h-3.5 w-3.5 transition-transform duration-150',
+                  isMenuOpen ? '' : '-rotate-90'
+                )}
+              />
+            </div>
+          </button>
+          <AnimatePresence initial={false}>
+            {isMenuOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="overflow-hidden"
+              >
+                {item.children!.map((child) => {
+                  const isChildActive = pathname === child.href;
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      onClick={onClick}
+                      className={cn(
+                        'block pl-11 pr-3 py-1.5 text-xs font-medium transition-colors duration-150 rounded-md',
+                        isChildActive
+                          ? 'text-white bg-white/10'
+                          : 'text-sidebar-text/70 hover:text-sidebar-text hover:bg-sidebar-hover'
+                      )}
+                    >
+                      {child.label}
+                    </Link>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      );
+    }
+
+    const isActive = active === item.href;
 
     return (
       <Link
