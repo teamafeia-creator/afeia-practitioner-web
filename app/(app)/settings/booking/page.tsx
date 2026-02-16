@@ -238,8 +238,13 @@ export default function BookingSettingsPage() {
       });
       setValidation(prev => ({ ...prev, hasSlug: !!form.booking_slug }));
       setToast({ title: 'Configuration enregistree', variant: 'success' });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error !== null && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : String(error);
       console.error('Error saving booking config:', message, error);
       setToast({
         title: 'Erreur lors de la sauvegarde',
