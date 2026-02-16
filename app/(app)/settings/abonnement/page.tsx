@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Crown, Check, ExternalLink, CreditCard } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Crown, Check, ExternalLink, CreditCard, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { getCurrentSubscription } from '@/lib/billing/api';
+import { supabase } from '@/lib/supabase';
 import type { Subscription } from '@/lib/billing/types';
 
 const PLAN_ADVANTAGES = [
@@ -19,6 +21,7 @@ const PLAN_ADVANTAGES = [
 ];
 
 export default function AbonnementPage() {
+  const router = useRouter();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -45,9 +48,20 @@ export default function AbonnementPage() {
   const handleManageSubscription = async () => {
     setPortalLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        setError('Session expirée. Veuillez vous reconnecter.');
+        setPortalLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/billing/manage-subscription', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
@@ -83,7 +97,15 @@ export default function AbonnementPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Abonnement" subtitle="Gerez votre plan et votre facturation." />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push('/settings')}
+            className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <PageHeader title="Abonnement" subtitle="Gerez votre plan et votre facturation." />
+        </div>
         <Card className="rounded-xl">
           <CardContent className="py-12 text-center text-stone">
             Chargement...
@@ -95,10 +117,18 @@ export default function AbonnementPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Abonnement"
-        subtitle="Gerez votre plan et votre facturation."
-      />
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => router.push('/settings')}
+          className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <PageHeader
+          title="Abonnement"
+          subtitle="Gerez votre plan et votre facturation."
+        />
+      </div>
 
       {error && (
         <div className="rounded-xl border border-rose/20 bg-rose/5 px-4 py-3 text-sm text-rose">

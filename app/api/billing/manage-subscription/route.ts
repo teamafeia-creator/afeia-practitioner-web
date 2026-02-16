@@ -1,14 +1,12 @@
 // app/api/billing/manage-subscription/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { createSupabaseAdminClient, createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
 import { createCustomerPortalSession } from '@/lib/stripe/server';
-import { verifyApiJwt, getBearerToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    // Vérifier l'authentification
-    const authHeader = request.headers.get('authorization');
-    const token = getBearerToken(authHeader);
+    // Vérifier l'authentification via Supabase
+    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
       return NextResponse.json(
         { message: 'Non authentifié' },
@@ -16,15 +14,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const payload = await verifyApiJwt(token);
-    if (!payload) {
+    const supabaseAuth = createSupabaseAuthClient();
+    const { data: authData, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !authData.user) {
       return NextResponse.json(
-        { message: 'Token invalide' },
+        { message: 'Session invalide' },
         { status: 401 }
       );
     }
 
-    const userId = payload.sub as string;
+    const userId = authData.user.id;
 
     // Récupérer l'abonnement actif avec le stripe_customer_id
     const supabase = createSupabaseAdminClient();
