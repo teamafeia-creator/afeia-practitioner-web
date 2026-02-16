@@ -477,7 +477,12 @@ export default function ConsultantDetailPage() {
 
   return (
     <>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end items-center gap-3 mb-4">
+        {consultant.is_demo && (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone/10 text-stone border border-stone/20">
+            Demo
+          </span>
+        )}
         <Button
           variant="secondary"
           onClick={handleExportDossier}
