@@ -18,16 +18,27 @@ export async function POST(request: NextRequest) {
 
     const supabase = createSupabaseAdminClient();
 
-    // Verifier si le praticien a deja un compte Stripe
+    // Verifier si le praticien a configure ses parametres de facturation
     const { data: settings } = await supabase
       .from('practitioner_billing_settings')
       .select('stripe_account_id')
       .eq('practitioner_id', userId)
       .single();
 
-    let accountId = settings?.stripe_account_id;
+    // Si pas de ligne, le praticien doit d'abord configurer SIRET + adresse
+    if (!settings) {
+      return NextResponse.json(
+        {
+          message:
+            "Veuillez d'abord configurer vos parametres de facturation (SIRET, adresse) avant de connecter Stripe.",
+        },
+        { status: 400 }
+      );
+    }
 
-    // Si pas de compte, en creer un
+    let accountId = settings.stripe_account_id;
+
+    // Si pas de compte Stripe, en creer un
     if (!accountId) {
       const { data: practitioner } = await supabase
         .from('practitioners')
@@ -42,11 +53,19 @@ export async function POST(request: NextRequest) {
 
       accountId = account.id;
 
-      // Sauvegarder l'ID
-      await supabase
+      // Sauvegarder l'ID — la ligne existe forcement a ce stade
+      const { error: updateError } = await supabase
         .from('practitioner_billing_settings')
         .update({ stripe_account_id: accountId })
         .eq('practitioner_id', userId);
+
+      if (updateError) {
+        console.error('Erreur sauvegarde stripe_account_id:', updateError);
+        return NextResponse.json(
+          { message: "Erreur lors de la sauvegarde de l'identifiant Stripe" },
+          { status: 500 }
+        );
+      }
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
