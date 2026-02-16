@@ -95,7 +95,11 @@ export function InvoiceModal({
       onClose();
     } catch (error) {
       console.error(error);
-      showToast.error('Une erreur est survenue lors de la creation de la facture');
+      const message =
+        error instanceof Error && error.message !== 'Erreur'
+          ? error.message
+          : 'Une erreur est survenue lors de la creation de la facture';
+      showToast.error(message);
     } finally {
       setLoading(false);
     }
