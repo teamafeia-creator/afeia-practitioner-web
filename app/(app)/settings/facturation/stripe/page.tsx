@@ -16,6 +16,7 @@ export default function StripeConnectSettingsPage() {
   const [authToken, setAuthToken] = useState('');
   const [loading, setLoading] = useState(true);
   const [onboardingLoading, setOnboardingLoading] = useState(false);
+  const [hasBillingSettings, setHasBillingSettings] = useState<boolean | null>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -24,12 +25,22 @@ export default function StripeConnectSettingsPage() {
       if (!token) return;
       setAuthToken(token);
 
-      const response = await fetch('/api/stripe/connect/account-status', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const [settingsRes, statusRes] = await Promise.all([
+        fetch('/api/invoicing/settings', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch('/api/stripe/connect/account-status', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (settingsRes.ok) {
+        const data = await settingsRes.json();
+        setHasBillingSettings(data.settings !== null);
+      }
+
+      if (statusRes.ok) {
+        const data = await statusRes.json();
         setStatus(data);
       }
     } finally {
@@ -106,6 +117,33 @@ export default function StripeConnectSettingsPage() {
         <CardContent className="space-y-4">
           {!status?.connected ? (
             <>
+              {hasBillingSettings === false && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">
+                        Parametres de facturation requis
+                      </p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        Veuillez d&apos;abord configurer votre SIRET et votre adresse de
+                        facturation avant de connecter Stripe.
+                      </p>
+                      <Link href="/settings/facturation">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          icon={<ArrowLeft className="h-4 w-4" />}
+                        >
+                          Configurer mes parametres
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="rounded-lg bg-cream/60 border border-divider p-4 space-y-3">
                 <h3 className="text-sm font-medium text-charcoal">
                   Pourquoi connecter Stripe ?
@@ -129,6 +167,7 @@ export default function StripeConnectSettingsPage() {
               <Button
                 onClick={handleStartOnboarding}
                 loading={onboardingLoading}
+                disabled={hasBillingSettings === false}
                 icon={<ExternalLink className="h-4 w-4" />}
               >
                 Connecter mon compte Stripe
@@ -219,15 +258,19 @@ export default function StripeConnectSettingsPage() {
               )}
 
               <div className="pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleStartOnboarding}
-                  loading={onboardingLoading}
-                  icon={<ExternalLink className="h-4 w-4" />}
+                <a
+                  href="https://dashboard.stripe.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  Acceder a mon dashboard Stripe
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={<ExternalLink className="h-4 w-4" />}
+                  >
+                    Acceder a mon dashboard Stripe
+                  </Button>
+                </a>
               </div>
             </div>
           )}

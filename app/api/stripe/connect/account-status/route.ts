@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const { data: settings } = await supabase
       .from('practitioner_billing_settings')
-      .select('stripe_account_id')
+      .select('stripe_account_id, stripe_onboarding_completed')
       .eq('practitioner_id', userId)
       .single();
 
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         stripe_charges_enabled: account.charges_enabled || false,
         stripe_details_submitted: account.details_submitted || false,
         stripe_onboarding_completed: isCompleted || false,
-        ...(isCompleted && !settings.stripe_account_id
+        ...(isCompleted && !settings.stripe_onboarding_completed
           ? { stripe_connected_at: new Date().toISOString() }
           : {}),
       })
