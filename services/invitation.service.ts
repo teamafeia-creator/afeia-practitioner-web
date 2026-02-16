@@ -486,6 +486,119 @@ export const invitationService = {
         error: err instanceof Error ? err.message : String(err)
       };
     }
+  },
+
+  /**
+   * Créer un consultant de démonstration (sans OTP, activé immédiatement)
+   * Le consultant est marqué is_demo=true et activated=true.
+   * Aucun code OTP, invitation ou email n'est créé.
+   */
+  async createDemoConsultant(data: CreateInvitationInput): Promise<CreateInvitationResult> {
+    try {
+      console.log('[invitation] CREATION CONSULTANT DEMO (sans OTP)');
+      console.log('Email:', data.email || '(non fourni)');
+
+      // 1. Récupérer le praticien connecté
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error('[invitation] Non authentifie');
+        throw new Error('Non authentifié');
+      }
+
+      const practitionerId = user.id;
+      const normalizedEmail = data.email ? data.email.toLowerCase().trim() : null;
+      console.log('[invitation] Praticien ID:', practitionerId);
+
+      // 2. Vérifier si le consultant existe déjà (par email)
+      if (normalizedEmail) {
+        const { data: existingConsultant } = await supabase
+          .from('consultants')
+          .select('id, activated')
+          .eq('email', normalizedEmail)
+          .eq('practitioner_id', practitionerId)
+          .single();
+
+        if (existingConsultant?.activated) {
+          console.error('[invitation] Consultant deja active');
+          throw new Error('Ce consultant a déjà un compte activé');
+        }
+
+        if (existingConsultant) {
+          // Mettre à jour le consultant existant comme démo activé
+          const { error: updateError } = await supabase
+            .from('consultants')
+            .update({
+              activated: true,
+              activated_at: new Date().toISOString(),
+              is_demo: true
+            })
+            .eq('id', existingConsultant.id);
+
+          if (updateError) {
+            console.error('[invitation] Erreur mise a jour consultant:', updateError);
+            throw updateError;
+          }
+
+          console.log('[invitation] Consultant existant mis a jour comme demo:', existingConsultant.id);
+          return {
+            success: true,
+            consultantId: existingConsultant.id
+          };
+        }
+      }
+
+      // 3. Préparer les données
+      const firstName = data.firstName || data.name?.split(' ')[0] || '';
+      const lastName = data.lastName || data.name?.split(' ').slice(1).join(' ') || '';
+      const fullName = data.fullName || data.name || `${firstName} ${lastName}`.trim();
+
+      // 4. Créer le consultant directement avec activated=true et is_demo=true
+      console.log('[invitation] Creation consultant demo avec activated=true...');
+      const { data: newConsultant, error: consultantError } = await supabase
+        .from('consultants')
+        .insert({
+          practitioner_id: practitionerId,
+          email: normalizedEmail,
+          name: fullName || 'Consultant Demo',
+          full_name: fullName || null,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          phone: data.phone || null,
+          city: data.city || null,
+          age: data.age || null,
+          date_of_birth: data.dateOfBirth || null,
+          activated: true,
+          activated_at: new Date().toISOString(),
+          is_demo: true,
+          is_premium: false
+        })
+        .select('id')
+        .single();
+
+      if (consultantError) {
+        console.error('[invitation] Erreur creation consultant demo:', consultantError);
+        throw consultantError;
+      }
+
+      console.log('[invitation] CONSULTANT DEMO CREE AVEC SUCCES');
+      console.log('Consultant ID:', newConsultant.id);
+      console.log('Nom:', fullName);
+      console.log('Email:', normalizedEmail || '(non fourni)');
+      console.log('Praticien ID:', practitionerId);
+      console.log('Statut: Activé (demo)');
+
+      return {
+        success: true,
+        consultantId: newConsultant.id
+      };
+
+    } catch (err: unknown) {
+      console.error('[invitation] Erreur createDemoConsultant:', err);
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : String(err)
+      };
+    }
   }
 };
 

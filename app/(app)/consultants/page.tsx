@@ -44,6 +44,7 @@ type ConsultantRow = {
   activated_at?: string | null;
   status?: string | null;
   is_premium?: boolean | null;
+  is_demo?: boolean | null;
 };
 
 type InvitationRow = {
@@ -519,12 +520,19 @@ export default function ConsultantsPage() {
                   </h3>
 
                   {/* Badge */}
-                  <span className={cn(
-                    'px-2 py-0.5 rounded-2xl text-[11px] font-medium mb-2',
-                    isPremium ? 'badge-premium' : 'badge-standard'
-                  )}>
-                    {isPremium ? 'Premium' : 'Standard'}
-                  </span>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className={cn(
+                      'px-2 py-0.5 rounded-2xl text-[11px] font-medium',
+                      isPremium ? 'badge-premium' : 'badge-standard'
+                    )}>
+                      {isPremium ? 'Premium' : 'Standard'}
+                    </span>
+                    {consultant.is_demo && (
+                      <span className="px-2 py-0.5 rounded-2xl text-[11px] font-medium bg-stone/10 text-stone border border-stone/20">
+                        Demo
+                      </span>
+                    )}
+                  </div>
 
                   {/* City */}
                   {consultant.city && (

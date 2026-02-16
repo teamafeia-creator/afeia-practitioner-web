@@ -32,6 +32,7 @@ export type Consultant = {
   is_premium: boolean;
   activated?: boolean;
   activated_at?: string | null;
+  is_demo?: boolean;
   deleted_at?: string | null;
   date_of_birth?: string | null;
   gender?: string | null;

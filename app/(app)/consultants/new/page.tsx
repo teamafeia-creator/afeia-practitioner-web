@@ -18,6 +18,7 @@ export default function NewConsultantPage() {
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
+  const [isDemo, setIsDemo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activationCode, setActivationCode] = useState<string | null>(null);
@@ -40,60 +41,100 @@ export default function NewConsultantPage() {
     }
 
     const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setError('L\'email du consultant est obligatoire pour envoyer le code d\'activation.');
-      return;
-    }
 
-    if (!EMAIL_REGEX.test(trimmedEmail)) {
+    // En mode demo, l'email est optionnel
+    if (!isDemo) {
+      if (!trimmedEmail) {
+        setError('L\'email du consultant est obligatoire pour envoyer le code d\'activation.');
+        return;
+      }
+
+      if (!EMAIL_REGEX.test(trimmedEmail)) {
+        setError('Merci de renseigner un email valide.');
+        return;
+      }
+    } else if (trimmedEmail && !EMAIL_REGEX.test(trimmedEmail)) {
       setError('Merci de renseigner un email valide.');
       return;
     }
 
     setLoading(true);
     try {
-      // Crée une invitation et un consultant avec activated=false
-      const result = await invitationService.createInvitation({
-        email: trimmedEmail,
-        name: name.trim(),
-        city: city.trim() || undefined,
-        phone: phone.trim() || undefined
-      });
+      if (isDemo) {
+        // Mode demo : creation directe sans OTP
+        const result = await invitationService.createDemoConsultant({
+          email: trimmedEmail || `demo-${Date.now()}@afeia.local`,
+          name: name.trim(),
+          city: city.trim() || undefined,
+          phone: phone.trim() || undefined
+        });
 
-      if (!result.success) {
-        setError(result.error || 'Une erreur est survenue.');
-        setLoading(false);
-        return;
-      }
+        if (!result.success) {
+          setError(result.error || 'Une erreur est survenue.');
+          setLoading(false);
+          return;
+        }
 
-      // Afficher le code dans la modale
-      if (result.code) {
-        setActivationCode(result.code);
-        setCreatedConsultantId(result.consultantId || null);
-        setShowCodeModal(true);
-        setLoading(false);
-        console.log('Code d\'activation:', result.code);
-      } else {
-        // Pas de code, rediriger directement
         setToast({
-          title: 'Consultant cree',
-          description: `Un email a ete envoye a ${trimmedEmail}.`,
+          title: 'Consultant demo cree',
+          description: `${name.trim()} a ete cree en mode demonstration (sans code OTP).`,
           variant: 'success'
         });
+
         if (result.consultantId) {
           setTimeout(() => {
-            router.push(`/consultants/${result.consultantId}?created=1`);
+            router.push(`/consultants/${result.consultantId}`);
           }, 1000);
         } else {
           setTimeout(() => {
-            router.push('/consultants?created=1');
+            router.push('/consultants');
           }, 1000);
         }
+
+        console.log('Consultant demo cree avec ID:', result.consultantId);
+      } else {
+        // Mode normal : creation avec OTP
+        const result = await invitationService.createInvitation({
+          email: trimmedEmail,
+          name: name.trim(),
+          city: city.trim() || undefined,
+          phone: phone.trim() || undefined
+        });
+
+        if (!result.success) {
+          setError(result.error || 'Une erreur est survenue.');
+          setLoading(false);
+          return;
+        }
+
+        // Afficher le code dans la modale
+        if (result.code) {
+          setActivationCode(result.code);
+          setCreatedConsultantId(result.consultantId || null);
+          setShowCodeModal(true);
+          setLoading(false);
+          console.log('Code d\'activation:', result.code);
+        } else {
+          // Pas de code, rediriger directement
+          setToast({
+            title: 'Consultant cree',
+            description: `Un email a ete envoye a ${trimmedEmail}.`,
+            variant: 'success'
+          });
+          if (result.consultantId) {
+            setTimeout(() => {
+              router.push(`/consultants/${result.consultantId}?created=1`);
+            }, 1000);
+          } else {
+            setTimeout(() => {
+              router.push('/consultants?created=1');
+            }, 1000);
+          }
+        }
+
+        console.log('Consultant cree avec ID:', result.consultantId);
+        console.log('Invitation creee avec ID:', result.invitationId);
       }
-
-      console.log('Consultant cree avec ID:', result.consultantId);
-      console.log('Invitation creee avec ID:', result.invitationId);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
       setLoading(false);
@@ -137,7 +178,7 @@ export default function NewConsultantPage() {
             />
             <div className="grid gap-4 md:grid-cols-2">
               <Input
-                label="Email"
+                label={isDemo ? 'Email (optionnel)' : 'Email'}
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -158,6 +199,26 @@ export default function NewConsultantPage() {
               placeholder="06 12 34 56 78"
             />
 
+            {/* Toggle mode demo */}
+            <div className="rounded-xl border border-divider bg-cream/50 p-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isDemo}
+                  onChange={(e) => setIsDemo(e.target.checked)}
+                  className="h-4 w-4 rounded border-stone text-sage focus:ring-sage"
+                />
+                <div>
+                  <span className="text-sm font-medium text-charcoal">
+                    Consultant de démonstration
+                  </span>
+                  <p className="text-xs text-stone mt-0.5">
+                    Créer un consultant sans envoyer de code OTP. Le compte sera activé immédiatement.
+                  </p>
+                </div>
+              </label>
+            </div>
+
             {error ? (
               <div className="rounded-xl border border-gold/30 bg-gold/10 p-3 text-sm">
                 {error}
@@ -165,7 +226,7 @@ export default function NewConsultantPage() {
             ) : null}
 
             <Button type="submit" loading={loading} className="w-full">
-              Envoyer le code d&apos;activation
+              {isDemo ? 'Créer le consultant demo' : 'Envoyer le code d\'activation'}
             </Button>
           </form>
         </CardContent>
