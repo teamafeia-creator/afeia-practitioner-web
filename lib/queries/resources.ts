@@ -78,7 +78,7 @@ export async function getResourceById(
   return data;
 }
 
-function slugify(text: string): string {
+export function slugify(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')

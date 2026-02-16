@@ -8,6 +8,7 @@ import {
   UserCheck,
   CreditCard,
   Radio,
+  BookOpen,
   Settings,
   ShieldCheck,
   FileText,
@@ -28,6 +29,7 @@ const mainNav: NavItem[] = [
   { label: 'Patients', href: '/admin/patients', icon: UserCheck },
   { label: 'Billing', href: '/admin/billing', icon: CreditCard },
   { label: 'Circular', href: '/admin/circular', icon: Radio },
+  { label: 'Fiches AFEIA', href: '/admin/fiches', icon: BookOpen },
 ];
 
 const settingsNav: NavItem[] = [
