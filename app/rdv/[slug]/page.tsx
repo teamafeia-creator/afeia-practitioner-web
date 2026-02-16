@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation';
 import { getPractitionerBySlug } from '@/lib/queries/booking';
 import { BookingPageClient } from './BookingPageClient';
 
+// Force dynamic rendering — booking data must always be fresh
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: { slug: string };
 }
