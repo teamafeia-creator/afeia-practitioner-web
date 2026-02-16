@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { supabase } from '@/lib/supabase';
 import type { PractitionerBillingSettings } from '@/lib/invoicing/types';
+import { DEFAULT_REMINDER_TEMPLATES } from '@/lib/invoicing/reminders';
 import { ArrowLeft, Save, Bell, BellOff } from 'lucide-react';
 import Link from 'next/link';
 
@@ -210,42 +211,51 @@ export default function ReminderSettingsPage() {
 
                 {delaiJ7 && (
                   <div>
+                    <span className="text-[13px] font-medium text-stone block mb-1">
+                      Email de relance J+7 — Objet : {DEFAULT_REMINDER_TEMPLATES.j7.subject}
+                    </span>
                     <Textarea
-                      placeholder="Template email J+7 (laisser vide pour le defaut)"
+                      placeholder={DEFAULT_REMINDER_TEMPLATES.j7.body}
                       value={templateJ7}
                       onChange={(e) => setTemplateJ7(e.target.value)}
-                      className="min-h-[80px]"
+                      className="min-h-[120px]"
                     />
-                    <span className="text-[13px] font-medium text-stone block mt-1">
-                      Email de relance J+7
+                    <span className="text-xs text-stone/70 block mt-1">
+                      Si ce champ est laissé vide, le template par défaut sera utilisé.
                     </span>
                   </div>
                 )}
 
                 {delaiJ15 && (
                   <div>
+                    <span className="text-[13px] font-medium text-stone block mb-1">
+                      Email de relance J+15 — Objet : {DEFAULT_REMINDER_TEMPLATES.j15.subject}
+                    </span>
                     <Textarea
-                      placeholder="Template email J+15 (laisser vide pour le defaut)"
+                      placeholder={DEFAULT_REMINDER_TEMPLATES.j15.body}
                       value={templateJ15}
                       onChange={(e) => setTemplateJ15(e.target.value)}
-                      className="min-h-[80px]"
+                      className="min-h-[120px]"
                     />
-                    <span className="text-[13px] font-medium text-stone block mt-1">
-                      Email de relance J+15
+                    <span className="text-xs text-stone/70 block mt-1">
+                      Si ce champ est laissé vide, le template par défaut sera utilisé.
                     </span>
                   </div>
                 )}
 
                 {delaiJ30 && (
                   <div>
+                    <span className="text-[13px] font-medium text-stone block mb-1">
+                      Email de relance J+30 — Objet : {DEFAULT_REMINDER_TEMPLATES.j30.subject}
+                    </span>
                     <Textarea
-                      placeholder="Template email J+30 (laisser vide pour le defaut)"
+                      placeholder={DEFAULT_REMINDER_TEMPLATES.j30.body}
                       value={templateJ30}
                       onChange={(e) => setTemplateJ30(e.target.value)}
-                      className="min-h-[80px]"
+                      className="min-h-[120px]"
                     />
-                    <span className="text-[13px] font-medium text-stone block mt-1">
-                      Email de relance J+30
+                    <span className="text-xs text-stone/70 block mt-1">
+                      Si ce champ est laissé vide, le template par défaut sera utilisé.
                     </span>
                   </div>
                 )}
