@@ -15,6 +15,22 @@ export type Practitioner = {
   booking_phone?: string | null;
   video_provider?: 'external' | 'daily';
   daily_api_key?: string | null;
+  // Identity
+  first_name?: string | null;
+  last_name?: string | null;
+  photo_url?: string | null;
+  // Professional information
+  specialties?: string[];
+  siret?: string | null;
+  adeli_number?: string | null;
+  formations?: string | null;
+  years_experience?: number | null;
+  // Professional contact
+  cabinet_address?: string | null;
+  professional_phone?: string | null;
+  website?: string | null;
+  // Presentation
+  bio?: string | null;
   created_at: string;
   updated_at: string;
 };
