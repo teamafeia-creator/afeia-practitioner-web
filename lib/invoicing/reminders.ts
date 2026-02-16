@@ -5,52 +5,58 @@ import type { ConsultationInvoice, PractitionerBillingSettings } from './types';
  */
 export const DEFAULT_REMINDER_TEMPLATES = {
   j7: {
-    subject: 'Rappel amical — Consultation du {date}',
-    body: `Bonjour {prenom_consultant},
+    subject: 'Rappel - Facture {numero_facture} en attente de règlement',
+    body: `Bonjour,
 
-Un petit rappel concernant votre consultation du {date_consultation}.
+Sauf erreur de notre part, la facture n°{numero_facture} d'un montant de {montant} €, émise le {date_emission}, n'a pas encore été réglée.
 
-Si vous avez deja regle cette facture ({montant}), merci d'ignorer ce message.
+Nous vous remercions de bien vouloir procéder au règlement dans les meilleurs délais.
 
-Bien cordialement,
-{prenom_praticien} {nom_praticien}`,
-  },
-  j15: {
-    subject: 'Relance — Facture {numero} en attente',
-    body: `Bonjour {prenom_consultant},
-
-Je me permets de vous relancer concernant votre consultation du {date_consultation} ({montant}), qui n'a pas encore ete reglee.
-
-Si vous rencontrez une difficulte, n'hesitez pas a me contacter directement.
-
-Merci de votre comprehension.
-
-{prenom_praticien} {nom_praticien}`,
-  },
-  j30: {
-    subject: 'Derniere relance — Facture {numero}',
-    body: `Bonjour {prenom_consultant},
-
-Votre facture {numero} du {date_consultation} ({montant}) est impayee depuis plus de 30 jours.
-
-Je vous remercie de bien vouloir proceder au reglement dans les plus brefs delais.
-
-En l'absence de reglement, je serai contraint d'appliquer les penalites de retard prevues (3,87% + 40 EUR).
+N'hésitez pas à nous contacter si vous avez la moindre question.
 
 Cordialement,
-{prenom_praticien} {nom_praticien}`,
+{prenom_consultant} {nom_consultant}`,
+  },
+  j15: {
+    subject: 'Deuxième rappel - Facture {numero_facture}',
+    body: `Bonjour,
+
+Nous nous permettons de revenir vers vous concernant la facture n°{numero_facture} d'un montant de {montant} €, émise le {date_emission}, qui reste à ce jour impayée.
+
+Merci de régulariser cette situation dans les plus brefs délais.
+
+Cordialement,
+{prenom_consultant} {nom_consultant}`,
+  },
+  j30: {
+    subject: 'Dernier rappel - Facture {numero_facture}',
+    body: `Bonjour,
+
+Malgré nos précédentes relances, la facture n°{numero_facture} d'un montant de {montant} €, émise le {date_emission}, demeure impayée.
+
+Sans régularisation de votre part sous 7 jours, nous serons contraints d'envisager d'autres démarches.
+
+Cordialement,
+{prenom_consultant} {nom_consultant}`,
   },
 } as const;
 
 /**
- * Remplace les variables dans un template de relance
+ * Remplace les variables dans un template de relance.
+ *
+ * Variables supportees :
+ *   {prenom_consultant}, {nom_consultant} — nom du praticien (signataire)
+ *   {prenom_praticien}, {nom_praticien}   — alias praticien
+ *   {numero_facture}, {numero}            — numero de facture
+ *   {montant}                             — montant (nombre formate, sans symbole €)
+ *   {date_emission}, {date_consultation}, {date} — date d'emission
  */
 export function interpolateReminderTemplate(
   template: string,
   invoice: ConsultationInvoice
 ): string {
-  const { consultant_snapshot, practitioner_snapshot } = invoice;
-  const dateConsultation = invoice.date_emission
+  const { practitioner_snapshot } = invoice;
+  const dateEmission = invoice.date_emission
     ? new Date(invoice.date_emission).toLocaleDateString('fr-FR', {
         day: 'numeric',
         month: 'long',
@@ -58,19 +64,21 @@ export function interpolateReminderTemplate(
       })
     : '';
   const montant = new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(Number(invoice.montant));
 
   return template
-    .replace(/\{prenom_consultant\}/g, consultant_snapshot.prenom)
-    .replace(/\{nom_consultant\}/g, consultant_snapshot.nom)
+    .replace(/\{prenom_consultant\}/g, practitioner_snapshot.prenom)
+    .replace(/\{nom_consultant\}/g, practitioner_snapshot.nom)
     .replace(/\{prenom_praticien\}/g, practitioner_snapshot.prenom)
     .replace(/\{nom_praticien\}/g, practitioner_snapshot.nom)
-    .replace(/\{date_consultation\}/g, dateConsultation)
-    .replace(/\{date\}/g, dateConsultation)
-    .replace(/\{montant\}/g, montant)
-    .replace(/\{numero\}/g, invoice.numero || '');
+    .replace(/\{numero_facture\}/g, invoice.numero || '')
+    .replace(/\{numero\}/g, invoice.numero || '')
+    .replace(/\{date_emission\}/g, dateEmission)
+    .replace(/\{date_consultation\}/g, dateEmission)
+    .replace(/\{date\}/g, dateEmission)
+    .replace(/\{montant\}/g, montant);
 }
 
 /**
