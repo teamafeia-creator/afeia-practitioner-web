@@ -13,8 +13,6 @@ import {
   MessageSquare,
   Receipt,
   Plus,
-  RefreshCw,
-  Banknote,
   Activity,
   BookOpen,
 } from 'lucide-react';
@@ -604,18 +602,6 @@ export default function DashboardPage() {
                   icon={<Calendar className="h-5 w-5" />}
                   value={stats.sessionsCount}
                   label="Seances ce mois"
-                  color="#5B8C6E"
-                />
-                <StatCard
-                  icon={<RefreshCw className="h-5 w-5" />}
-                  value={`${stats.retentionRate}%`}
-                  label="Fidelisation"
-                  color={stats.retentionRate >= 70 ? '#7BAE7F' : stats.retentionRate >= 50 ? '#D4A060' : '#D4738B'}
-                />
-                <StatCard
-                  icon={<Banknote className="h-5 w-5" />}
-                  value={stats.revenue > 0 ? `${(stats.revenue / 100).toFixed(0)} €` : '—'}
-                  label="CA mensuel"
                   color="#5B8C6E"
                 />
               </div>
