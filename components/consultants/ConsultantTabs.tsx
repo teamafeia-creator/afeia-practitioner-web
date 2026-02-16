@@ -2001,55 +2001,6 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             </CardContent>
           </Card>
 
-          {/* ─── Card Liens familiaux ───── */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <h2 className="text-sm font-semibold">{T.labelLiensFamiliaux}</h2>
-                <Button variant="secondary" onClick={() => {
-                  setRelationshipForm({ related_consultant_id: '', relationship_type: 'parent', label: '' });
-                  setConsultantSearch('');
-                  setConsultantSearchResults([]);
-                  setRelationshipModal({ open: true });
-                }}>
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter un lien familial
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {relationships.length === 0 ? (
-                <EmptyState icon="users" title="Aucun lien familial" description="Ajoutez des liens de parenté avec d'autres consultants." />
-              ) : (
-                <div className="space-y-2">
-                  {relationships.map((rel) => {
-                    const relName = rel.related_consultant?.name || 'Consultant';
-                    const typeLabels: Record<string, string> = { parent: 'Parent', child: 'Enfant', spouse: 'Conjoint(e)', sibling: 'Frère/Sœur', other: 'Autre' };
-                    return (
-                      <div key={rel.id} className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider">
-                        <div className="flex items-center gap-2">
-                          <Link2 className="h-4 w-4 text-stone" />
-                          <button
-                            onClick={() => router.push(`/consultants/${rel.related_consultant_id}`)}
-                            className="text-sm font-medium text-charcoal hover:underline"
-                          >
-                            {relName}
-                          </button>
-                          <Badge variant="info">{typeLabels[rel.relationship_type] || rel.relationship_type}</Badge>
-                          {rel.label ? <span className="text-xs text-stone">({rel.label})</span> : null}
-                        </div>
-                        <button
-                          onClick={() => setConfirmDeleteId({ type: 'relationship', id: rel.id })}
-                          className="p-1 rounded text-stone hover:text-rose hover:bg-rose/10 transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
           {/* ─── Card Suivi du cycle menstruel ───── */}
           <Card>
             <CardHeader>
@@ -2080,6 +2031,55 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                   <Button variant="primary" onClick={handleActivateCycleTracking} loading={cycleActivating}>
                     Activer le suivi du cycle
                   </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          {/* ─── Card Liens familiaux ───── */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h2 className="text-sm font-semibold">{T.labelLiensFamiliaux}</h2>
+                <Button variant="secondary" onClick={() => {
+                  setRelationshipForm({ related_consultant_id: '', relationship_type: 'parent', label: '' });
+                  setConsultantSearch('');
+                  setConsultantSearchResults([]);
+                  setRelationshipModal({ open: true });
+                }}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter un lien familial
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {relationships.length === 0 ? (
+                <EmptyState icon="users" title="Aucun lien familial" description="Ajoutez des liens de parenté avec d'autres consultants." size="sm" />
+              ) : (
+                <div className="space-y-2">
+                  {relationships.map((rel) => {
+                    const relName = rel.related_consultant?.name || 'Consultant';
+                    const typeLabels: Record<string, string> = { parent: 'Parent', child: 'Enfant', spouse: 'Conjoint(e)', sibling: 'Frère/Sœur', other: 'Autre' };
+                    return (
+                      <div key={rel.id} className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider">
+                        <div className="flex items-center gap-2">
+                          <Link2 className="h-4 w-4 text-stone" />
+                          <button
+                            onClick={() => router.push(`/consultants/${rel.related_consultant_id}`)}
+                            className="text-sm font-medium text-charcoal hover:underline"
+                          >
+                            {relName}
+                          </button>
+                          <Badge variant="info">{typeLabels[rel.relationship_type] || rel.relationship_type}</Badge>
+                          {rel.label ? <span className="text-xs text-stone">({rel.label})</span> : null}
+                        </div>
+                        <button
+                          onClick={() => setConfirmDeleteId({ type: 'relationship', id: rel.id })}
+                          className="p-1 rounded text-stone hover:text-rose hover:bg-rose/10 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
