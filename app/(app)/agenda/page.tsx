@@ -11,10 +11,10 @@ import { AppointmentForm } from './components/AppointmentForm';
 import { AppointmentDetail } from './components/AppointmentDetail';
 import { GroupSessionForm } from './components/GroupSessionForm';
 import { GroupSessionDetail } from './components/GroupSessionDetail';
-import { rescheduleAppointment } from '@/lib/queries/appointments';
+import { linkReschedule } from '@/lib/queries/appointments';
 import { triggerWaitlistNotification } from '@/lib/waitlist-trigger';
 import { showToast } from '@/components/ui/Toaster';
-import type { Appointment, GroupSession, LocationType } from '@/lib/types';
+import type { Appointment, GroupSession } from '@/lib/types';
 
 export default function AgendaPage() {
   const { loading: authLoading, isAuthenticated } = useRequireAuth('/login');
@@ -95,15 +95,9 @@ export default function AgendaPage() {
   async function handleFormSaved(appointment: Appointment) {
     if (isRescheduling && editAppointment) {
       try {
-        await rescheduleAppointment(editAppointment.id, {
-          starts_at: appointment.starts_at,
-          ends_at: appointment.ends_at,
-          consultant_id: appointment.consultant_id,
-          consultation_type_id: appointment.consultation_type_id,
-          location_type: appointment.location_type as LocationType,
-          video_link: appointment.video_link,
-          notes_internal: appointment.notes_internal,
-        });
+        // Link the already-created appointment as the reschedule of the old one
+        // (the form already created the new appointment via createNativeAppointment)
+        await linkReschedule(editAppointment.id, appointment.id);
         // Fire-and-forget: notify waitlist entries about the old freed slot
         triggerWaitlistNotification(editAppointment.id);
         showToast.success('Seance reportee');
