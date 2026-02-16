@@ -94,10 +94,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ template }, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {
-      const messages = error.errors.map((e) => e.message).join(', ');
+      const messages = error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+      console.error('Validation template:', messages);
       return NextResponse.json({ message: messages }, { status: 400 });
     }
-    console.error('Erreur creation template:', error);
+    console.error('Erreur creation template:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
       { message: 'Erreur lors de la creation du template' },
       { status: 500 }
