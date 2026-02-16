@@ -104,12 +104,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       const { data: practitioner } = await supabase
         .from('practitioners')
-        .select('name')
+        .select('full_name')
         .eq('id', data.session.user.id)
         .single();
 
-      if (practitioner?.name) {
-        setUserName(practitioner.name);
+      if (practitioner?.full_name) {
+        setUserName(practitioner.full_name);
       }
 
       if (email) {
