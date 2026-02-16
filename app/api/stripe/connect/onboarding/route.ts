@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       .from('practitioner_billing_settings')
       .select('stripe_account_id')
       .eq('practitioner_id', userId)
-      .single();
+      .maybeSingle();
 
     // Si pas de ligne, le praticien doit d'abord configurer SIRET + adresse
     if (!settings) {
@@ -79,9 +79,25 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: accountLink.url });
   } catch (error) {
-    console.error('Erreur onboarding Stripe:', error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Erreur onboarding Stripe:', message, error);
+
+    // Retourner un message plus precis selon le type d'erreur
+    if (message.includes('STRIPE_SECRET_KEY')) {
+      return NextResponse.json(
+        { message: 'Configuration Stripe manquante (STRIPE_SECRET_KEY). Contactez l\'administrateur.' },
+        { status: 500 }
+      );
+    }
+    if (message.includes('SUPABASE_SERVICE_ROLE_KEY')) {
+      return NextResponse.json(
+        { message: 'Configuration serveur manquante (SUPABASE_SERVICE_ROLE_KEY). Contactez l\'administrateur.' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { message: "Erreur lors de la creation du lien d'onboarding" },
+      { message: `Erreur lors de la creation du lien d'onboarding: ${message}` },
       { status: 500 }
     );
   }
