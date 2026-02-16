@@ -54,6 +54,19 @@ export function InvoiceTemplatesManager({
   }
 
   async function handleCreate() {
+    if (!label.trim()) {
+      showToast.error('Le nom du template est requis');
+      return;
+    }
+    if (!description.trim()) {
+      showToast.error('La description est requise');
+      return;
+    }
+    if (montant <= 0) {
+      showToast.error('Le montant doit être positif');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch('/api/invoicing/templates', {
@@ -61,8 +74,8 @@ export function InvoiceTemplatesManager({
         headers,
         body: JSON.stringify({
           id: generateTemplateId(label),
-          label,
-          description,
+          label: label.trim(),
+          description: description.trim(),
           montant_defaut: montant,
           duree_defaut: duree || null,
           ordre: templates.length + 1,
@@ -70,7 +83,10 @@ export function InvoiceTemplatesManager({
         }),
       });
 
-      if (!response.ok) throw new Error('Erreur');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Erreur lors de la creation du template');
+      }
 
       showToast.success('Template cree');
       setShowCreateModal(false);
@@ -79,8 +95,8 @@ export function InvoiceTemplatesManager({
       setMontant(60);
       setDuree(60);
       onRefresh();
-    } catch {
-      showToast.error('Erreur lors de la creation du template');
+    } catch (err) {
+      showToast.error(err instanceof Error ? err.message : 'Erreur lors de la creation du template');
     } finally {
       setLoading(false);
     }

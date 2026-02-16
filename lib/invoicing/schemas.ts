@@ -45,10 +45,10 @@ export const billingSettingsSchema = z.object({
 export type BillingSettingsInput = z.infer<typeof billingSettingsSchema>;
 
 export const invoiceTemplateSchema = z.object({
-  id: z.string().min(3),
-  label: z.string().min(3),
-  description: z.string().min(5),
-  montant_defaut: z.number().positive(),
+  id: z.string().min(1),
+  label: z.string().min(1, 'Le nom du template est requis'),
+  description: z.string().min(1, 'La description est requise'),
+  montant_defaut: z.number().positive('Le montant doit être positif'),
   duree_defaut: z.number().int().positive().nullable(),
   ordre: z.number().int().default(0),
   is_active: z.boolean().default(true),
