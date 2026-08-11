@@ -58,10 +58,11 @@ export default function LoginPage() {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#4A5568] mb-1">
+            <label htmlFor="consultant-login-email" className="block text-sm font-medium text-[#4A5568] mb-1">
               Email
             </label>
             <input
+              id="consultant-login-email"
               type="email"
               placeholder="votre@email.com"
               value={email}
@@ -72,10 +73,11 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#4A5568] mb-1">
+            <label htmlFor="consultant-login-password" className="block text-sm font-medium text-[#4A5568] mb-1">
               Mot de passe
             </label>
             <input
+              id="consultant-login-password"
               type="password"
               placeholder="Votre mot de passe"
               value={password}
