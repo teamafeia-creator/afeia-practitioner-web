@@ -259,18 +259,6 @@ export function NotificationDropdown() {
             )}
           </div>
 
-          {/* Footer */}
-          {notifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-black/5">
-              <Link
-                href="/notifications"
-                className="text-xs text-sage hover:underline"
-                onClick={() => setIsOpen(false)}
-              >
-                Voir toutes les notifications →
-              </Link>
-            </div>
-          )}
         </div>
       )}
     </div>

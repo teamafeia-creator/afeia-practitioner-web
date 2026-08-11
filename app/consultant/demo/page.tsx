@@ -154,12 +154,6 @@ export default function ConsultantDemoPage() {
             ) : (
               <div className="bg-gray-50 p-4 rounded-lg text-center">
                 <p className="text-gray-600">Aucun complément dans ce plan</p>
-                <Link
-                  href="/consultant/demo/add-supplements"
-                  className="inline-block mt-3 text-blue-600 hover:underline"
-                >
-                  → Ajouter des compléments (pour tester)
-                </Link>
               </div>
             )}
           </div>
@@ -197,25 +191,25 @@ export default function ConsultantDemoPage() {
           </div>
         )}
 
-        {/* Actions */}
+        {/* Actions (démo : fonctionnalités présentées, pages non encore disponibles) */}
         <div className="grid grid-cols-2 gap-4">
-          <Link
-            href="/consultant/demo/daily-log"
-            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-6 rounded-xl shadow text-center hover:shadow-lg transition"
+          <div
+            aria-disabled="true"
+            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-6 rounded-xl shadow text-center opacity-80 cursor-default"
           >
             <div className="mb-2 flex justify-center"><Pencil className="w-8 h-8" /></div>
             <h3 className="font-bold">Journal quotidien</h3>
-            <p className="text-sm text-white/90 mt-1">Suivre mon état</p>
-          </Link>
+            <p className="text-sm text-white/90 mt-1">Suivre mon état — bientôt</p>
+          </div>
 
-          <Link
-            href="/consultant/demo/messages"
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-6 rounded-xl shadow text-center hover:shadow-lg transition"
+          <div
+            aria-disabled="true"
+            className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-6 rounded-xl shadow text-center opacity-80 cursor-default"
           >
             <div className="mb-2 flex justify-center"><MessageSquare className="w-8 h-8" /></div>
             <h3 className="font-bold">Messages</h3>
-            <p className="text-sm text-white/90 mt-1">Contacter mon naturo</p>
-          </Link>
+            <p className="text-sm text-white/90 mt-1">Contacter mon naturo — bientôt</p>
+          </div>
         </div>
 
         {/* Infos debug */}
