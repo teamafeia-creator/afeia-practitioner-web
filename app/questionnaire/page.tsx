@@ -202,7 +202,7 @@ export default function PublicQuestionnairePage() {
           <Image src="/afeia_symbol.svg" alt="AFEIA" width={36} height={36} />
           <div>
             <div className="text-2xl font-semibold tracking-tight">Afeia</div>
-            <div className="text-sm text-stone">Questionnaire Anamnèse</div>
+            <h1 className="text-sm text-stone font-normal">Questionnaire Anamnèse</h1>
           </div>
         </div>
 

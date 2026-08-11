@@ -82,6 +82,7 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="votre@email.com"
+                  aria-label="Adresse e-mail"
                   autoComplete="email"
                   required
                   className="w-full pl-11 pr-4 py-3 rounded-xl border border-neutral-200 bg-white text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
@@ -97,6 +98,7 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mot de passe"
+                  aria-label="Mot de passe"
                   autoComplete="current-password"
                   required
                   className="w-full pl-11 pr-11 py-3 rounded-xl border border-neutral-200 bg-white text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
@@ -104,7 +106,8 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone hover:text-charcoal transition-colors"
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center text-stone hover:text-charcoal transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>

@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Debug: Log configuration status (partial keys for security)
-if (typeof window !== 'undefined') {
+// Debug: Log configuration status (partial keys for security) — dev uniquement
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   console.log('[supabase] config:', {
     url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'MISSING',
     key: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'MISSING'
@@ -26,4 +26,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-console.log('✅ Supabase client initialized with auth persistence');
+if (process.env.NODE_ENV !== 'production') {
+  console.log('✅ Supabase client initialized with auth persistence');
+}

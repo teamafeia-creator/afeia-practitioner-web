@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { DebugMount } from '@/components/debug/DebugMount';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://afeia.fr';
 
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <QueryProvider>{children}</QueryProvider>
+        <DebugMount />
       </body>
     </html>
   );

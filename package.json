@@ -9,7 +9,9 @@
     "lint": "next lint",
     "auth:smoke": "node scripts/auth-smoke-test.mjs",
     "questionnaire:smoke": "node scripts/questionnaire-code-smoke-test.mjs",
-    "screenshots": "node scripts/screenshot-dashboard.mjs"
+    "screenshots": "node scripts/screenshot-dashboard.mjs",
+    "e2e": "playwright test",
+    "e2e:report": "playwright show-report e2e/.report/html"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",

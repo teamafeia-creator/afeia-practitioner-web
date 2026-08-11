@@ -325,10 +325,11 @@ function RegisterForm() {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#4A5568] mb-1">
+            <label htmlFor="consultant-register-email" className="block text-sm font-medium text-[#4A5568] mb-1">
               Email
             </label>
             <input
+              id="consultant-register-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -338,10 +339,11 @@ function RegisterForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#4A5568] mb-1">
+            <label htmlFor="consultant-register-password" className="block text-sm font-medium text-[#4A5568] mb-1">
               Mot de passe
             </label>
             <input
+              id="consultant-register-password"
               type="password"
               placeholder="Minimum 8 caractères"
               value={password}
@@ -351,10 +353,11 @@ function RegisterForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#4A5568] mb-1">
+            <label htmlFor="consultant-register-confirm" className="block text-sm font-medium text-[#4A5568] mb-1">
               Confirmer le mot de passe
             </label>
             <input
+              id="consultant-register-confirm"
               type="password"
               placeholder="Retapez votre mot de passe"
               value={confirmPassword}
