@@ -1,7 +1,28 @@
 # QA — Rapport de campagne AFEIA (Étape 3)
 
-> Exécution de la suite Playwright (`e2e/`) + constats d'inspection. Les
-> correctifs sont **proposés, non appliqués** (§5) — tu arbitres.
+> Exécution de la suite Playwright (`e2e/`) + constats d'inspection.
+
+> ## ✅ Addendum — Correctifs appliqués (post-arbitrage)
+> À la demande, **les 12 correctifs du §5 ont été appliqués**. Après corrections,
+> la suite passe à **56/56 verts (0 échec)**. Détail des changements :
+> - **M1** titres uniques : `layout.tsx` serveur (metadata) par route publique.
+> - **M2** labels : `htmlFor/id` (consultant login/register) + `aria-label` (login) ;
+>   audit OK sur les pages publiques.
+> - **M3** liens morts : lien « Voir toutes les notifications » retiré ; tuiles de
+>   démo (`daily-log`, `messages`) rendues non-navigantes ; hint `add-supplements` retiré.
+> - **M4** CORS : suppression de `Access-Control-Allow-Credentials: true` (l'API mobile
+>   utilise Bearer, le web est same-origin) ; `Allow-Origin: *` conservé.
+> - **m1/m2** : ajout de `app/robots.ts` (interdit l'espace authentifié) et `app/sitemap.ts`.
+> - **m3** : `h1` ajouté sur `/questionnaire`.
+> - **m4** : bouton œil ≥44px + `min-h-[44px]` sur les tailles `md`/`lg` de `Button`.
+> - **m5** : timeout (8s) + écran « Réessayer » sur la vérification de session (AppShell).
+> - **m6** : optimisation Next/Image réactivée (`remotePatterns` Supabase, AVIF/WebP).
+>   Mesuré : `dashboard-header.jpg` 421 KB → 77 KB (‑82 %) en 640px.
+> - **m7** : logs `console.log` de `lib/supabase.ts` et `hooks/useAuth.ts` mis derrière un garde dev.
+> - **c1** : `?from` désormais préservé aussi dans `onAuthStateChange`.
+> - **c2** : liens « Aide » câblés en `mailto:contact@afeia.fr`.
+>
+> Le corps du rapport ci-dessous décrit les constats **tels qu'observés avant correction**.
 
 ## 0. Synthèse d'exécution
 
