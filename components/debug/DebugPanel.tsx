@@ -74,10 +74,17 @@ export function DebugPanel() {
     return tools.find((t) => t.id === activeTab) ?? tools[0];
   }, [tools, activeTab]);
 
-  // Raccourci clavier : Ctrl+` (Backquote) ouvre/ferme.
+  // Raccourci clavier : simple touche « ` » (backtick). Ignorée pendant la
+  // saisie dans un champ éditable pour ne pas gêner la frappe.
   useEffect(() => {
+    const isEditable = (el: EventTarget | null): boolean => {
+      const node = el as HTMLElement | null;
+      if (!node) return false;
+      const tag = node.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || node.isContentEditable;
+    };
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey && (e.code === 'Backquote' || e.key === '`')) {
+      if ((e.key === '`' || e.code === 'Backquote') && !e.ctrlKey && !e.metaKey && !e.altKey && !isEditable(e.target)) {
         e.preventDefault();
         setOpen((o) => !o);
       }
@@ -174,7 +181,7 @@ export function DebugPanel() {
           justifyContent: 'center',
           touchAction: 'none',
         }}
-        title="Panneau debug (Ctrl+`)"
+        title="Panneau debug (touche `)"
       >
         <Bug size={20} />
         {errorCount > 0 && (

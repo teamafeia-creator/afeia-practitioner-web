@@ -16,7 +16,7 @@ le code.
 | `…?debug=1` (ou `?debug=true`) | Active le mode et le persiste en `sessionStorage`. |
 | `…?debug=0` (ou `?debug=false`) | Désactive et purge la persistance. |
 | Aucun paramètre | Relit l'état persisté (donc reste actif après la 1re activation, le temps de l'onglet). |
-| `Ctrl` + `` ` `` | Ouvre / ferme le panneau. |
+| Touche `` ` `` (backtick) | Ouvre / ferme le panneau (ignorée pendant la saisie dans un champ). |
 | `Échap` | Ferme le panneau. |
 
 - Le mode n'est **jamais actif par défaut** : il faut au moins une visite avec `?debug=1`.
