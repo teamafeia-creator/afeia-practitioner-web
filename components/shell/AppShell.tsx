@@ -74,6 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [authTimedOut, setAuthTimedOut] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -93,9 +94,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
+    // Filet de sécurité : si la vérification de session ne répond pas (backend
+    // lent/indisponible), on sort du spinner infini et on propose de réessayer.
+    const authTimer = setTimeout(() => {
+      if (isMounted) setAuthTimedOut(true);
+    }, 8000);
+
     async function loadSession() {
       const { data } = await supabase.auth.getSession();
       if (!isMounted) return;
+      clearTimeout(authTimer);
 
       if (!data.session) {
         router.replace(`/login?from=${encodeURIComponent(pathname)}`);
@@ -138,7 +146,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setUserEmail(null);
         setUserName(null);
         setIsAdmin(false);
-        router.replace('/login');
+        // Cohérent avec loadSession : on conserve la cible dans ?from.
+        router.replace(`/login?from=${encodeURIComponent(pathname)}`);
         return;
       }
       const email = session.user.email ?? null;
@@ -161,6 +170,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false;
+      clearTimeout(authTimer);
       authListener.subscription.unsubscribe();
     };
   }, [pathname, router]);
@@ -228,6 +238,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   if (checkingAuth) {
+    if (authTimedOut) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gradient-cream px-6 text-center">
+          <p className="text-charcoal font-medium">Impossible de vérifier votre session</p>
+          <p className="text-sm text-stone max-w-sm">
+            Le service met trop de temps à répondre. Vérifiez votre connexion puis réessayez.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-lg bg-charcoal px-4 py-2 text-sm font-medium text-white hover:bg-charcoal/90"
+          >
+            Réessayer
+          </button>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-cream">
         <div className="text-stone animate-pulse">Chargement...</div>
@@ -610,23 +636,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className="absolute bottom-14 right-0 w-56 rounded-xl bg-white/95 backdrop-blur-md border border-divider shadow-lg overflow-hidden"
             >
               <a
-                href="#"
+                href="mailto:contact@afeia.fr?subject=Aide%20AFEIA"
                 className="block px-4 py-3 text-sm text-charcoal hover:bg-cream transition-colors"
-                onClick={(e) => { e.preventDefault(); setHelpMenuOpen(false); }}
+                onClick={() => setHelpMenuOpen(false)}
               >
                 Centre d&apos;aide
               </a>
               <a
-                href="#"
+                href="mailto:contact@afeia.fr?subject=Assistance%20AFEIA"
                 className="block px-4 py-3 text-sm text-charcoal hover:bg-cream transition-colors border-t border-divider"
-                onClick={(e) => { e.preventDefault(); setHelpMenuOpen(false); }}
+                onClick={() => setHelpMenuOpen(false)}
               >
                 Contacter l&apos;assistance
               </a>
               <a
-                href="#"
+                href="mailto:contact@afeia.fr?subject=Signalement%20d%27abus"
                 className="block px-4 py-3 text-sm text-charcoal hover:bg-cream transition-colors border-t border-divider"
-                onClick={(e) => { e.preventDefault(); setHelpMenuOpen(false); }}
+                onClick={() => setHelpMenuOpen(false)}
               >
                 Signaler un abus
               </a>

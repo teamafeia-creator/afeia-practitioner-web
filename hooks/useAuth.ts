@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
+const devLog = process.env.NODE_ENV !== 'production' ? console.log : () => {};
+
 interface UseAuthOptions {
   redirectTo?: string;
   redirectIfFound?: boolean;
@@ -31,7 +33,7 @@ export function useAuth(options: UseAuthOptions = {}) {
 
   const checkSession = useCallback(async () => {
     try {
-      console.log('[auth] Verification de la session...');
+      devLog('[auth] Verification de la session...');
 
       const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -42,8 +44,8 @@ export function useAuth(options: UseAuthOptions = {}) {
       }
 
       if (session) {
-        console.log('[auth] Session active pour:', session.user.email);
-        console.log('[auth] Token expires at:', new Date(session.expires_at! * 1000).toLocaleString());
+        devLog('[auth] Session active pour:', session.user.email);
+        devLog('[auth] Token expires at:', new Date(session.expires_at! * 1000).toLocaleString());
         setState({
           user: session.user,
           session,
@@ -51,7 +53,7 @@ export function useAuth(options: UseAuthOptions = {}) {
           error: null
         });
       } else {
-        console.log('[auth] Pas de session active');
+        devLog('[auth] Pas de session active');
         setState({
           user: null,
           session: null,
@@ -76,10 +78,10 @@ export function useAuth(options: UseAuthOptions = {}) {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
-        console.log('[auth] Auth state changed:', event);
+        devLog('[auth] Auth state changed:', event);
 
         if (session) {
-          console.log('[auth] Nouvelle session pour:', session.user.email);
+          devLog('[auth] Nouvelle session pour:', session.user.email);
           setState({
             user: session.user,
             session,
@@ -87,7 +89,7 @@ export function useAuth(options: UseAuthOptions = {}) {
             error: null
           });
         } else {
-          console.log('[auth] Session terminee');
+          devLog('[auth] Session terminee');
           setState({
             user: null,
             session: null,
@@ -98,12 +100,12 @@ export function useAuth(options: UseAuthOptions = {}) {
 
         // Handle token refresh
         if (event === 'TOKEN_REFRESHED') {
-          console.log('[auth] Token rafraichi automatiquement');
+          devLog('[auth] Token rafraichi automatiquement');
         }
 
         // Handle sign out
         if (event === 'SIGNED_OUT') {
-          console.log('[auth] Utilisateur deconnecte');
+          devLog('[auth] Utilisateur deconnecte');
         }
       }
     );
@@ -121,24 +123,24 @@ export function useAuth(options: UseAuthOptions = {}) {
 
     if (!state.session && !isAuthPage && !redirectIfFound) {
       // Not logged in, redirect to login
-      console.log('[auth] Non authentifie, redirection vers:', redirectTo);
+      devLog('[auth] Non authentifie, redirection vers:', redirectTo);
       router.replace(`${redirectTo}?from=${encodeURIComponent(pathname)}`);
     } else if (state.session && isAuthPage && redirectIfFound) {
       // Already logged in, redirect away from auth pages
-      console.log('[auth] Deja connecte, redirection vers /dashboard');
+      devLog('[auth] Deja connecte, redirection vers /dashboard');
       router.replace('/dashboard');
     }
   }, [state.loading, state.session, pathname, redirectTo, redirectIfFound, router]);
 
   const signOut = useCallback(async () => {
-    console.log('[auth] Deconnexion en cours...');
+    devLog('[auth] Deconnexion en cours...');
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('[auth] Erreur lors de la deconnexion:', error.message);
         throw error;
       }
-      console.log('[auth] Deconnexion reussie');
+      devLog('[auth] Deconnexion reussie');
       router.replace('/login');
     } catch (err) {
       console.error('[auth] Exception lors de la deconnexion:', err);
@@ -147,7 +149,7 @@ export function useAuth(options: UseAuthOptions = {}) {
   }, [router]);
 
   const refreshSession = useCallback(async () => {
-    console.log('[auth] Rafraichissement manuel de la session...');
+    devLog('[auth] Rafraichissement manuel de la session...');
     try {
       const { data: { session }, error } = await supabase.auth.refreshSession();
       if (error) {
@@ -155,7 +157,7 @@ export function useAuth(options: UseAuthOptions = {}) {
         throw error;
       }
       if (session) {
-        console.log('[auth] Session rafraichie');
+        devLog('[auth] Session rafraichie');
         setState({
           user: session.user,
           session,
