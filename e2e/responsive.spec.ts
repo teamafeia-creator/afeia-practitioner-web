@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { horizontalOverflow } from './helpers';
+import { horizontalOverflow, gotoSettled } from './helpers';
 
 const VIEWPORTS = [
   { name: 'mobile-375', width: 375, height: 812 },
@@ -15,7 +15,7 @@ test.describe('Responsive', () => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       const offenders: Array<{ route: string; overflow: number }> = [];
       for (const route of ROUTES) {
-        await page.goto(route, { waitUntil: 'domcontentloaded' });
+        await gotoSettled(page, route);
         await page.waitForTimeout(150);
         const overflow = await horizontalOverflow(page);
         if (overflow > 1) offenders.push({ route, overflow });
@@ -28,7 +28,7 @@ test.describe('Responsive', () => {
     await page.setViewportSize({ width: 375, height: 812 });
     const offenders: Array<{ route: string; small: Array<{ label: string; w: number; h: number }> }> = [];
     for (const route of ['/login', '/signup', '/questionnaire']) {
-      await page.goto(route, { waitUntil: 'domcontentloaded' });
+      await gotoSettled(page, route);
       const small = await page.evaluate(() => {
         const out: Array<{ label: string; w: number; h: number }> = [];
         const els = document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"]');

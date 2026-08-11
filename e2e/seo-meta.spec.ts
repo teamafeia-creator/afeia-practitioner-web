@@ -1,11 +1,11 @@
 import { test, expect } from './fixtures';
-import { PUBLIC_ROUTES } from './helpers';
+import { PUBLIC_ROUTES, gotoSettled } from './helpers';
 
 test.describe('SEO / méta', () => {
   test('chaque page publique a un <title> non vide', async ({ page }) => {
     const empties: string[] = [];
     for (const route of PUBLIC_ROUTES) {
-      await page.goto(route, { waitUntil: 'domcontentloaded' });
+      await gotoSettled(page, route);
       const title = (await page.title()).trim();
       if (!title) empties.push(route);
     }
@@ -15,7 +15,7 @@ test.describe('SEO / méta', () => {
   test('les titres sont uniques par page', async ({ page }) => {
     const titles: Record<string, string> = {};
     for (const route of PUBLIC_ROUTES) {
-      await page.goto(route, { waitUntil: 'domcontentloaded' });
+      await gotoSettled(page, route);
       titles[route] = (await page.title()).trim();
     }
     // Recherche de doublons.
@@ -30,7 +30,7 @@ test.describe('SEO / méta', () => {
   test('chaque page publique a une meta description non vide', async ({ page }) => {
     const missing: string[] = [];
     for (const route of PUBLIC_ROUTES) {
-      await page.goto(route, { waitUntil: 'domcontentloaded' });
+      await gotoSettled(page, route);
       const desc = await page.locator('head meta[name="description"]').getAttribute('content').catch(() => null);
       if (!desc || !desc.trim()) missing.push(route);
     }
