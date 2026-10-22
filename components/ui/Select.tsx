@@ -13,7 +13,7 @@ export function Select({ className, label, hint, id, children, ...props }: Props
     <select
       id={selectId}
       className={cn(
-        'w-full rounded-sm border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal transition duration-200 focus:border-sage focus:outline-none focus:ring-[3px] focus:ring-sage/10',
+        'w-full rounded-sm border border-sage/20 bg-surface/50 px-3.5 py-2.5 text-sm text-charcoal transition duration-200 focus:border-sage focus:outline-none focus:ring-[3px] focus:ring-sage/10',
         className
       )}
       {...props}

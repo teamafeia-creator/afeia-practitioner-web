@@ -157,7 +157,7 @@ export function ObservanceGeneratorModal({
               </h3>
               <div className="space-y-1">
                 {items.map((item) => (
-                  <div key={item.index} className="flex items-center gap-2 rounded-lg bg-white/60 px-3 py-2 border border-divider">
+                  <div key={item.index} className="flex items-center gap-2 rounded-lg bg-surface/60 px-3 py-2 border border-divider">
                     <input
                       type="checkbox"
                       checked={item.checked}
@@ -184,7 +184,7 @@ export function ObservanceGeneratorModal({
                         type="number"
                         min={1}
                         max={7}
-                        className="w-12 text-xs border border-divider rounded px-1 py-0.5 bg-white text-charcoal text-center"
+                        className="w-12 text-xs border border-divider rounded px-1 py-0.5 bg-surface text-charcoal text-center"
                         value={item.weekly_target ?? 3}
                         onChange={(e) => updateCandidate(item.index, 'weekly_target', parseInt(e.target.value) || null)}
                         title="Objectif hebdomadaire"

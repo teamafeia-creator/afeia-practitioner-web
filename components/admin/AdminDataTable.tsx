@@ -29,7 +29,7 @@ export function AdminDataTable<T>({
 }: AdminDataTableProps<T>) {
   return (
     <div className={cn('space-y-4', className)}>
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-surface shadow-sm">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50">
             <tr className="text-left text-xs uppercase tracking-wide text-slate-500">

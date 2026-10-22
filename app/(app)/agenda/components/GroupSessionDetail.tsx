@@ -263,10 +263,10 @@ export function GroupSessionDetail({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-md bg-white shadow-2xl overflow-y-auto"
+              className="relative w-full max-w-md bg-surface shadow-2xl overflow-y-auto"
             >
               {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-neutral-100 px-5 py-4 flex items-center justify-between z-10">
+              <div className="sticky top-0 bg-surface border-b border-neutral-100 px-5 py-4 flex items-center justify-between z-10">
                 <h2 className="text-lg font-semibold text-charcoal">Detail de l&apos;atelier</h2>
                 <button
                   onClick={onClose}
@@ -549,7 +549,7 @@ export function GroupSessionDetail({
                   placeholder="Rechercher un consultant..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-sm border border-sage/20 bg-white/50 pl-10 pr-3.5 py-2.5 text-sm text-charcoal placeholder:text-stone/80 transition duration-200 focus:border-sage focus:outline-none focus:ring-[3px] focus:ring-sage/10"
+                  className="w-full rounded-sm border border-sage/20 bg-surface/50 pl-10 pr-3.5 py-2.5 text-sm text-charcoal placeholder:text-stone/80 transition duration-200 focus:border-sage focus:outline-none focus:ring-[3px] focus:ring-sage/10"
                 />
               </div>
               <div className="mt-2 max-h-48 overflow-y-auto space-y-1">

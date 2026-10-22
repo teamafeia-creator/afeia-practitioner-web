@@ -77,7 +77,7 @@ export default function ManageSubscriptionPage() {
             className={cn(
               'py-2 px-6 text-sm font-medium rounded-lg transition-colors',
               selectedCycle === 'monthly'
-                ? 'bg-white text-charcoal shadow-sm'
+                ? 'bg-surface text-charcoal shadow-sm'
                 : 'text-charcoal hover:text-charcoal'
             )}
           >
@@ -88,7 +88,7 @@ export default function ManageSubscriptionPage() {
             className={cn(
               'py-2 px-6 text-sm font-medium rounded-lg transition-colors relative',
               selectedCycle === 'yearly'
-                ? 'bg-white text-charcoal shadow-sm'
+                ? 'bg-surface text-charcoal shadow-sm'
                 : 'text-charcoal hover:text-charcoal'
             )}
           >

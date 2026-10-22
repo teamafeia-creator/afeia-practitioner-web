@@ -29,7 +29,7 @@ export function BlockCard({
   return (
     <div
       className={cn(
-        'group relative rounded-lg border bg-white p-3 transition-all cursor-pointer',
+        'group relative rounded-lg border bg-surface p-3 transition-all cursor-pointer',
         selected
           ? 'border-sage/40 ring-2 ring-sage/20 shadow-sm'
           : 'border-divider hover:border-sage/25 hover:shadow-sm'
@@ -82,7 +82,7 @@ export function BlockCard({
                 e.stopPropagation();
                 onInsert(block.content);
               }}
-              className="shrink-0 rounded-md bg-sage px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-sage-deep"
+              className="shrink-0 rounded-md bg-sage px-3 py-1 text-xs font-medium text-ink transition-colors hover:bg-sage-deep"
             >
               Insérer
             </button>

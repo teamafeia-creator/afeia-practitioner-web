@@ -70,7 +70,7 @@ export function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-charcoal/30 backdrop-blur-[4px]"
+            className="absolute inset-0 bg-black/60 backdrop-blur-[4px]"
             onClick={closeOnOverlayClick ? onClose : undefined}
           />
 
@@ -82,7 +82,7 @@ export function Modal({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className={cn(
-              'relative w-full mx-4 bg-white rounded-xl border border-divider shadow-lg overflow-hidden',
+              'relative w-full mx-4 bg-surface rounded-xl border border-divider shadow-lg overflow-hidden',
               sizes[size],
               className
             )}
@@ -182,7 +182,7 @@ export function ConfirmModal({
           onClick={onConfirm}
           disabled={loading}
           className={cn(
-            'px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50',
+            'px-4 py-2 text-sm font-medium text-ink rounded-lg transition-colors disabled:opacity-50',
             variantStyles[variant]
           )}
         >

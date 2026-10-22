@@ -114,7 +114,7 @@ export function BristolScale({ value, onChange, readonly = false, size = 'md' }:
               size === 'sm' ? 'p-1.5 min-w-[44px]' : 'p-2 min-w-[60px]',
               isSelected
                 ? `${colors.bg} border-transparent ring-2 ${colors.ring}`
-                : 'border-divider bg-white hover:bg-cream/50',
+                : 'border-divider bg-surface hover:bg-cream/50',
               readonly && 'cursor-default',
               !readonly && !isSelected && 'hover:border-sage/30 cursor-pointer'
             )}

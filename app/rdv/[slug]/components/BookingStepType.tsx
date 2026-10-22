@@ -31,7 +31,7 @@ export function BookingStepType({
           <button
             key={type.id}
             onClick={() => onSelect(type.id)}
-            className="w-full text-left rounded-xl border border-teal/15 bg-white/70 p-4 hover:border-sage/40 hover:bg-white/90 hover:shadow-sm transition-all group relative"
+            className="w-full text-left rounded-xl border border-teal/15 bg-surface/70 p-4 hover:border-sage/40 hover:bg-surface/90 hover:shadow-sm transition-all group relative"
           >
             {type.is_group && (
               <span className="absolute top-3 right-12 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">

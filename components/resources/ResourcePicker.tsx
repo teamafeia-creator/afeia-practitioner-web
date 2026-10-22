@@ -43,7 +43,7 @@ export function ResourcePicker({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-start justify-end bg-charcoal/30 backdrop-blur-[4px]"
+        className="fixed inset-0 z-50 flex items-start justify-end bg-black/60 backdrop-blur-[4px]"
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
         <motion.div
@@ -51,7 +51,7 @@ export function ResourcePicker({
           animate={{ x: 0 }}
           exit={{ x: 320 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="h-full w-full max-w-sm bg-white shadow-xl flex flex-col"
+          className="h-full w-full max-w-sm bg-surface shadow-xl flex flex-col"
         >
           <div className="flex items-center justify-between border-b border-divider px-4 py-3">
             <h2 className="text-sm font-semibold text-charcoal">Choisir une fiche éducative</h2>
@@ -85,7 +85,7 @@ export function ResourcePicker({
                   <button
                     key={resource.id}
                     onClick={() => onSelect(resource)}
-                    className="w-full text-left rounded-lg border border-divider bg-white/60 p-3 hover:bg-cream/50 transition-colors"
+                    className="w-full text-left rounded-lg border border-divider bg-surface/60 p-3 hover:bg-cream/50 transition-colors"
                   >
                     <div className="flex items-start gap-2">
                       <Icon className="h-4 w-4 text-sage shrink-0 mt-0.5" />

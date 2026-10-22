@@ -1,4 +1,38 @@
 import type { Config } from 'tailwindcss';
+import colors from 'tailwindcss/colors';
+
+type Scale = Record<string, string>;
+
+// Inverse les teintes claires et les textes foncés d'une échelle Tailwind
+// pour qu'elle fonctionne sur fond sombre (bg-red-50 → teinte sombre, text-red-700 → texte clair)
+const invert = (scale: Scale): Scale => ({
+  50: scale[950],
+  100: scale[900],
+  200: scale[800],
+  300: scale[700],
+  400: scale[400],
+  500: scale[500],
+  600: scale[600],
+  700: scale[300],
+  800: scale[200],
+  900: scale[100],
+  950: scale[50]
+});
+
+// Gris du thème mobile, du plus sombre (50) au plus clair (950)
+const darkGray: Scale = {
+  50: '#10141C',
+  100: '#151A23',
+  200: '#2A3140',
+  300: '#3A4252',
+  400: '#5C6573',
+  500: '#8B95A5',
+  600: '#A3ACBA',
+  700: '#BFC6D1',
+  800: '#D6DCE5',
+  900: '#E8EDF4',
+  950: '#F4F7FA'
+};
 
 export default {
   content: [
@@ -13,119 +47,140 @@ export default {
         serif: ['Source Serif 4', 'Lora', 'Georgia', 'serif']
       },
       colors: {
-        // ── SURFACES ──
-        cream: '#FBF7F2',
+        // Palette alignée sur le thème de l'app mobile (lib/core/theme/app_theme.dart)
+
+        // ── SURFACES (dark) ──
+        ink: '#0A0E14',              // cosmicBlack — fond principal / texte sur couleur pastel
+        cream: '#0A0E14',            // ancien fond crème → fond principal sombre
+        surface: {
+          DEFAULT: '#151A23',        // deepSlate — cartes
+          raised: '#1C2230'          // raisedSlate — cartes élevées, champs
+        },
         white: '#FFFFFF',
 
-        // ── SIDEBAR (charcoal) ──
-        'sidebar-bg': '#2D3436',
-        'sidebar-text': '#E8E6E1',
-        'sidebar-hover': 'rgba(255,255,255,0.08)',
-        'sidebar-active': '#5B8C6E',
+        // ── SIDEBAR ──
+        'sidebar-bg': '#151A23',
+        'sidebar-text': '#E8EDF4',
+        'sidebar-hover': 'rgba(255,255,255,0.06)',
+        'sidebar-active': '#6DD4B8',
 
-        // ── PRIMAIRE (sage — ~15% of screen) ──
+        // ── PRIMAIRE (vert menthe AFEIA) ──
         sage: {
-          DEFAULT: '#5B8C6E',
-          light: '#E8F0EB',
-          dark: '#4A7A5D'
+          DEFAULT: '#6DD4B8',        // primaryGreen
+          light: '#23383B',          // teinte menthe sur fond sombre
+          dark: '#A8E6CF',           // mintGreen — hover / texte sur teinte
+          deep: '#5BC2A6'            // menthe un ton plus soutenu (hover)
         },
 
-        // ── ACCENT CHAUD (terracotta) ──
+        // ── ACCENT CHAUD (vitalité & énergie) ──
         terracotta: {
-          DEFAULT: '#C4856C',
-          light: '#F5E0D5',
-          dark: '#A8705A'
+          DEFAULT: '#E8A87C',        // vibrantOrange
+          light: '#373131',
+          dark: '#D4A574'            // goldOrange
         },
 
         // ── SÉMANTIQUE ──
         gold: {
-          DEFAULT: '#D4A060'
+          DEFAULT: '#D4A574'
         },
         rose: {
-          DEFAULT: '#D4738B'
+          DEFAULT: '#E57B7B'         // error
         },
         sky: {
-          DEFAULT: '#7EB0D4'
+          DEFAULT: '#7B93DB'         // calmBlue
         },
         success: {
-          DEFAULT: '#7BAE7F'
+          DEFAULT: '#6DD4B8'
         },
 
         // ── TEXTE ──
         charcoal: {
-          DEFAULT: '#2D3436'
+          DEFAULT: '#E8EDF4'         // textWhite — texte principal
         },
         stone: {
-          DEFAULT: '#6B7280'
+          DEFAULT: '#8B95A5'         // textGray — texte secondaire
         },
         mist: {
-          DEFAULT: '#9CA3AF'
+          DEFAULT: '#5C6573'         // textDim — texte tertiaire
         },
         divider: {
-          DEFAULT: '#E5E1DB'
+          DEFAULT: '#2A3140'         // dividerGray
         },
 
         // Legacy aliases for compatibility (map old → new)
         teal: {
-          dark: '#5B8C6E',
-          deep: '#4A7A5D',
-          DEFAULT: '#5B8C6E',
-          medium: '#5B8C6E',
-          light: '#E8F0EB'
+          ...invert(colors.teal),
+          dark: '#6DD4B8',
+          deep: '#2D7A6E',
+          DEFAULT: '#6DD4B8',
+          medium: '#6DD4B8',
+          light: '#23383B'
         },
         aubergine: {
-          DEFAULT: '#C4856C'
+          DEFAULT: '#E8A87C'
         },
         marine: {
-          DEFAULT: '#2D3436'
+          DEFAULT: '#E8EDF4'
         },
         sable: {
-          DEFAULT: '#FBF7F2',
-          light: '#FBF7F2',
-          dark: '#E5E1DB'
+          DEFAULT: '#0A0E14',
+          light: '#151A23',
+          dark: '#2A3140'
         },
         warmgray: {
-          DEFAULT: '#6B7280',
-          light: '#E5E1DB'
+          DEFAULT: '#8B95A5',
+          light: '#2A3140'
         },
 
-        // Neutral scale (keep for compatibility)
-        neutral: {
-          50: '#F9FAFB',
-          100: '#F3F4F6',
-          200: '#E5E7EB',
-          300: '#D1D5DB',
-          400: '#9CA3AF',
-          500: '#6B7280',
-          600: '#4B5563',
-          700: '#374151',
-          800: '#1F2937',
-          900: '#111827'
-        },
+        // Échelles de gris inversées pour le mode sombre (50 = le plus sombre)
+        neutral: darkGray,
+        gray: darkGray,
+        slate: darkGray,
+        zinc: darkGray,
+
+        // Teintes claires (50-300) et textes foncés (700-950) inversés,
+        // les tons pleins (400-600) restent identiques
+        red: invert(colors.red),
+        orange: invert(colors.orange),
+        amber: invert(colors.amber),
+        yellow: invert(colors.yellow),
+        lime: invert(colors.lime),
+        green: invert(colors.green),
+        emerald: invert(colors.emerald),
+        cyan: invert(colors.cyan),
+        blue: invert(colors.blue),
+        indigo: invert(colors.indigo),
+        violet: invert(colors.violet),
+        purple: invert(colors.purple),
+        fuchsia: invert(colors.fuchsia),
+        pink: invert(colors.pink),
 
         // Legacy accent colors mapped to new palette
         accent: {
-          orange: '#D4A060',
-          pink: '#D4738B',
-          success: '#7BAE7F',
-          danger: '#D4738B',
-          warning: '#D4A060'
+          orange: '#E8A87C',
+          pink: '#E8A5C6',
+          success: '#6DD4B8',
+          danger: '#E57B7B',
+          warning: '#E8A87C'
         }
       },
+      ringOffsetColor: {
+        DEFAULT: '#0A0E14'
+      },
       boxShadow: {
-        'card': '0 1px 3px rgba(45, 52, 54, 0.03), 0 4px 12px rgba(45, 52, 54, 0.02)',
-        'card-hover': '0 2px 8px rgba(45, 52, 54, 0.05), 0 8px 24px rgba(45, 52, 54, 0.04)',
-        'soft': '0 1px 3px rgba(45, 52, 54, 0.03), 0 4px 12px rgba(45, 52, 54, 0.02)',
-        'sm': '0 1px 2px rgba(45, 52, 54, 0.03)',
-        'md': '0 2px 8px rgba(45, 52, 54, 0.05), 0 4px 16px rgba(45, 52, 54, 0.03)',
-        'lg': '0 4px 16px rgba(45, 52, 54, 0.06), 0 12px 32px rgba(45, 52, 54, 0.04)',
+        'card': '0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15)',
+        'card-hover': '0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25)',
+        'soft': '0 1px 2px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15)',
+        'sm': '0 1px 2px rgba(0, 0, 0, 0.25)',
+        'md': '0 2px 8px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2)',
+        'lg': '0 4px 16px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.25)',
         // Legacy aliases
-        'teal-glow': '0 2px 8px rgba(91, 140, 110, 0.15)',
-        'teal-hover': '0 2px 8px rgba(45, 52, 54, 0.05), 0 8px 24px rgba(45, 52, 54, 0.04)',
-        'action-hover': '0 2px 8px rgba(45, 52, 54, 0.05), 0 8px 24px rgba(45, 52, 54, 0.04)',
-        'glow': '0 0 20px rgba(91, 140, 110, 0.2)',
-        'glow-emerald': '0 0 20px rgba(123, 174, 127, 0.2)',
-        'glow-orange': '0 0 20px rgba(196, 133, 108, 0.2)'
+        'teal-glow': '0 2px 8px rgba(109, 212, 184, 0.15)',
+        'teal-hover': '0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25)',
+        'action-hover': '0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25)',
+        'glow': '0 0 20px rgba(109, 212, 184, 0.2)',
+        'glow-emerald': '0 0 20px rgba(109, 212, 184, 0.2)',
+        'glow-orange': '0 0 20px rgba(232, 168, 124, 0.2)'
       },
       borderRadius: {
         sm: '6px',
@@ -165,7 +220,12 @@ export default {
         }
       },
       backgroundImage: {
-        'gradient-cream': 'linear-gradient(180deg, #FBF7F2 0%, #FFFFFF 60%, #FFFFFF 100%)'
+        'gradient-cream': 'linear-gradient(180deg, #0A0E14 0%, #151A23 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #6DD4B8 0%, #2D7A6E 100%)',
+        'gradient-energy': 'linear-gradient(135deg, #E8A87C 0%, #D4A574 100%)',
+        'gradient-calm': 'linear-gradient(135deg, #7B93DB 0%, #4A5F8C 100%)',
+        'gradient-cycle': 'linear-gradient(135deg, #E8A5C6 0%, #B89FD9 100%)',
+        'gradient-clarity': 'linear-gradient(135deg, #6DCFE0 0%, #5FB5A6 100%)'
       },
       transitionTimingFunction: {
         'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)'

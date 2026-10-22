@@ -167,7 +167,7 @@ export default function AnamnesePage() {
                           <select
                             value={answers[question.key] ?? ''}
                             onChange={(event) => updateAnswer(question.key, event.target.value)}
-                            className="mt-2 w-full rounded-xl border border-warmgray/30 bg-white px-3 py-2 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+                            className="mt-2 w-full rounded-xl border border-warmgray/30 bg-surface px-3 py-2 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
                           >
                             <option value="">Sélectionner</option>
                             {question.options?.map((option) => (

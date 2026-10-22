@@ -155,7 +155,7 @@ export function AdminPractitionerDetailClient({
       </Link>
 
       {/* Header with practitioner info */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-slate-200 bg-surface p-6">
         <div className="flex flex-wrap items-start gap-4">
           {/* Avatar */}
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-100 text-sage-700 text-lg font-bold">
@@ -235,7 +235,7 @@ export function AdminPractitionerDetailClient({
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Profile section */}
-        <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-4">
+        <div className="rounded-lg border border-slate-200 bg-surface p-4 space-y-4">
           <h3 className="text-lg font-semibold text-slate-800">Profil</h3>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
@@ -278,7 +278,7 @@ export function AdminPractitionerDetailClient({
         </div>
 
         {/* Financial section */}
-        <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+        <div className="rounded-lg border border-slate-200 bg-surface p-4 space-y-3">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
             <CreditCard className="h-4 w-4 text-slate-400" />
             Financier
@@ -330,7 +330,7 @@ export function AdminPractitionerDetailClient({
       </div>
 
       {/* Consultants section */}
-      <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
+      <div className="rounded-lg border border-slate-200 bg-surface p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
             <Users className="h-4 w-4 text-slate-400" />

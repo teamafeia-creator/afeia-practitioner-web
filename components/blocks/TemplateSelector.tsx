@@ -95,7 +95,7 @@ export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-2 rounded-lg border border-sage/20 bg-white px-3 py-2 text-sm font-medium text-sage transition-colors hover:border-sage/40 hover:bg-sage-light/50"
+        className="inline-flex items-center gap-2 rounded-lg border border-sage/20 bg-surface px-3 py-2 text-sm font-medium text-sage transition-colors hover:border-sage/40 hover:bg-sage-light/50"
       >
         <FileText className="h-4 w-4" />
         Partir d&apos;un modèle de conseillancier
@@ -103,7 +103,7 @@ export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-40 mt-1 w-96 rounded-xl border border-divider bg-white shadow-lg">
+        <div className="absolute left-0 top-full z-40 mt-1 w-96 rounded-xl border border-divider bg-surface shadow-lg">
           <div className="p-3 border-b border-neutral-100">
             <p className="text-xs font-medium text-charcoal">Modèles disponibles</p>
             <p className="text-[10px] text-stone">

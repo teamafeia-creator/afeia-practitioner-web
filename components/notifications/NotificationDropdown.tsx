@@ -173,7 +173,7 @@ export function NotificationDropdown() {
         </svg>
         {/* Unread badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-terracotta text-[10px] font-bold text-white">
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-terracotta text-[10px] font-bold text-ink">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -181,7 +181,7 @@ export function NotificationDropdown() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-divider z-50">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-surface/95 backdrop-blur-md rounded-2xl shadow-lg border border-divider z-50">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-black/5">
             <h3 className="font-semibold text-charcoal">Notifications</h3>

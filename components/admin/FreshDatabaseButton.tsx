@@ -53,9 +53,9 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
             </p>
           </div>
           <Button
-            variant="primary"
+            variant="destructive"
             size="sm"
-            className="bg-red-600 hover:bg-red-700 shrink-0"
+            className="shrink-0"
             onClick={() => setStep(1)}
             icon={<Trash2 className="h-3.5 w-3.5" />}
           >
@@ -74,7 +74,7 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
           Reinitialiser la base de donnees ?
         </h3>
 
-        <div className="rounded-lg bg-white border border-red-200 p-4 mb-4">
+        <div className="rounded-lg bg-surface border border-red-200 p-4 mb-4">
           <p className="text-sm text-slate-700 mb-3">
             Cette action va supprimer <strong className="text-red-700">definitivement</strong> toutes
             les donnees :
@@ -102,8 +102,7 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
             Annuler
           </Button>
           <Button
-            variant="primary"
-            className="bg-red-600 hover:bg-red-700"
+            variant="destructive"
             onClick={() => setStep(2)}
           >
             Je comprends, continuer
@@ -143,8 +142,7 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
             Annuler
           </Button>
           <Button
-            variant="primary"
-            className="bg-red-600 hover:bg-red-700"
+            variant="destructive"
             onClick={handleFreshDatabase}
             disabled={confirmationText !== EXPECTED_CONFIRMATION || freshDatabaseMutation.isPending}
             loading={freshDatabaseMutation.isPending}

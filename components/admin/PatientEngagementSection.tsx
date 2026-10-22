@@ -86,7 +86,7 @@ export function PatientEngagementSection({
   lastCircularSyncAt,
 }: PatientEngagementSectionProps) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5">
+    <div className="rounded-lg border border-slate-200 bg-surface p-5">
       <h3 className="text-base font-semibold text-slate-800 mb-3">
         Indicateurs d&apos;engagement
       </h3>

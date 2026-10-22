@@ -55,7 +55,7 @@ function SummaryCard({
   trend?: { direction: 'up' | 'down' | 'stable'; variation: number };
 }) {
   return (
-    <div className="rounded-xl bg-white p-5 shadow-sm border border-divider flex-1 min-w-[140px]">
+    <div className="rounded-xl bg-surface p-5 shadow-sm border border-divider flex-1 min-w-[140px]">
       {emoji && <div className="text-2xl mb-1">{emoji}</div>}
       <p className="text-xs text-warmgray font-medium uppercase tracking-wider">{label}</p>
       <div className="flex items-end gap-2 mt-1">
@@ -144,7 +144,7 @@ export default function BilanVisuelPage() {
 
   if (loading || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FBF7F2' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0A0E14' }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-sage border-t-transparent" />
       </div>
     );
@@ -281,8 +281,8 @@ export default function BilanVisuelPage() {
             <>
               <LineChartFull
                 series={[
-                  { label: 'Énergie', data: energySeries, color: '#5B8C6E' },
-                  { label: 'Humeur', data: moodSeries, color: '#C4856C' },
+                  { label: 'Énergie', data: energySeries, color: '#6DD4B8' },
+                  { label: 'Humeur', data: moodSeries, color: '#E8A87C' },
                 ]}
                 height={320}
               />
@@ -322,7 +322,7 @@ export default function BilanVisuelPage() {
                     data: data.wearableSummaries
                       .filter((w) => w.hrv_avg != null)
                       .map((w) => ({ date: w.date, value: w.hrv_avg! })),
-                    color: '#D4A060',
+                    color: '#D4A574',
                   }]}
                   height={200}
                 />
@@ -366,7 +366,7 @@ export default function BilanVisuelPage() {
           totalSlides={totalSlides}
         >
           <div className="space-y-4">
-            <div className="flex flex-wrap items-end gap-3 bg-white rounded-lg p-4 border border-divider">
+            <div className="flex flex-wrap items-end gap-3 bg-surface rounded-lg p-4 border border-divider">
               <div>
                 <label className="text-xs text-warmgray block mb-1">Variable</label>
                 <select
@@ -429,7 +429,7 @@ export default function BilanVisuelPage() {
                   conditionType={corrCondition}
                   height={300}
                 />
-                <div className="bg-white rounded-lg p-4 border border-divider text-center">
+                <div className="bg-surface rounded-lg p-4 border border-divider text-center">
                   <p className="text-base text-charcoal font-medium">
                     Quand {VARIABLE_LABELS[corrVarA].toLowerCase()} est {corrCondition === 'lt' ? 'inférieur' : 'supérieur'} à {corrThreshold},{' '}
                     {VARIABLE_LABELS[corrVarB].toLowerCase()} moyen = <strong>{corrResult.meanWhenConditionMet}</strong> au lieu de{' '}
@@ -456,7 +456,7 @@ export default function BilanVisuelPage() {
         >
           <div className="space-y-6">
             {data.activePlan ? (
-              <div className="rounded-xl bg-white p-6 border border-divider">
+              <div className="rounded-xl bg-surface p-6 border border-divider">
                 <h3 className="text-sm font-semibold text-charcoal mb-3">Plan actif (v{data.activePlan.version})</h3>
                 {data.activePlan.content && (
                   <div className="space-y-2">
@@ -473,13 +473,13 @@ export default function BilanVisuelPage() {
                 )}
               </div>
             ) : (
-              <div className="rounded-xl bg-white p-6 border border-divider">
+              <div className="rounded-xl bg-surface p-6 border border-divider">
                 <p className="text-sm text-stone">Aucun plan actif partagé.</p>
               </div>
             )}
 
             {data.recentAssignments.length > 0 && (
-              <div className="rounded-xl bg-white p-6 border border-divider">
+              <div className="rounded-xl bg-surface p-6 border border-divider">
                 <h3 className="text-sm font-semibold text-charcoal mb-3">Fiches éducatives récentes</h3>
                 <div className="space-y-2">
                   {data.recentAssignments.map((a) => (

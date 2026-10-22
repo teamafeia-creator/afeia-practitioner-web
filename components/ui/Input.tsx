@@ -13,7 +13,7 @@ export function Input({ className, label, hint, id, ...props }: Props) {
     <input
       id={inputId}
       className={cn(
-        'w-full rounded-[10px] border border-divider bg-white px-3.5 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-150 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20',
+        'w-full rounded-[10px] border border-divider bg-surface px-3.5 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-150 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20',
         className
       )}
       {...props}

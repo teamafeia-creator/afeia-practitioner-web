@@ -199,7 +199,7 @@ export default function ConsultationPage() {
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[280px] w-full rounded-2xl border border-black/10 bg-white p-3 text-sm text-charcoal placeholder:text-stone focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
+                className="min-h-[280px] w-full rounded-2xl border border-black/10 bg-surface p-3 text-sm text-charcoal placeholder:text-stone focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
                 placeholder="Saisissez vos observations, questions clés, hypothèses (non médicales), et éléments validés avec le client..."
               />
               <p className="mt-2 text-xs text-stone">
@@ -242,7 +242,7 @@ export default function ConsultationPage() {
                 <div className="text-xs text-stone">Dernière entrée journal</div>
                 <div className="text-sm text-charcoal">{lastJournalEntry}</div>
               </div>
-              <div className="rounded-2xl bg-white ring-1 ring-black/5 p-3">
+              <div className="rounded-2xl bg-surface ring-1 ring-black/5 p-3">
                 <div className="text-xs text-stone">Prochaine action</div>
                 <div className="mt-1 text-sm text-charcoal">
                   {consultant?.is_premium ? 'Analyser la semaine bague connectée et ajuster le plan.' : 'Finaliser les objectifs mesurables.'}

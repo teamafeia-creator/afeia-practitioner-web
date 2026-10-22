@@ -175,17 +175,17 @@ export function EmunctoryDiagram({ statuses, editing, onStatusChange }: Emunctor
         />
 
         {/* Labels */}
-        <text x={150} y={135} textAnchor="middle" fill="#6B7280" fontSize={11} fontWeight={500}>Poumons</text>
-        <text x={195} y={220} textAnchor="middle" fill="#6B7280" fontSize={11} fontWeight={500}>Foie</text>
-        <text x={150} y={305} textAnchor="middle" fill="#6B7280" fontSize={11} fontWeight={500}>Intestins</text>
-        <text x={110} y={275} textAnchor="middle" fill="#6B7280" fontSize={10}>Rein G</text>
-        <text x={190} y={275} textAnchor="middle" fill="#6B7280" fontSize={10}>Rein D</text>
+        <text x={150} y={135} textAnchor="middle" fill="#8B95A5" fontSize={11} fontWeight={500}>Poumons</text>
+        <text x={195} y={220} textAnchor="middle" fill="#8B95A5" fontSize={11} fontWeight={500}>Foie</text>
+        <text x={150} y={305} textAnchor="middle" fill="#8B95A5" fontSize={11} fontWeight={500}>Intestins</text>
+        <text x={110} y={275} textAnchor="middle" fill="#8B95A5" fontSize={10}>Rein G</text>
+        <text x={190} y={275} textAnchor="middle" fill="#8B95A5" fontSize={10}>Rein D</text>
 
         {/* Tooltip */}
         {hoveredOrgan && (
           <g>
-            <rect x={70} y={5} width={160} height={24} rx={6} fill="white" stroke="#E5E1DB" strokeWidth={1} />
-            <text x={150} y={21} textAnchor="middle" fill="#2D3436" fontSize={11} fontWeight={600}>
+            <rect x={70} y={5} width={160} height={24} rx={6} fill="#1C2230" stroke="#2A3140" strokeWidth={1} />
+            <text x={150} y={21} textAnchor="middle" fill="#E8EDF4" fontSize={11} fontWeight={600}>
               {hoveredOrgan === 'peau' ? 'Peau' : hoveredOrgan === 'poumons' ? 'Poumons' : hoveredOrgan === 'foie' ? 'Foie' : hoveredOrgan === 'intestins' ? 'Intestins' : 'Reins'}
               {' — '}
               {getStatusLabel(hoveredOrgan, (statuses as unknown as Record<string, string | null>)[hoveredOrgan])}
@@ -197,11 +197,11 @@ export function EmunctoryDiagram({ statuses, editing, onStatusChange }: Emunctor
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
         {[
-          { color: '#5B8C6E', label: 'Fonctionnel' },
-          { color: '#D4A060', label: 'Ralenti / Réactif' },
-          { color: '#C4856C', label: 'Surchargé' },
-          { color: '#D4738B', label: 'Bloqué' },
-          { color: '#6B7280', label: 'Non évalué' },
+          { color: '#6DD4B8', label: 'Fonctionnel' },
+          { color: '#D4A574', label: 'Ralenti / Réactif' },
+          { color: '#E8A87C', label: 'Surchargé' },
+          { color: '#E57B7B', label: 'Bloqué' },
+          { color: '#8B95A5', label: 'Non évalué' },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />

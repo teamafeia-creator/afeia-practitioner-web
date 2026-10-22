@@ -70,7 +70,7 @@ function VideoCallUI({
   // Connecting
   if (meetingState === 'joining-meeting' || meetingState === 'loading') {
     return (
-      <div className="min-h-screen bg-[#2D3436] flex items-center justify-center">
+      <div className="min-h-screen bg-ink flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
           <p className="text-white/80 text-sm">Connexion en cours...</p>
@@ -82,7 +82,7 @@ function VideoCallUI({
   // Error
   if (meetingState === 'error') {
     return (
-      <div className="min-h-screen bg-[#2D3436] flex items-center justify-center">
+      <div className="min-h-screen bg-ink flex items-center justify-center">
         <div className="text-center space-y-4 max-w-sm">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20">
             <AlertCircle className="h-8 w-8 text-red-400" />
@@ -93,7 +93,7 @@ function VideoCallUI({
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-[#5B8C6E] text-white rounded-lg hover:bg-[#4a7a5d] transition-colors"
+            className="px-6 py-2 bg-[#6DD4B8] text-ink rounded-lg hover:bg-sage-deep transition-colors"
           >
             Reessayer
           </button>
@@ -106,7 +106,7 @@ function VideoCallUI({
   const hasRemoteParticipants = remoteParticipantIds.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#2D3436] flex flex-col">
+    <div className="min-h-screen bg-ink flex flex-col">
       {/* Video area */}
       <div className="flex-1 flex items-center justify-center p-4 pb-24">
         {hasRemoteParticipants ? (

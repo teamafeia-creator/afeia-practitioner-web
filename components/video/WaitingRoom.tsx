@@ -50,23 +50,23 @@ export function WaitingRoom({
   const startsAtDate = new Date(startsAt);
 
   return (
-    <div className="min-h-screen bg-[#FBF7F2] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-lg max-w-lg w-full p-8 space-y-6">
+    <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+      <div className="bg-surface rounded-2xl shadow-lg max-w-lg w-full p-8 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sage/10">
             <Video className="h-6 w-6 text-sage" />
           </div>
-          <h1 className="text-xl font-semibold text-[#2D3436]">
+          <h1 className="text-xl font-semibold text-charcoal">
             Consultation en visio
           </h1>
-          <p className="text-sm text-[#6B7280]">
+          <p className="text-sm text-[#8B95A5]">
             {consultationType} avec {practitionerName}
           </p>
         </div>
 
         {/* Appointment info */}
-        <div className="flex items-center justify-center gap-4 text-sm text-[#6B7280]">
+        <div className="flex items-center justify-center gap-4 text-sm text-[#8B95A5]">
           <div className="flex items-center gap-1.5">
             <Clock className="h-4 w-4" />
             <span className="capitalize">{dateFormatter.format(startsAtDate)}</span>
@@ -75,7 +75,7 @@ export function WaitingRoom({
         </div>
 
         {/* Camera preview */}
-        <div className="relative aspect-video bg-[#2D3436] rounded-xl overflow-hidden">
+        <div className="relative aspect-video bg-ink rounded-xl overflow-hidden">
           {localParticipant && videoOn ? (
             <DailyVideo
               type="video"
@@ -101,7 +101,7 @@ export function WaitingRoom({
             onClick={toggleAudio}
             className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
               audioOn
-                ? 'bg-[#2D3436]/10 text-[#2D3436] hover:bg-[#2D3436]/20'
+                ? 'bg-white/10 text-charcoal hover:bg-white/20'
                 : 'bg-red-100 text-red-500 hover:bg-red-200'
             }`}
           >
@@ -111,7 +111,7 @@ export function WaitingRoom({
             onClick={toggleVideo}
             className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
               videoOn
-                ? 'bg-[#2D3436]/10 text-[#2D3436] hover:bg-[#2D3436]/20'
+                ? 'bg-white/10 text-charcoal hover:bg-white/20'
                 : 'bg-red-100 text-red-500 hover:bg-red-200'
             }`}
           >
@@ -120,7 +120,7 @@ export function WaitingRoom({
         </div>
 
         {/* Waiting message */}
-        <p className="text-center text-sm text-[#6B7280]">
+        <p className="text-center text-sm text-[#8B95A5]">
           {isOwner
             ? 'En attente du consultant...'
             : 'Votre praticien n\'est pas encore connecte. Veuillez patienter.'}
@@ -129,7 +129,7 @@ export function WaitingRoom({
         {/* Join button */}
         <button
           onClick={onJoin}
-          className="w-full py-3 px-6 rounded-xl bg-[#5B8C6E] text-white font-medium text-base hover:bg-[#4a7a5d] transition-colors"
+          className="w-full py-3 px-6 rounded-xl bg-[#6DD4B8] text-ink font-medium text-base hover:bg-sage-deep transition-colors"
         >
           Rejoindre la consultation
         </button>

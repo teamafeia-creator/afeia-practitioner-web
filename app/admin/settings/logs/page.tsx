@@ -154,7 +154,7 @@ export default function SettingsAuditLogsPage() {
       />
 
       {/* Filters */}
-      <div className="rounded-lg border border-slate-200 bg-white p-5">
+      <div className="rounded-lg border border-slate-200 bg-surface p-5">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-500">
@@ -216,7 +216,7 @@ export default function SettingsAuditLogsPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="rounded-lg border border-slate-200 bg-surface">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-sm text-slate-500">
             Chargement...

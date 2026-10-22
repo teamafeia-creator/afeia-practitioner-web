@@ -15,24 +15,24 @@ export function Toaster() {
       toastOptions={{
         duration: 4000,
         style: {
-          background: '#fff',
-          color: '#3D3D3D',
+          background: '#1C2230',
+          color: '#E8EDF4',
           padding: '16px',
           borderRadius: '16px',
-          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
-          border: '1px solid rgba(0, 0, 0, 0.05)',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)',
+          border: '1px solid #2A3140',
           maxWidth: '400px'
         },
         success: {
           iconTheme: {
-            primary: '#22C55E',
-            secondary: '#fff'
+            primary: '#6DD4B8',
+            secondary: '#0A0E14'
           }
         },
         error: {
           iconTheme: {
-            primary: '#EF4444',
-            secondary: '#fff'
+            primary: '#E57B7B',
+            secondary: '#0A0E14'
           }
         }
       }}
@@ -53,7 +53,7 @@ export const showToast = {
         <div
           className={`${
             t.visible ? 'animate-slide-down' : 'animate-fade-out'
-          } flex items-start gap-3 bg-white px-4 py-3 rounded-2xl shadow-lg ring-1 ring-black/5 max-w-sm`}
+          } flex items-start gap-3 bg-surface px-4 py-3 rounded-2xl shadow-lg ring-1 ring-black/5 max-w-sm`}
         >
           <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-success/10 flex items-center justify-center">
             <CheckCircle className="w-4 h-4 text-accent-success" />
@@ -79,7 +79,7 @@ export const showToast = {
         <div
           className={`${
             t.visible ? 'animate-slide-down' : 'animate-fade-out'
-          } flex items-start gap-3 bg-white px-4 py-3 rounded-2xl shadow-lg ring-1 ring-accent-danger/20 max-w-sm`}
+          } flex items-start gap-3 bg-surface px-4 py-3 rounded-2xl shadow-lg ring-1 ring-accent-danger/20 max-w-sm`}
         >
           <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-danger/10 flex items-center justify-center">
             <XCircle className="w-4 h-4 text-accent-danger" />
@@ -105,7 +105,7 @@ export const showToast = {
         <div
           className={`${
             t.visible ? 'animate-slide-down' : 'animate-fade-out'
-          } flex items-start gap-3 bg-white px-4 py-3 rounded-2xl shadow-lg ring-1 ring-accent-warning/20 max-w-sm`}
+          } flex items-start gap-3 bg-surface px-4 py-3 rounded-2xl shadow-lg ring-1 ring-accent-warning/20 max-w-sm`}
         >
           <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-warning/10 flex items-center justify-center">
             <AlertCircle className="w-4 h-4 text-accent-warning" />
@@ -131,7 +131,7 @@ export const showToast = {
         <div
           className={`${
             t.visible ? 'animate-slide-down' : 'animate-fade-out'
-          } flex items-start gap-3 bg-white px-4 py-3 rounded-2xl shadow-lg ring-1 ring-sage/20 max-w-sm`}
+          } flex items-start gap-3 bg-surface px-4 py-3 rounded-2xl shadow-lg ring-1 ring-sage/20 max-w-sm`}
         >
           <div className="flex-shrink-0 w-6 h-6 rounded-full bg-sage-light flex items-center justify-center">
             <Info className="w-4 h-4 text-sage" />
@@ -155,11 +155,11 @@ export const showToast = {
     return toast.loading(message, {
       id: options?.id,
       style: {
-        background: '#fff',
-        color: '#3D3D3D',
+        background: '#1C2230',
+        color: '#E8EDF4',
         padding: '16px',
         borderRadius: '16px',
-        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)'
       }
     });
   },
@@ -178,11 +178,11 @@ export const showToast = {
   ) => {
     return toast.promise(promise, messages, {
       style: {
-        background: '#fff',
-        color: '#3D3D3D',
+        background: '#1C2230',
+        color: '#E8EDF4',
         padding: '16px',
         borderRadius: '16px',
-        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)'
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)'
       }
     });
   }

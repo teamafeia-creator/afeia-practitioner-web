@@ -260,7 +260,7 @@ export default function DashboardPage() {
   if (!isAuthenticated) {
     return (
       <div className="space-y-6">
-        <div className="bg-white border border-divider rounded-xl p-8 text-center">
+        <div className="bg-surface border border-divider rounded-xl p-8 text-center">
           <p className="text-stone">Redirection vers la page de connexion...</p>
         </div>
       </div>
@@ -294,16 +294,16 @@ export default function DashboardPage() {
           />
 
           {/* Overlay dégradé — plus opaque à gauche (texte), plus transparent à droite (image visible) */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FBF7F2]/90 via-[#FBF7F2]/70 to-[#FBF7F2]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-cream/90 via-cream/70 to-cream/40" />
 
           {/* Contenu par-dessus */}
           <div className="relative z-10 p-6 md:p-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-h-[200px]">
             <div>
-              <h1 className="text-[28px] md:text-3xl font-semibold font-serif text-[#2D3436]" style={{ letterSpacing: '-0.02em' }}>
+              <h1 className="text-[28px] md:text-3xl font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>
                 {greeting}
                 {practitionerName ? `, ${practitionerName}` : ''} !
               </h1>
-              <p className="text-[#6B7280] capitalize mt-1">{todayLabel}</p>
+              <p className="text-[#8B95A5] capitalize mt-1">{todayLabel}</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button
@@ -317,7 +317,7 @@ export default function DashboardPage() {
                 variant="secondary"
                 icon={<Calendar className="w-4 h-4" />}
                 onClick={() => router.push('/agenda')}
-                className="bg-white hover:bg-gray-50"
+                className="bg-surface hover:bg-gray-50"
               >
                 Nouvelle seance
               </Button>
@@ -342,7 +342,7 @@ export default function DashboardPage() {
             </div>
 
             {todayAppointments.length > 0 ? (
-              <div className="bg-white border border-divider rounded-xl overflow-hidden shadow-card">
+              <div className="bg-surface border border-divider rounded-xl overflow-hidden shadow-card">
                 <div className="divide-y divide-divider">
                   {todayAppointments.map((appointment) => (
                     <div
@@ -389,7 +389,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white border border-divider rounded-xl p-8 shadow-card flex flex-col items-center justify-center text-center">
+              <div className="bg-surface border border-divider rounded-xl p-8 shadow-card flex flex-col items-center justify-center text-center">
                 <div className="w-28 h-28 rounded-full overflow-hidden mb-6 opacity-50">
                   <Image
                     src="/images/sage-tisane.jpg"
@@ -399,10 +399,10 @@ export default function DashboardPage() {
                     className="object-cover w-full h-full"
                   />
                 </div>
-                <h4 className="font-serif text-xl text-[#2D3436] mb-2">
+                <h4 className="font-serif text-xl text-charcoal mb-2">
                   Aucune seance prevue aujourd&apos;hui
                 </h4>
-                <p className="text-[#6B7280] text-sm max-w-sm">
+                <p className="text-[#8B95A5] text-sm max-w-sm">
                   Planifiez votre prochaine seance en quelques clics.
                 </p>
                 <Button
@@ -426,7 +426,7 @@ export default function DashboardPage() {
                   Seances recentes sans notes
                 </span>
               </h2>
-              <div className="bg-white border border-divider rounded-xl p-4 border-l-4 border-l-gold shadow-card">
+              <div className="bg-surface border border-divider rounded-xl p-4 border-l-4 border-l-gold shadow-card">
                 <p className="text-sm text-charcoal mb-3">
                   N&apos;oubliez pas de rediger vos notes pour ces seances :
                 </p>
@@ -471,7 +471,7 @@ export default function DashboardPage() {
                   Voir tous
                 </Button>
               </div>
-              <div className="bg-white border border-divider rounded-xl overflow-hidden shadow-card">
+              <div className="bg-surface border border-divider rounded-xl overflow-hidden shadow-card">
                 <div className="divide-y divide-divider">
                   {recontactConsultants.slice(0, 5).map((consultant) => (
                     <div
@@ -528,7 +528,7 @@ export default function DashboardPage() {
               {/* Consultants to recontact */}
               <button
                 onClick={() => router.push('/consultants?filter=recontact')}
-                className="w-full bg-white border border-divider rounded-xl p-4 shadow-card hover:shadow-card-hover transition-shadow flex items-center justify-between text-left"
+                className="w-full bg-surface border border-divider rounded-xl p-4 shadow-card hover:shadow-card-hover transition-shadow flex items-center justify-between text-left"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-terracotta-light">
@@ -539,7 +539,7 @@ export default function DashboardPage() {
                     <div className="text-xs text-stone">+ de {RECONTACT_DAYS} jours sans contact</div>
                   </div>
                 </div>
-                <span className="flex h-8 min-w-[32px] items-center justify-center rounded-full bg-terracotta text-white text-sm font-semibold px-2">
+                <span className="flex h-8 min-w-[32px] items-center justify-center rounded-full bg-terracotta text-ink text-sm font-semibold px-2">
                   {recontactConsultants.length}
                 </span>
               </button>
@@ -547,7 +547,7 @@ export default function DashboardPage() {
               {/* Pending plans */}
               <button
                 onClick={() => router.push('/consultants')}
-                className="w-full bg-white border border-divider rounded-xl p-4 shadow-card hover:shadow-card-hover transition-shadow flex items-center justify-between text-left"
+                className="w-full bg-surface border border-divider rounded-xl p-4 shadow-card hover:shadow-card-hover transition-shadow flex items-center justify-between text-left"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sage-light">
@@ -558,7 +558,7 @@ export default function DashboardPage() {
                     <div className="text-xs text-stone">A finaliser et partager</div>
                   </div>
                 </div>
-                <span className="flex h-8 min-w-[32px] items-center justify-center rounded-full bg-sage text-white text-sm font-semibold px-2">
+                <span className="flex h-8 min-w-[32px] items-center justify-center rounded-full bg-sage text-ink text-sm font-semibold px-2">
                   {pendingPlans.length}
                 </span>
               </button>
@@ -566,7 +566,7 @@ export default function DashboardPage() {
               {/* Unread messages */}
               <button
                 onClick={() => router.push('/messages')}
-                className="w-full bg-white border border-divider rounded-xl p-4 shadow-card hover:shadow-card-hover transition-shadow flex items-center justify-between text-left"
+                className="w-full bg-surface border border-divider rounded-xl p-4 shadow-card hover:shadow-card-hover transition-shadow flex items-center justify-between text-left"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky/10">
@@ -597,13 +597,13 @@ export default function DashboardPage() {
                   icon={<Users className="h-5 w-5" />}
                   value={stats.activeConsultants}
                   label="Consultants actifs"
-                  color="#5B8C6E"
+                  color="#6DD4B8"
                 />
                 <StatCard
                   icon={<Calendar className="h-5 w-5" />}
                   value={stats.sessionsCount}
                   label="Seances ce mois"
-                  color="#5B8C6E"
+                  color="#6DD4B8"
                 />
               </div>
             </motion.section>
@@ -619,7 +619,7 @@ export default function DashboardPage() {
               <h2 className="text-xl font-semibold font-serif text-charcoal mb-4" style={{ letterSpacing: '-0.02em' }}>
                 Suivi des programmes
               </h2>
-              <div className="bg-white border border-divider rounded-xl p-5 shadow-card space-y-4">
+              <div className="bg-surface border border-divider rounded-xl p-5 shadow-card space-y-4">
                 {/* Observance rate bar */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
@@ -628,7 +628,7 @@ export default function DashboardPage() {
                       Observance globale
                     </div>
                     <span className="text-sm font-semibold" style={{
-                      color: stats.avgObservanceRate >= 75 ? '#7BAE7F' : stats.avgObservanceRate >= 50 ? '#D4A060' : '#D4738B'
+                      color: stats.avgObservanceRate >= 75 ? '#A8E6CF' : stats.avgObservanceRate >= 50 ? '#D4A574' : '#E57B7B'
                     }}>
                       {stats.avgObservanceRate}%
                     </span>
@@ -638,7 +638,7 @@ export default function DashboardPage() {
                       className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${stats.avgObservanceRate}%`,
-                        backgroundColor: stats.avgObservanceRate >= 75 ? '#7BAE7F' : stats.avgObservanceRate >= 50 ? '#D4A060' : '#D4738B',
+                        backgroundColor: stats.avgObservanceRate >= 75 ? '#A8E6CF' : stats.avgObservanceRate >= 50 ? '#D4A574' : '#E57B7B',
                       }}
                     />
                   </div>
@@ -652,7 +652,7 @@ export default function DashboardPage() {
                       Remplissage journal
                     </div>
                     <span className="text-sm font-semibold" style={{
-                      color: stats.avgJournalFillRate >= 75 ? '#7BAE7F' : stats.avgJournalFillRate >= 50 ? '#D4A060' : '#D4738B'
+                      color: stats.avgJournalFillRate >= 75 ? '#A8E6CF' : stats.avgJournalFillRate >= 50 ? '#D4A574' : '#E57B7B'
                     }}>
                       {stats.avgJournalFillRate}%
                     </span>
@@ -662,7 +662,7 @@ export default function DashboardPage() {
                       className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${stats.avgJournalFillRate}%`,
-                        backgroundColor: stats.avgJournalFillRate >= 75 ? '#7BAE7F' : stats.avgJournalFillRate >= 50 ? '#D4A060' : '#D4738B',
+                        backgroundColor: stats.avgJournalFillRate >= 75 ? '#A8E6CF' : stats.avgJournalFillRate >= 50 ? '#D4A574' : '#E57B7B',
                       }}
                     />
                   </div>
@@ -688,7 +688,7 @@ export default function DashboardPage() {
                           </div>
                           <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{
                             backgroundColor: c.rate < 25 ? '#D4738B20' : '#D4A06020',
-                            color: c.rate < 25 ? '#D4738B' : '#D4A060',
+                            color: c.rate < 25 ? '#E57B7B' : '#D4A574',
                           }}>
                             Obs. {c.rate}%
                           </span>

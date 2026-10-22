@@ -34,7 +34,7 @@ function InvoiceCard({ invoice }: { invoice: Invoice }) {
   return (
     <div className="flex items-center gap-4 p-4 bg-cream/60 rounded-xl">
       {/* Icône */}
-      <div className="shrink-0 p-2 bg-white rounded-lg shadow-sm">
+      <div className="shrink-0 p-2 bg-surface rounded-lg shadow-sm">
         <svg
           className="h-6 w-6 text-charcoal"
           fill="none"

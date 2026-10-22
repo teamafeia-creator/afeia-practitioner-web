@@ -227,7 +227,7 @@ export default function AdminPatientsPage() {
       )}
 
       {/* Filters */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-slate-200 bg-surface p-4">
         <div className="grid gap-4 md:grid-cols-7">
           <div className="md:col-span-2">
             <label className="text-xs font-medium text-slate-500">Recherche</label>
@@ -306,7 +306,7 @@ export default function AdminPatientsPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-surface">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>

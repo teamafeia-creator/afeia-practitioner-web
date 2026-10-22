@@ -127,7 +127,7 @@ export function BookingStepGroupSession({
                 className={`w-full text-left rounded-xl border p-4 transition-all ${
                   isFull
                     ? 'border-neutral-200 bg-neutral-50 opacity-60 cursor-not-allowed'
-                    : 'border-teal/15 bg-white/70 hover:border-sage/40 hover:bg-white/90 hover:shadow-sm cursor-pointer'
+                    : 'border-teal/15 bg-surface/70 hover:border-sage/40 hover:bg-surface/90 hover:shadow-sm cursor-pointer'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">

@@ -180,7 +180,7 @@ export default function ResourceDetailPage() {
 
       {/* Send modal */}
       {sendModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/30 backdrop-blur-[4px] px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[4px] px-4">
           <div className="w-full max-w-md rounded-xl glass-card p-6">
             <h2 className="text-lg font-semibold text-charcoal">Envoyer la fiche</h2>
             <p className="mt-1 text-sm text-stone">Sélectionnez un consultant</p>

@@ -12,12 +12,12 @@ type DataSeries = {
 };
 
 const AVAILABLE_SERIES: DataSeries[] = [
-  { key: 'energy', label: 'Énergie (Journal)', color: '#D4A060' },
-  { key: 'mood', label: 'Humeur (Journal)', color: '#D4738B' },
-  { key: 'sleep_duration', label: 'Sommeil (heures)', color: '#5B8C6E' },
+  { key: 'energy', label: 'Énergie (Journal)', color: '#D4A574' },
+  { key: 'mood', label: 'Humeur (Journal)', color: '#E57B7B' },
+  { key: 'sleep_duration', label: 'Sommeil (heures)', color: '#6DD4B8' },
   { key: 'sleep_score', label: 'Score sommeil', color: '#5B8C8E' },
   { key: 'hrv', label: 'HRV moyenne', color: '#8B5CF6' },
-  { key: 'activity', label: 'Activité', color: '#C4856C' },
+  { key: 'activity', label: 'Activité', color: '#E8A87C' },
 ];
 
 function convertEnergy(val?: string | null): number | null {
@@ -211,7 +211,7 @@ export function CycleOverlayChart({
             onClick={() => toggleSeries(s.key)}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               selectedSeries.includes(s.key)
-                ? 'text-white'
+                ? 'text-ink'
                 : 'bg-cream text-stone hover:bg-cream/80'
             }`}
             style={
@@ -262,10 +262,10 @@ export function CycleOverlayChart({
                   y1={y}
                   x2={width - paddingRight}
                   y2={y}
-                  stroke="#e5e5e5"
+                  stroke="#2A3140"
                   strokeWidth="0.5"
                 />
-                <text x={paddingLeft - 4} y={y + 3} textAnchor="end" fontSize="9" fill="#9ca3af">
+                <text x={paddingLeft - 4} y={y + 3} textAnchor="end" fontSize="9" fill="#5C6573">
                   {v}
                 </text>
               </g>
@@ -298,7 +298,7 @@ export function CycleOverlayChart({
                 y={height - 6}
                 textAnchor="middle"
                 fontSize="9"
-                fill="#9ca3af"
+                fill="#5C6573"
               >
                 {label}
               </text>

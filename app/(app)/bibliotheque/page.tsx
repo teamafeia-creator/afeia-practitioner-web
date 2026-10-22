@@ -77,7 +77,7 @@ export default function BibliothequePage() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value as ResourceCategory | '')}
-              className="rounded-lg border border-divider bg-white px-3 py-1.5 text-xs text-charcoal focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
+              className="rounded-lg border border-divider bg-surface px-3 py-1.5 text-xs text-charcoal focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
             >
               <option value="">Toutes les catégories</option>
               {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
@@ -97,8 +97,8 @@ export default function BibliothequePage() {
                   onClick={() => setSourceFilter(option.value as ResourceSource | '')}
                   className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     sourceFilter === option.value
-                      ? 'bg-sage text-white'
-                      : 'bg-white text-sage hover:bg-sage-light/50'
+                      ? 'bg-sage text-ink'
+                      : 'bg-surface text-sage hover:bg-sage-light/50'
                   }`}
                 >
                   {option.label}

@@ -214,7 +214,7 @@ export default function PublicQuestionnairePage() {
             </span>
             <span>{progress}%</span>
           </div>
-          <div className="h-2 bg-white/50 rounded-full overflow-hidden">
+          <div className="h-2 bg-surface/50 rounded-full overflow-hidden">
             <div
               className="h-full bg-sage transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -336,8 +336,8 @@ export default function PublicQuestionnairePage() {
                             }}
                             className={`px-4 py-2 rounded-xl text-sm transition-all ${
                               currentValue === option
-                                ? 'bg-sage text-white shadow-sm'
-                                : 'bg-white/80 text-charcoal hover:bg-sage-light border border-black/10'
+                                ? 'bg-sage text-ink shadow-sm'
+                                : 'bg-surface/80 text-charcoal hover:bg-sage-light border border-black/10'
                             }`}
                           >
                             {option}

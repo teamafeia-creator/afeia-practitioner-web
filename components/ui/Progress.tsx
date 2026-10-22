@@ -110,7 +110,7 @@ export function ProgressCircle({
   };
 
   const colors = {
-    teal: '#5B8C6E',
+    teal: '#6DD4B8',
     emerald: '#10B981',
     orange: '#F59E0B',
     pink: '#EC4899',
@@ -135,7 +135,7 @@ export function ProgressCircle({
           cy={svgSize / 2}
           r={radius}
           fill="none"
-          stroke="#E5E7EB"
+          stroke="#2A3140"
           strokeWidth={strokeWidth}
         />
         {/* Progress circle */}
@@ -197,7 +197,7 @@ export function StepsProgress({
               className={cn(
                 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
                 index < currentStep
-                  ? 'bg-sage text-white'
+                  ? 'bg-sage text-ink'
                   : index === currentStep
                   ? 'bg-sage-light text-sage ring-2 ring-sage'
                   : 'bg-neutral-100 text-neutral-400'

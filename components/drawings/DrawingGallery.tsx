@@ -107,7 +107,7 @@ export function DrawingGallery({ drawings, onOpen, onDelete, onCreate, onExportP
                   className="flex flex-col rounded-xl border border-divider bg-cream/60 p-4 transition hover:shadow-card"
                 >
                   {/* Miniature */}
-                  <div className="mb-3 flex h-36 items-center justify-center rounded-lg bg-white">
+                  <div className="mb-3 flex h-36 items-center justify-center rounded-lg bg-surface">
                     {snapshotUrls[drawing.id] ? (
                       <img
                         src={snapshotUrls[drawing.id]}

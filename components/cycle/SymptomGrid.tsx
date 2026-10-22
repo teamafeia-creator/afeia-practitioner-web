@@ -48,7 +48,7 @@ export function SymptomGrid({
       <table className="w-full text-xs">
         <thead>
           <tr>
-            <th className="sticky left-0 bg-white/90 px-2 py-1 text-left font-medium text-stone min-w-[120px]">
+            <th className="sticky left-0 bg-surface/90 px-2 py-1 text-left font-medium text-stone min-w-[120px]">
               Symptôme
             </th>
             {columns.map((col) => {
@@ -78,7 +78,7 @@ export function SymptomGrid({
 
             return (
               <tr key={symptomKey} className="border-t border-black/5">
-                <td className="sticky left-0 bg-white/90 px-2 py-1 text-stone">
+                <td className="sticky left-0 bg-surface/90 px-2 py-1 text-stone">
                   {SYMPTOM_LABELS[symptomKey]}
                 </td>
                 {columns.map((col) => {

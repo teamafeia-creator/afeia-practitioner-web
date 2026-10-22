@@ -283,7 +283,7 @@ export default function CreatePlanPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description generale du plan..."
-              className="w-full rounded-xl border border-black/10 bg-white p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
+              className="w-full rounded-xl border border-black/10 bg-surface p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
               rows={3}
             />
           </div>
@@ -336,7 +336,7 @@ export default function CreatePlanPage() {
                 <select
                   value={rec.category}
                   onChange={(e) => updateRecommendation(idx, 'category', e.target.value)}
-                  className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-sage focus:outline-none"
+                  className="rounded-xl border border-black/10 bg-surface px-3 py-2 text-sm focus:border-sage focus:outline-none"
                 >
                   <option value="">Categorie...</option>
                   <option value="Alimentation">Alimentation</option>
@@ -362,7 +362,7 @@ export default function CreatePlanPage() {
                 value={rec.details}
                 onChange={(e) => updateRecommendation(idx, 'details', e.target.value)}
                 placeholder="Details et explications..."
-                className="w-full rounded-xl border border-black/10 bg-white p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
+                className="w-full rounded-xl border border-black/10 bg-surface p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
                 rows={2}
               />
             </div>
@@ -422,7 +422,7 @@ export default function CreatePlanPage() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes supplementaires pour le consultant..."
-            className="w-full rounded-xl border border-black/10 bg-white p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
+            className="w-full rounded-xl border border-black/10 bg-surface p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
             rows={4}
           />
         </CardContent>

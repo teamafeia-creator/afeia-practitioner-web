@@ -58,8 +58,8 @@ export function JensenChart({
   const humoralR = size * 0.30; // Humoral zone
   const ciliaryR = size * 0.38; // Ciliary zone
 
-  const lineColor = '#9CA3AF';
-  const labelColor = '#6B7280';
+  const lineColor = '#5C6573';
+  const labelColor = '#8B95A5';
   const dashArray = '4 4';
 
   // Calculate label position for each sector

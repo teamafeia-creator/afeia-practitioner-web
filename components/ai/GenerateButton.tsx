@@ -102,7 +102,7 @@ export function GenerateButton({
             className="fixed inset-0 z-40"
             onClick={() => setShowMenu(false)}
           />
-          <div className="absolute top-full right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border z-50">
+          <div className="absolute top-full right-0 mt-1 w-56 bg-surface rounded-lg shadow-lg border z-50">
             <button
               onClick={handleGenerate}
               className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-sm rounded-t-lg"

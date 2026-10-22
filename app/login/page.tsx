@@ -85,7 +85,7 @@ function LoginForm() {
                   aria-label="Adresse e-mail"
                   autoComplete="email"
                   required
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-neutral-200 bg-white text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-neutral-200 bg-surface text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
                 />
               </div>
 
@@ -101,7 +101,7 @@ function LoginForm() {
                   aria-label="Mot de passe"
                   autoComplete="current-password"
                   required
-                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-neutral-200 bg-white text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
+                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-neutral-200 bg-surface text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
                 />
                 <button
                   type="button"
@@ -182,7 +182,7 @@ function LoginForm() {
               <div className="w-full border-t border-neutral-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-4 text-stone">ou</span>
+              <span className="bg-surface px-4 text-stone">ou</span>
             </div>
           </div>
 
@@ -208,7 +208,7 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen">
       {/* Left: form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#FBF7F2] p-6 lg:p-12 relative overflow-hidden">
+      <div className="w-full lg:w-1/2 flex items-center justify-center bg-cream p-6 lg:p-12 relative overflow-hidden">
         {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-sage-light blur-3xl" />

@@ -52,7 +52,7 @@ export function LineChartFull({
       {/* Y axis */}
       {showAxes && yTicks.map((v) => (
         <g key={v}>
-          <line x1={padding.left} x2={width - padding.right} y1={scaleY(v)} y2={scaleY(v)} stroke="#e5e7eb" strokeWidth="0.5" />
+          <line x1={padding.left} x2={width - padding.right} y1={scaleY(v)} y2={scaleY(v)} stroke="#2A3140" strokeWidth="0.5" />
           <text x={padding.left - 8} y={scaleY(v) + 4} textAnchor="end" className="fill-warmgray" fontSize="10">{v}</text>
         </g>
       ))}
@@ -104,8 +104,8 @@ export function LineChartFull({
             width={90}
             height={series.length * 16 + 18}
             rx={4}
-            fill="white"
-            stroke="#e5e7eb"
+            fill="#1C2230"
+            stroke="#2A3140"
             strokeWidth="0.5"
             opacity={0.95}
           />

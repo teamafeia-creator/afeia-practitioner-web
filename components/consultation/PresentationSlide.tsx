@@ -21,15 +21,15 @@ export function PresentationSlide({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="min-h-screen bg-cream flex flex-col"
-      style={{ backgroundColor: '#FBF7F2' }}
+      style={{ backgroundColor: '#0A0E14' }}
     >
       <div className="flex-1 flex flex-col px-8 py-10 md:px-16 md:py-14 lg:px-24 lg:py-16 max-w-[1200px] mx-auto w-full">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-semibold font-serif text-charcoal" style={{ color: '#2D3436', letterSpacing: '-0.02em' }}>
+          <h1 className="text-3xl md:text-4xl font-semibold font-serif text-charcoal" style={{ color: '#E8EDF4', letterSpacing: '-0.02em' }}>
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-2 text-lg text-warmgray" style={{ color: '#6B7280' }}>
+            <p className="mt-2 text-lg text-warmgray" style={{ color: '#8B95A5' }}>
               {subtitle}
             </p>
           )}
@@ -38,7 +38,7 @@ export function PresentationSlide({
       </div>
 
       <div className="text-right px-8 pb-4 md:px-16 lg:px-24">
-        <span className="text-xs text-warmgray" style={{ color: '#6B7280' }}>
+        <span className="text-xs text-warmgray" style={{ color: '#8B95A5' }}>
           {slideNumber} / {totalSlides}
         </span>
       </div>

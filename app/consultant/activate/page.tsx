@@ -243,16 +243,16 @@ export default function ActivatePage() {
   const codeComplete = code.every(d => d !== '')
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6B8DC9] via-[#7B9DD9] to-[#9B8DC9] p-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6DD4B8] via-[#4FB59C] to-[#2D7A6E] p-4">
+      <div className="bg-surface rounded-3xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#6B8DC9] to-[#9B8DC9] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#6DD4B8] to-[#2D7A6E] rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Leaf className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-[#2D3748] mb-2">
+          <h1 className="text-2xl font-bold text-[#E8EDF4] mb-2">
             Bienvenue sur AFEIA
           </h1>
-          <p className="text-[#718096]">
+          <p className="text-[#8B95A5]">
             Entrez le code à 6 chiffres reçu par email
           </p>
         </div>
@@ -264,7 +264,7 @@ export default function ActivatePage() {
               ref={el => { inputs.current[index] = el }}
               type="text"
               inputMode="numeric"
-              className="w-12 h-14 text-2xl font-bold text-center border-2 border-[#E2E8F0] rounded-xl focus:border-[#6B8DC9] focus:ring-2 focus:ring-[#6B8DC9]/20 outline-none transition-all"
+              className="w-12 h-14 text-2xl font-bold text-center border-2 border-[#2A3140] rounded-xl focus:border-[#6DD4B8] focus:ring-2 focus:ring-[#6DD4B8]/20 outline-none transition-all"
               value={digit}
               onChange={(e) => handleCodeChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
@@ -282,18 +282,18 @@ export default function ActivatePage() {
         <button
           onClick={handleVerifyCode}
           disabled={loading || !codeComplete}
-          className="w-full bg-gradient-to-r from-[#6B8DC9] to-[#9B8DC9] text-white py-4 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg"
+          className="w-full bg-gradient-to-r from-[#6DD4B8] to-[#2D7A6E] text-white py-4 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg"
         >
           {loading ? 'Vérification...' : 'Continuer'}
         </button>
 
         <div className="text-center mt-6">
-          <a href="/consultant/login" className="text-[#6B8DC9] text-sm hover:underline">
+          <a href="/consultant/login" className="text-[#6DD4B8] text-sm hover:underline">
             J&apos;ai déjà un compte
           </a>
         </div>
 
-        <p className="text-xs text-[#A0AEC0] text-center mt-4">
+        <p className="text-xs text-[#5C6573] text-center mt-4">
           Le code est valide pendant 7 jours
         </p>
       </div>

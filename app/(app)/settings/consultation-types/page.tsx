@@ -196,7 +196,7 @@ export default function ConsultationTypesPage() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push('/settings')}
-          className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone"
+          className="p-2 rounded-lg hover:bg-surface/50 transition-colors text-stone"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -268,7 +268,7 @@ export default function ConsultationTypesPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleToggleActive(ct)}
-                  className="p-2 rounded-lg hover:bg-white/50 transition-colors"
+                  className="p-2 rounded-lg hover:bg-surface/50 transition-colors"
                   title={ct.is_active ? 'Desactiver' : 'Reactiver'}
                 >
                   {ct.is_active ? (
@@ -279,7 +279,7 @@ export default function ConsultationTypesPage() {
                 </button>
                 <button
                   onClick={() => openEdit(ct)}
-                  className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone hover:text-charcoal"
+                  className="p-2 rounded-lg hover:bg-surface/50 transition-colors text-stone hover:text-charcoal"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>

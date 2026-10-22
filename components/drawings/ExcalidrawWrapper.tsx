@@ -185,7 +185,7 @@ const ExcalidrawWrapper = forwardRef<any, ExcalidrawWrapperProps>(
 
     if (loading || !sceneData) {
       return (
-        <div className="flex h-full w-full items-center justify-center bg-white">
+        <div className="flex h-full w-full items-center justify-center bg-surface">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-sage border-t-transparent" />
         </div>
       );

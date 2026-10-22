@@ -164,10 +164,10 @@ export function AppointmentDetail({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-md bg-white shadow-2xl overflow-y-auto"
+              className="relative w-full max-w-md bg-surface shadow-2xl overflow-y-auto"
             >
               {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-neutral-100 px-5 py-4 flex items-center justify-between z-10">
+              <div className="sticky top-0 bg-surface border-b border-neutral-100 px-5 py-4 flex items-center justify-between z-10">
                 <h2 className="text-lg font-semibold text-charcoal">Detail de la seance</h2>
                 <button
                   onClick={onClose}

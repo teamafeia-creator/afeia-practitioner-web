@@ -58,8 +58,8 @@ export function SlotPicker({
               px-4 py-2 rounded-lg text-sm font-medium transition-all
               ${
                 selectedSlot === slot
-                  ? 'bg-sage text-white shadow-sm'
-                  : 'bg-white/80 border border-sage/20 text-charcoal hover:border-sage/40 hover:bg-sage-light/50'
+                  ? 'bg-sage text-ink shadow-sm'
+                  : 'bg-surface/80 border border-sage/20 text-charcoal hover:border-sage/40 hover:bg-sage-light/50'
               }
             `}
           >

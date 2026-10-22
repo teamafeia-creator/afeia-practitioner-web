@@ -102,7 +102,7 @@ export default function ConsultantDemoPage() {
 
       <div className="max-w-4xl mx-auto p-6 space-y-4">
         {/* Informations consultant */}
-        <div className="bg-white rounded-xl p-6 shadow">
+        <div className="bg-surface rounded-xl p-6 shadow">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><ClipboardList className="w-5 h-5" /> Mes informations</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -126,7 +126,7 @@ export default function ConsultantDemoPage() {
 
         {/* Conseillancier */}
         {plan ? (
-          <div className="bg-white rounded-xl p-6 shadow">
+          <div className="bg-surface rounded-xl p-6 shadow">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Pill className="w-5 h-5" /> Mon conseillancier</h2>
             <p className="text-gray-600 mb-4">{plan.plan_name}</p>
 
@@ -158,7 +158,7 @@ export default function ConsultantDemoPage() {
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-xl p-6 shadow">
+          <div className="bg-surface rounded-xl p-6 shadow">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Pill className="w-5 h-5" /> Mon conseillancier</h2>
             <div className="bg-gray-50 p-4 rounded-lg text-center">
               <p className="text-gray-600 mb-3">Aucun conseillancier pour le moment</p>
@@ -174,7 +174,7 @@ export default function ConsultantDemoPage() {
 
         {/* Mon naturopathe */}
         {consultant.practitioners && (
-          <div className="bg-white rounded-xl p-6 shadow">
+          <div className="bg-surface rounded-xl p-6 shadow">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><User className="w-5 h-5" /> Mon naturopathe</h2>
             <div className="flex items-start space-x-4">
               <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center">

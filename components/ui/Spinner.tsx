@@ -19,7 +19,7 @@ export function Spinner({ size = 'md', color = 'teal', className }: SpinnerProps
 
   const colors = {
     teal: 'border-teal',
-    white: 'border-white',
+    white: 'border-surface',
     neutral: 'border-neutral-400'
   };
 
@@ -47,7 +47,7 @@ export function LoadingOverlay({ message, fullScreen = false }: LoadingOverlayPr
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className={cn(
-        'flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-50',
+        'flex flex-col items-center justify-center bg-surface/80 backdrop-blur-sm z-50',
         fullScreen ? 'fixed inset-0' : 'absolute inset-0 rounded-2xl'
       )}
     >
@@ -67,7 +67,7 @@ interface PulseDotsProps {
 export function PulseDots({ color = 'teal', className }: PulseDotsProps) {
   const colors = {
     teal: 'bg-teal',
-    white: 'bg-white',
+    white: 'bg-surface',
     neutral: 'bg-neutral-400'
   };
 
@@ -94,7 +94,7 @@ export function PulseDots({ color = 'teal', className }: PulseDotsProps) {
 
 export function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream via-white to-sage/5 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-cream via-surface to-sage/5 flex flex-col items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -107,7 +107,7 @@ export function LoadingScreen() {
           transition={{ duration: 2, repeat: Infinity }}
           className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-sage to-sage-dark flex items-center justify-center shadow-glow"
         >
-          <span className="text-3xl font-bold text-white">A</span>
+          <span className="text-3xl font-bold text-ink">A</span>
         </motion.div>
 
         <h2 className="text-xl font-semibold text-charcoal mb-2">AFEIA</h2>

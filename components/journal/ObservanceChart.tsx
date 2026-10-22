@@ -33,7 +33,7 @@ export function ObservanceChart({ summary, onCategoryClick, detailed = false, de
   return (
     <div className="space-y-4">
       {/* Global rate bar */}
-      <div className="rounded-lg bg-white/60 p-4 border border-divider">
+      <div className="rounded-lg bg-surface/60 p-4 border border-divider">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-charcoal">Observance globale</span>
           <span className={cn('text-lg font-bold', getRateTextColor(summary.globalRate))}>
@@ -56,7 +56,7 @@ export function ObservanceChart({ summary, onCategoryClick, detailed = false, de
               type="button"
               onClick={() => onCategoryClick?.(cat.category)}
               className={cn(
-                'w-full flex items-center gap-3 rounded-lg bg-white/60 px-3 py-2.5 border border-divider transition-colors',
+                'w-full flex items-center gap-3 rounded-lg bg-surface/60 px-3 py-2.5 border border-divider transition-colors',
                 onCategoryClick && 'hover:bg-cream/50 cursor-pointer'
               )}
             >

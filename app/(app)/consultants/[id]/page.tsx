@@ -453,8 +453,7 @@ export default function ConsultantDetailPage() {
               Annuler
             </Button>
             <Button
-              variant="primary"
-              className="bg-red-600 hover:bg-red-700"
+              variant="destructive"
               onClick={handleDeleteConsultant}
               loading={deleteConsultantMutation.isPending}
             >

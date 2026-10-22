@@ -112,9 +112,9 @@ export function IrisViewer({ photo, onSave, onClose }: IrisViewerProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-charcoal/95">
+    <div className="fixed inset-0 z-50 flex flex-col bg-ink/95">
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 bg-white border-b border-divider flex-wrap">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 bg-surface border-b border-divider flex-wrap">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-charcoal">
             {EYE_LABELS[photo.eye]}
@@ -294,7 +294,7 @@ export function IrisViewer({ photo, onSave, onClose }: IrisViewerProps) {
                   >
                     {ann.type === 'point' && (
                       <div
-                        className="h-3 w-3 rounded-full border-2 border-white shadow-md"
+                        className="h-3 w-3 rounded-full border-2 border-surface shadow-md"
                         style={{ backgroundColor: ann.color }}
                       />
                     )}
@@ -313,7 +313,7 @@ export function IrisViewer({ photo, onSave, onClose }: IrisViewerProps) {
                     )}
                     {ann.label && (
                       <span
-                        className="absolute left-full ml-1 top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-medium px-1 py-0.5 rounded bg-white/90 shadow-sm"
+                        className="absolute left-full ml-1 top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-medium px-1 py-0.5 rounded bg-surface/90 shadow-sm"
                         style={{ color: ann.color }}
                       >
                         {ann.label}
@@ -323,7 +323,7 @@ export function IrisViewer({ photo, onSave, onClose }: IrisViewerProps) {
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); removeAnnotation(idx); }}
-                      className="absolute -top-2 -right-2 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-rose text-white text-[8px]"
+                      className="absolute -top-2 -right-2 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-rose text-ink text-[8px]"
                     >
                       <X className="h-2.5 w-2.5" />
                     </button>
@@ -339,7 +339,7 @@ export function IrisViewer({ photo, onSave, onClose }: IrisViewerProps) {
         </div>
 
         {/* Notes sidebar */}
-        <div className="w-72 bg-white border-l border-divider p-4 space-y-3 overflow-y-auto hidden lg:block">
+        <div className="w-72 bg-surface border-l border-divider p-4 space-y-3 overflow-y-auto hidden lg:block">
           <h4 className="text-xs font-semibold text-charcoal uppercase tracking-wide">Notes iridologiques</h4>
           <Textarea
             value={notes}

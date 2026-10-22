@@ -466,7 +466,7 @@ function renderAdherence(entry: JournalEntry) {
 
 function renderInsight(insight: WearableInsight) {
   return (
-    <div key={insight.id} className="rounded-lg bg-white/60 p-4 border border-divider">
+    <div key={insight.id} className="rounded-lg bg-surface/60 p-4 border border-divider">
       <div className="flex items-center justify-between">
         <span className="text-xs uppercase tracking-wide text-stone">Insight {insight.type ?? ''}</span>
         <Badge variant={insight.level === 'attention' ? 'attention' : 'info'}>
@@ -1715,7 +1715,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         className={cn(
                           'w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors',
                           isActive
-                            ? 'bg-sage text-white shadow-sm'
+                            ? 'bg-sage text-ink shadow-sm'
                             : 'text-stone hover:bg-cream hover:text-charcoal'
                         )}
                       >
@@ -1733,7 +1733,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         {/* Content Area */}
         <div className="flex-1 min-w-0">
           {/* Section description */}
-          <div className="rounded-xl bg-white px-4 py-3 border border-divider mb-4">
+          <div className="rounded-xl bg-surface px-4 py-3 border border-divider mb-4">
             <h2 className="text-sm font-semibold text-charcoal">{activeMeta.title}</h2>
             <p className="text-xs text-stone">{activeMeta.description}</p>
           </div>
@@ -2059,7 +2059,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     const relName = rel.related_consultant?.name || 'Consultant';
                     const typeLabels: Record<string, string> = { parent: 'Parent', child: 'Enfant', spouse: 'Conjoint(e)', sibling: 'Frère/Sœur', other: 'Autre' };
                     return (
-                      <div key={rel.id} className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider">
+                      <div key={rel.id} className="flex items-center justify-between rounded-lg bg-surface/60 p-3 border border-divider">
                         <div className="flex items-center gap-2">
                           <Link2 className="h-4 w-4 text-stone" />
                           <button
@@ -2122,7 +2122,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         {items.map((entry) => (
                           <div
                             key={entry.id}
-                            className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider mb-1 cursor-pointer hover:bg-cream/50"
+                            className="flex items-center justify-between rounded-lg bg-surface/60 p-3 border border-divider mb-1 cursor-pointer hover:bg-cream/50"
                             onClick={() => {
                               setHistoryForm({
                                 category: entry.category,
@@ -2185,7 +2185,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     return (
                       <div
                         key={entry.id}
-                        className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider cursor-pointer hover:bg-cream/50"
+                        className="flex items-center justify-between rounded-lg bg-surface/60 p-3 border border-divider cursor-pointer hover:bg-cream/50"
                         onClick={() => {
                           setAllergyForm({
                             type: entry.type,
@@ -2247,7 +2247,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                   {currentTreatments.map((entry) => (
                     <div
                       key={entry.id}
-                      className="flex items-center justify-between rounded-lg bg-white/60 p-3 border border-divider cursor-pointer hover:bg-cream/50"
+                      className="flex items-center justify-between rounded-lg bg-surface/60 p-3 border border-divider cursor-pointer hover:bg-cream/50"
                       onClick={() => {
                         setTreatmentForm({
                           name: entry.name,
@@ -2323,7 +2323,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                       {upcoming.map((appointment) => (
                         <div
                           key={appointment.id}
-                          className="rounded-lg bg-white/60 p-4 border border-divider"
+                          className="rounded-lg bg-surface/60 p-4 border border-divider"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
@@ -2376,7 +2376,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         <div
                           key={appointment.id}
                           className={cn(
-                            'rounded-lg bg-white/60 p-4 border border-divider',
+                            'rounded-lg bg-surface/60 p-4 border border-divider',
                             appointment.status === 'cancelled' && 'opacity-60'
                           )}
                         >
@@ -2439,7 +2439,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     {section.questions.map((question) => (
                       <div
                         key={question.key}
-                        className="rounded-lg bg-white/60 p-4 border border-divider"
+                        className="rounded-lg bg-surface/60 p-4 border border-divider"
                       >
                         <p className="text-xs uppercase tracking-wide text-stone">{question.label}</p>
                         {anamnesisEditing ? (
@@ -2771,7 +2771,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         : (statusVal ? EMUNCTORY_STATUS_MAP[statusVal as keyof typeof EMUNCTORY_STATUS_MAP] : null);
 
                       return (
-                        <div key={em.key} className="rounded-lg bg-white/60 p-3 border border-divider space-y-2">
+                        <div key={em.key} className="rounded-lg bg-surface/60 p-3 border border-divider space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-charcoal">{em.label}</span>
                             {statusInfo ? (
@@ -2847,7 +2847,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                                   <button
                                     type="button"
                                     onClick={() => setIrisViewerPhoto(latestPhoto)}
-                                    className="flex-1 bg-white/90 text-charcoal text-xs font-medium py-1.5 rounded-lg hover:bg-white transition"
+                                    className="flex-1 bg-surface/90 text-charcoal text-xs font-medium py-1.5 rounded-lg hover:bg-surface transition"
                                   >
                                     Voir / Annoter
                                   </button>
@@ -2855,7 +2855,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                                     <button
                                       type="button"
                                       onClick={() => setIrisCompareEye(eyeSide)}
-                                      className="bg-white/90 text-charcoal text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-white transition"
+                                      className="bg-surface/90 text-charcoal text-xs font-medium py-1.5 px-3 rounded-lg hover:bg-surface transition"
                                     >
                                       Comparer
                                     </button>
@@ -3171,7 +3171,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           <CardContent>
             {/* Cycle phase bar overlay */}
             {cycleIsTracking && cycleContext && wearableSummaries.length > 0 && (
-              <div className="mb-4 rounded-lg bg-white/60 p-3 border border-divider">
+              <div className="mb-4 rounded-lg bg-surface/60 p-3 border border-divider">
                 <p className="text-[10px] uppercase tracking-wide text-stone mb-2">Phases du cycle (60 derniers jours)</p>
                 <div className="flex h-4 rounded-full overflow-hidden">
                   {(() => {
@@ -3218,7 +3218,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             )}
             {!isPremium ? (
               <div className="relative overflow-hidden rounded-lg border border-dashed border-sage/20 bg-sage-light/50 p-6 text-sm text-charcoal">
-                <div className="absolute right-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-sage shadow-soft">
+                <div className="absolute right-4 top-4 rounded-full bg-surface px-3 py-1 text-xs font-semibold text-sage shadow-soft">
                   Premium
                 </div>
                 <div className="flex flex-col gap-3">
@@ -3408,7 +3408,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 </div>
 
                 {/* Transit Bristol */}
-                <div className="rounded-lg bg-white/60 p-4 border border-divider">
+                <div className="rounded-lg bg-surface/60 p-4 border border-divider">
                   <p className="text-xs uppercase tracking-wide text-stone mb-3">Transit (échelle de Bristol)</p>
                   <BristolScale
                     value={(journalForm.bristol_type as BristolType) ?? null}
@@ -3441,7 +3441,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
 
                 {/* Hydration + Exercise */}
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-lg bg-white/60 p-4 border border-divider">
+                  <div className="rounded-lg bg-surface/60 p-4 border border-divider">
                     <p className="text-xs uppercase tracking-wide text-stone mb-2 flex items-center gap-1">
                       <Droplets className="h-3.5 w-3.5" /> Hydratation
                     </p>
@@ -3467,7 +3467,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                       </div>
                     )}
                   </div>
-                  <div className="rounded-lg bg-white/60 p-4 border border-divider">
+                  <div className="rounded-lg bg-surface/60 p-4 border border-divider">
                     <p className="text-xs uppercase tracking-wide text-stone mb-2 flex items-center gap-1">
                       <Dumbbell className="h-3.5 w-3.5" /> Exercice
                     </p>
@@ -3660,7 +3660,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         key={entry.id}
                         type="button"
                         onClick={() => { setJournalForm(buildJournalForm(entry)); }}
-                        className="w-full text-left rounded-lg bg-white/60 p-4 border border-divider hover:bg-cream/50 transition-colors"
+                        className="w-full text-left rounded-lg bg-surface/60 p-4 border border-divider hover:bg-cream/50 transition-colors"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
@@ -3727,7 +3727,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             {noteEditing ? <EditBanner label="Enregistrez vos notes confidentielles." /> : null}
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 rounded-lg bg-white/60 p-4 text-sm text-charcoal border border-divider">
+            <div className="flex items-start gap-3 rounded-lg bg-surface/60 p-4 text-sm text-charcoal border border-divider">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage-light flex-shrink-0">
                 <svg className="w-4 h-4 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -3748,7 +3748,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 rows={6}
               />
             ) : (
-              <div className="rounded-lg bg-white/60 p-4 text-sm border border-divider whitespace-pre-line">
+              <div className="rounded-lg bg-surface/60 p-4 text-sm border border-divider whitespace-pre-line">
                 {renderValue(noteContent)}
               </div>
             )}
@@ -3921,7 +3921,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                         type="button"
                         onClick={() => setActivePlanId(planItem.id)}
                         className={cn(
-                          'text-left rounded-lg border border-divider bg-white/60 p-4 transition',
+                          'text-left rounded-lg border border-divider bg-surface/60 p-4 transition',
                           isActive ? 'border-sage/40 ring-2 ring-sage/20' : 'hover:border-sage/20'
                         )}
                       >
@@ -4053,7 +4053,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                           return (
                             <div
                               key={field.key}
-                              className="rounded-lg bg-white/60 p-4 border border-divider"
+                              className="rounded-lg bg-surface/60 p-4 border border-divider"
                             >
                               <div className="flex items-center justify-between">
                                 <p className="text-xs uppercase tracking-wide text-stone">{field.label}</p>
@@ -4284,7 +4284,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 description="Envoyez un premier message pour ouvrir la conversation."
               />
             ) : (
-              <div className="space-y-3 rounded-lg bg-white/60 p-4 border border-divider">
+              <div className="space-y-3 rounded-lg bg-surface/60 p-4 border border-divider">
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -4292,14 +4292,14 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                       'max-w-[90%] rounded-lg px-4 py-2 text-sm sm:max-w-[78%]',
                       message.sender === 'consultant'
                         ? 'bg-cream text-charcoal'
-                        : 'ml-auto bg-sage text-white'
+                        : 'ml-auto bg-sage text-ink'
                     )}
                   >
                     <p className="break-words">{message.text || '—'}</p>
                     <p
                       className={cn(
                         'mt-1 text-[11px] opacity-80',
-                        message.sender === 'consultant' ? 'text-stone' : 'text-white/80'
+                        message.sender === 'consultant' ? 'text-stone' : 'text-ink/70'
                       )}
                     >
                       {formatDate(message.sent_at, true)}
@@ -4354,7 +4354,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       </div>{/* end flex sidebar+content */}
 
       {appointmentModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/30 backdrop-blur-[4px] px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[4px] px-4">
           <div className="w-full max-w-md rounded-xl glass-card p-6">
             <h2 className="text-lg font-semibold text-charcoal">Planifier un rendez-vous</h2>
             <p className="mt-2 text-sm text-stone">
@@ -4411,7 +4411,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </div>
       ) : null}
       {deleteModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/30 backdrop-blur-[4px] px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[4px] px-4">
           <div className="w-full max-w-md rounded-xl glass-card p-6">
             <h2 className="text-lg font-semibold text-charcoal">Suppression définitive</h2>
             <p className="mt-2 text-sm text-stone">
@@ -4642,7 +4642,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone" />
               <input
                 type="text"
-                className="w-full rounded-[10px] border border-divider bg-white pl-9 pr-3 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-150 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+                className="w-full rounded-[10px] border border-divider bg-surface pl-9 pr-3 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-150 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
                 placeholder="Tapez un nom..."
                 value={consultantSearch}
                 onChange={(e) => {
@@ -4662,7 +4662,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               />
             </div>
             {consultantSearchResults.length > 0 ? (
-              <div className="mt-1 rounded-lg border border-divider bg-white shadow-sm max-h-40 overflow-y-auto">
+              <div className="mt-1 rounded-lg border border-divider bg-surface shadow-sm max-h-40 overflow-y-auto">
                 {consultantSearchResults.map((result) => (
                   <button
                     key={result.id}

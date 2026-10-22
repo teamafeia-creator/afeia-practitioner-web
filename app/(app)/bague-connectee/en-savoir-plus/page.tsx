@@ -41,9 +41,9 @@ const actionBase =
 
 const actionVariants = {
   primary:
-    'bg-sage text-white shadow-[0_10px_26px_rgba(42,128,128,0.18)] hover:bg-sage-deep',
+    'bg-sage text-ink shadow-[0_10px_26px_rgba(42,128,128,0.18)] hover:bg-sage-deep',
   secondary:
-    'border border-sage/30 bg-white text-sage shadow-sm hover:border-sage/50 hover:bg-sage-light/50'
+    'border border-sage/30 bg-surface text-sage shadow-sm hover:border-sage/50 hover:bg-sage-light/50'
 };
 
 export default function BagueConnecteeLearnMorePage() {
@@ -54,7 +54,7 @@ export default function BagueConnecteeLearnMorePage() {
         subtitle="Suivi biométrique intelligent au service de la naturopathie."
       />
 
-      <section className="rounded-3xl border border-divider/60 bg-white/70 p-6 md:p-8">
+      <section className="rounded-3xl border border-divider/60 bg-surface/70 p-6 md:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone">
@@ -88,7 +88,7 @@ export default function BagueConnecteeLearnMorePage() {
           {METRICS.map((metric) => (
             <div
               key={metric.title}
-              className="rounded-2xl border border-divider/60 bg-white/80 p-4 shadow-sm"
+              className="rounded-2xl border border-divider/60 bg-surface/80 p-4 shadow-sm"
             >
               <h3 className="text-sm font-semibold text-charcoal">{metric.title}</h3>
               <p className="mt-2 text-sm text-charcoal">{metric.description}</p>
@@ -98,7 +98,7 @@ export default function BagueConnecteeLearnMorePage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="space-y-3 rounded-2xl border border-divider/60 bg-white/80 p-6">
+        <div className="space-y-3 rounded-2xl border border-divider/60 bg-surface/80 p-6">
           <h2 className="text-lg font-semibold text-charcoal">Pourquoi c&apos;est utile en naturopathie</h2>
           <ul className="space-y-2 text-sm text-charcoal">
             <li>• Objectiver les ressentis du consultant avec des repères simples.</li>
@@ -107,7 +107,7 @@ export default function BagueConnecteeLearnMorePage() {
             <li>• Affiner l&apos;accompagnement grâce à des tendances fiables.</li>
           </ul>
         </div>
-        <div className="space-y-3 rounded-2xl border border-divider/60 bg-white/80 p-6">
+        <div className="space-y-3 rounded-2xl border border-divider/60 bg-surface/80 p-6">
           <h2 className="text-lg font-semibold text-charcoal">Pour les professionnels</h2>
           <ul className="space-y-2 text-sm text-charcoal">
             <li>• Données exploitables directement dans le suivi consultant.</li>
@@ -117,7 +117,7 @@ export default function BagueConnecteeLearnMorePage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-divider/60 bg-white/80 p-6">
+      <section className="rounded-2xl border border-divider/60 bg-surface/80 p-6">
         <h2 className="text-lg font-semibold text-charcoal">Confidentialité</h2>
         <p className="mt-2 text-sm text-charcoal">
           Les données sont partagées uniquement avec le consentement du consultant. Le praticien dispose
@@ -130,7 +130,7 @@ export default function BagueConnecteeLearnMorePage() {
         <h2 className="text-lg font-semibold text-charcoal">FAQ</h2>
         <div className="grid gap-4 md:grid-cols-2">
           {FAQS.map((item) => (
-            <div key={item.question} className="rounded-2xl border border-divider/60 bg-white/80 p-4">
+            <div key={item.question} className="rounded-2xl border border-divider/60 bg-surface/80 p-4">
               <h3 className="text-sm font-semibold text-charcoal">{item.question}</h3>
               <p className="mt-2 text-sm text-charcoal">{item.answer}</p>
             </div>

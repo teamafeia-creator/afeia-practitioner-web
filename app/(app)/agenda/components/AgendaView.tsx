@@ -143,16 +143,16 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
 
       return {
         style: {
-          backgroundColor: event.isCancelled ? '#e5e5e5' : event.color,
-          borderColor: event.isCancelled ? '#9ca3af' : event.color,
-          color: event.isCancelled ? '#6b7280' : '#fff',
+          backgroundColor: event.isCancelled ? '#2A3140' : event.color,
+          borderColor: event.isCancelled ? '#5C6573' : event.color,
+          color: event.isCancelled ? '#8B95A5' : '#0A0E14',
           opacity: event.isCancelled ? 0.5 : 1,
           textDecoration: event.isCancelled ? 'line-through' : 'none',
           borderRadius: '6px',
           border: needsNotes
             ? '2px solid #f59e0b'
             : event.isGroupSession
-              ? `2px dashed ${event.isCancelled ? '#9ca3af' : event.color}`
+              ? `2px dashed ${event.isCancelled ? '#5C6573' : event.color}`
               : 'none',
           fontSize: '12px',
           padding: '2px 6px',
@@ -203,7 +203,7 @@ export function AgendaView({ onSelectEvent, onSelectSlot, refreshKey }: AgendaVi
   return (
     <div className="relative">
       {loading && (
-        <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+        <div className="absolute inset-0 bg-surface/50 z-10 flex items-center justify-center">
           <div className="text-stone text-sm">Chargement...</div>
         </div>
       )}

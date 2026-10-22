@@ -35,15 +35,15 @@ export function PresentationNav({
       {/* Exit button */}
       <button
         onClick={onExit}
-        className="fixed top-4 left-4 z-50 flex items-center gap-1 rounded-lg bg-white/80 backdrop-blur px-3 py-2 text-sm text-charcoal shadow-sm hover:bg-white transition-colors"
-        style={{ color: '#2D3436' }}
+        className="fixed top-4 left-4 z-50 flex items-center gap-1 rounded-lg bg-surface/80 backdrop-blur px-3 py-2 text-sm text-charcoal shadow-sm hover:bg-surface transition-colors"
+        style={{ color: '#E8EDF4' }}
       >
         <X className="h-4 w-4" />
         Quitter
       </button>
 
       {/* Bottom nav bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-t border-divider">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur border-t border-divider">
         <div className="flex items-center justify-between px-6 py-3 max-w-[1200px] mx-auto">
           <button
             onClick={() => onNavigate(currentSlide - 1)}
@@ -65,7 +65,7 @@ export function PresentationNav({
                     ? 'text-white'
                     : 'bg-gray-100 text-warmgray hover:bg-gray-200'
                 }`}
-                style={i === currentSlide ? { backgroundColor: '#5B8C6E' } : undefined}
+                style={i === currentSlide ? { backgroundColor: '#6DD4B8' } : undefined}
               >
                 {i + 1}
               </button>

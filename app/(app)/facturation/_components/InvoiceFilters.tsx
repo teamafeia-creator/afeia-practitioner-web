@@ -26,8 +26,8 @@ export function InvoiceFilters({ currentFilter, onFilterChange }: Props) {
           className={cn(
             'px-3 py-1.5 rounded-sm text-[13px] font-medium transition-all duration-200',
             currentFilter === filter.value
-              ? 'bg-sage text-white shadow-teal-glow'
-              : 'bg-white/50 text-charcoal hover:bg-sage-light hover:text-sage border border-divider'
+              ? 'bg-sage text-ink shadow-teal-glow'
+              : 'bg-surface/50 text-charcoal hover:bg-sage-light hover:text-sage border border-divider'
           )}
         >
           {filter.label}

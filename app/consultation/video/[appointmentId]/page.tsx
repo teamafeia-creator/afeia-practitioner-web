@@ -170,21 +170,21 @@ export default function VideoConsultationPage() {
 
   if (hasLeft) {
     return (
-      <div className="min-h-screen bg-[#FBF7F2] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-8 text-center space-y-6">
+      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+        <div className="bg-surface rounded-2xl shadow-lg max-w-md w-full p-8 text-center space-y-6">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sage/10">
             <Video className="h-8 w-8 text-sage" />
           </div>
-          <h1 className="text-xl font-semibold text-[#2D3436]">
+          <h1 className="text-xl font-semibold text-charcoal">
             Consultation terminee
           </h1>
-          <p className="text-sm text-[#6B7280]">
+          <p className="text-sm text-[#8B95A5]">
             Merci pour votre consultation. Vous pouvez fermer cette fenetre.
           </p>
           {!consultantToken && (
             <button
               onClick={() => router.push('/agenda')}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#5B8C6E] text-white rounded-lg hover:bg-[#4a7a5d] transition-colors text-sm font-medium"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#6DD4B8] text-ink rounded-lg hover:bg-sage-deep transition-colors text-sm font-medium"
             >
               <ArrowLeft className="h-4 w-4" />
               Retour a l&apos;agenda
@@ -197,7 +197,7 @@ export default function VideoConsultationPage() {
 
   if (state.type === 'loading') {
     return (
-      <div className="min-h-screen bg-[#2D3436] flex items-center justify-center">
+      <div className="min-h-screen bg-ink flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
           <p className="text-white/80 text-sm">Chargement de la consultation...</p>
@@ -208,15 +208,15 @@ export default function VideoConsultationPage() {
 
   if (state.type === 'error') {
     return (
-      <div className="min-h-screen bg-[#FBF7F2] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-8 text-center space-y-6">
+      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+        <div className="bg-surface rounded-2xl shadow-lg max-w-md w-full p-8 text-center space-y-6">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
             <AlertCircle className="h-8 w-8 text-red-500" />
           </div>
-          <h1 className="text-xl font-semibold text-[#2D3436]">
+          <h1 className="text-xl font-semibold text-charcoal">
             Acces impossible
           </h1>
-          <p className="text-sm text-[#6B7280]">{state.message}</p>
+          <p className="text-sm text-[#8B95A5]">{state.message}</p>
         </div>
       </div>
     );

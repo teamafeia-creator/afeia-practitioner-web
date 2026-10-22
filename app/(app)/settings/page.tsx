@@ -285,8 +285,8 @@ export default function SettingsPage() {
       <div className="relative rounded-2xl overflow-hidden mb-2 h-[120px]">
         <Image src="/images/fern-moody.jpg" alt="" fill className="object-cover opacity-15" />
         <div className="relative z-10 p-6 flex flex-col justify-center h-full">
-          <h1 className="font-serif text-2xl font-semibold text-[#2D3436]">Paramètres</h1>
-          <p className="text-sm text-[#6B7280] mt-1">Gérez votre profil professionnel et votre abonnement.</p>
+          <h1 className="font-serif text-2xl font-semibold text-charcoal">Paramètres</h1>
+          <p className="text-sm text-[#8B95A5] mt-1">Gérez votre profil professionnel et votre abonnement.</p>
         </div>
       </div>
 
@@ -314,7 +314,7 @@ export default function SettingsPage() {
             {/* Photo de profil */}
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="h-20 w-20 rounded-full overflow-hidden bg-cream flex items-center justify-center ring-2 ring-white shadow-sm">
+                <div className="h-20 w-20 rounded-full overflow-hidden bg-cream flex items-center justify-center ring-2 ring-surface shadow-sm">
                   {formState.photo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={formState.photo_url} alt="Photo de profil" className="h-full w-full object-cover" />
@@ -329,7 +329,7 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingPhoto}
-                    className="absolute -bottom-1 -right-1 rounded-full bg-sage p-1.5 text-white shadow-sm hover:bg-sage-dark transition-colors disabled:opacity-50"
+                    className="absolute -bottom-1 -right-1 rounded-full bg-sage p-1.5 text-ink shadow-sm hover:bg-sage-dark transition-colors disabled:opacity-50"
                   >
                     <Camera className="h-3.5 w-3.5" />
                   </button>
@@ -418,8 +418,8 @@ export default function SettingsPage() {
                         onClick={() => toggleSpecialty(spec)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                           selected
-                            ? 'bg-sage text-white border-sage'
-                            : 'bg-white text-stone border-divider hover:border-sage hover:text-sage'
+                            ? 'bg-sage text-ink border-sage'
+                            : 'bg-surface text-stone border-divider hover:border-sage hover:text-sage'
                         }`}
                       >
                         {spec}
@@ -620,7 +620,7 @@ export default function SettingsPage() {
                 <div className="text-sm text-charcoal">Plan</div>
                 <Badge variant="premium">Premium</Badge>
               </div>
-              <div className="rounded-lg bg-white/60 p-3 text-sm text-charcoal border border-divider">
+              <div className="rounded-lg bg-surface/60 p-3 text-sm text-charcoal border border-divider">
                 Bague connectée (sommeil, HRV, activité) activée pour les consultants Premium.
               </div>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/abonnement')}>

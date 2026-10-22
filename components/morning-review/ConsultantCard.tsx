@@ -119,7 +119,7 @@ export function ConsultantCard({ summary, onActionComplete }: ConsultantCardProp
     <>
       <motion.div
         layout
-        className="border border-neutral-200 rounded-lg p-4 md:p-5 hover:shadow-md transition-shadow bg-white"
+        className="border border-neutral-200 rounded-lg p-4 md:p-5 hover:shadow-md transition-shadow bg-surface"
         data-testid="consultant-card"
         data-attention-level={attentionLevel}
       >

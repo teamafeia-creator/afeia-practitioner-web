@@ -118,7 +118,7 @@ export function BookingStepContact({
               type="text"
               value={form.name}
               onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
+              className="w-full rounded-lg border border-sage/20 bg-surface/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
               placeholder="Dupont"
             />
             {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
@@ -131,7 +131,7 @@ export function BookingStepContact({
               type="text"
               value={form.first_name}
               onChange={(e) => setForm(prev => ({ ...prev, first_name: e.target.value }))}
-              className="w-full rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
+              className="w-full rounded-lg border border-sage/20 bg-surface/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
               placeholder="Marie"
             />
             {errors.first_name && <p className="mt-1 text-xs text-red-500">{errors.first_name}</p>}
@@ -146,7 +146,7 @@ export function BookingStepContact({
             type="email"
             value={form.email}
             onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
-            className="w-full rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
+            className="w-full rounded-lg border border-sage/20 bg-surface/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
             placeholder="marie@exemple.fr"
           />
           {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
@@ -160,7 +160,7 @@ export function BookingStepContact({
             type="tel"
             value={form.phone}
             onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))}
-            className="w-full rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
+            className="w-full rounded-lg border border-sage/20 bg-surface/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
             placeholder="06 12 34 56 78"
           />
           {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
@@ -173,7 +173,7 @@ export function BookingStepContact({
           <textarea
             value={form.reason}
             onChange={(e) => setForm(prev => ({ ...prev, reason: e.target.value }))}
-            className="w-full min-h-[80px] rounded-lg border border-sage/20 bg-white/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
+            className="w-full min-h-[80px] rounded-lg border border-sage/20 bg-surface/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
             placeholder="Decrivez brievement la raison de votre visite..."
           />
         </div>

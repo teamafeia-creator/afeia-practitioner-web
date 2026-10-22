@@ -213,7 +213,7 @@ export function CycleCalendar({
       {/* Tooltip */}
       {tooltip && (
         <div
-          className="fixed z-50 rounded-lg bg-charcoal px-3 py-2 text-xs text-white shadow-lg whitespace-pre-line pointer-events-none"
+          className="fixed z-50 rounded-lg bg-surface-raised px-3 py-2 text-xs text-white shadow-lg whitespace-pre-line pointer-events-none"
           style={{ left: tooltip.x, top: tooltip.y, transform: 'translateY(-100%)' }}
         >
           {tooltip.content}

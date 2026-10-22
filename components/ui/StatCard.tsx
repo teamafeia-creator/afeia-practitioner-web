@@ -17,16 +17,16 @@ export function StatCard({ icon, value, label, trend, color, className }: StatCa
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-divider p-5 shadow-card hover:shadow-card-hover transition-shadow duration-200',
+        'bg-surface rounded-xl border border-divider p-5 shadow-card hover:shadow-card-hover transition-shadow duration-200',
         className
       )}
     >
       <div className="flex items-start justify-between mb-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: color ? `${color}15` : '#E8F0EB' }}>
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: color ? `${color}15` : '#23383B' }}>
           {typeof icon === 'string' ? (
-            <span className="text-lg" style={{ color: color || '#5B8C6E' }}>{icon}</span>
+            <span className="text-lg" style={{ color: color || '#6DD4B8' }}>{icon}</span>
           ) : (
-            <span style={{ color: color || '#5B8C6E' }}>{icon}</span>
+            <span style={{ color: color || '#6DD4B8' }}>{icon}</span>
           )}
         </div>
         {trend && (

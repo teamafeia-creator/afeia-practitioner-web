@@ -32,13 +32,15 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           padding: 24,
           textAlign: 'center',
           fontFamily: 'Inter, system-ui, sans-serif',
+          background: '#0A0E14',
+          color: '#E8EDF4',
         }}
       >
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>Erreur inattendue</h2>
-        <p style={{ color: '#6b7280', maxWidth: 440 }}>
+        <p style={{ color: '#8B95A5', maxWidth: 440 }}>
           L&apos;application a rencontré une erreur. Rechargez la page ou réessayez.
         </p>
-        {error?.digest && <code style={{ fontSize: 12, color: '#9ca3af' }}>ref: {error.digest}</code>}
+        {error?.digest && <code style={{ fontSize: 12, color: '#5C6573' }}>ref: {error.digest}</code>}
         <button
           type="button"
           onClick={reset}
@@ -46,9 +48,9 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
             marginTop: 8,
             padding: '8px 16px',
             borderRadius: 8,
-            border: '1px solid #d1d5db',
-            background: '#111827',
-            color: '#fff',
+            border: '1px solid #6DD4B8',
+            background: '#6DD4B8',
+            color: '#0A0E14',
             cursor: 'pointer',
             fontWeight: 500,
           }}

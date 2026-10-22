@@ -59,7 +59,7 @@ export function TransitTimeline({ data, days = 30 }: TransitTimelineProps) {
             />
             {/* Tooltip */}
             {hoveredIndex === i && (
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-charcoal text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface-raised text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
                 {point.label}
                 {point.bristol_type !== null ? ` — Type ${point.bristol_type}` : ' — Pas de donnée'}
               </div>

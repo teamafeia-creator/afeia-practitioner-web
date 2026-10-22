@@ -42,23 +42,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6B8DC9] via-[#7B9DD9] to-[#9B8DC9] p-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#6DD4B8] via-[#4FB59C] to-[#2D7A6E] p-4">
+      <div className="bg-surface rounded-3xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#6B8DC9] to-[#9B8DC9] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#6DD4B8] to-[#2D7A6E] rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Leaf className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-[#2D3748]">
+          <h1 className="text-2xl font-bold text-[#E8EDF4]">
             Content de vous revoir
           </h1>
-          <p className="text-[#718096] mt-1">
+          <p className="text-[#8B95A5] mt-1">
             Connectez-vous à votre espace santé
           </p>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label htmlFor="consultant-login-email" className="block text-sm font-medium text-[#4A5568] mb-1">
+            <label htmlFor="consultant-login-email" className="block text-sm font-medium text-[#8B95A5] mb-1">
               Email
             </label>
             <input
@@ -68,12 +68,12 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full px-4 py-3 border-2 border-[#E2E8F0] rounded-xl focus:border-[#6B8DC9] focus:ring-2 focus:ring-[#6B8DC9]/20 outline-none transition-all"
+              className="w-full px-4 py-3 border-2 border-[#2A3140] rounded-xl focus:border-[#6DD4B8] focus:ring-2 focus:ring-[#6DD4B8]/20 outline-none transition-all"
             />
           </div>
 
           <div>
-            <label htmlFor="consultant-login-password" className="block text-sm font-medium text-[#4A5568] mb-1">
+            <label htmlFor="consultant-login-password" className="block text-sm font-medium text-[#8B95A5] mb-1">
               Mot de passe
             </label>
             <input
@@ -83,7 +83,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full px-4 py-3 border-2 border-[#E2E8F0] rounded-xl focus:border-[#6B8DC9] focus:ring-2 focus:ring-[#6B8DC9]/20 outline-none transition-all"
+              className="w-full px-4 py-3 border-2 border-[#2A3140] rounded-xl focus:border-[#6DD4B8] focus:ring-2 focus:ring-[#6DD4B8]/20 outline-none transition-all"
             />
           </div>
 
@@ -96,18 +96,18 @@ export default function LoginPage() {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-[#6B8DC9] to-[#9B8DC9] text-white py-4 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg"
+            className="w-full bg-gradient-to-r from-[#6DD4B8] to-[#2D7A6E] text-white py-4 rounded-xl font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg"
           >
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
 
-          <div className="text-center pt-4 border-t border-[#E2E8F0] mt-6">
-            <p className="text-sm text-[#718096] mb-2">
+          <div className="text-center pt-4 border-t border-[#2A3140] mt-6">
+            <p className="text-sm text-[#8B95A5] mb-2">
               Vous avez reçu un code d&apos;activation ?
             </p>
             <a
               href="/consultant/activate"
-              className="text-[#6B8DC9] font-medium hover:underline"
+              className="text-[#6DD4B8] font-medium hover:underline"
             >
               Activer mon compte
             </a>

@@ -147,7 +147,7 @@ export function ActivationCard({
           {/* Close button */}
           <button
             onClick={() => setIsHidden(true)}
-            className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/50 transition-colors"
+            className="absolute top-4 right-4 p-1 rounded-full hover:bg-surface/50 transition-colors"
             title="Masquer temporairement"
           >
             <X className="h-4 w-4 text-stone" />
@@ -174,7 +174,7 @@ export function ActivationCard({
           </div>
 
           {/* Code display */}
-          <div className="bg-white/60 rounded-lg p-4 mb-4 border border-divider">
+          <div className="bg-surface/60 rounded-lg p-4 mb-4 border border-divider">
             <div className="flex items-center justify-center gap-2">
               <span
                 className={cn(
