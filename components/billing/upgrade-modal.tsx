@@ -83,7 +83,7 @@ export function UpgradeModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-charcoal/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -156,7 +156,7 @@ export function UpgradeModal({
                     className={cn(
                       'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-colors',
                       selectedCycle === 'monthly'
-                        ? 'bg-white text-charcoal shadow-sm'
+                        ? 'bg-surface text-charcoal shadow-sm'
                         : 'text-charcoal hover:text-charcoal'
                     )}
                   >
@@ -167,7 +167,7 @@ export function UpgradeModal({
                     className={cn(
                       'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-colors relative',
                       selectedCycle === 'yearly'
-                        ? 'bg-white text-charcoal shadow-sm'
+                        ? 'bg-surface text-charcoal shadow-sm'
                         : 'text-charcoal hover:text-charcoal'
                     )}
                   >

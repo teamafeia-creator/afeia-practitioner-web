@@ -123,7 +123,7 @@ export function BlockLibrarySidebar({
       {/* Panel */}
       <div
         className={cn(
-          'relative flex h-full w-full max-w-[420px] flex-col bg-white shadow-2xl',
+          'relative flex h-full w-full max-w-[420px] flex-col bg-surface shadow-2xl',
           'animate-slide-in-right'
         )}
         style={{
@@ -168,7 +168,7 @@ export function BlockLibrarySidebar({
               className={cn(
                 'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors',
                 activeMotif === null
-                  ? 'bg-sage text-white'
+                  ? 'bg-sage text-ink'
                   : 'bg-sage-light/50 text-sage hover:bg-sage-light'
               )}
             >
@@ -182,7 +182,7 @@ export function BlockLibrarySidebar({
                 className={cn(
                   'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors whitespace-nowrap',
                   activeMotif === motif
-                    ? 'bg-sage text-white'
+                    ? 'bg-sage text-ink'
                     : 'bg-sage-light/50 text-sage hover:bg-sage-light'
                 )}
               >
@@ -226,12 +226,12 @@ export function BlockLibrarySidebar({
               <button
                 type="button"
                 onClick={() => onInsert(selectedBlock.content)}
-                className="rounded-md bg-sage px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-sage-deep"
+                className="rounded-md bg-sage px-3 py-1 text-xs font-medium text-ink transition-colors hover:bg-sage-deep"
               >
                 Insérer
               </button>
             </div>
-            <div className="max-h-32 overflow-y-auto rounded-md bg-white p-2 text-xs text-charcoal whitespace-pre-line border border-divider">
+            <div className="max-h-32 overflow-y-auto rounded-md bg-surface p-2 text-xs text-charcoal whitespace-pre-line border border-divider">
               {selectedBlock.content}
             </div>
           </div>

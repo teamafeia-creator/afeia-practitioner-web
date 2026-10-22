@@ -210,7 +210,7 @@ export default function AdminFicheEditorPage() {
         }
       />
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-6">
+      <div className="rounded-xl border border-slate-200 bg-surface p-6 space-y-6">
         {/* Title + Category */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
@@ -322,7 +322,7 @@ export default function AdminFicheEditorPage() {
             </button>
           </div>
           {previewMode ? (
-            <div className="rounded-lg border border-divider bg-white p-4 min-h-[300px]">
+            <div className="rounded-lg border border-divider bg-surface p-4 min-h-[300px]">
               <MarkdownRenderer content={form.content_markdown} />
             </div>
           ) : (
@@ -331,7 +331,7 @@ export default function AdminFicheEditorPage() {
               onChange={(e) => update('content_markdown', e.target.value)}
               placeholder="## Introduction&#10;&#10;Ecrivez votre contenu en Markdown..."
               rows={16}
-              className="w-full rounded-lg border border-divider bg-white px-3 py-2 text-sm text-charcoal font-mono placeholder:text-stone focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
+              className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-charcoal font-mono placeholder:text-stone focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
             />
           )}
         </div>

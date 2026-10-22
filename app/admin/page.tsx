@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
           actions={
             <Link
               href="/admin/settings/admins"
-              className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-surface px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
               Gerer les admins
             </Link>
@@ -226,7 +226,7 @@ export default function AdminDashboardPage() {
 
         {/* Alerts section */}
         {!loading && alerts.length > 0 && (
-          <div className="rounded-lg border border-slate-200 bg-white p-5">
+          <div className="rounded-lg border border-slate-200 bg-surface p-5">
             <h2 className="text-base font-semibold text-slate-800">
               A traiter
             </h2>
@@ -246,7 +246,7 @@ export default function AdminDashboardPage() {
 
         {/* Activity timeline */}
         {!loading && activity.length > 0 && (
-          <div className="rounded-lg border border-slate-200 bg-white p-5">
+          <div className="rounded-lg border border-slate-200 bg-surface p-5">
             <h2 className="text-base font-semibold text-slate-800">
               Activite recente
             </h2>

@@ -173,8 +173,8 @@ export function WaitlistForm({
             onClick={handleToggleAllDays}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
               allDays
-                ? 'bg-teal text-white border-teal'
-                : 'bg-white text-charcoal border-divider hover:border-sage'
+                ? 'bg-teal text-ink border-teal'
+                : 'bg-surface text-charcoal border-divider hover:border-sage'
             }`}
           >
             Tous les jours
@@ -186,8 +186,8 @@ export function WaitlistForm({
               onClick={() => handleToggleDay(day.value)}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
                 !allDays && preferredDays.includes(day.value)
-                  ? 'bg-teal text-white border-teal'
-                  : 'bg-white text-charcoal border-divider hover:border-sage'
+                  ? 'bg-teal text-ink border-teal'
+                  : 'bg-surface text-charcoal border-divider hover:border-sage'
               }`}
             >
               {day.label}

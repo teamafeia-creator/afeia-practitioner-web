@@ -107,7 +107,7 @@ export default function SettingsAdminsPage() {
       />
 
       {/* Add admin form */}
-      <div className="rounded-lg border border-slate-200 bg-white p-5">
+      <div className="rounded-lg border border-slate-200 bg-surface p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
             <label className="mb-1 block text-xs font-medium text-slate-500">
@@ -133,7 +133,7 @@ export default function SettingsAdminsPage() {
       </div>
 
       {/* Admins table */}
-      <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="rounded-lg border border-slate-200 bg-surface">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-sm text-slate-500">
             Chargement...

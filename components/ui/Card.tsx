@@ -12,10 +12,10 @@ interface CardProps extends Omit<HTMLMotionProps<'div'>, 'ref'> {
 const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', interactive = false, children, ...props }, ref) => {
     const variants = {
-      default: 'bg-white border border-divider shadow-card',
-      hover: 'bg-white border border-divider shadow-card hover:shadow-card-hover',
-      selected: 'bg-white border-2 border-sage shadow-card',
-      gradient: 'bg-white border border-divider shadow-card'
+      default: 'bg-surface border border-divider shadow-card',
+      hover: 'bg-surface border border-divider shadow-card hover:shadow-card-hover',
+      selected: 'bg-surface border-2 border-sage shadow-card',
+      gradient: 'bg-surface border border-divider shadow-card'
     };
 
     if (interactive) {

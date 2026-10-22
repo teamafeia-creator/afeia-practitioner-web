@@ -247,7 +247,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="rounded-lg bg-charcoal px-4 py-2 text-sm font-medium text-white hover:bg-charcoal/90"
+            className="rounded-lg bg-surface-raised px-4 py-2 text-sm font-medium text-white hover:bg-surface-raised/90"
           >
             Réessayer
           </button>
@@ -374,7 +374,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <motion.span
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-terracotta text-[10px] font-bold text-white px-1"
+                className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-terracotta text-[10px] font-bold text-ink px-1"
               >
                 {unreadMessages > 9 ? '9+' : unreadMessages}
               </motion.span>
@@ -435,7 +435,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150',
                     isActive
-                      ? 'bg-terracotta text-white'
+                      ? 'bg-terracotta text-ink'
                       : 'text-sidebar-text hover:bg-sidebar-hover'
                   )}
                 >
@@ -534,7 +534,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="hidden lg:block relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen((open) => !open)}
-                className="flex items-center gap-2 rounded-xl border border-divider bg-white px-3 py-2 text-sm font-medium text-charcoal transition-shadow hover:shadow-sm"
+                className="flex items-center gap-2 rounded-xl border border-divider bg-surface px-3 py-2 text-sm font-medium text-charcoal transition-shadow hover:shadow-sm"
               >
                 <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
                 <span className="max-w-[120px] truncate">
@@ -550,7 +550,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 mt-2 w-48 rounded-xl bg-white/95 backdrop-blur-md border border-divider shadow-lg overflow-hidden"
+                    className="absolute right-0 mt-2 w-48 rounded-xl bg-surface/95 backdrop-blur-md border border-divider shadow-lg overflow-hidden"
                   >
                     <div className="px-4 py-3 border-b border-divider">
                       <div className="text-xs text-stone">Compte praticien</div>
@@ -589,7 +589,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-charcoal/30 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
             />
             <motion.div
@@ -620,7 +620,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => setHelpMenuOpen(!helpMenuOpen)}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-charcoal text-white shadow-lg hover:shadow-xl transition-shadow"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-raised text-white shadow-lg hover:shadow-xl transition-shadow"
           aria-label="Aide"
         >
           <HelpCircle className="h-5 w-5" />
@@ -633,7 +633,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 8 }}
               transition={{ duration: 0.15 }}
-              className="absolute bottom-14 right-0 w-56 rounded-xl bg-white/95 backdrop-blur-md border border-divider shadow-lg overflow-hidden"
+              className="absolute bottom-14 right-0 w-56 rounded-xl bg-surface/95 backdrop-blur-md border border-divider shadow-lg overflow-hidden"
             >
               <a
                 href="mailto:contact@afeia.fr?subject=Aide%20AFEIA"

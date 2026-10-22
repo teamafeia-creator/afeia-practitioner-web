@@ -164,21 +164,21 @@ export function IrisComparison({ photos, eye }: IrisComparisonProps) {
 
           {/* Slider handle */}
           <div
-            className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg cursor-ew-resize z-10"
+            className="absolute top-0 bottom-0 w-0.5 bg-surface shadow-lg cursor-ew-resize z-10"
             style={{ left: `${sliderPos}%` }}
             onMouseDown={() => setIsDragging(true)}
             onTouchStart={() => setIsDragging(true)}
           >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white shadow-md flex items-center justify-center text-xs text-stone">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-surface shadow-md flex items-center justify-center text-xs text-stone">
               ⇔
             </div>
           </div>
 
           {/* Labels */}
-          <div className="absolute top-2 left-2 bg-white/80 text-xs text-charcoal px-2 py-1 rounded">
+          <div className="absolute top-2 left-2 bg-surface/80 text-xs text-charcoal px-2 py-1 rounded">
             {formatDate(leftPhoto?.taken_at ?? null)}
           </div>
-          <div className="absolute top-2 right-2 bg-white/80 text-xs text-charcoal px-2 py-1 rounded">
+          <div className="absolute top-2 right-2 bg-surface/80 text-xs text-charcoal px-2 py-1 rounded">
             {formatDate(rightPhoto?.taken_at ?? null)}
           </div>
         </div>

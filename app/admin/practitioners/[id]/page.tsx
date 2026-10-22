@@ -30,7 +30,7 @@ export default async function AdminPractitionerDetailPage({ params }: PageProps)
       console.error('[admin] practitioner detail error:', error);
       return (
         <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white p-6">
+          <div className="rounded-lg border border-slate-200 bg-surface p-6">
             <h1 className="text-xl font-semibold text-slate-800">Praticien</h1>
             <p className="mt-1 text-sm text-slate-500">Erreur de chargement.</p>
           </div>
@@ -41,7 +41,7 @@ export default async function AdminPractitionerDetailPage({ params }: PageProps)
     if (!practitioner) {
       return (
         <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white p-6">
+          <div className="rounded-lg border border-slate-200 bg-surface p-6">
             <h1 className="text-xl font-semibold text-slate-800">Praticien</h1>
             <p className="mt-1 text-sm text-slate-500">Praticien introuvable.</p>
           </div>
@@ -100,7 +100,7 @@ export default async function AdminPractitionerDetailPage({ params }: PageProps)
     console.error('[admin] practitioner detail exception:', error);
     return (
       <div className="space-y-6">
-        <div className="rounded-lg border border-slate-200 bg-white p-6">
+        <div className="rounded-lg border border-slate-200 bg-surface p-6">
           <h1 className="text-xl font-semibold text-slate-800">Praticien</h1>
           <p className="mt-1 text-sm text-slate-500">Erreur de chargement.</p>
         </div>

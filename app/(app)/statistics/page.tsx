@@ -14,7 +14,7 @@ import { Calendar, Users, Activity, RefreshCw, Banknote, BookOpen } from 'lucide
 import type { PeriodKey } from '@/lib/types/stats';
 import { getPeriodRange } from '@/lib/types/stats';
 
-const CHART_COLORS = ['#5B8C6E', '#7BAE7F', '#C4856C', '#D4A060', '#7EB0D4', '#D4738B'];
+const CHART_COLORS = ['#6DD4B8', '#A8E6CF', '#E8A87C', '#D4A574', '#7B93DB', '#E57B7B'];
 
 const shortDateFormatter = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
@@ -77,7 +77,7 @@ export default function StatisticsPage() {
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-divider p-5 h-28 animate-pulse" />
+            <div key={i} className="bg-surface rounded-xl border border-divider p-5 h-28 animate-pulse" />
           ))}
         </div>
       ) : (
@@ -86,31 +86,31 @@ export default function StatisticsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          <StatCard icon={<Calendar className="h-5 w-5" />} value={stats.sessionsCount} label="Seances" color="#5B8C6E" />
-          <StatCard icon={<Users className="h-5 w-5" />} value={stats.newConsultants} label="Nouveaux consultants" color="#5B8C6E" />
+          <StatCard icon={<Calendar className="h-5 w-5" />} value={stats.sessionsCount} label="Seances" color="#6DD4B8" />
+          <StatCard icon={<Users className="h-5 w-5" />} value={stats.newConsultants} label="Nouveaux consultants" color="#6DD4B8" />
           <StatCard
             icon={<Activity className="h-5 w-5" />}
             value={`${stats.activeConsultants}/${stats.totalConsultants}`}
             label="Actifs cette semaine"
-            color="#5B8C6E"
+            color="#6DD4B8"
           />
           <StatCard
             icon={<RefreshCw className="h-5 w-5" />}
             value={`${stats.retentionRate}%`}
             label="Fidelisation"
-            color={stats.retentionRate >= 70 ? '#7BAE7F' : stats.retentionRate >= 50 ? '#D4A060' : '#D4738B'}
+            color={stats.retentionRate >= 70 ? '#A8E6CF' : stats.retentionRate >= 50 ? '#D4A574' : '#E57B7B'}
           />
           <StatCard
             icon={<Banknote className="h-5 w-5" />}
             value={stats.revenue > 0 ? `${(stats.revenue / 100).toFixed(0)} €` : '—'}
             label="CA periode"
-            color="#5B8C6E"
+            color="#6DD4B8"
           />
           <StatCard
             icon={<BookOpen className="h-5 w-5" />}
             value={`${stats.avgJournalFillRate}%`}
             label="Remplissage journal"
-            color={stats.avgJournalFillRate >= 60 ? '#7BAE7F' : stats.avgJournalFillRate >= 30 ? '#D4A060' : '#D4738B'}
+            color={stats.avgJournalFillRate >= 60 ? '#A8E6CF' : stats.avgJournalFillRate >= 30 ? '#D4A574' : '#E57B7B'}
           />
         </motion.div>
       )}
@@ -120,21 +120,21 @@ export default function StatisticsPage() {
         <h3 className="text-lg font-semibold text-charcoal mb-4">Activite</h3>
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Sessions per week */}
-          <div className="bg-white rounded-xl border border-divider p-5">
+          <div className="bg-surface rounded-xl border border-divider p-5">
             <h4 className="text-sm font-medium text-stone mb-4">Seances par semaine (12 semaines)</h4>
             {sessionsChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={sessionsChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2A3140" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#8C8680" />
                   <YAxis tick={{ fontSize: 11 }} stroke="#8C8680" />
                   <Tooltip />
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke="#5B8C6E"
+                    stroke="#6DD4B8"
                     strokeWidth={2}
-                    dot={{ fill: '#5B8C6E', r: 4 }}
+                    dot={{ fill: '#6DD4B8', r: 4 }}
                     name="Seances"
                   />
                 </LineChart>
@@ -147,7 +147,7 @@ export default function StatisticsPage() {
           </div>
 
           {/* Conseillanciers stats */}
-          <div className="bg-white rounded-xl border border-divider p-5">
+          <div className="bg-surface rounded-xl border border-divider p-5">
             <h4 className="text-sm font-medium text-stone mb-4">Conseillanciers</h4>
             <div className="flex items-center justify-center gap-8 h-[250px]">
               <div className="text-center">
@@ -170,22 +170,22 @@ export default function StatisticsPage() {
           <h3 className="text-lg font-semibold text-charcoal mb-4">Financier</h3>
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Revenue chart */}
-            <div className="bg-white rounded-xl border border-divider p-5">
+            <div className="bg-surface rounded-xl border border-divider p-5">
               <h4 className="text-sm font-medium text-stone mb-4">CA mensuel (12 mois)</h4>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={revenueChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2A3140" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#8C8680" />
                   <YAxis tick={{ fontSize: 11 }} stroke="#8C8680" />
                   <Tooltip formatter={(value: number) => [`${value.toFixed(0)} €`, 'CA']} />
-                  <Bar dataKey="total" fill="#5B8C6E" radius={[4, 4, 0, 0]} name="CA" />
+                  <Bar dataKey="total" fill="#6DD4B8" radius={[4, 4, 0, 0]} name="CA" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* URSSAF reminder */}
             {quarterRevenue > 0 && (
-              <div className="bg-white rounded-xl border border-divider p-5">
+              <div className="bg-surface rounded-xl border border-divider p-5">
                 <h4 className="text-sm font-medium text-stone mb-4">Declaration URSSAF</h4>
                 <div className="flex flex-col items-center justify-center h-[250px]">
                   <div className="text-4xl font-bold text-charcoal">
@@ -206,7 +206,7 @@ export default function StatisticsPage() {
         <h3 className="text-lg font-semibold text-charcoal mb-4">Engagement</h3>
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Top concerns pie chart */}
-          <div className="bg-white rounded-xl border border-divider p-5">
+          <div className="bg-surface rounded-xl border border-divider p-5">
             <h4 className="text-sm font-medium text-stone mb-4">Motifs de consultation principaux</h4>
             {stats.topConcerns.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
@@ -239,7 +239,7 @@ export default function StatisticsPage() {
           </div>
 
           {/* Journal fill rate */}
-          <div className="bg-white rounded-xl border border-divider p-5">
+          <div className="bg-surface rounded-xl border border-divider p-5">
             <h4 className="text-sm font-medium text-stone mb-4">Taux moyen de remplissage journal</h4>
             <div className="flex flex-col items-center justify-center h-[250px]">
               <div className="relative h-40 w-40">
@@ -247,13 +247,13 @@ export default function StatisticsPage() {
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    stroke="#e5e7eb"
+                    stroke="#2A3140"
                     strokeWidth="3"
                   />
                   <path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    stroke="#5B8C6E"
+                    stroke="#6DD4B8"
                     strokeWidth="3"
                     strokeDasharray={`${stats.avgJournalFillRate}, 100`}
                     strokeLinecap="round"

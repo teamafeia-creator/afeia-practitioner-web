@@ -44,7 +44,7 @@ export function TemplatePicker({ isOpen, onClose, onSelect }: TemplatePickerProp
                 <button
                   key={template.type}
                   type="button"
-                  className="group flex flex-col items-center rounded-xl border border-divider bg-white p-3 text-center transition hover:ring-2 hover:ring-sage/50 cursor-pointer"
+                  className="group flex flex-col items-center rounded-xl border border-divider bg-surface p-3 text-center transition hover:ring-2 hover:ring-sage/50 cursor-pointer"
                   onClick={() => {
                     onSelect(template.type);
                     onClose();

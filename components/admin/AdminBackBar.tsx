@@ -14,7 +14,7 @@ const baseClasses =
 
 const variants = {
   ghost: 'bg-transparent text-charcoal hover:bg-cream focus-visible:ring-sage/30',
-  outline: 'border border-sage/30 bg-white text-sage hover:border-sage hover:bg-sage-light/50'
+  outline: 'border border-sage/30 bg-surface text-sage hover:border-sage hover:bg-sage-light/50'
 };
 
 const sizes = {

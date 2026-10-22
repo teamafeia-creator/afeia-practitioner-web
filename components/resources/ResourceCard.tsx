@@ -83,7 +83,7 @@ export function ResourceCard({
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.15 }}
       onClick={onClick}
-      className="cursor-pointer rounded-xl border border-divider bg-white/80 p-4 hover:shadow-md transition-shadow"
+      className="cursor-pointer rounded-xl border border-divider bg-surface/80 p-4 hover:shadow-md transition-shadow"
     >
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cream">

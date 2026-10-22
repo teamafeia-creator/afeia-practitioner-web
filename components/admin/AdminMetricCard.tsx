@@ -30,7 +30,7 @@ export function AdminMetricCard({
   progress,
 }: AdminMetricCardProps) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+    <div className="rounded-lg border border-slate-200 bg-surface p-4">
       <div className="flex items-center justify-between">
         <Icon className="h-4 w-4 text-slate-400" />
         {trend !== undefined && trend !== 0 && (

@@ -53,7 +53,7 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col bg-slate-900">
+    <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col bg-surface">
       {/* Logo */}
       <div className="flex items-baseline gap-2 px-6 py-5">
         <span className="text-lg font-bold text-sage-400">AFEIA</span>
@@ -71,8 +71,8 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
               className={cn(
                 'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                 active
-                  ? 'border-l-2 border-teal-500 bg-slate-800 text-white'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  ? 'border-l-2 border-teal-500 bg-surface-raised text-white'
+                  : 'text-slate-400 hover:bg-surface-raised hover:text-white'
               )}
             >
               <item.icon className="h-4 w-4 shrink-0" />
@@ -82,7 +82,7 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
         })}
 
         {/* Separator */}
-        <div className="my-3 border-t border-slate-700" />
+        <div className="my-3 border-t border-divider" />
 
         {/* Settings section */}
         <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -97,8 +97,8 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
               className={cn(
                 'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                 active
-                  ? 'border-l-2 border-teal-500 bg-slate-800 text-white'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  ? 'border-l-2 border-teal-500 bg-surface-raised text-white'
+                  : 'text-slate-400 hover:bg-surface-raised hover:text-white'
               )}
             >
               <item.icon className="h-4 w-4 shrink-0" />
@@ -109,7 +109,7 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
       </nav>
 
       {/* Bottom section */}
-      <div className="border-t border-slate-700 px-4 py-4 space-y-3">
+      <div className="border-t border-divider px-4 py-4 space-y-3">
         {adminEmail && (
           <div className="truncate text-xs text-slate-400">{adminEmail}</div>
         )}

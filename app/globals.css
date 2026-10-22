@@ -3,35 +3,39 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --sage: #5B8C6E;
-  --sage-light: #E8F0EB;
-  --sage-dark: #4A7A5D;
-  --terracotta: #C4856C;
-  --terracotta-light: #F5E0D5;
-  --terracotta-dark: #A8705A;
-  --charcoal: #2D3436;
-  --stone: #6B7280;
-  --mist: #9CA3AF;
-  --cream: #FBF7F2;
-  --divider: #E5E1DB;
-  --gold: #D4A060;
-  --rose: #D4738B;
-  --sky: #7EB0D4;
-  --success: #7BAE7F;
-  --sidebar-bg: #2D3436;
-  --sidebar-text: #E8E6E1;
+  /* Palette alignée sur le thème de l'app mobile (AppTheme) */
+  color-scheme: dark;
+  --sage: #6DD4B8;
+  --sage-light: #23383B;
+  --sage-dark: #A8E6CF;
+  --terracotta: #E8A87C;
+  --terracotta-light: #373131;
+  --terracotta-dark: #D4A574;
+  --charcoal: #E8EDF4;
+  --stone: #8B95A5;
+  --mist: #5C6573;
+  --cream: #0A0E14;
+  --surface: #151A23;
+  --surface-raised: #1C2230;
+  --ink: #0A0E14;
+  --divider: #2A3140;
+  --gold: #D4A574;
+  --rose: #E57B7B;
+  --sky: #7B93DB;
+  --success: #6DD4B8;
+  --sidebar-bg: #151A23;
+  --sidebar-text: #E8EDF4;
 
   /* Legacy aliases */
-  --teal-dark: #5B8C6E;
-  --teal-medium: #5B8C6E;
-  --teal-light: #E8F0EB;
-  --aubergine: #C4856C;
-  --warmgray: #6B7280;
-  --warmgray-light: #E5E1DB;
-  --sable: #FBF7F2;
-  --sable-light: #FBF7F2;
-  --sable-dark: #E5E1DB;
+  --teal-dark: #6DD4B8;
+  --teal-medium: #6DD4B8;
+  --teal-light: #23383B;
+  --aubergine: #E8A87C;
+  --warmgray: #8B95A5;
+  --warmgray-light: #2A3140;
+  --sable: #0A0E14;
+  --sable-light: #151A23;
+  --sable-dark: #2A3140;
 }
 
 html {
@@ -45,7 +49,8 @@ html, body {
 body {
   @apply text-charcoal;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-  background: linear-gradient(180deg, #FBF7F2 0%, #FFFFFF 60%, #FFFFFF 100%);
+  background: linear-gradient(180deg, #0A0E14 0%, #0A0E14 60%, #151A23 100%);
+  background-color: #0A0E14;
   background-attachment: fixed;
 }
 
@@ -53,39 +58,40 @@ body {
    CARD & PANEL STYLES — Soft Opaque
    ============================================ */
 
-/* Standard card - white, opaque, warm shadow */
+/* Standard card - deep slate, opaque, soft shadow */
 .glass-card {
-  background: #FFFFFF;
-  border: 1px solid #E5E1DB;
+  background: #151A23;
+  border: 1px solid #2A3140;
   border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
-              0 4px 12px rgba(45, 52, 54, 0.02);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),
+              0 4px 12px rgba(0, 0, 0, 0.15);
   transition: box-shadow 200ms ease;
 }
 
 .glass-card:hover {
-  box-shadow: 0 2px 8px rgba(45, 52, 54, 0.05),
-              0 8px 24px rgba(45, 52, 54, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+              0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 /* Panel - same as card but for wider containers */
 .glass-panel {
-  background: #FFFFFF;
-  border: 1px solid #E5E1DB;
+  background: #151A23;
+  border: 1px solid #2A3140;
   border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
-              0 4px 12px rgba(45, 52, 54, 0.02);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),
+              0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Sidebar — opaque charcoal */
+/* Sidebar — opaque deep slate */
 .glass-sidebar {
-  background: #2D3436;
+  background: #151A23;
+  border-right: 1px solid #2A3140;
 }
 
-/* Header — opaque white */
+/* Header — opaque cosmic black */
 .glass-header {
-  background: #FFFFFF;
-  border-bottom: 1px solid #E5E1DB;
+  background: #0A0E14;
+  border-bottom: 1px solid #2A3140;
 }
 
 /* Focus ring */
@@ -98,51 +104,51 @@ body {
    ============================================ */
 
 .alert-card {
-  background: #FFFFFF;
-  border: 1px solid #E5E1DB;
+  background: #151A23;
+  border: 1px solid #2A3140;
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
-              0 4px 12px rgba(45, 52, 54, 0.02);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),
+              0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .alert-card:hover {
-  box-shadow: 0 2px 8px rgba(45, 52, 54, 0.05),
-              0 8px 24px rgba(45, 52, 54, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+              0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .action-card {
-  background: #FFFFFF;
-  border: 1px solid #E5E1DB;
+  background: #151A23;
+  border: 1px solid #2A3140;
   border-radius: 16px;
   padding: 20px;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
-              0 4px 12px rgba(45, 52, 54, 0.02);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),
+              0 4px 12px rgba(0, 0, 0, 0.15);
   transition: box-shadow 200ms ease;
 }
 
 .action-card:hover {
-  box-shadow: 0 2px 8px rgba(45, 52, 54, 0.05),
-              0 8px 24px rgba(45, 52, 54, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+              0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 /* Consultant card */
 .consultant-card {
-  background: #FFFFFF;
-  border: 1px solid #E5E1DB;
+  background: #151A23;
+  border: 1px solid #2A3140;
   border-radius: 16px;
   padding: 20px;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(45, 52, 54, 0.03),
-              0 4px 12px rgba(45, 52, 54, 0.02);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25),
+              0 4px 12px rgba(0, 0, 0, 0.15);
   transition: box-shadow 200ms ease;
 }
 
 .consultant-card:hover {
-  box-shadow: 0 2px 8px rgba(45, 52, 54, 0.05),
-              0 8px 24px rgba(45, 52, 54, 0.04);
-  border-color: #5B8C6E40;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3),
+              0 8px 24px rgba(0, 0, 0, 0.25);
+  border-color: #6DD4B840;
 }
 
 /* ============================================
@@ -150,27 +156,27 @@ body {
    ============================================ */
 
 .badge-urgent {
-  background: rgba(212, 115, 139, 0.12);
-  color: #D4738B;
-  border: 1px solid rgba(212, 115, 139, 0.25);
+  background: rgba(229, 123, 123, 0.12);
+  color: #E57B7B;
+  border: 1px solid rgba(229, 123, 123, 0.25);
 }
 
 .badge-info {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6B7280;
-  border: 1px solid rgba(107, 114, 128, 0.2);
+  background: rgba(139, 149, 165, 0.1);
+  color: #8B95A5;
+  border: 1px solid rgba(139, 149, 165, 0.2);
 }
 
 .badge-premium {
-  background: rgba(196, 133, 108, 0.12);
-  color: #A8705A;
-  border: 1px solid rgba(196, 133, 108, 0.25);
+  background: rgba(232, 168, 124, 0.12);
+  color: #E8A87C;
+  border: 1px solid rgba(232, 168, 124, 0.25);
 }
 
 .badge-standard {
-  background: rgba(91, 140, 110, 0.1);
-  color: #5B8C6E;
-  border: 1px solid rgba(91, 140, 110, 0.2);
+  background: rgba(109, 212, 184, 0.1);
+  color: #6DD4B8;
+  border: 1px solid rgba(109, 212, 184, 0.2);
 }
 
 /* ============================================
@@ -179,7 +185,7 @@ body {
 
 .toggle-group {
   display: flex;
-  background: rgba(91, 140, 110, 0.06);
+  background: rgba(109, 212, 184, 0.06);
   border-radius: 10px;
   padding: 2px;
   gap: 2px;
@@ -189,7 +195,7 @@ body {
   padding: 6px 14px;
   border: none;
   background: transparent;
-  color: #6B7280;
+  color: #8B95A5;
   font-size: 13px;
   font-weight: 500;
   border-radius: 8px;
@@ -198,16 +204,16 @@ body {
 }
 
 .toggle-btn.active {
-  background: #5B8C6E;
-  color: white;
-  box-shadow: 0 2px 8px rgba(91, 140, 110, 0.2);
+  background: #6DD4B8;
+  color: #0A0E14;
+  box-shadow: 0 2px 8px rgba(109, 212, 184, 0.2);
 }
 
 .chip {
   padding: 6px 14px;
-  border: 1px solid #E5E1DB;
+  border: 1px solid #2A3140;
   background: transparent;
-  color: #2D3436;
+  color: #E8EDF4;
   font-size: 13px;
   font-weight: 500;
   border-radius: 20px;
@@ -216,9 +222,9 @@ body {
 }
 
 .chip.active {
-  background: #5B8C6E;
-  border-color: #5B8C6E;
-  color: white;
+  background: #6DD4B8;
+  border-color: #6DD4B8;
+  color: #0A0E14;
 }
 
 /* ============================================
@@ -228,14 +234,14 @@ body {
 .progress-bar {
   width: 120px;
   height: 6px;
-  background: rgba(91, 140, 110, 0.1);
+  background: rgba(109, 212, 184, 0.1);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #5B8C6E 0%, #7BAE7F 100%);
+  background: linear-gradient(90deg, #6DD4B8 0%, #A8E6CF 100%);
   transition: width 0.3s ease;
 }
 
@@ -247,19 +253,19 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #7BAE7F;
+  background: #A8E6CF;
 }
 
 .status-dot.inactive {
-  background: #9CA3AF;
+  background: #5C6573;
 }
 
 .status-dot.warning {
-  background: #D4A060;
+  background: #D4A574;
 }
 
 .status-dot.urgent {
-  background: #D4738B;
+  background: #E57B7B;
 }
 
 /* ============================================
@@ -268,9 +274,9 @@ body {
 
 .message-badge {
   padding: 4px 10px;
-  background: rgba(196, 133, 108, 0.12);
-  color: #A8705A;
-  border: 1px solid rgba(196, 133, 108, 0.25);
+  background: rgba(232, 168, 124, 0.12);
+  color: #E8A87C;
+  border: 1px solid rgba(232, 168, 124, 0.25);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
@@ -282,8 +288,8 @@ body {
 
 .alert-action {
   padding: 8px 16px;
-  background: #5B8C6E;
-  color: white;
+  background: #6DD4B8;
+  color: #0A0E14;
   border: none;
   border-radius: 12px;
   font-size: 13px;
@@ -293,7 +299,7 @@ body {
 }
 
 .alert-action:hover {
-  background: #4A7A5D;
+  background: #A8E6CF;
 }
 
 /* ============================================
@@ -304,16 +310,16 @@ body {
   font-size: 20px;
   font-weight: 600;
   font-family: 'Source Serif 4', 'Lora', Georgia, serif;
-  color: #2D3436;
+  color: #E8EDF4;
   letter-spacing: -0.02em;
 }
 
 /* ============================================
-   RECESSED ZONE (cream background)
+   RECESSED ZONE (sunken background)
    ============================================ */
 
 .recessed {
-  background: #FBF7F2;
+  background: #0A0E14;
   border-radius: 12px;
 }
 
@@ -323,7 +329,7 @@ body {
    ============================================ */
 .agenda-calendar-wrapper .rbc-calendar {
   font-family: inherit;
-  color: #2D3436;
+  color: #E8EDF4;
 }
 
 .agenda-calendar-wrapper .rbc-toolbar {
@@ -337,80 +343,80 @@ body {
   font-size: 13px;
   font-weight: 500;
   padding: 6px 14px;
-  border: 1px solid #E5E1DB;
+  border: 1px solid #2A3140;
   border-radius: 10px;
-  color: #2D3436;
+  color: #E8EDF4;
   background: transparent;
   transition: all 0.15s ease;
 }
 
 .agenda-calendar-wrapper .rbc-toolbar button:hover {
-  background: rgba(91, 140, 110, 0.05);
-  border-color: rgba(91, 140, 110, 0.3);
+  background: rgba(109, 212, 184, 0.05);
+  border-color: rgba(109, 212, 184, 0.3);
 }
 
 .agenda-calendar-wrapper .rbc-toolbar button.rbc-active {
-  background: #5B8C6E;
-  color: white;
-  border-color: #5B8C6E;
-  box-shadow: 0 2px 8px rgba(91, 140, 110, 0.2);
+  background: #6DD4B8;
+  color: #0A0E14;
+  border-color: #6DD4B8;
+  box-shadow: 0 2px 8px rgba(109, 212, 184, 0.2);
 }
 
 .agenda-calendar-wrapper .rbc-toolbar-label {
   font-weight: 600;
-  color: #2D3436;
+  color: #E8EDF4;
   text-transform: capitalize;
 }
 
 .agenda-calendar-wrapper .rbc-header {
   font-size: 13px;
   font-weight: 600;
-  color: #6B7280;
+  color: #8B95A5;
   text-transform: capitalize;
   padding: 8px 4px;
-  border-bottom: 1px solid #E5E1DB;
+  border-bottom: 1px solid #2A3140;
 }
 
 .agenda-calendar-wrapper .rbc-time-view,
 .agenda-calendar-wrapper .rbc-month-view {
-  border: 1px solid #E5E1DB;
+  border: 1px solid #2A3140;
   border-radius: 12px;
   overflow: hidden;
 }
 
 .agenda-calendar-wrapper .rbc-time-header-content {
-  border-left: 1px solid rgba(229, 225, 219, 0.6);
+  border-left: 1px solid rgba(42, 49, 64, 0.6);
 }
 
 .agenda-calendar-wrapper .rbc-time-content {
-  border-top: 1px solid #E5E1DB;
+  border-top: 1px solid #2A3140;
 }
 
 .agenda-calendar-wrapper .rbc-time-slot {
-  border-top: 1px solid rgba(229, 225, 219, 0.4);
+  border-top: 1px solid rgba(42, 49, 64, 0.4);
 }
 
 .agenda-calendar-wrapper .rbc-timeslot-group {
-  border-bottom: 1px solid rgba(229, 225, 219, 0.5);
+  border-bottom: 1px solid rgba(42, 49, 64, 0.5);
   min-height: 50px;
 }
 
 .agenda-calendar-wrapper .rbc-time-gutter .rbc-label {
   font-size: 11px;
-  color: #6B7280;
+  color: #8B95A5;
   padding: 0 8px;
 }
 
 .agenda-calendar-wrapper .rbc-day-slot .rbc-time-slot {
-  border-top: 1px solid rgba(229, 225, 219, 0.3);
+  border-top: 1px solid rgba(42, 49, 64, 0.3);
 }
 
 .agenda-calendar-wrapper .rbc-today {
-  background-color: rgba(91, 140, 110, 0.03);
+  background-color: rgba(109, 212, 184, 0.03);
 }
 
 .agenda-calendar-wrapper .rbc-current-time-indicator {
-  background-color: #D4738B;
+  background-color: #E57B7B;
   height: 2px;
 }
 
@@ -422,7 +428,7 @@ body {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background-color: #D4738B;
+  background-color: #E57B7B;
 }
 
 .agenda-calendar-wrapper .rbc-event {
@@ -443,12 +449,12 @@ body {
 
 .agenda-calendar-wrapper .rbc-show-more {
   font-size: 12px;
-  color: #5B8C6E;
+  color: #6DD4B8;
   font-weight: 500;
 }
 
 .agenda-calendar-wrapper .rbc-off-range-bg {
-  background-color: rgba(107, 114, 128, 0.03);
+  background-color: rgba(139, 149, 165, 0.03);
 }
 
 .agenda-calendar-wrapper .rbc-agenda-view table {
@@ -459,24 +465,24 @@ body {
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-table td,
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-table th {
   padding: 8px 12px;
-  border-bottom: 1px solid #E5E1DB;
+  border-bottom: 1px solid #2A3140;
   font-size: 13px;
 }
 
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-date-cell {
   font-weight: 600;
-  color: #2D3436;
+  color: #E8EDF4;
   text-transform: capitalize;
   white-space: nowrap;
 }
 
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-time-cell {
-  color: #6B7280;
+  color: #8B95A5;
   white-space: nowrap;
 }
 
 .agenda-calendar-wrapper .rbc-agenda-view .rbc-agenda-event-cell {
-  color: #2D3436;
+  color: #E8EDF4;
 }
 
 /* Responsive */
@@ -492,4 +498,83 @@ body {
     margin-bottom: 4px;
     font-size: 14px;
   }
+}
+
+/* ============================================
+   DARK MODE — éléments natifs
+   ============================================ */
+
+::selection {
+  background: rgba(109, 212, 184, 0.3);
+  color: #E8EDF4;
+}
+
+* {
+  scrollbar-color: #2A3140 transparent;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #E8EDF4;
+  -webkit-box-shadow: 0 0 0 1000px #1C2230 inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+option {
+  background: #1C2230;
+  color: #E8EDF4;
+}
+
+/* Tooltip Recharts (fond blanc par défaut) */
+.recharts-default-tooltip {
+  background-color: #1C2230 !important;
+  border: 1px solid #2A3140 !important;
+  border-radius: 10px;
+  color: #E8EDF4;
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: #8B95A5;
+}
+
+/* react-big-calendar : bordures et états clairs par défaut */
+.agenda-calendar-wrapper :where(
+  .rbc-header, .rbc-month-row, .rbc-day-bg, .rbc-row-bg, .rbc-time-header,
+  .rbc-time-header-content, .rbc-time-content, .rbc-timeslot-group, .rbc-time-slot,
+  .rbc-allday-cell, .rbc-day-slot, .rbc-events-container, .rbc-month-view, .rbc-time-view,
+  .rbc-agenda-view table, .rbc-agenda-view td, .rbc-agenda-view th, .rbc-row
+) {
+  border-color: #2A3140 !important;
+}
+
+.agenda-calendar-wrapper .rbc-toolbar button:focus,
+.agenda-calendar-wrapper .rbc-toolbar button:active,
+.agenda-calendar-wrapper .rbc-toolbar button:active:hover,
+.agenda-calendar-wrapper .rbc-toolbar button:active:focus {
+  background: rgba(109, 212, 184, 0.08);
+  color: #E8EDF4;
+  border-color: rgba(109, 212, 184, 0.3);
+  box-shadow: none;
+}
+
+.agenda-calendar-wrapper .rbc-toolbar button.rbc-active:hover,
+.agenda-calendar-wrapper .rbc-toolbar button.rbc-active:focus {
+  background: #6DD4B8;
+  color: #0A0E14;
+}
+
+.agenda-calendar-wrapper .rbc-off-range {
+  color: #5C6573;
+}
+
+.agenda-calendar-wrapper .rbc-selected-cell {
+  background-color: rgba(109, 212, 184, 0.1);
+}
+
+.agenda-calendar-wrapper .rbc-overlay {
+  background: #1C2230;
+  border-color: #2A3140;
 }

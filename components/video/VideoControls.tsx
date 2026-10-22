@@ -39,13 +39,13 @@ export function VideoControls({ onLeave, onToggleChat }: VideoControlsProps) {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-20 bg-[#2D3436]/80 backdrop-blur-md flex items-center justify-center gap-4 z-50">
+    <div className="fixed bottom-0 left-0 right-0 h-20 bg-surface/80 backdrop-blur-md flex items-center justify-center gap-4 z-50">
       <button
         onClick={toggleAudio}
         className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
           isAudioOn
             ? 'bg-white/10 text-white hover:bg-white/20'
-            : 'bg-white/20 text-red-400 hover:bg-white/30'
+            : 'bg-white/20 text-red-400 hover:bg-surface/30'
         }`}
         title={isAudioOn ? 'Couper le micro' : 'Activer le micro'}
       >
@@ -57,7 +57,7 @@ export function VideoControls({ onLeave, onToggleChat }: VideoControlsProps) {
         className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
           isVideoOn
             ? 'bg-white/10 text-white hover:bg-white/20'
-            : 'bg-white/20 text-red-400 hover:bg-white/30'
+            : 'bg-white/20 text-red-400 hover:bg-surface/30'
         }`}
         title={isVideoOn ? 'Couper la camera' : 'Activer la camera'}
       >

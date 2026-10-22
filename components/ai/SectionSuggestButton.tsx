@@ -73,7 +73,7 @@ export function SectionSuggestButton({
           <button
             onClick={handleSuggest}
             disabled={isSuggesting}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-gray-600 text-xs rounded border hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 bg-surface text-gray-600 text-xs rounded border hover:bg-gray-50 transition-colors"
           >
             {isSuggesting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -84,7 +84,7 @@ export function SectionSuggestButton({
           </button>
           <button
             onClick={rejectSuggestion}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-gray-500 text-xs rounded border hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 bg-surface text-gray-500 text-xs rounded border hover:bg-gray-50 transition-colors"
           >
             <X className="w-3.5 h-3.5" /> Ignorer
           </button>

@@ -100,7 +100,7 @@ export default function AbonnementPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/settings')}
-            className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone"
+            className="p-2 rounded-lg hover:bg-surface/50 transition-colors text-stone"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -120,7 +120,7 @@ export default function AbonnementPage() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push('/settings')}
-          className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone"
+          className="p-2 rounded-lg hover:bg-surface/50 transition-colors text-stone"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -139,7 +139,7 @@ export default function AbonnementPage() {
       {/* Current plan card - dark background */}
       <Card
         className="rounded-xl border-0 shadow-lg"
-        style={{ background: isPremium ? '#2D3436' : '#4A7A5D' }}
+        style={{ background: isPremium ? '#1C2230' : '#2D7A6E' }}
       >
         <CardHeader className="pb-0">
           <div className="flex items-center justify-between">

@@ -30,7 +30,7 @@ const slides: Slide[] = [
     description:
       'La plateforme qui connecte les naturopathes à leurs consultants pour un accompagnement holistique et personnalisé.',
     icon: <Sparkles className="w-8 h-8 text-white" />,
-    gradient: 'from-sage via-sage-dark to-emerald-700',
+    gradient: 'from-sage to-teal-deep',
     illustration: (
       <WelcomeIllustration />
     )
@@ -85,8 +85,8 @@ function WelcomeIllustration() {
         transition={{ duration: 3, repeat: Infinity }}
         className="absolute inset-0 m-auto w-40 h-40 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
       >
-        <div className="w-28 h-28 rounded-full bg-white/30 flex items-center justify-center">
-          <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-xl">
+        <div className="w-28 h-28 rounded-full bg-surface/30 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-surface flex items-center justify-center shadow-xl">
             <span className="text-3xl font-bold text-sage">A</span>
           </div>
         </div>
@@ -122,9 +122,9 @@ function CalendarIllustration() {
     >
       <div className="w-48 h-56 bg-white/20 backdrop-blur-sm rounded-2xl p-4 shadow-xl">
         {/* Calendar header */}
-        <div className="h-8 bg-white/30 rounded-lg mb-3 flex items-center px-3">
+        <div className="h-8 bg-surface/30 rounded-lg mb-3 flex items-center px-3">
           <div className="w-2 h-2 rounded-full bg-sage mr-2" />
-          <div className="w-16 h-2 bg-white/50 rounded" />
+          <div className="w-16 h-2 bg-surface/50 rounded" />
         </div>
         {/* Calendar grid */}
         <div className="grid grid-cols-7 gap-1">
@@ -139,7 +139,7 @@ function CalendarIllustration() {
                   ? 'bg-emerald-400'
                   : i === 8
                   ? 'bg-accent-orange'
-                  : 'bg-white/30'
+                  : 'bg-surface/30'
               }`}
             />
           ))}
@@ -165,10 +165,10 @@ function MessagingIllustration() {
           transition={{ delay: 0.4 }}
           className="flex items-end gap-2"
         >
-          <div className="w-8 h-8 rounded-full bg-white/30" />
+          <div className="w-8 h-8 rounded-full bg-surface/30" />
           <div className="bg-white/20 backdrop-blur-sm rounded-2xl rounded-bl-none px-4 py-3 max-w-[70%]">
-            <div className="w-24 h-2 bg-white/50 rounded mb-1" />
-            <div className="w-16 h-2 bg-white/30 rounded" />
+            <div className="w-24 h-2 bg-surface/50 rounded mb-1" />
+            <div className="w-16 h-2 bg-surface/30 rounded" />
           </div>
         </motion.div>
 
@@ -178,9 +178,9 @@ function MessagingIllustration() {
           transition={{ delay: 0.6 }}
           className="flex justify-end"
         >
-          <div className="bg-white/30 backdrop-blur-sm rounded-2xl rounded-br-none px-4 py-3 max-w-[70%]">
-            <div className="w-20 h-2 bg-white/60 rounded mb-1" />
-            <div className="w-28 h-2 bg-white/40 rounded" />
+          <div className="bg-surface/30 backdrop-blur-sm rounded-2xl rounded-br-none px-4 py-3 max-w-[70%]">
+            <div className="w-20 h-2 bg-surface/60 rounded mb-1" />
+            <div className="w-28 h-2 bg-surface/40 rounded" />
           </div>
         </motion.div>
 
@@ -190,9 +190,9 @@ function MessagingIllustration() {
           transition={{ delay: 0.8 }}
           className="flex items-end gap-2"
         >
-          <div className="w-8 h-8 rounded-full bg-white/30" />
+          <div className="w-8 h-8 rounded-full bg-surface/30" />
           <div className="bg-emerald-400/40 backdrop-blur-sm rounded-2xl rounded-bl-none px-4 py-3">
-            <div className="w-32 h-2 bg-white/60 rounded" />
+            <div className="w-32 h-2 bg-surface/60 rounded" />
           </div>
         </motion.div>
       </div>
@@ -218,7 +218,7 @@ function ProgressIllustration() {
               animate={{ height: `${height}%` }}
               transition={{ delay: 0.4 + i * 0.1, duration: 0.5 }}
               className={`flex-1 rounded-t-md ${
-                i === 6 ? 'bg-emerald-400' : 'bg-white/30'
+                i === 6 ? 'bg-emerald-400' : 'bg-surface/30'
               }`}
             />
           ))}
@@ -229,11 +229,11 @@ function ProgressIllustration() {
             <div className="w-8 h-8 rounded-full bg-emerald-400/50 flex items-center justify-center mb-1">
               <Activity className="w-4 h-4 text-white" />
             </div>
-            <div className="w-12 h-2 bg-white/40 rounded" />
+            <div className="w-12 h-2 bg-surface/40 rounded" />
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-white">+24%</div>
-            <div className="w-16 h-2 bg-white/30 rounded" />
+            <div className="w-16 h-2 bg-surface/30 rounded" />
           </div>
         </div>
       </div>
@@ -356,8 +356,8 @@ export default function WelcomePage() {
                 onClick={() => setCurrentSlide(index)}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   index === currentSlide
-                    ? 'w-8 bg-white'
-                    : 'w-2 bg-white/40 hover:bg-white/60'
+                    ? 'w-8 bg-surface'
+                    : 'w-2 bg-surface/40 hover:bg-surface/60'
                 }`}
               />
             ))}
@@ -376,7 +376,7 @@ export default function WelcomePage() {
             )}
             <Button
               onClick={nextSlide}
-              className="flex-1 bg-white text-charcoal hover:bg-white/90 shadow-xl"
+              className="flex-1 bg-surface text-charcoal hover:bg-surface-raised shadow-xl"
               icon={<ArrowRight className="w-4 h-4" />}
               iconPosition="right"
             >

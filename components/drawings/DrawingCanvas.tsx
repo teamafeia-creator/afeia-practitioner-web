@@ -15,7 +15,7 @@ const ExcalidrawWrapper = dynamic(
 
 function ExcalidrawLoading() {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-white">
+    <div className="flex h-full w-full items-center justify-center bg-surface">
       <div className="text-center">
         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-sage border-t-transparent" />
         <p className="mt-3 text-sm text-stone">Chargement de l&apos;éditeur…</p>
@@ -136,7 +136,7 @@ export default function DrawingCanvas({
   return (
     <div className="flex h-full flex-col">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 border-b border-divider bg-white px-4 py-2">
+      <div className="flex items-center gap-3 border-b border-divider bg-surface px-4 py-2">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -175,7 +175,7 @@ export default function DrawingCanvas({
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 bg-white">
+      <div className="flex-1 bg-surface">
         <ExcalidrawWrapper
           ref={excalidrawRef}
           initialData={initialData}

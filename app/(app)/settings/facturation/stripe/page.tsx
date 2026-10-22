@@ -184,7 +184,7 @@ export default function StripeConnectSettingsPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-lg bg-white/60 border border-divider p-3">
+                <div className="rounded-lg bg-surface/60 border border-divider p-3">
                   <p className="text-xs font-medium text-stone uppercase tracking-wider mb-1">
                     Statut du compte
                   </p>
@@ -203,7 +203,7 @@ export default function StripeConnectSettingsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-white/60 border border-divider p-3">
+                <div className="rounded-lg bg-surface/60 border border-divider p-3">
                   <p className="text-xs font-medium text-stone uppercase tracking-wider mb-1">
                     Informations
                   </p>

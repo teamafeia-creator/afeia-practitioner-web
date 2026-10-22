@@ -20,7 +20,7 @@ export function PeriodSelector({ value, onChange, className }: PeriodSelectorPro
           className={cn(
             'px-3 py-1.5 text-sm font-medium rounded-md transition-all',
             value === option.key
-              ? 'bg-white text-charcoal shadow-sm'
+              ? 'bg-surface text-charcoal shadow-sm'
               : 'text-stone hover:text-charcoal'
           )}
         >

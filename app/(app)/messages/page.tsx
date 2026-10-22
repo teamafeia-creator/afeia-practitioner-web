@@ -302,7 +302,7 @@ export default function MessagesPage() {
                           {conv.last_message.text}
                         </p>
                         {conv.unread_count > 0 && (
-                          <span className="ml-2 flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-sage text-[10px] font-bold text-white">
+                          <span className="ml-2 flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-sage text-[10px] font-bold text-ink">
                             {conv.unread_count > 9
                               ? '9+'
                               : conv.unread_count}
@@ -398,7 +398,7 @@ export default function MessagesPage() {
                         className={cn(
                           'max-w-[78%] rounded-lg px-4 py-2 text-sm',
                           msg.sender === 'praticien'
-                            ? 'bg-sage text-white'
+                            ? 'bg-sage text-ink'
                             : 'bg-cream text-charcoal'
                         )}
                       >
@@ -436,7 +436,7 @@ export default function MessagesPage() {
                       }
                     }}
                     placeholder="Ecrire un message..."
-                    className="flex-1 rounded-lg border border-divider bg-white px-3.5 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-200 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
+                    className="flex-1 rounded-lg border border-divider bg-surface px-3.5 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-200 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
                   />
                   <Button
                     variant="primary"

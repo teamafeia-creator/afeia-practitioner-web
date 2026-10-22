@@ -289,7 +289,7 @@ export default function AISettingsPage() {
                     onClick={() => toggleApproche(approche)}
                     className={`rounded-full px-4 py-2 text-sm transition ${
                       form.approches.includes(approche)
-                        ? 'bg-sage text-white'
+                        ? 'bg-sage text-ink'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >

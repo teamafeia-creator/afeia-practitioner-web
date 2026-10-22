@@ -149,7 +149,7 @@ export function BookingStepDate({
             </p>
           </div>
 
-          <div className="rounded-xl border border-teal/15 bg-white/70 p-6">
+          <div className="rounded-xl border border-teal/15 bg-surface/70 p-6">
             <WaitlistForm
               practitionerSlug={effectiveSlug}
               consultationTypes={effectiveTypes}
@@ -159,7 +159,7 @@ export function BookingStepDate({
         </div>
       ) : (
         <>
-          <div className="rounded-xl border border-teal/15 bg-white/70 p-4">
+          <div className="rounded-xl border border-teal/15 bg-surface/70 p-4">
             <MiniCalendar
               currentMonth={currentMonth}
               availableDays={availableDays}
@@ -203,7 +203,7 @@ export function BookingStepDate({
                   Aucun creneau ne vous convient ? Inscrivez-vous a la liste d&apos;attente
                 </button>
               ) : (
-                <div className="rounded-xl border border-teal/15 bg-white/70 p-6 space-y-4">
+                <div className="rounded-xl border border-teal/15 bg-surface/70 p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-charcoal">
                       Liste d&apos;attente

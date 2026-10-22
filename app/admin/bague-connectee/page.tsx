@@ -147,7 +147,7 @@ export default function AdminBagueConnecteePage() {
       />
 
       {/* Table */}
-      <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="rounded-lg border border-slate-200 bg-surface">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-sm text-slate-500">
             Chargement...

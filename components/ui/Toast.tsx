@@ -27,9 +27,9 @@ export function Toast({
   }, [autoCloseMs, onClose]);
 
   const variantStyles: Record<ToastVariant, string> = {
-    success: 'border-sage/30 bg-sage text-white',
-    error: 'border-aubergine/30 bg-terracotta text-white',
-    info: 'border-marine/30 bg-marine text-white'
+    success: 'border-sage/30 bg-sage text-ink',
+    error: 'border-aubergine/30 bg-terracotta text-ink',
+    info: 'border-sky/30 bg-sky text-ink'
   };
 
   return (

@@ -34,10 +34,10 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       }}
     >
       <h2 style={{ fontSize: 20, fontWeight: 600 }}>Une erreur est survenue</h2>
-      <p style={{ color: '#6b7280', maxWidth: 420 }}>
+      <p style={{ color: '#8B95A5', maxWidth: 420 }}>
         Un problème est survenu lors de l&apos;affichage de cette page. Vous pouvez réessayer.
       </p>
-      {error?.digest && <code style={{ fontSize: 12, color: '#9ca3af' }}>ref: {error.digest}</code>}
+      {error?.digest && <code style={{ fontSize: 12, color: '#5C6573' }}>ref: {error.digest}</code>}
       <button
         type="button"
         onClick={reset}
@@ -45,9 +45,9 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           marginTop: 8,
           padding: '8px 16px',
           borderRadius: 8,
-          border: '1px solid #d1d5db',
-          background: '#111827',
-          color: '#fff',
+          border: '1px solid #6DD4B8',
+          background: '#6DD4B8',
+          color: '#0A0E14',
           cursor: 'pointer',
           fontWeight: 500,
         }}

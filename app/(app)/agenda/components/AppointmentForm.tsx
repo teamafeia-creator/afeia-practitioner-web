@@ -337,11 +337,11 @@ export function AppointmentForm({
                       setShowSearch(true);
                     }}
                     onFocus={() => setShowSearch(true)}
-                    className="w-full rounded-sm border border-sage/20 bg-white/50 pl-10 pr-3.5 py-2.5 text-sm text-charcoal placeholder:text-stone/80 transition duration-200 focus:border-sage focus:outline-none focus:ring-[3px] focus:ring-sage/10"
+                    className="w-full rounded-sm border border-sage/20 bg-surface/50 pl-10 pr-3.5 py-2.5 text-sm text-charcoal placeholder:text-stone/80 transition duration-200 focus:border-sage focus:outline-none focus:ring-[3px] focus:ring-sage/10"
                   />
                 </div>
                 {showSearch && (
-                  <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white rounded-lg shadow-lg ring-1 ring-black/5">
+                  <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-surface rounded-lg shadow-lg ring-1 ring-black/5">
                     {filteredConsultants.length === 0 ? (
                       <div className="p-3 text-sm text-stone">Aucun consultant trouve</div>
                     ) : (

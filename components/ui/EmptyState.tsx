@@ -93,7 +93,7 @@ export function EmptyState({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        'flex flex-col items-center gap-4 rounded-xl bg-white border border-divider text-center shadow-card',
+        'flex flex-col items-center gap-4 rounded-xl bg-surface border border-divider text-center shadow-card',
         sizeStyles[size].container,
         className
       )}

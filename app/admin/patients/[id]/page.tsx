@@ -151,7 +151,7 @@ export default function AdminPatientDetailPage({
           <ArrowLeft className="h-4 w-4" />
           Retour aux patients
         </button>
-        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
+        <div className="rounded-lg border border-slate-200 bg-surface p-8 text-center">
           <p className="text-sm text-slate-500">{error ?? 'Patient non trouve.'}</p>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function AdminPatientDetailPage({
       </button>
 
       {/* Header */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-slate-200 bg-surface p-6">
         <div className="flex items-start gap-4">
           {/* Initials avatar */}
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-100 text-sage-700 font-semibold text-lg shrink-0">
@@ -235,7 +235,7 @@ export default function AdminPatientDetailPage({
         {/* Left column */}
         <div className="space-y-6">
           {/* Profile section */}
-          <div className="rounded-lg border border-slate-200 bg-white p-5">
+          <div className="rounded-lg border border-slate-200 bg-surface p-5">
             <h3 className="text-base font-semibold text-slate-800 mb-4">Profil</h3>
             <dl className="space-y-3">
               <ProfileRow label="Nom complet" value={patient.full_name} />

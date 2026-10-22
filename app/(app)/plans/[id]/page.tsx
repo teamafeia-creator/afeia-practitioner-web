@@ -296,8 +296,8 @@ export default function PlanPage() {
                   onClick={() => handleVersionSelect(idx)}
                   className={`rounded-xl px-3 py-1 text-xs font-medium ring-1 transition ${
                     idx === selected
-                      ? 'bg-sage text-white ring-sage/40'
-                      : 'bg-white text-charcoal ring-black/10 hover:bg-cream'
+                      ? 'bg-sage text-ink ring-sage/40'
+                      : 'bg-surface text-charcoal ring-black/10 hover:bg-cream'
                   }`}
                 >
                   V{v.version}
@@ -326,7 +326,7 @@ export default function PlanPage() {
 
           <div className="space-y-3">
             {sections.map((s, idx) => (
-              <div key={idx} className="rounded-2xl bg-white ring-1 ring-black/5 p-4">
+              <div key={idx} className="rounded-2xl bg-surface ring-1 ring-black/5 p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <Input
                     className="sm:max-w-sm"
@@ -356,7 +356,7 @@ export default function PlanPage() {
                     next[idx] = { ...next[idx], body: e.target.value };
                     setSections(next);
                   }}
-                  className="mt-3 min-h-[120px] w-full rounded-2xl border border-black/10 bg-white p-3 text-sm text-charcoal placeholder:text-stone focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
+                  className="mt-3 min-h-[120px] w-full rounded-2xl border border-black/10 bg-surface p-3 text-sm text-charcoal placeholder:text-stone focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
                   placeholder="Recommandations (ton neutre, pédagogique, non médical)"
                 />
               </div>

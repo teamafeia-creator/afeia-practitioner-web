@@ -58,8 +58,8 @@ export function CorrelationChart({
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto" role="img" aria-label="Graphique de corrélation">
       {/* Axis lines */}
-      <line x1={padding.left} x2={padding.left} y1={padding.top} y2={padding.top + chartH} stroke="#e5e7eb" strokeWidth="1" />
-      <line x1={padding.left} x2={padding.left + chartW} y1={padding.top + chartH} y2={padding.top + chartH} stroke="#e5e7eb" strokeWidth="1" />
+      <line x1={padding.left} x2={padding.left} y1={padding.top} y2={padding.top + chartH} stroke="#2A3140" strokeWidth="1" />
+      <line x1={padding.left} x2={padding.left + chartW} y1={padding.top + chartH} y2={padding.top + chartH} stroke="#2A3140" strokeWidth="1" />
 
       {/* X axis label */}
       <text x={padding.left + chartW / 2} y={height - 5} textAnchor="middle" fontSize="11" className="fill-charcoal">{xLabel}</text>
@@ -73,7 +73,7 @@ export function CorrelationChart({
         x2={padding.left + chartW}
         y1={scaleY(conditionResult.meanWhenMet)}
         y2={scaleY(conditionResult.meanWhenMet)}
-        stroke="#C4856C"
+        stroke="#E8A87C"
         strokeWidth="1.5"
         strokeDasharray="6 3"
       />
@@ -86,7 +86,7 @@ export function CorrelationChart({
         x2={padding.left + chartW}
         y1={scaleY(conditionResult.meanOtherwise)}
         y2={scaleY(conditionResult.meanOtherwise)}
-        stroke="#5B8C6E"
+        stroke="#6DD4B8"
         strokeWidth="1.5"
         strokeDasharray="6 3"
       />
@@ -100,7 +100,7 @@ export function CorrelationChart({
         x2={scaleX(threshold)}
         y1={padding.top}
         y2={padding.top + chartH}
-        stroke="#6B7280"
+        stroke="#8B95A5"
         strokeWidth="1"
         strokeDasharray="4 2"
       />
@@ -114,14 +114,14 @@ export function CorrelationChart({
             cx={scaleX(d.x)}
             cy={scaleY(d.y)}
             r={4}
-            fill={met ? '#C4856C' : '#5B8C6E'}
+            fill={met ? '#E8A87C' : '#6DD4B8'}
             opacity={0.7}
           />
         );
       })}
 
       {/* Summary box */}
-      <rect x={padding.left + 8} y={padding.top + 4} width={chartW - 16} height={36} rx={6} fill="white" stroke="#e5e7eb" opacity={0.92} />
+      <rect x={padding.left + 8} y={padding.top + 4} width={chartW - 16} height={36} rx={6} fill="#1C2230" stroke="#2A3140" opacity={0.92} />
       <text x={padding.left + 16} y={padding.top + 18} fontSize="10" className="fill-charcoal">
         Quand {xLabel} {conditionLabel} {threshold} : {yLabel} moy. = {conditionResult.meanWhenMet}
       </text>

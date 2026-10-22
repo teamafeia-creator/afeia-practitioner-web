@@ -10,7 +10,7 @@ export default function BookingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream to-white">
+    <div className="min-h-screen bg-gradient-to-b from-cream to-surface">
       <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
         {children}
       </div>

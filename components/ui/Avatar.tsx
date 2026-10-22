@@ -75,7 +75,7 @@ export function Avatar({
     <div className={cn('relative inline-flex', className)}>
       <div
         className={cn(
-          'flex items-center justify-center rounded-full overflow-hidden ring-2 ring-white shadow-sm',
+          'flex items-center justify-center rounded-full overflow-hidden ring-2 ring-surface shadow-sm',
           sizes[size],
           showFallback && bgColor
         )}
@@ -88,7 +88,7 @@ export function Avatar({
             className="h-full w-full object-cover"
           />
         ) : initials ? (
-          <span className="font-semibold text-white">{initials}</span>
+          <span className="font-semibold text-ink">{initials}</span>
         ) : (
           <User className="h-1/2 w-1/2 text-stone" />
         )}
@@ -96,7 +96,7 @@ export function Avatar({
       {status && (
         <span
           className={cn(
-            'absolute bottom-0 right-0 rounded-full ring-2 ring-white',
+            'absolute bottom-0 right-0 rounded-full ring-2 ring-surface',
             statusColors[status],
             statusSizes[size]
           )}
@@ -136,7 +136,7 @@ export function AvatarGroup({ avatars, max = 4, size = 'md' }: AvatarGroupProps)
       {remaining > 0 && (
         <div
           className={cn(
-            'flex items-center justify-center rounded-full bg-cream ring-2 ring-white font-medium text-stone',
+            'flex items-center justify-center rounded-full bg-cream ring-2 ring-surface font-medium text-stone',
             size === 'sm' && 'h-8 w-8 text-xs -ml-2',
             size === 'md' && 'h-10 w-10 text-sm -ml-3',
             size === 'lg' && 'h-12 w-12 text-base -ml-4'

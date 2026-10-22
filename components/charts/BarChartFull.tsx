@@ -4,10 +4,10 @@ type BarData = { label: string; value: number; color?: string };
 type Thresholds = { green: number; orange: number };
 
 function getBarColor(value: number, thresholds?: Thresholds): string {
-  if (!thresholds) return '#5B8C6E';
-  if (value >= thresholds.green) return '#5B8C6E';
-  if (value >= thresholds.orange) return '#D4A060';
-  return '#C4856C';
+  if (!thresholds) return '#6DD4B8';
+  if (value >= thresholds.green) return '#6DD4B8';
+  if (value >= thresholds.orange) return '#D4A574';
+  return '#E8A87C';
 }
 
 export function BarChartFull({
@@ -48,7 +48,7 @@ export function BarChartFull({
       {/* Y grid + labels */}
       {yTicks.map((v) => (
         <g key={v}>
-          <line x1={padding.left} x2={width - padding.right} y1={scaleY(v)} y2={scaleY(v)} stroke="#e5e7eb" strokeWidth="0.5" />
+          <line x1={padding.left} x2={width - padding.right} y1={scaleY(v)} y2={scaleY(v)} stroke="#2A3140" strokeWidth="0.5" />
           <text x={padding.left - 8} y={scaleY(v) + 4} textAnchor="end" className="fill-warmgray" fontSize="10">{v}</text>
         </g>
       ))}
@@ -61,7 +61,7 @@ export function BarChartFull({
             y={scaleY(referenceZone.max)}
             width={chartW}
             height={scaleY(referenceZone.min) - scaleY(referenceZone.max)}
-            fill="#5B8C6E"
+            fill="#6DD4B8"
             opacity={0.08}
           />
           <text

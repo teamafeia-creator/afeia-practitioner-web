@@ -141,7 +141,7 @@ export default function AgendaPage() {
           {showCreateMenu && (
             <>
               <div className="fixed inset-0 z-20" onClick={() => setShowCreateMenu(false)} />
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black/5 z-30">
+              <div className="absolute right-0 mt-2 w-48 bg-surface rounded-lg shadow-lg ring-1 ring-black/5 z-30">
                 <button
                   onClick={handleCreateAppointment}
                   className="w-full text-left px-4 py-3 text-sm text-charcoal hover:bg-sage-light/50 rounded-t-lg transition-colors"
@@ -177,7 +177,7 @@ export default function AgendaPage() {
       {/* Floating mobile button */}
       <button
         onClick={handleCreateAppointment}
-        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-sage text-white shadow-lg flex items-center justify-center hover:bg-sage-deep transition-colors"
+        className="md:hidden fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-sage text-ink shadow-lg flex items-center justify-center hover:bg-sage-deep transition-colors"
       >
         <Plus className="w-6 h-6" />
       </button>

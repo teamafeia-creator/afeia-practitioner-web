@@ -117,7 +117,7 @@ export function ResourceEditor({
               onClick={() => update('content_type', type)}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                 form.content_type === type
-                  ? 'bg-sage text-white'
+                  ? 'bg-sage text-ink'
                   : 'bg-cream text-stone hover:bg-sage-light'
               }`}
             >
@@ -140,7 +140,7 @@ export function ResourceEditor({
             </button>
           </div>
           {previewMode ? (
-            <div className="rounded-lg border border-divider bg-white p-4 min-h-[200px]">
+            <div className="rounded-lg border border-divider bg-surface p-4 min-h-[200px]">
               <MarkdownRenderer content={form.content_markdown} />
             </div>
           ) : (
@@ -149,7 +149,7 @@ export function ResourceEditor({
               onChange={(e) => update('content_markdown', e.target.value)}
               placeholder="## Introduction&#10;&#10;Écrivez votre contenu en Markdown..."
               rows={12}
-              className="w-full rounded-lg border border-divider bg-white px-3 py-2 text-sm text-charcoal font-mono placeholder:text-stone focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
+              className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-charcoal font-mono placeholder:text-stone focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
             />
           )}
         </div>

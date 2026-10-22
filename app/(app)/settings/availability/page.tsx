@@ -198,7 +198,7 @@ export default function AvailabilityPage() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push('/settings')}
-          className="p-2 rounded-lg hover:bg-white/50 transition-colors text-stone"
+          className="p-2 rounded-lg hover:bg-surface/50 transition-colors text-stone"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -232,7 +232,7 @@ export default function AvailabilityPage() {
                       onClick={() => toggleDay(dayIndex)}
                       className={`w-5 h-5 rounded flex items-center justify-center text-xs transition-colors ${
                         week[dayIndex].active
-                          ? 'bg-sage text-white'
+                          ? 'bg-sage text-ink'
                           : 'bg-neutral-200 text-neutral-400'
                       }`}
                     >
@@ -311,7 +311,7 @@ export default function AvailabilityPage() {
             ) : (
               <div className="space-y-2">
                 {overrides.map((ovr) => (
-                  <div key={ovr.id} className="flex items-center justify-between p-3 bg-white/40 rounded-lg">
+                  <div key={ovr.id} className="flex items-center justify-between p-3 bg-surface/40 rounded-lg">
                     <div>
                       <div className="text-sm font-medium text-charcoal">
                         {dateFormatter.format(new Date(ovr.date + 'T00:00:00'))}

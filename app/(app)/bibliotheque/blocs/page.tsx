@@ -171,7 +171,7 @@ export default function BlocsConseillancierPage() {
             <select
               value={sectionFilter}
               onChange={(e) => setSectionFilter(e.target.value as BlockSection | '')}
-              className="rounded-lg border border-divider bg-white px-3 py-1.5 text-xs text-charcoal focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
+              className="rounded-lg border border-divider bg-surface px-3 py-1.5 text-xs text-charcoal focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
             >
               <option value="">Toutes les sections</option>
               {BLOCK_SECTIONS.map((s) => (
@@ -182,7 +182,7 @@ export default function BlocsConseillancierPage() {
             <select
               value={motifFilter}
               onChange={(e) => setMotifFilter(e.target.value as ConsultationMotif | '')}
-              className="rounded-lg border border-divider bg-white px-3 py-1.5 text-xs text-charcoal focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
+              className="rounded-lg border border-divider bg-surface px-3 py-1.5 text-xs text-charcoal focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
             >
               <option value="">Tous les motifs</option>
               {ALL_MOTIFS.map((m) => (
@@ -202,8 +202,8 @@ export default function BlocsConseillancierPage() {
                   onClick={() => setSourceFilter(option.value as '' | 'afeia_base' | 'praticien')}
                   className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     sourceFilter === option.value
-                      ? 'bg-sage text-white'
-                      : 'bg-white text-sage hover:bg-sage-light/50'
+                      ? 'bg-sage text-ink'
+                      : 'bg-surface text-sage hover:bg-sage-light/50'
                   }`}
                 >
                   {option.label}
@@ -218,7 +218,7 @@ export default function BlocsConseillancierPage() {
                 'flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
                 favoriteOnly
                   ? 'border-gold bg-gold/10 text-gold'
-                  : 'border-divider bg-white text-stone hover:bg-cream'
+                  : 'border-divider bg-surface text-stone hover:bg-cream'
               )}
             >
               <Star className="h-3 w-3" fill={favoriteOnly ? 'currentColor' : 'none'} />

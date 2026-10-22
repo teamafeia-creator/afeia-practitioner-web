@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-6 py-12 text-white">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-ink px-6 py-12 text-white">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 right-0 h-72 w-72 rounded-full bg-teal-500/20 blur-3xl" />
         <div className="absolute -bottom-32 left-0 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
@@ -58,12 +58,12 @@ export default function AdminLoginPage() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-sage">
             <Image src="/afeia_symbol.svg" alt="AFEIA" width={32} height={32} />
           </div>
           <p className="text-xs uppercase tracking-[0.4em] text-sage-200/70">AFEIA</p>
           <h1 className="mt-2 text-2xl font-semibold">Connexion Administrateur AFEIA</h1>
-          <p className="mt-2 text-sm text-slate-300">
+          <p className="mt-2 text-sm text-stone">
             Accès sécurisé réservé à l&apos;équipe AFEIA.
           </p>
         </div>
@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
           <CardContent className="space-y-6 p-6">
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-4">
-                <label className="block text-sm text-slate-200">
+                <label className="block text-sm text-charcoal">
                   Email admin
                   <div className="relative mt-2">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -83,12 +83,12 @@ export default function AdminLoginPage() {
                       placeholder="team.afeia@gmail.com"
                       autoComplete="email"
                       required
-                      className="w-full rounded-xl border border-white/10 bg-slate-950/60 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-400/40"
+                      className="w-full rounded-xl border border-white/10 bg-ink/60 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-400/40"
                     />
                   </div>
                 </label>
 
-                <label className="block text-sm text-slate-200">
+                <label className="block text-sm text-charcoal">
                   Mot de passe
                   <div className="relative mt-2">
                     <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
                       placeholder="••••••"
                       autoComplete="current-password"
                       required
-                      className="w-full rounded-xl border border-white/10 bg-slate-950/60 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-400/40"
+                      className="w-full rounded-xl border border-white/10 bg-ink/60 py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-400/40"
                     />
                   </div>
                 </label>

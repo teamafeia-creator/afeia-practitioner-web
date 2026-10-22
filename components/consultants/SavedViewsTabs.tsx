@@ -130,7 +130,7 @@ export function SavedViewsTabs({ filters, activeFilterCount, onApplyView }: Save
           <button
             onClick={handleSaveView}
             disabled={saving || !viewName.trim()}
-            className="px-2 py-1 text-xs font-medium text-white bg-sage rounded-md hover:bg-sage-deep disabled:opacity-50 transition-colors"
+            className="px-2 py-1 text-xs font-medium text-ink bg-sage rounded-md hover:bg-sage-deep disabled:opacity-50 transition-colors"
           >
             {saving ? '...' : 'OK'}
           </button>

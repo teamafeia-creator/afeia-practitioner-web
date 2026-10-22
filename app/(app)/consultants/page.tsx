@@ -367,7 +367,7 @@ export default function ConsultantsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher par nom, ville ou tag..."
-          className="w-full pl-12 pr-10 py-3.5 text-sm rounded-xl border border-divider bg-white focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20 shadow-card transition-shadow placeholder:text-mist"
+          className="w-full pl-12 pr-10 py-3.5 text-sm rounded-xl border border-divider bg-surface focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20 shadow-card transition-shadow placeholder:text-mist"
         />
         {search && (
           <button
@@ -421,7 +421,7 @@ export default function ConsultantsPage() {
       </div>
 
       {/* Advanced Filter Bar */}
-      <div className="bg-white border border-divider rounded-xl p-4">
+      <div className="bg-surface border border-divider rounded-xl p-4">
         <ConsultantFilterBar
           filters={advancedFilters.filters}
           setFilter={advancedFilters.setFilter}
@@ -449,7 +449,7 @@ export default function ConsultantsPage() {
 
       {/* Empty State */}
       {filteredConsultants.length === 0 && (
-        <div className="bg-white border border-divider rounded-xl p-8 shadow-card flex flex-col items-center justify-center text-center">
+        <div className="bg-surface border border-divider rounded-xl p-8 shadow-card flex flex-col items-center justify-center text-center">
           <div className="w-28 h-28 rounded-full overflow-hidden mb-6 opacity-50">
             <Image
               src="/images/palm-minimal.jpg"
@@ -459,10 +459,10 @@ export default function ConsultantsPage() {
               className="object-cover w-full h-full"
             />
           </div>
-          <h4 className="font-serif text-xl text-[#2D3436] mb-2">
+          <h4 className="font-serif text-xl text-charcoal mb-2">
             Aucun consultant
           </h4>
-          <p className="text-[#6B7280] text-sm max-w-sm mb-4">
+          <p className="text-[#8B95A5] text-sm max-w-sm mb-4">
             {search ? 'Aucun consultant ne correspond a votre recherche.' : 'Commencez par ajouter votre premier consultant.'}
           </p>
           <Link href="/consultants/new">
@@ -500,14 +500,14 @@ export default function ConsultantsPage() {
               >
               <Link
                 href={`/consultants/${consultant.id}`}
-                className="block bg-white border border-divider rounded-xl p-5 shadow-card transition-all duration-200 hover:border-sage/30"
+                className="block bg-surface border border-divider rounded-xl p-5 shadow-card transition-all duration-200 hover:border-sage/30"
               >
                 <div className="flex flex-col items-center text-center">
                   {/* Avatar + status dot */}
                   <div className="relative mb-3">
                     <Avatar name={getDisplayName(consultant)} size="lg" />
                     <span className={cn(
-                      'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white',
+                      'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-surface',
                       !isActive ? 'bg-mist' :
                       meta.lastConsultation && new Date(meta.lastConsultation) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) ? 'bg-gold' :
                       'bg-success'
@@ -585,7 +585,7 @@ export default function ConsultantsPage() {
                 <div
                   key={invitation.id}
                   className={cn(
-                    'bg-white border border-divider rounded-xl p-4 shadow-card transition-shadow',
+                    'bg-surface border border-divider rounded-xl p-4 shadow-card transition-shadow',
                     canOpen && 'cursor-pointer hover:shadow-card-hover'
                   )}
                   onClick={() => {

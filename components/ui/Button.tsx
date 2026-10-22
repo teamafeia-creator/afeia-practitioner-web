@@ -36,17 +36,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants: Record<Variant, string> = {
       primary:
-        'bg-sage text-white hover:bg-sage-dark',
+        'bg-sage text-ink hover:bg-sage-dark',
       secondary:
         'bg-transparent border border-sage text-sage hover:bg-sage-light',
       ghost:
         'bg-transparent text-charcoal hover:bg-cream',
       destructive:
-        'bg-rose text-white hover:bg-rose/90',
+        'bg-rose text-ink hover:bg-rose/90',
       success:
-        'bg-success text-white hover:bg-success/90',
+        'bg-success text-ink hover:bg-success/90',
       outline:
-        'border border-divider bg-white text-charcoal hover:border-sage hover:text-sage'
+        'border border-divider bg-surface text-charcoal hover:border-sage hover:text-sage'
     };
 
     const sizes: Record<Size, string> = {

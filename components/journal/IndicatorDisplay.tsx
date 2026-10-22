@@ -23,7 +23,7 @@ export function IndicatorDisplay({ indicator, value, onChange, readonly = false 
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg bg-white/60 px-3 py-2 border border-divider">
+    <div className="flex items-center justify-between gap-3 rounded-lg bg-surface/60 px-3 py-2 border border-divider">
       <span className="text-xs text-charcoal font-medium truncate">{indicator.label}</span>
 
       <div className="flex-shrink-0">
@@ -59,7 +59,7 @@ export function IndicatorDisplay({ indicator, value, onChange, readonly = false 
           ) : (
             <input
               type="text"
-              className="text-xs border border-divider rounded px-2 py-1 w-24 bg-white text-charcoal"
+              className="text-xs border border-divider rounded px-2 py-1 w-24 bg-surface text-charcoal"
               value={typeof currentValue === 'string' ? currentValue : ''}
               onChange={(e) => handleChange(e.target.value)}
               placeholder="..."
@@ -133,7 +133,7 @@ function NumberControl({
     <div className="flex items-center gap-1">
       <input
         type="number"
-        className="w-16 text-xs border border-divider rounded px-2 py-1 bg-white text-charcoal text-right"
+        className="w-16 text-xs border border-divider rounded px-2 py-1 bg-surface text-charcoal text-right"
         value={value || ''}
         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
       />
@@ -171,7 +171,7 @@ function ScaleControl({
             'h-5 w-5 rounded-full border transition-colors',
             n <= value
               ? 'bg-sage border-sage'
-              : 'bg-white border-divider',
+              : 'bg-surface border-divider',
             !readonly && 'cursor-pointer hover:border-sage/50'
           )}
         />

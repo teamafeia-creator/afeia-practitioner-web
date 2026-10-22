@@ -126,7 +126,7 @@ export function MiniCalendar({
               className={`
                 h-10 rounded-lg text-sm font-medium transition-all
                 ${isSelected
-                  ? 'bg-sage text-white shadow-sm'
+                  ? 'bg-sage text-ink shadow-sm'
                   : isAvailable && !isPast
                     ? 'bg-sage-light text-sage hover:bg-sage-light'
                     : 'text-stone/40'

@@ -146,7 +146,7 @@ export default function FacturationPage() {
                   Exporter
                 </Button>
                 {showExportMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-divider py-1 z-50">
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-surface rounded-lg shadow-lg border border-divider py-1 z-50">
                     <div className="px-3 py-1.5 text-xs font-medium text-stone uppercase tracking-wider">
                       CSV
                     </div>

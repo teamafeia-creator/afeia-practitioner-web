@@ -226,7 +226,7 @@ export function ConsultantFilterBar({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher un consultant..."
-          className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:border-sage focus:ring-1 focus:ring-sage/30"
+          className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 bg-surface focus:outline-none focus:border-sage focus:ring-1 focus:ring-sage/30"
         />
         {search && (
           <button
@@ -254,7 +254,7 @@ export function ConsultantFilterBar({
               <Filter className="h-3.5 w-3.5" />
               Filtrer
               {activeFilterCount > 0 && (
-                <span className="ml-1 bg-sage text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="ml-1 bg-sage text-ink text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
