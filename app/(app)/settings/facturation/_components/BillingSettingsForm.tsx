@@ -49,7 +49,7 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
       return;
     }
     if (adresse.length < 10) {
-      showToast.error('L\'adresse de facturation est requise (minimum 10 caracteres)');
+      showToast.error('L\'adresse de facturation est requise (minimum 10 caractères)');
       return;
     }
     if (mentionTva.length < 5) {
@@ -82,7 +82,7 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
         throw new Error(err.message);
       }
 
-      showToast.success('Parametres enregistres');
+      showToast.success('Paramètres enregistrés');
       onSaved();
     } catch (error) {
       showToast.error(
@@ -96,7 +96,7 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Informations legales</CardTitle>
+        <CardTitle>Informations légales</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -144,7 +144,7 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
             onChange={(e) => setLibelleDocument(e.target.value)}
           >
             <option value="facture">Facture</option>
-            <option value="recu">Recu</option>
+            <option value="recu">Reçu</option>
             <option value="facture-recu">Facture-Recu</option>
           </Select>
 
@@ -169,7 +169,7 @@ export function BillingSettingsForm({ settings, authToken, onSaved }: Props) {
                 className="rounded border-sage/30 text-sage focus:ring-sage/30"
               />
               <span className="text-sm text-charcoal">
-                Recevoir une copie de chaque facture envoyee
+                Recevoir une copie de chaque facture envoyée
               </span>
             </label>
           </div>

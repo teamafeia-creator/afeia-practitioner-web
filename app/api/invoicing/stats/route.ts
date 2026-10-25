@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Erreur stats factures:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la recuperation des statistiques' },
+      { message: 'Erreur lors de la récupération des statistiques' },
       { status: 500 }
     );
   }

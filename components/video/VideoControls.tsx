@@ -71,7 +71,7 @@ export function VideoControls({ onLeave, onToggleChat }: VideoControlsProps) {
             ? 'bg-sage/30 text-sage hover:bg-sage/40'
             : 'bg-white/10 text-white hover:bg-white/20'
         }`}
-        title={isScreenSharing ? 'Arreter le partage' : 'Partager l\'ecran'}
+        title={isScreenSharing ? 'Arrêter le partage' : 'Partager l\'écran'}
       >
         {isScreenSharing ? <MonitorOff className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
       </button>

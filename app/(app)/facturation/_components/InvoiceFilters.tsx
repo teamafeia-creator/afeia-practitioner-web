@@ -9,11 +9,11 @@ interface Props {
 
 const FILTERS = [
   { value: '', label: 'Toutes' },
-  { value: 'paid', label: 'Payees' },
+  { value: 'paid', label: 'Payées' },
   { value: 'issued', label: 'En attente' },
   { value: 'draft', label: 'Brouillons' },
-  { value: 'cancelled', label: 'Annulees' },
-  { value: 'refunded', label: 'Remboursees' },
+  { value: 'cancelled', label: 'Annulées' },
+  { value: 'refunded', label: 'Remboursées' },
 ];
 
 export function InvoiceFilters({ currentFilter, onFilterChange }: Props) {

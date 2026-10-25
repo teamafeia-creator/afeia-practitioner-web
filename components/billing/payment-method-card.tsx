@@ -103,7 +103,7 @@ export function PaymentMethodCard({ paymentMethods }: PaymentMethodCardProps) {
                       {formatCardBrand(pm.card_brand)} •••• {pm.card_last4}
                     </p>
                     <p className="text-xs text-charcoal">
-                      Expire {formatCardExpiry(pm.card_exp_month, pm.card_exp_year)}
+                      Expiré {formatCardExpiry(pm.card_exp_month, pm.card_exp_year)}
                     </p>
                   </>
                 )}

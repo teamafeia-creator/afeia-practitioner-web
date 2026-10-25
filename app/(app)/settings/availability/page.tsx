@@ -105,7 +105,7 @@ export default function AvailabilityPage() {
       }
       setOverrides(ovr);
     } catch (err) {
-      showToast.error('Erreur lors du chargement des disponibilites');
+      showToast.error('Erreur lors du chargement des disponibilités');
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ export default function AvailabilityPage() {
     try {
       const schedules = weekToSchedules(week);
       await saveAvailabilitySchedules(schedules);
-      showToast.success('Disponibilites enregistrees');
+      showToast.success('Disponibilités enregistrées');
     } catch (err) {
       showToast.error('Erreur lors de la sauvegarde');
     } finally {
@@ -174,9 +174,9 @@ export default function AvailabilityPage() {
       setOverrideModalOpen(false);
       setOverrideForm({ date: '', is_available: false, all_day: true, start_time: '09:00', end_time: '18:00', reason: '' });
       await loadData();
-      showToast.success('Exception ajoutee');
+      showToast.success('Exception ajoutée');
     } catch (err) {
-      showToast.error('Erreur lors de la creation');
+      showToast.error('Erreur lors de la création');
     }
   }
 
@@ -184,7 +184,7 @@ export default function AvailabilityPage() {
     try {
       await deleteAvailabilityOverride(id);
       setOverrides((prev) => prev.filter((o) => o.id !== id));
-      showToast.success('Exception supprimee');
+      showToast.success('Exception supprimée');
     } catch {
       showToast.error('Erreur lors de la suppression');
     }
@@ -203,7 +203,7 @@ export default function AvailabilityPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <PageHeader
-          title="Disponibilites"
+          title="Disponibilités"
           subtitle="Configurez vos horaires hebdomadaires et vos exceptions."
         />
       </div>
@@ -294,7 +294,7 @@ export default function AvailabilityPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-charcoal flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-sage" />
-                Indisponibilites & exceptions
+                Indisponibilités & exceptions
               </h3>
               <Button
                 variant="outline"
@@ -307,7 +307,7 @@ export default function AvailabilityPage() {
             </div>
 
             {overrides.length === 0 ? (
-              <p className="text-sm text-stone">Aucune exception configuree.</p>
+              <p className="text-sm text-stone">Aucune exception configurée.</p>
             ) : (
               <div className="space-y-2">
                 {overrides.map((ovr) => (
@@ -323,7 +323,7 @@ export default function AvailabilityPage() {
                           <span className="text-red-500">Indisponible</span>
                         )}
                         {ovr.start_time && ovr.end_time && ` · ${ovr.start_time.slice(0, 5)} - ${ovr.end_time.slice(0, 5)}`}
-                        {!ovr.start_time && ' · Toute la journee'}
+                        {!ovr.start_time && ' · Toute la journée'}
                         {ovr.reason && ` · ${ovr.reason}`}
                       </div>
                     </div>
@@ -380,7 +380,7 @@ export default function AvailabilityPage() {
           </div>
 
           <div>
-            <span className="text-[13px] font-medium text-stone">Duree</span>
+            <span className="text-[13px] font-medium text-stone">Durée</span>
             <div className="flex gap-3 mt-2">
               <button
                 onClick={() => setOverrideForm((f) => ({ ...f, all_day: true }))}
@@ -388,7 +388,7 @@ export default function AvailabilityPage() {
                   overrideForm.all_day ? 'bg-sage-light text-sage ring-1 ring-sage/20' : 'bg-neutral-100 text-stone'
                 }`}
               >
-                Toute la journee
+                Toute la journée
               </button>
               <button
                 onClick={() => setOverrideForm((f) => ({ ...f, all_day: false }))}
@@ -396,7 +396,7 @@ export default function AvailabilityPage() {
                   !overrideForm.all_day ? 'bg-sage-light text-sage ring-1 ring-sage/20' : 'bg-neutral-100 text-stone'
                 }`}
               >
-                Creneau specifique
+                Créneau spécifique
               </button>
             </div>
           </div>
@@ -404,7 +404,7 @@ export default function AvailabilityPage() {
           {!overrideForm.all_day && (
             <div className="grid grid-cols-2 gap-4">
               <Select
-                label="Debut"
+                label="Début"
                 value={overrideForm.start_time}
                 onChange={(e) => setOverrideForm((f) => ({ ...f, start_time: e.target.value }))}
               >

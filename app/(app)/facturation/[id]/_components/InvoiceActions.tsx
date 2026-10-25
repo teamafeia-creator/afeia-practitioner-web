@@ -50,7 +50,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
         throw new Error(err.message);
       }
 
-      showToast.success('Facture marquee comme payee');
+      showToast.success('Facture marquée comme payée');
       setShowMarkPaidModal(false);
       onRefresh();
     } catch (error) {
@@ -75,7 +75,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
         throw new Error(err.message);
       }
 
-      showToast.success('Facture annulee');
+      showToast.success('Facture annulée');
       setShowCancelModal(false);
       onRefresh();
     } catch (error) {
@@ -106,7 +106,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
       }
 
       const { avoir } = await response.json();
-      showToast.success(`Avoir ${avoir.numero} cree et envoye`);
+      showToast.success(`Avoir ${avoir.numero} créé et envoyé`);
       setShowRefundModal(false);
       onRefresh();
     } catch (error) {
@@ -132,12 +132,12 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
       }
 
       const { payment_link_url } = await response.json();
-      showToast.success('Lien de paiement cree');
+      showToast.success('Lien de paiement créé');
 
       // Copier dans le presse-papiers
       try {
         await navigator.clipboard.writeText(payment_link_url);
-        showToast.success('Lien copie dans le presse-papiers');
+        showToast.success('Lien copié dans le presse-papiers');
       } catch {
         // Fallback si clipboard non disponible
       }
@@ -156,7 +156,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
     if (invoice.stripe_payment_link_url) {
       try {
         await navigator.clipboard.writeText(invoice.stripe_payment_link_url);
-        showToast.success('Lien copie dans le presse-papiers');
+        showToast.success('Lien copié dans le presse-papiers');
       } catch {
         showToast.error('Impossible de copier le lien');
       }
@@ -171,7 +171,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
         body: JSON.stringify({ invoice_id: invoice.id }),
       });
 
-      if (!response.ok) throw new Error('Erreur generation PDF');
+      if (!response.ok) throw new Error('Erreur génération PDF');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -181,7 +181,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
-      showToast.error('Erreur lors du telechargement du PDF');
+      showToast.error('Erreur lors du téléchargement du PDF');
     }
   }
 
@@ -200,7 +200,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
       }
 
       showToast.success(
-        `Email envoye a ${invoice.consultant_snapshot.email}`
+        `Email envoyé à ${invoice.consultant_snapshot.email}`
       );
     } catch (error) {
       showToast.error(
@@ -220,7 +220,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
           icon={<Download className="h-4 w-4" />}
           onClick={handleDownloadPdf}
         >
-          Telecharger PDF
+          Télécharger PDF
         </Button>
 
         {(invoice.status === 'paid' || invoice.status === 'refunded') && (
@@ -242,7 +242,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
             icon={<Check className="h-4 w-4" />}
             onClick={() => setShowMarkPaidModal(true)}
           >
-            Marquer comme payee
+            Marquer comme payée
           </Button>
         )}
 
@@ -255,7 +255,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
             onClick={handleCreatePaymentLink}
             loading={loading}
           >
-            Creer lien de paiement
+            Créer lien de paiement
           </Button>
         )}
 
@@ -298,7 +298,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
       <Modal
         isOpen={showMarkPaidModal}
         onClose={() => setShowMarkPaidModal(false)}
-        title="Marquer comme payee"
+        title="Marquer comme payée"
         size="sm"
       >
         <div className="space-y-4">
@@ -307,15 +307,15 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
           >
-            <option value="especes">Especes</option>
-            <option value="cheque">Cheque</option>
+            <option value="especes">Espèces</option>
+            <option value="cheque">Chèque</option>
             <option value="cb">Carte bancaire</option>
             <option value="virement">Virement</option>
           </Select>
 
           {paymentMethod === 'cheque' && (
             <Textarea
-              placeholder="Numero de cheque (optionnel)"
+              placeholder="Numéro de chèque (optionnel)"
               value={paymentNotes}
               onChange={(e) => setPaymentNotes(e.target.value)}
               className="min-h-[60px]"
@@ -345,7 +345,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
         isOpen={showRefundModal}
         onClose={() => setShowRefundModal(false)}
         title="Rembourser cette facture"
-        description="Un avoir sera cree et la facture sera marquee comme remboursee."
+        description="Un avoir sera créé et la facture sera marquée comme remboursée."
         size="sm"
       >
         <div className="space-y-4">
@@ -354,7 +354,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
             value={refundMotif}
             onChange={(e) => setRefundMotif(e.target.value)}
           >
-            <option value="consultation_annulee">Consultation annulee</option>
+            <option value="consultation_annulee">Consultation annulée</option>
             <option value="erreur_facturation">Erreur de facturation</option>
             <option value="geste_commercial">Geste commercial</option>
             <option value="autre">Autre</option>
@@ -362,7 +362,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
 
           {refundMotif === 'autre' && (
             <Textarea
-              placeholder="Preciser le motif..."
+              placeholder="Préciser le motif..."
               value={refundDetail}
               onChange={(e) => setRefundDetail(e.target.value)}
               className="min-h-[60px]"
@@ -382,7 +382,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
             onClick={handleRefund}
             loading={loading}
           >
-            Creer l&apos;avoir
+            Créer l&apos;avoir
           </Button>
         </ModalFooter>
       </Modal>
@@ -393,7 +393,7 @@ export function InvoiceActions({ invoice, authToken, onRefresh, stripeConnected 
         onClose={() => setShowCancelModal(false)}
         onConfirm={handleCancel}
         title="Annuler cette facture ?"
-        message="Le numero de facture sera conserve mais la facture sera marquee comme annulee. Cette action est irreversible."
+        message="Le numéro de facture sera conserve mais la facture sera marquée comme annulée. Cette action est irréversible."
         confirmText="Annuler la facture"
         variant="danger"
         loading={loading}

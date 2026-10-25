@@ -20,7 +20,7 @@ export async function GET(
     const practitioner = await getPractitionerBySlug(params.slug);
     if (!practitioner) {
       return NextResponse.json(
-        { error: 'Praticien non trouve.' },
+        { error: 'Praticien non trouvé.' },
         { status: 404 }
       );
     }
@@ -43,7 +43,7 @@ export async function GET(
     if (error) {
       console.error('Error fetching group sessions:', error);
       return NextResponse.json(
-        { error: 'Erreur lors du chargement des seances.' },
+        { error: 'Erreur lors du chargement des séances.' },
         { status: 500 }
       );
     }

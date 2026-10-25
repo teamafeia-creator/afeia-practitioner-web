@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       // Fallback: verifier si c'est un praticien authentifie (pour tests manuels)
       const token = authHeader?.replace('Bearer ', '').trim();
       if (!token) {
-        return NextResponse.json({ message: 'Non autorise' }, { status: 401 });
+        return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
       }
     }
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         processed: 0,
-        message: 'Aucune relance a envoyer',
+        message: 'Aucune relance à envoyer',
       });
     }
 
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         if (!settings?.relances_auto) {
           await supabase
             .from('reminder_queue')
-            .update({ sent: true, error_message: 'Relances desactivees' })
+            .update({ sent: true, error_message: 'Relances désactivées' })
             .eq('id', reminder.id);
           continue;
         }
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
           console.info('RESEND_API_KEY not configured. Skipping reminder.');
           await supabase
             .from('reminder_queue')
-            .update({ sent: true, error_message: 'RESEND_API_KEY non configure' })
+            .update({ sent: true, error_message: 'RESEND_API_KEY non configuré' })
             .eq('id', reminder.id);
           failed++;
           continue;

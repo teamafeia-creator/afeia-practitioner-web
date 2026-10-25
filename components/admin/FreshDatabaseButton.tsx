@@ -30,13 +30,13 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
     try {
       const result = await freshDatabaseMutation.mutateAsync(EXPECTED_CODE);
       showToast.success(
-        `Reinitialisation terminee. ${result.totalDeleted} lignes supprimees.`
+        `Réinitialisation terminée. ${result.totalDeleted} lignes supprimées.`
       );
       handleReset();
       onSuccess?.();
       router.refresh();
     } catch (error) {
-      showToast.error(error instanceof Error ? error.message : 'Erreur lors de la reinitialisation');
+      showToast.error(error instanceof Error ? error.message : 'Erreur lors de la réinitialisation');
     }
   };
 
@@ -49,7 +49,7 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-red-800">Zone dangereuse</h3>
             <p className="text-xs text-red-600 mt-1">
-              Supprime tous les praticiens, patients, et donnees associees. Irreversible.
+              Supprimé tous les praticiens, patients, et données associées. Irréversible.
             </p>
           </div>
           <Button
@@ -59,7 +59,7 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
             onClick={() => setStep(1)}
             icon={<Trash2 className="h-3.5 w-3.5" />}
           >
-            Reinitialiser la base de donnees
+            Réinitialiser la base de données
           </Button>
         </div>
       </div>
@@ -71,26 +71,26 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
     return (
       <div className="rounded-lg border-2 border-red-300 bg-red-50 p-6">
         <h3 className="text-lg font-semibold text-red-800 mb-4">
-          Reinitialiser la base de donnees ?
+          Réinitialiser la base de données ?
         </h3>
 
         <div className="rounded-lg bg-surface border border-red-200 p-4 mb-4">
           <p className="text-sm text-slate-700 mb-3">
-            Cette action va supprimer <strong className="text-red-700">definitivement</strong> toutes
-            les donnees :
+            Cette action va supprimer <strong className="text-red-700">définitivement</strong> toutes
+            les données :
           </p>
           <ul className="text-sm text-slate-600 space-y-1.5 ml-4 list-disc">
             <li>Praticiens et leurs profils</li>
             <li>Patients / consultants</li>
             <li>Plans de soins et conseillanciers</li>
             <li>Messages, consultations, rendez-vous</li>
-            <li>Questionnaires et anamneses</li>
-            <li>Journaux et donnees wearables</li>
-            <li>Notifications et logs d&apos;activite</li>
-            <li>Abonnements et donnees de facturation</li>
+            <li>Questionnaires et anamnèses</li>
+            <li>Journaux et données wearables</li>
+            <li>Notifications et logs d&apos;activité</li>
+            <li>Abonnements et données de facturation</li>
           </ul>
           <p className="text-sm text-red-700 font-semibold mt-3">
-            Cette action est irreversible.
+            Cette action est irréversible.
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export function FreshDatabaseButton({ onSuccess }: FreshDatabaseButtonProps) {
             disabled={confirmationText !== EXPECTED_CONFIRMATION || freshDatabaseMutation.isPending}
             loading={freshDatabaseMutation.isPending}
           >
-            {freshDatabaseMutation.isPending ? 'Suppression en cours...' : 'Supprimer definitivement'}
+            {freshDatabaseMutation.isPending ? 'Suppression en cours...' : 'Supprimer définitivement'}
           </Button>
         </div>
 

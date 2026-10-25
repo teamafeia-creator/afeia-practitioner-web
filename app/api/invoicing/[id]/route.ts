@@ -9,7 +9,7 @@ export async function GET(
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -29,9 +29,9 @@ export async function GET(
 
     return NextResponse.json({ invoice, history });
   } catch (error) {
-    console.error('Erreur detail facture:', error);
+    console.error('Erreur détail facture:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la recuperation de la facture' },
+      { message: 'Erreur lors de la récupération de la facture' },
       { status: 500 }
     );
   }

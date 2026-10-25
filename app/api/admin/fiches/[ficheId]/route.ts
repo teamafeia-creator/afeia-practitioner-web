@@ -30,7 +30,7 @@ export async function GET(
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: 'Fiche non trouvee.' }, { status: 404 });
+      return NextResponse.json({ error: 'Fiche non trouvée.' }, { status: 404 });
     }
 
     return NextResponse.json({ fiche: data });
@@ -57,7 +57,7 @@ export async function PATCH(
 
     if (body.title !== undefined) {
       if (typeof body.title !== 'string' || !body.title.trim()) {
-        return NextResponse.json({ error: 'Le titre ne peut pas etre vide.' }, { status: 400 });
+        return NextResponse.json({ error: 'Le titre ne peut pas être vide.' }, { status: 400 });
       }
       updateData.title = (body.title as string).trim();
       updateData.slug = slugify(body.title as string);
@@ -69,7 +69,7 @@ export async function PATCH(
 
     if (body.content_markdown !== undefined) {
       if (typeof body.content_markdown !== 'string' || !body.content_markdown.trim()) {
-        return NextResponse.json({ error: 'Le contenu markdown ne peut pas etre vide.' }, { status: 400 });
+        return NextResponse.json({ error: 'Le contenu markdown ne peut pas être vide.' }, { status: 400 });
       }
       updateData.content_markdown = (body.content_markdown as string).trim();
     }
@@ -77,7 +77,7 @@ export async function PATCH(
     if (body.category !== undefined) {
       if (!VALID_CATEGORIES.has(body.category as string)) {
         return NextResponse.json({
-          error: `La categorie est invalide. Valeurs autorisees : ${[...VALID_CATEGORIES].join(', ')}`,
+          error: `La catégorie est invalide. Valeurs autorisées : ${[...VALID_CATEGORIES].join(', ')}`,
         }, { status: 400 });
       }
       updateData.category = body.category;
@@ -96,7 +96,7 @@ export async function PATCH(
     }
 
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: 'Aucun champ a mettre a jour.' }, { status: 400 });
+      return NextResponse.json({ error: 'Aucun champ à mettre à jour.' }, { status: 400 });
     }
 
     updateData.updated_at = new Date().toISOString();
@@ -114,13 +114,13 @@ export async function PATCH(
     if (error) {
       console.error('Erreur update fiche AFEIA:', error);
       if (error.code === '23505') {
-        return NextResponse.json({ error: 'Une fiche avec ce slug existe deja.' }, { status: 409 });
+        return NextResponse.json({ error: 'Une fiche avec ce slug existe déjà.' }, { status: 409 });
       }
-      return NextResponse.json({ error: 'Erreur lors de la mise a jour.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur lors de la mise à jour.' }, { status: 500 });
     }
 
     if (!data) {
-      return NextResponse.json({ error: 'Fiche non trouvee.' }, { status: 404 });
+      return NextResponse.json({ error: 'Fiche non trouvée.' }, { status: 404 });
     }
 
     return NextResponse.json({ fiche: data });
@@ -152,7 +152,7 @@ export async function DELETE(
       .single();
 
     if (fetchError || !existing) {
-      return NextResponse.json({ error: 'Fiche non trouvee.' }, { status: 404 });
+      return NextResponse.json({ error: 'Fiche non trouvée.' }, { status: 404 });
     }
 
     const { error } = await supabase

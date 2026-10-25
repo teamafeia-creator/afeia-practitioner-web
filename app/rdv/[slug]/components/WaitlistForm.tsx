@@ -81,7 +81,7 @@ export function WaitlistForm({
 
       if (!res.ok) {
         if (result.error === 'DUPLICATE') {
-          setError('Vous etes deja inscrit(e) sur la liste d\'attente.');
+          setError('Vous êtes déjà inscrit(e) sur la liste d\'attente.');
         } else {
           setError(result.error || result.message || 'Une erreur est survenue.');
         }
@@ -90,7 +90,7 @@ export function WaitlistForm({
 
       setSuccess(true);
     } catch {
-      setError('Une erreur est survenue. Veuillez reessayer.');
+      setError('Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setSubmitting(false);
     }
@@ -102,9 +102,9 @@ export function WaitlistForm({
         <div className="flex justify-center">
           <CheckCircle className="h-10 w-10 text-sage" />
         </div>
-        <p className="text-sm font-medium text-charcoal">Inscription confirmee !</p>
+        <p className="text-sm font-medium text-charcoal">Inscription confirmée !</p>
         <p className="text-sm text-stone">
-          Vous serez prevenu(e) par email des qu&apos;un creneau correspondant se libere.
+          Vous serez prévenu(e) par email dès qu&apos;un créneau correspondant se libère.
         </p>
       </div>
     );
@@ -114,12 +114,12 @@ export function WaitlistForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Prenom"
+          label="Prénom"
           value={firstName}
           onChange={e => setFirstName(e.target.value)}
           required
           minLength={2}
-          placeholder="Votre prenom"
+          placeholder="Votre prénom"
         />
         <Input
           label="Email"
@@ -132,7 +132,7 @@ export function WaitlistForm({
       </div>
 
       <Input
-        label="Telephone (optionnel)"
+        label="Téléphone (optionnel)"
         type="tel"
         value={phone}
         onChange={e => setPhone(e.target.value)}
@@ -155,18 +155,18 @@ export function WaitlistForm({
       )}
 
       <Select
-        label="Preference horaire"
+        label="Préférence horaire"
         value={preferredTimeOfDay}
         onChange={e => setPreferredTimeOfDay(e.target.value)}
       >
-        <option value="any">Peu importe</option>
+        <option value="any">Peu importé</option>
         <option value="morning">Matin (avant 12h)</option>
         <option value="afternoon">Apres-midi (12h-17h)</option>
-        <option value="evening">Soir (apres 17h)</option>
+        <option value="evening">Soir (après 17h)</option>
       </Select>
 
       <div>
-        <span className="text-xs font-medium text-stone block mb-2">Jours preferes</span>
+        <span className="text-xs font-medium text-stone block mb-2">Jours préférés</span>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -208,7 +208,7 @@ export function WaitlistForm({
         className="w-full"
         loading={submitting}
       >
-        S&apos;inscrire a la liste d&apos;attente
+        S&apos;inscrire à la liste d&apos;attente
       </Button>
     </form>
   );

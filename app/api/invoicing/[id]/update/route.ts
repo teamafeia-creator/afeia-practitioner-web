@@ -9,7 +9,7 @@ export async function PATCH(
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -40,7 +40,7 @@ export async function PATCH(
     // Seuls les brouillons peuvent etre modifies
     if (invoice.status !== 'draft' && validatedData.status === undefined) {
       return NextResponse.json(
-        { message: 'Seuls les brouillons peuvent etre modifies' },
+        { message: 'Seuls les brouillons peuvent être modifiés' },
         { status: 400 }
       );
     }
@@ -64,9 +64,9 @@ export async function PATCH(
 
     return NextResponse.json({ invoice: updated });
   } catch (error) {
-    console.error('Erreur mise a jour facture:', error);
+    console.error('Erreur mise à jour facture:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la mise a jour de la facture' },
+      { message: 'Erreur lors de la mise à jour de la facture' },
       { status: 500 }
     );
   }

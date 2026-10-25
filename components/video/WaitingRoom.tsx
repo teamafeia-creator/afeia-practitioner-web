@@ -71,7 +71,7 @@ export function WaitingRoom({
             <Clock className="h-4 w-4" />
             <span className="capitalize">{dateFormatter.format(startsAtDate)}</span>
           </div>
-          <span>a {timeFormatter.format(startsAtDate)}</span>
+          <span>à {timeFormatter.format(startsAtDate)}</span>
         </div>
 
         {/* Camera preview */}

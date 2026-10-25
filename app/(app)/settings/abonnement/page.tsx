@@ -13,10 +13,10 @@ import type { Subscription } from '@/lib/billing/types';
 
 const PLAN_ADVANTAGES = [
   "Jusqu'a 50 consultants",
-  'Bague Circular connectee',
-  'Generation IA des conseillanciers',
+  'Objet connecté Circular',
+  'Génération IA des conseillanciers',
   'Messagerie praticien-consultant',
-  'Export PDF personnalise',
+  'Export PDF personnalisé',
   'Support prioritaire',
 ];
 
@@ -73,7 +73,7 @@ export default function AbonnementPage() {
       window.location.href = url;
     } catch (err) {
       console.error('[abonnement] Erreur portail Stripe:', err);
-      setError('Impossible d\'ouvrir le portail de gestion. Veuillez reessayer.');
+      setError('Impossible d\'ouvrir le portail de gestion. Veuillez réessayer.');
       setPortalLoading(false);
     }
   };
@@ -104,7 +104,7 @@ export default function AbonnementPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <PageHeader title="Abonnement" subtitle="Gerez votre plan et votre facturation." />
+          <PageHeader title="Abonnement" subtitle="Gérez votre plan et votre facturation." />
         </div>
         <Card className="rounded-xl">
           <CardContent className="py-12 text-center text-stone">
@@ -126,7 +126,7 @@ export default function AbonnementPage() {
         </button>
         <PageHeader
           title="Abonnement"
-          subtitle="Gerez votre plan et votre facturation."
+          subtitle="Gérez votre plan et votre facturation."
         />
       </div>
 
@@ -165,7 +165,7 @@ export default function AbonnementPage() {
               <CreditCard className="h-4 w-4" />
               <span>
                 {subscription?.cancel_at_period_end
-                  ? `Expire le ${renewalDate}`
+                  ? `Expiré le ${renewalDate}`
                   : `Prochain renouvellement le ${renewalDate}`}
               </span>
             </div>
@@ -180,7 +180,7 @@ export default function AbonnementPage() {
               onClick={handleManageSubscription}
               loading={portalLoading}
             >
-              Gerer
+              Gérer
             </Button>
           )}
         </CardContent>
@@ -194,8 +194,8 @@ export default function AbonnementPage() {
           </h2>
           <p className="mt-1 text-[13px] text-stone">
             {isPremium
-              ? 'Vous beneficiez de toutes les fonctionnalites Premium.'
-              : 'Passez au plan Premium pour debloquer toutes les fonctionnalites.'}
+              ? 'Vous bénéficiez de toutes les fonctionnalités Premium.'
+              : 'Passez au plan Premium pour débloquer toutes les fonctionnalités.'}
           </p>
         </CardHeader>
         <CardContent>

@@ -15,12 +15,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const practitioner = await getPractitionerBySlug(params.slug);
 
   if (!practitioner) {
-    return { title: 'Praticien non trouve — AFEIA' };
+    return { title: 'Praticien non trouvé — AFEIA' };
   }
 
   return {
     title: `Prendre RDV avec ${practitioner.full_name} — AFEIA`,
-    description: `Reservez une consultation avec ${practitioner.full_name}. Prise de rendez-vous en ligne simple et rapide.`,
+    description: `Réservez une consultation avec ${practitioner.full_name}. Prise de rendez-vous en ligne simple et rapide.`,
     openGraph: {
       title: `Prendre RDV avec ${practitioner.full_name}`,
       description: `Consultation — ${practitioner.booking_address || 'Prise de rendez-vous en ligne'}`,

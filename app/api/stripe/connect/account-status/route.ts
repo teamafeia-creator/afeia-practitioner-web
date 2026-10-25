@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Erreur statut Stripe:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la recuperation du statut' },
+      { message: 'Erreur lors de la récupération du statut' },
       { status: 500 }
     );
   }

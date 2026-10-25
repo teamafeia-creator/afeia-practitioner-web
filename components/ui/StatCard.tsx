@@ -46,7 +46,7 @@ export function StatCard({ icon, value, label, trend, color, className }: StatCa
         )}
       </div>
       <div
-        className="text-2xl font-bold text-charcoal mb-1"
+        className="font-serif text-[28px] font-medium leading-tight tabular-nums text-charcoal mb-1"
         style={color ? { color } : undefined}
       >
         {value}

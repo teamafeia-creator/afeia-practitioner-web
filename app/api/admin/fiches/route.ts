@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Erreur liste fiches AFEIA:', error);
-      return NextResponse.json({ error: 'Erreur lors de la recuperation des fiches.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur lors de la récupération des fiches.' }, { status: 500 });
     }
 
     return NextResponse.json({ fiches: data ?? [], total: count ?? 0 });
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     if (!category || !VALID_CATEGORIES.has(category)) {
       return NextResponse.json({
-        error: `La categorie est invalide. Valeurs autorisees : ${[...VALID_CATEGORIES].join(', ')}`,
+        error: `La catégorie est invalide. Valeurs autorisées : ${[...VALID_CATEGORIES].join(', ')}`,
       }, { status: 400 });
     }
 
@@ -111,11 +111,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Erreur creation fiche AFEIA:', error);
+      console.error('Erreur création fiche AFEIA:', error);
       if (error.code === '23505') {
-        return NextResponse.json({ error: 'Une fiche avec ce slug existe deja.' }, { status: 409 });
+        return NextResponse.json({ error: 'Une fiche avec ce slug existe déjà.' }, { status: 409 });
       }
-      return NextResponse.json({ error: 'Erreur lors de la creation de la fiche.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur lors de la création de la fiche.' }, { status: 500 });
     }
 
     return NextResponse.json({ fiche: data }, { status: 201 });

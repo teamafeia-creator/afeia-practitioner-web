@@ -17,7 +17,7 @@ export default function BookingNotFound() {
         </svg>
       </div>
       <h1 className="text-xl font-semibold text-charcoal">
-        Praticien non trouve
+        Praticien non trouvé
       </h1>
       <p className="text-sm text-stone max-w-sm mx-auto">
         Ce praticien n&apos;existe pas sur AFEIA ou n&apos;a pas active
@@ -27,7 +27,7 @@ export default function BookingNotFound() {
         href="https://afeia.fr"
         className="inline-block mt-4 text-sm text-sage hover:underline"
       >
-        Retour a afeia.fr
+        Retour à afeia.fr
       </a>
     </div>
   );

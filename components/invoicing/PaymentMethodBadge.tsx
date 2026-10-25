@@ -4,8 +4,8 @@ import { Banknote, CreditCard, Building2, ArrowRightLeft } from 'lucide-react';
 import type { PaymentMethod } from '@/lib/invoicing/types';
 
 const METHOD_CONFIG: Record<PaymentMethod, { label: string; icon: typeof Banknote }> = {
-  especes: { label: 'Especes', icon: Banknote },
-  cheque: { label: 'Cheque', icon: Building2 },
+  especes: { label: 'Espèces', icon: Banknote },
+  cheque: { label: 'Chèque', icon: Building2 },
   cb: { label: 'CB', icon: CreditCard },
   virement: { label: 'Virement', icon: ArrowRightLeft },
   stripe: { label: 'En ligne', icon: CreditCard },

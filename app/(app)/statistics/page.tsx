@@ -68,7 +68,7 @@ export default function StatisticsPage() {
       >
         <div>
           <h2 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>Statistiques</h2>
-          <p className="text-sm text-stone mt-1">Vue d&apos;ensemble de votre activite</p>
+          <p className="text-sm text-stone mt-1">Vue d&apos;ensemble de votre activité</p>
         </div>
         <PeriodSelector value={period} onChange={setPeriod} />
       </motion.div>
@@ -86,7 +86,7 @@ export default function StatisticsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-2 lg:grid-cols-3 gap-4"
         >
-          <StatCard icon={<Calendar className="h-5 w-5" />} value={stats.sessionsCount} label="Seances" color="#6DD4B8" />
+          <StatCard icon={<Calendar className="h-5 w-5" />} value={stats.sessionsCount} label="Séances" color="#6DD4B8" />
           <StatCard icon={<Users className="h-5 w-5" />} value={stats.newConsultants} label="Nouveaux consultants" color="#6DD4B8" />
           <StatCard
             icon={<Activity className="h-5 w-5" />}
@@ -97,13 +97,13 @@ export default function StatisticsPage() {
           <StatCard
             icon={<RefreshCw className="h-5 w-5" />}
             value={`${stats.retentionRate}%`}
-            label="Fidelisation"
+            label="Fidélisation"
             color={stats.retentionRate >= 70 ? '#A8E6CF' : stats.retentionRate >= 50 ? '#D4A574' : '#E57B7B'}
           />
           <StatCard
             icon={<Banknote className="h-5 w-5" />}
             value={stats.revenue > 0 ? `${(stats.revenue / 100).toFixed(0)} €` : '—'}
-            label="CA periode"
+            label="CA période"
             color="#6DD4B8"
           />
           <StatCard
@@ -117,11 +117,11 @@ export default function StatisticsPage() {
 
       {/* Activity Section */}
       <section>
-        <h3 className="text-lg font-semibold text-charcoal mb-4">Activite</h3>
+        <h3 className="text-lg font-semibold text-charcoal mb-4">Activité</h3>
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Sessions per week */}
           <div className="bg-surface rounded-xl border border-divider p-5">
-            <h4 className="text-sm font-medium text-stone mb-4">Seances par semaine (12 semaines)</h4>
+            <h4 className="text-sm font-medium text-stone mb-4">Séances par semaine (12 semaines)</h4>
             {sessionsChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={sessionsChartData}>
@@ -141,7 +141,7 @@ export default function StatisticsPage() {
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-[250px] text-sm text-stone">
-                Aucune donnee pour cette periode
+                Aucune donnée pour cette période
               </div>
             )}
           </div>
@@ -152,12 +152,12 @@ export default function StatisticsPage() {
             <div className="flex items-center justify-center gap-8 h-[250px]">
               <div className="text-center">
                 <div className="text-4xl font-bold text-sage">{stats.carePlansCount}</div>
-                <div className="text-sm text-stone mt-1">Crees</div>
+                <div className="text-sm text-stone mt-1">Créés</div>
               </div>
               <div className="h-16 w-px bg-gray-200" />
               <div className="text-center">
                 <div className="text-4xl font-bold text-terracotta">{stats.carePlansShared}</div>
-                <div className="text-sm text-stone mt-1">Partages</div>
+                <div className="text-sm text-stone mt-1">Partagés</div>
               </div>
             </div>
           </div>
@@ -186,13 +186,13 @@ export default function StatisticsPage() {
             {/* URSSAF reminder */}
             {quarterRevenue > 0 && (
               <div className="bg-surface rounded-xl border border-divider p-5">
-                <h4 className="text-sm font-medium text-stone mb-4">Declaration URSSAF</h4>
+                <h4 className="text-sm font-medium text-stone mb-4">Déclaration URSSAF</h4>
                 <div className="flex flex-col items-center justify-center h-[250px]">
                   <div className="text-4xl font-bold text-charcoal">
                     {(quarterRevenue / 100).toFixed(0)} €
                   </div>
                   <p className="text-sm text-stone mt-3 text-center max-w-xs">
-                    Rappel : montant a declarer a l&apos;URSSAF pour le trimestre en cours
+                    Rappel : montant à déclarer à l&apos;URSSAF pour le trimestre en cours
                   </p>
                 </div>
               </div>
@@ -233,7 +233,7 @@ export default function StatisticsPage() {
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-[250px] text-sm text-stone">
-                Aucun motif renseigne
+                Aucun motif renseigné
               </div>
             )}
           </div>

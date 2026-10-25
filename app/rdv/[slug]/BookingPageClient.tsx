@@ -169,10 +169,10 @@ export function BookingPageClient({
 
         if (!res.ok) {
           if (result.error === 'FULL') {
-            setBookingError('Cette seance est malheureusement complete. Veuillez en choisir une autre.');
+            setBookingError('Cette séance est malheureusement complete. Veuillez en choisir une autre.');
             setStep('group_session');
           } else if (result.error === 'DUPLICATE') {
-            setBookingError(result.message || 'Vous etes deja inscrit a cette seance.');
+            setBookingError(result.message || 'Vous êtes déjà inscrit à cette séance.');
           } else {
             setBookingError(result.message || result.error || 'Une erreur est survenue.');
           }
@@ -215,7 +215,7 @@ export function BookingPageClient({
 
         if (!res.ok) {
           if (result.error === 'SLOT_CONFLICT') {
-            setBookingError('Ce creneau vient d\'etre reserve. Veuillez en choisir un autre.');
+            setBookingError('Ce créneau vient d\'être réservé. Veuillez en choisir un autre.');
             setStep('date');
           } else {
             setBookingError(result.message || result.error || 'Une erreur est survenue.');
@@ -227,7 +227,7 @@ export function BookingPageClient({
         setStep('confirm');
       }
     } catch {
-      setBookingError('Une erreur est survenue. Veuillez reessayer.');
+      setBookingError('Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setSubmitting(false);
     }
@@ -304,7 +304,7 @@ export function BookingPageClient({
       {prefillSlotUnavailable && step === 'date' && (
         <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-4 text-center">
           <p className="text-sm text-amber-800">
-            Ce creneau n&apos;est malheureusement plus disponible. Veuillez en choisir un autre.
+            Ce créneau n&apos;est malheureusement plus disponible. Veuillez en choisir un autre.
           </p>
         </div>
       )}

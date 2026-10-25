@@ -142,10 +142,10 @@ export function BookingStepDate({
           <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-6 text-center">
             <Bell className="h-8 w-8 text-amber-600 mx-auto mb-3" />
             <h3 className="text-base font-semibold text-charcoal mb-1">
-              Aucun creneau disponible pour le moment
+              Aucun créneau disponible pour le moment
             </h3>
             <p className="text-sm text-stone">
-              Inscrivez-vous a la liste d&apos;attente pour etre prevenu(e) des qu&apos;un creneau se libere.
+              Inscrivez-vous à la liste d&apos;attente pour être prévenu(e) dès qu&apos;un créneau se libère.
             </p>
           </div>
 
@@ -200,7 +200,7 @@ export function BookingStepDate({
                   className="text-sm text-stone hover:text-teal transition-colors flex items-center gap-2 mx-auto"
                 >
                   <Bell className="h-4 w-4" />
-                  Aucun creneau ne vous convient ? Inscrivez-vous a la liste d&apos;attente
+                  Aucun créneau ne vous convient ? Inscrivez-vous à la liste d&apos;attente
                 </button>
               ) : (
                 <div className="rounded-xl border border-teal/15 bg-surface/70 p-6 space-y-4">

@@ -108,7 +108,7 @@ export function ContraindicationInlineAlert({ alert, onAcknowledge, compact }: C
                 className="text-xs font-medium text-gray-600 hover:text-gray-800 flex items-center gap-1"
               >
                 <ExternalLink className="h-3 w-3" />
-                {showDetails ? 'Masquer' : 'Voir details'}
+                {showDetails ? 'Masquer' : 'Voir détails'}
               </button>
             )}
             <button

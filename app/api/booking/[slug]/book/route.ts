@@ -21,7 +21,7 @@ export async function POST(
 
     if (!consultation_type_id || !starts_at || !name || !first_name || !email || !phone) {
       return NextResponse.json(
-        { error: 'Tous les champs obligatoires doivent etre remplis.' },
+        { error: 'Tous les champs obligatoires doivent être remplis.' },
         { status: 400 }
       );
     }
@@ -46,7 +46,7 @@ export async function POST(
     const cleanPhone = phone.replace(/[\s.-]/g, '');
     if (!/^0\d{9}$/.test(cleanPhone)) {
       return NextResponse.json(
-        { error: 'Format de telephone invalide.' },
+        { error: 'Format de téléphone invalide.' },
         { status: 400 }
       );
     }
@@ -59,7 +59,7 @@ export async function POST(
     const practitioner = await getPractitionerBySlug(params.slug);
     if (!practitioner) {
       return NextResponse.json(
-        { error: 'Praticien non trouve.' },
+        { error: 'Praticien non trouvé.' },
         { status: 404 }
       );
     }
@@ -67,7 +67,7 @@ export async function POST(
     const ct = practitioner.consultation_types.find(t => t.id === consultation_type_id);
     if (!ct) {
       return NextResponse.json(
-        { error: 'Type de consultation non trouve.' },
+        { error: 'Type de consultation non trouvé.' },
         { status: 404 }
       );
     }
@@ -95,13 +95,13 @@ export async function POST(
     if (rpcError) {
       if (rpcError.message?.includes('SLOT_CONFLICT')) {
         return NextResponse.json(
-          { error: 'SLOT_CONFLICT', message: 'Ce creneau vient d\'etre reserve. Veuillez en choisir un autre.' },
+          { error: 'SLOT_CONFLICT', message: 'Ce créneau vient d\'être réservé. Veuillez en choisir un autre.' },
           { status: 409 }
         );
       }
       console.error('Booking RPC error:', rpcError);
       return NextResponse.json(
-        { error: 'Une erreur est survenue lors de la reservation.' },
+        { error: 'Une erreur est survenue lors de la réservation.' },
         { status: 500 }
       );
     }

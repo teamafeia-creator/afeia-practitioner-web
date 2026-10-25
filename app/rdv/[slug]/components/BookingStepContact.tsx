@@ -55,7 +55,7 @@ export function BookingStepContact({
     const errs: Record<string, string> = {};
 
     if (!form.name.trim()) errs.name = 'Nom requis';
-    if (!form.first_name.trim()) errs.first_name = 'Prenom requis';
+    if (!form.first_name.trim()) errs.first_name = 'Prénom requis';
 
     if (!form.email.trim()) {
       errs.email = 'Email requis';
@@ -65,9 +65,9 @@ export function BookingStepContact({
 
     const cleanPhone = form.phone.replace(/[\s.\-]/g, '');
     if (!cleanPhone) {
-      errs.phone = 'Telephone requis';
+      errs.phone = 'Téléphone requis';
     } else if (!/^0\d{9}$/.test(cleanPhone)) {
-      errs.phone = 'Format: 10 chiffres commencant par 0';
+      errs.phone = 'Format: 10 chiffres commençant par 0';
     }
 
     if (!form.consent_rgpd) {
@@ -100,10 +100,10 @@ export function BookingStepContact({
         </button>
         <div>
           <h2 className="text-lg font-semibold text-charcoal">
-            Vos coordonnees
+            Vos coordonnées
           </h2>
           <p className="text-sm text-stone">
-            {consultationTypeName} — {dateFormatted} a {timeFormatted}
+            {consultationTypeName} — {dateFormatted} à {timeFormatted}
           </p>
         </div>
       </div>
@@ -125,7 +125,7 @@ export function BookingStepContact({
           </div>
           <div>
             <label className="block text-[13px] font-medium text-stone mb-1">
-              Prenom *
+              Prénom *
             </label>
             <input
               type="text"
@@ -154,7 +154,7 @@ export function BookingStepContact({
 
         <div>
           <label className="block text-[13px] font-medium text-stone mb-1">
-            Telephone *
+            Téléphone *
           </label>
           <input
             type="tel"
@@ -174,7 +174,7 @@ export function BookingStepContact({
             value={form.reason}
             onChange={(e) => setForm(prev => ({ ...prev, reason: e.target.value }))}
             className="w-full min-h-[80px] rounded-lg border border-sage/20 bg-surface/50 px-3.5 py-2.5 text-sm text-charcoal focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/10"
-            placeholder="Decrivez brievement la raison de votre visite..."
+            placeholder="Décrivez brièvement la raison de votre visite..."
           />
         </div>
 
@@ -188,7 +188,7 @@ export function BookingStepContact({
               className="mt-1 h-4 w-4 rounded border-sage/30 text-sage focus:ring-sage/50"
             />
             <span className="text-xs text-stone leading-relaxed">
-              J&apos;accepte que mes donnees soient traitees par {practitionerName} via AFEIA
+              J&apos;accepte que mes données soient traitées par {practitionerName} via AFEIA
               pour la gestion de mon rendez-vous. *
             </span>
           </label>
@@ -230,7 +230,7 @@ export function BookingStepContact({
           disabled={submitting}
           className="w-full rounded-lg bg-gradient-to-br from-sage to-sage-dark px-6 py-3 text-sm font-medium text-white hover:shadow-teal-glow transition-all disabled:opacity-50"
         >
-          {submitting ? 'Reservation en cours...' : 'Confirmer mon rendez-vous'}
+          {submitting ? 'Réservation en cours...' : 'Confirmer mon rendez-vous'}
         </button>
       </form>
     </div>

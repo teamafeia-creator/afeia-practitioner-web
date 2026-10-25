@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           message:
-            "Veuillez d'abord configurer vos parametres de facturation (SIRET, adresse) avant de connecter Stripe.",
+            "Veuillez d'abord configurer vos paramètres de facturation (SIRET, adresse) avant de connecter Stripe.",
         },
         { status: 400 }
       );
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { message: `Erreur lors de la creation du lien d'onboarding: ${message}` },
+      { message: `Erreur lors de la création du lien d'onboarding: ${message}` },
       { status: 500 }
     );
   }

@@ -83,7 +83,7 @@ function RegisterForm() {
       }
 
       // 2. Créer le compte auth Supabase
-      console.log('Creation compte auth...')
+      console.log('Création compte auth...')
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
@@ -103,7 +103,7 @@ function RegisterForm() {
         console.error('Erreur auth:', authError)
         if (authError.message.includes('already registered')) {
           // Tenter la connexion si le compte existe déjà
-          console.log('Compte auth existe deja, tentative de connexion...')
+          console.log('Compte auth existe déjà, tentative de connexion...')
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: normalizedEmail,
             password
@@ -119,7 +119,7 @@ function RegisterForm() {
         }
       } else {
         userId = authData.user?.id
-        console.log('Compte auth cree:', userId)
+        console.log('Compte auth créé:', userId)
       }
 
       if (!userId) {
@@ -132,7 +132,7 @@ function RegisterForm() {
       const fullName = consultantName || `${finalFirstName} ${finalLastName}`.trim()
 
       // 4. Creer ou mettre a jour le consultant dans la table consultants
-      console.log('Creation/MAJ consultant dans la table consultants...')
+      console.log('Création/MAJ consultant dans la table consultants...')
 
       const consultantPayload: Record<string, unknown> = {
         practitioner_id: practitionerId,
@@ -153,7 +153,7 @@ function RegisterForm() {
 
       // Si on a un consultant_id existant (nouveau flux), mettre a jour
       if (existingConsultantId) {
-        console.log('Consultant existant trouve, mise a jour:', existingConsultantId)
+        console.log('Consultant existant trouvé, mise à jour:', existingConsultantId)
         const { error: updateError } = await supabase
           .from('consultants')
           .update(consultantPayload)
@@ -164,10 +164,10 @@ function RegisterForm() {
           throw updateError
         }
         finalConsultantId = existingConsultantId
-        console.log('Consultant mis a jour:', finalConsultantId)
+        console.log('Consultant mis à jour:', finalConsultantId)
       } else if (existingConsultant && !existingConsultant.activated) {
         // Ancien flux: consultant pending existe
-        console.log('Consultant pending existant, mise a jour:', existingConsultant.id)
+        console.log('Consultant pending existant, mise à jour:', existingConsultant.id)
         const { error: updateError } = await supabase
           .from('consultants')
           .update(consultantPayload)
@@ -178,10 +178,10 @@ function RegisterForm() {
           throw updateError
         }
         finalConsultantId = existingConsultant.id
-        console.log('Consultant pending mis a jour:', finalConsultantId)
+        console.log('Consultant pending mis à jour:', finalConsultantId)
       } else {
         // Creer un nouveau consultant
-        console.log('Creation nouveau consultant...')
+        console.log('Création nouveau consultant...')
         const insertPayload = {
           id: userId, // Utiliser ID auth comme ID consultant
           ...consultantPayload
@@ -194,10 +194,10 @@ function RegisterForm() {
           .single()
 
         if (consultantError) {
-          console.error('Erreur creation consultant:', consultantError)
+          console.error('Erreur création consultant:', consultantError)
           // Si erreur de duplicate, essayer sans specifier l'ID
           if (consultantError.message.includes('duplicate') || consultantError.message.includes('unique')) {
-            console.log('Tentative sans ID specifique...')
+            console.log('Tentative sans ID spécifique...')
             const { data: newConsultant2, error: consultantError2 } = await supabase
               .from('consultants')
               .insert(consultantPayload)
@@ -213,13 +213,13 @@ function RegisterForm() {
         } else {
           finalConsultantId = newConsultant?.id || userId
         }
-        console.log('Consultant cree avec ID:', finalConsultantId)
+        console.log('Consultant créé avec ID:', finalConsultantId)
       }
 
-      console.log('Consultant active avec ID:', finalConsultantId || userId)
+      console.log('Consultant activé avec ID:', finalConsultantId || userId)
 
       // 5. Marquer l'invitation comme acceptée
-      console.log('Mise a jour invitation:', invitationId)
+      console.log('Mise à jour invitation:', invitationId)
 
       const { error: invitError } = await supabase
         .from('consultant_invitations')
@@ -230,10 +230,10 @@ function RegisterForm() {
         .eq('id', invitationId)
 
       if (invitError) {
-        console.warn('Erreur mise a jour invitation:', invitError)
+        console.warn('Erreur mise à jour invitation:', invitError)
         // Ne pas bloquer, le consultant est créé
       } else {
-        console.log('Invitation marquee comme acceptee')
+        console.log('Invitation marquée comme acceptée')
       }
 
       // 6. Marquer le code OTP comme utilisé
@@ -247,9 +247,9 @@ function RegisterForm() {
           .eq('id', otpId)
 
         if (otpError) {
-          console.warn('Erreur mise a jour OTP:', otpError)
+          console.warn('Erreur mise à jour OTP:', otpError)
         } else {
-          console.log('Code OTP marque comme utilise')
+          console.log('Code OTP marqué comme utilisé')
         }
       }
 
@@ -262,14 +262,14 @@ function RegisterForm() {
           password
         })
         if (signInError) {
-          console.warn('Auto-login echoue:', signInError)
+          console.warn('Auto-login échoué:', signInError)
         } else {
-          console.log('Connecte automatiquement')
+          console.log('Connecté automatiquement')
         }
       }
 
       console.log('═══════════════════════════════════════')
-      console.log('ACTIVATION REUSSIE')
+      console.log('ACTIVATION RÉUSSIE')
       console.log('Email:', normalizedEmail)
       console.log('Consultant ID:', userId)
       console.log('Praticien ID:', practitionerId)

@@ -10,7 +10,7 @@ import { runAdminDatabaseReset } from '@/lib/server/resetDatabase';
 export async function POST(request: NextRequest) {
   if (process.env.NODE_ENV === 'production' && process.env.ENABLE_FRESH_DATABASE !== 'true') {
     return NextResponse.json(
-      { error: 'Fonctionnalite desactivee en production.' },
+      { error: 'Fonctionnalité désactivée en production.' },
       { status: 403 }
     );
   }
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const adminEmail = guard.user.email ?? 'unknown';
-    console.log(`RESET DATABASE initiee par ${adminEmail}`);
+    console.log(`RESET DATABASE initiée par ${adminEmail}`);
 
     const result = await runAdminDatabaseReset(adminEmail);
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           ok: false,
-          error: 'La verification post-suppression a detecte des donnees restantes.',
+          error: 'La vérification post-suppression a détecté des données restantes.',
           deleted: result.deleted,
           remaining: result.remaining,
           results: result.results
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      message: 'Base de donnees reinitialisee avec succes.',
+      message: 'Base de données réinitialisée avec succès.',
       totalDeleted: result.totalDeleted,
       deleted: result.deleted,
       remaining: result.remaining,

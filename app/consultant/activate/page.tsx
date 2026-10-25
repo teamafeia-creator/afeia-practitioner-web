@@ -52,7 +52,7 @@ export default function ActivatePage() {
 
     try {
       console.log('═══════════════════════════════════════')
-      console.log('VERIFICATION CODE ACTIVATION')
+      console.log('VÉRIFICATION CODE ACTIVATION')
       console.log('Code:', codeString)
 
       // 1. Chercher dans otp_codes
@@ -69,17 +69,17 @@ export default function ActivatePage() {
 
       if (otpError) {
         console.error('Erreur recherche OTP:', otpError)
-        setError('Erreur lors de la verification')
+        setError('Erreur lors de la vérification')
         return
       }
 
       if (!otpData) {
-        console.error('Code non trouve ou expire')
-        setError('Code invalide ou expire')
+        console.error('Code non trouvé ou expiré')
+        setError('Code invalide ou expiré')
         return
       }
 
-      console.log('Code OTP trouve')
+      console.log('Code OTP trouvé')
       console.log('   Email:', otpData.email)
       console.log('   OTP ID:', otpData.id)
       console.log('   Consultant ID:', otpData.consultant_id)
@@ -104,7 +104,7 @@ export default function ActivatePage() {
 
         if (invByConsultant) {
           invitation = invByConsultant
-          console.log('Invitation trouvee par consultant_id')
+          console.log('Invitation trouvée par consultant_id')
         }
       }
 
@@ -123,7 +123,7 @@ export default function ActivatePage() {
 
         if (invByEmailPractitioner) {
           invitation = invByEmailPractitioner
-          console.log('Invitation trouvee par email + practitioner_id')
+          console.log('Invitation trouvée par email + practitioner_id')
         }
       }
 
@@ -141,7 +141,7 @@ export default function ActivatePage() {
 
         if (invByEmail) {
           invitation = invByEmail
-          console.log('Invitation trouvee par email')
+          console.log('Invitation trouvée par email')
         }
       }
 
@@ -159,12 +159,12 @@ export default function ActivatePage() {
 
         if (invByCode) {
           invitation = invByCode
-          console.log('Invitation trouvee par invitation_code')
+          console.log('Invitation trouvée par invitation_code')
         }
       }
 
       if (!invitation) {
-        console.error('Invitation non trouvee avec toutes les strategies')
+        console.error('Invitation non trouvée avec toutes les strategies')
         console.log('Debug info:')
         console.log('   OTP email:', email)
         console.log('   OTP consultant_id:', otpData.consultant_id)
@@ -173,7 +173,7 @@ export default function ActivatePage() {
 
         // Essayer de recuperer les infos du consultant directement si consultant_id existe
         if (otpData.consultant_id) {
-          console.log('Tentative recuperation consultant directement...')
+          console.log('Tentative récupération consultant directement...')
           const { data: consultantData } = await supabase
             .from('consultants')
             .select('*')
@@ -181,7 +181,7 @@ export default function ActivatePage() {
             .single()
 
           if (consultantData) {
-            console.log('Consultant trouve directement, creation invitation virtuelle')
+            console.log('Consultant trouvé directement, création invitation virtuelle')
             // Creer une invitation virtuelle basee sur le consultant
             invitation = {
               id: 'virtual-' + otpData.id,
@@ -202,11 +202,11 @@ export default function ActivatePage() {
       }
 
       if (!invitation) {
-        setError('Invitation non trouvee. Contactez votre naturopathe.')
+        setError('Invitation non trouvée. Contactez votre naturopathe.')
         return
       }
 
-      console.log('Invitation trouvee')
+      console.log('Invitation trouvée')
       console.log('   ID:', invitation.id)
       console.log('   Praticien ID:', invitation.practitioner_id)
       console.log('   Nom:', invitation.full_name)
@@ -234,7 +234,7 @@ export default function ActivatePage() {
       router.push(`/consultant/register?${params.toString()}`)
     } catch (err) {
       console.error('Exception:', err)
-      setError('Erreur de verification')
+      setError('Erreur de vérification')
     } finally {
       setLoading(false)
     }

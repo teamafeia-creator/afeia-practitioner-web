@@ -28,7 +28,7 @@ export async function GET(
       .single();
 
     if (error || !patient) {
-      return NextResponse.json({ error: 'Patient non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Patient non trouvé.' }, { status: 404 });
     }
 
     // Fetch all related data in parallel
@@ -194,7 +194,7 @@ export async function GET(
       })),
     });
   } catch (error) {
-    console.error('[admin] patient detail exception:', error);
+    console.error('[admin] patient détail exception:', error);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }

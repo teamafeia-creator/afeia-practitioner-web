@@ -24,7 +24,7 @@ export function SlotPicker({
   if (loading) {
     return (
       <div className="mt-4 text-center text-sm text-stone">
-        Chargement des creneaux...
+        Chargement des créneaux...
       </div>
     );
   }
@@ -37,7 +37,7 @@ export function SlotPicker({
   if (slots.length === 0) {
     return (
       <div className="mt-4 rounded-lg bg-stone/5 p-4 text-center text-sm text-stone">
-        Aucun creneau disponible le {dayName} {day} {monthName}.
+        Aucun créneau disponible le {dayName} {day} {monthName}.
         <br />
         Essayez un autre jour.
       </div>
@@ -47,7 +47,7 @@ export function SlotPicker({
   return (
     <div className="mt-4 space-y-3">
       <p className="text-sm font-medium text-charcoal">
-        Creneaux disponibles le {dayName} {day} {monthName} :
+        Créneaux disponibles le {dayName} {day} {monthName} :
       </p>
       <div className="flex flex-wrap gap-2">
         {slots.map((slot) => (

@@ -44,7 +44,7 @@ export async function GET() {
 
     return NextResponse.json({ cleaned, total: appointments?.length || 0 });
   } catch (error) {
-    console.error('Video cleanup error:', error);
+    console.error('Vidéo cleanup error:', error);
     return NextResponse.json({ error: 'Cleanup failed' }, { status: 500 });
   }
 }

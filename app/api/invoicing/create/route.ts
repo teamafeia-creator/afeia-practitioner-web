@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (settingsError || !settings) {
       return NextResponse.json(
-        { message: 'Veuillez d\'abord configurer vos parametres de facturation' },
+        { message: 'Veuillez d\'abord configurer vos paramètres de facturation' },
         { status: 400 }
       );
     }
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (invoiceError) {
-      console.error('Erreur creation facture:', invoiceError);
+      console.error('Erreur création facture:', invoiceError);
       throw invoiceError;
     }
 
@@ -115,9 +115,9 @@ export async function POST(request: NextRequest) {
       const messages = error.errors.map((e) => e.message).join(', ');
       return NextResponse.json({ message: messages }, { status: 400 });
     }
-    console.error('Erreur creation facture:', error);
+    console.error('Erreur création facture:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la creation de la facture' },
+      { message: 'Erreur lors de la création de la facture' },
       { status: 500 }
     );
   }

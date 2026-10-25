@@ -54,7 +54,7 @@ export default function FacturationSettingsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Parametres facturation" />
+        <PageHeader title="Paramètres facturation" />
         <div className="glass-card rounded-lg p-8 text-center text-stone">
           Chargement...
         </div>
@@ -66,8 +66,8 @@ export default function FacturationSettingsPage() {
     <div className="space-y-6">
       <Toaster />
       <PageHeader
-        title="Parametres facturation"
-        subtitle="Configurez vos informations legales et vos templates de facturation"
+        title="Paramètres facturation"
+        subtitle="Configurez vos informations légales et vos templates de facturation"
         actions={
           <Link href="/facturation">
             <Button
@@ -124,7 +124,7 @@ export default function FacturationSettingsPage() {
                   Relances automatiques
                 </h3>
                 <p className="text-xs text-stone">
-                  Configurer les rappels pour les factures impayees
+                  Configurer les rappels pour les factures impayées
                 </p>
               </div>
             </div>

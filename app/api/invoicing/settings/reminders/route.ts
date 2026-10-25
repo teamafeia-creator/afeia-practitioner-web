@@ -7,7 +7,7 @@ export async function PUT(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -37,9 +37,9 @@ export async function PUT(request: NextRequest) {
       const messages = error.errors.map((e) => e.message).join(', ');
       return NextResponse.json({ message: messages }, { status: 400 });
     }
-    console.error('Erreur sauvegarde parametres relances:', error);
+    console.error('Erreur sauvegarde paramètres relances:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la sauvegarde des parametres de relance' },
+      { message: 'Erreur lors de la sauvegarde des paramètres de relance' },
       { status: 500 }
     );
   }

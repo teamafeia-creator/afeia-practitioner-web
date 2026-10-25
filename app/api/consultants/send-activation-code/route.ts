@@ -154,9 +154,9 @@ export async function POST(request: Request) {
     const expiresInDays = 7;
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-    console.log('[activation] Code OTP genere:', code);
+    console.log('[activation] Code OTP généré:', code);
     console.log('[activation] Email:', normalizedEmail);
-    console.log('[activation] Expire:', expiresAt.toISOString());
+    console.log('[activation] Expiré:', expiresAt.toISOString());
 
     // 4b. CRITIQUE: S'assurer d'avoir le consultant_id (requis pour l'app mobile)
     // Si consultantId n'est pas fourni, chercher le consultant par email
@@ -181,7 +181,7 @@ export async function POST(request: Request) {
     if (existingConsultant) {
       resolvedConsultantId = existingConsultant.id;
       consultantData = existingConsultant;
-      console.log('[activation] Consultant trouve par email:', resolvedConsultantId);
+      console.log('[activation] Consultant trouvé par email:', resolvedConsultantId);
     } else if (consultantId) {
       // Si on a un consultantId mais pas trouvé par email, chercher par ID
       const { data: consultantById } = await supabase
@@ -193,12 +193,12 @@ export async function POST(request: Request) {
       if (consultantById) {
         resolvedConsultantId = consultantById.id;
         consultantData = consultantById;
-        console.log('[activation] Consultant trouve par ID:', resolvedConsultantId);
+        console.log('[activation] Consultant trouvé par ID:', resolvedConsultantId);
       }
     }
 
     if (!resolvedConsultantId) {
-      console.warn('[activation] Aucun consultant trouve pour:', normalizedEmail);
+      console.warn('[activation] Aucun consultant trouvé pour:', normalizedEmail);
     }
 
     // 5. Invalider les anciens codes non utilisés
@@ -258,9 +258,9 @@ export async function POST(request: Request) {
         .eq('id', existingInvitation.id);
 
       if (updateInvitationError) {
-        console.error('[activation] Erreur mise a jour invitation:', updateInvitationError);
+        console.error('[activation] Erreur mise à jour invitation:', updateInvitationError);
       } else {
-        console.log('[activation] Invitation mise a jour dans consultant_invitations');
+        console.log('[activation] Invitation mise à jour dans consultant_invitations');
       }
     } else {
       // Créer une nouvelle invitation
@@ -284,10 +284,10 @@ export async function POST(request: Request) {
         .insert(invitationPayload);
 
       if (invitationInsertError) {
-        console.error('[activation] Erreur creation invitation:', invitationInsertError);
+        console.error('[activation] Erreur création invitation:', invitationInsertError);
         // Ne pas bloquer - continuer avec l'envoi d'email
       } else {
-        console.log('[activation] Invitation creee dans consultant_invitations');
+        console.log('[activation] Invitation créée dans consultant_invitations');
       }
     }
 
@@ -301,7 +301,7 @@ export async function POST(request: Request) {
 
     try {
       await sendEmail(emailPayload);
-      console.log('[activation] Email envoye avec succes a', normalizedEmail);
+      console.log('[activation] Email envoyé avec succès à', normalizedEmail);
 
       // TOUJOURS retourner le code au naturopathe
       return NextResponse.json({

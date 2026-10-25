@@ -112,7 +112,7 @@ export default function AdminPatientDetailPage({
         if (!isMounted) return;
 
         if (!response.ok) {
-          setError('Patient non trouve.');
+          setError('Patient non trouvé.');
           setLoading(false);
           return;
         }
@@ -122,7 +122,7 @@ export default function AdminPatientDetailPage({
           setData(json);
         }
       } catch (err) {
-        console.error('[admin] patient detail fetch error:', err);
+        console.error('[admin] patient détail fetch error:', err);
         if (isMounted) setError('Erreur de chargement.');
       } finally {
         if (isMounted) setLoading(false);
@@ -152,7 +152,7 @@ export default function AdminPatientDetailPage({
           Retour aux patients
         </button>
         <div className="rounded-lg border border-slate-200 bg-surface p-8 text-center">
-          <p className="text-sm text-slate-500">{error ?? 'Patient non trouve.'}</p>
+          <p className="text-sm text-slate-500">{error ?? 'Patient non trouvé.'}</p>
         </div>
       </div>
     );
@@ -240,12 +240,12 @@ export default function AdminPatientDetailPage({
             <dl className="space-y-3">
               <ProfileRow label="Nom complet" value={patient.full_name} />
               <ProfileRow label="Email" value={patient.email} />
-              <ProfileRow label="Telephone" value={patient.phone} />
-              {patient.age && <ProfileRow label="Age" value={`${patient.age} ans`} />}
+              <ProfileRow label="Téléphone" value={patient.phone} />
+              {patient.age && <ProfileRow label="Âge" value={`${patient.age} ans`} />}
               {patient.city && <ProfileRow label="Ville" value={patient.city} />}
-              <ProfileRow label="Date de creation" value={formatDate(patient.created_at)} />
+              <ProfileRow label="Date de création" value={formatDate(patient.created_at)} />
               <ProfileRow
-                label="Praticien associe"
+                label="Praticien associé"
                 value={
                   practitioner ? (
                     <Link

@@ -92,7 +92,7 @@ function getStatusLine(summary: ConsultantSummary): string {
 
   if (attentionLevel === 'attention') return 'Phase d\'ajustement';
   if (attentionLevel === 'progress') return 'Belle progression';
-  if (attentionLevel === 'insufficient') return 'Donnees insuffisantes';
+  if (attentionLevel === 'insufficient') return 'Données insuffisantes';
 
   return 'Sur la bonne voie';
 }
@@ -156,16 +156,16 @@ export function ConsultantCard({ summary, onActionComplete }: ConsultantCardProp
             <TrendIcon trend={lastWeekStats.moodTrend} />
           </div>
           <div className="flex items-center gap-1.5 text-stone">
-            <span>Energie</span>
+            <span>Énergie</span>
             <TrendIcon trend={lastWeekStats.energyTrend} />
           </div>
           <div className="flex items-center gap-1.5 text-stone">
-            <span>Adhesion {Math.round(lastWeekStats.averageAdherence * 100)}%</span>
+            <span>Adhésion {Math.round(lastWeekStats.averageAdherence * 100)}%</span>
             <TrendIcon trend={lastWeekStats.adherenceTrend} />
           </div>
         </div>
 
-        {/* Donnees bague connectee (si Premium) */}
+        {/* Données objet connecté (si Premium) */}
         {bagueConnecteeStats && (
           <div className="mb-3 text-sm text-stone space-y-1">
             <div className="flex items-center gap-2">

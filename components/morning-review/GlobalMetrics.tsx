@@ -156,7 +156,7 @@ export function GlobalMetrics({ consultantsSummary }: GlobalMetricsProps) {
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="w-full flex items-center justify-between"
       >
-        <h2 className="text-lg font-semibold text-charcoal">Metriques globales</h2>
+        <h2 className="text-lg font-semibold text-charcoal">Métriques globales</h2>
         {isCollapsed ? (
           <ChevronDown className="w-5 h-5 text-stone" />
         ) : (
@@ -183,14 +183,14 @@ export function GlobalMetrics({ consultantsSummary }: GlobalMetricsProps) {
 
               <MetricCard
                 icon={<BarChart3 className="w-5 h-5 text-sage" />}
-                label="Taux de presence ce mois"
+                label="Taux de présence ce mois"
                 value={`${metrics.presenceRate}%`}
                 trend={metrics.presenceRateTrend}
               />
 
               <MetricCard
                 icon={<CheckSquare className="w-5 h-5 text-sage" />}
-                label="Adhesion moyenne aux 4 piliers"
+                label="Adhésion moyenne aux 4 piliers"
                 value={`${metrics.averageAdherence}%`}
                 trend={metrics.adherenceTrend}
               />
@@ -209,7 +209,7 @@ export function GlobalMetrics({ consultantsSummary }: GlobalMetricsProps) {
                 icon={<Calendar className="w-5 h-5 text-terracotta" />}
                 label="Consultations cette semaine"
                 value={metrics.consultationsThisWeek}
-                subtitle={nextConsultStr ? `Prochaine : ${nextConsultStr}` : 'Aucune planifiee'}
+                subtitle={nextConsultStr ? `Prochaine : ${nextConsultStr}` : 'Aucune planifiée'}
               />
 
               <MetricCard

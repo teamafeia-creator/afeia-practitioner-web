@@ -33,11 +33,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (aptError || !appointment) {
-      return NextResponse.json({ error: 'Rendez-vous non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Rendez-vous non trouvé.' }, { status: 404 });
     }
 
     if (appointment.practitioner_id !== practitionerId) {
-      return NextResponse.json({ error: 'Acces refuse.' }, { status: 403 });
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     }
 
     // Check practitioner video_provider
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     // Create room
     if (practitioner?.video_provider !== 'daily') {
-      return NextResponse.json({ error: 'Visio integree non activee.' }, { status: 400 });
+      return NextResponse.json({ error: 'Visio intégrée non activée.' }, { status: 400 });
     }
 
     if (appointment.location_type !== 'video') {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     const room = await createDailyRoom({ name: roomName, expiresAt });
     if (!room) {
       return NextResponse.json(
-        { error: 'La salle de visio n\'a pas pu etre creee.' },
+        { error: 'La salle de visio n\'a pas pu être créée.' },
         { status: 502 }
       );
     }
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       video_room_name: room.name,
     });
   } catch (error) {
-    console.error('Error in video provision API:', error);
+    console.error('Error in vidéo provision API:', error);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }

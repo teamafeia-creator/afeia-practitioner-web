@@ -41,7 +41,7 @@ function formatRelativeTime(dateStr: string): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return "a l'instant";
+  if (diffMins < 1) return "à l'instant";
   if (diffMins < 60) return `${diffMins} min`;
   if (diffHours < 24) return `${diffHours}h`;
   if (diffDays < 7) return `${diffDays}j`;
@@ -328,7 +328,7 @@ export default function MessagesPage() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-stone">
                 <p className="text-base font-medium">
-                  Selectionnez une conversation
+                  Sélectionnez une conversation
                 </p>
                 <p className="text-sm mt-1">
                   Choisissez un consultant dans la liste pour voir ses messages
@@ -379,7 +379,7 @@ export default function MessagesPage() {
                         Aucun message pour l&apos;instant.
                       </p>
                       <p className="text-xs mt-1">
-                        Envoyez le premier message a votre consultant.
+                        Envoyez le premier message à votre consultant.
                       </p>
                     </div>
                   </div>
@@ -435,7 +435,7 @@ export default function MessagesPage() {
                         handleSend();
                       }
                     }}
-                    placeholder="Ecrire un message..."
+                    placeholder="Écrire un message..."
                     className="flex-1 rounded-lg border border-divider bg-surface px-3.5 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-200 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
                   />
                   <Button

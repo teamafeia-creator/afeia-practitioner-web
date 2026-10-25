@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!consultant) {
-      return NextResponse.json({ error: 'Acces refuse.' }, { status: 404 });
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 404 });
     }
 
     // 4. Get AI profile
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     // 6. Build prompt for single field
     const systemPrompt = buildSystemPrompt(aiProfile as PractitionerAIProfile | null);
-    const userPrompt = `Redige UNIQUEMENT le champ "${fieldLabel}" (section "${sectionTitle}") du conseillancier pour ce consultant. Reponds avec un JSON contenant uniquement la cle "${fieldKey}" et sa valeur texte.\n\n${contextText}`;
+    const userPrompt = `Rédigé UNIQUEMENT le champ "${fieldLabel}" (section "${sectionTitle}") du conseillancier pour ce consultant. Réponds avec un JSON contenant uniquement la clé "${fieldKey}" et sa valeur texte.\n\n${contextText}`;
 
     // 7. Call Anthropic API
     const anthropic = getAnthropicClient();
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       parsedResult = JSON.parse(cleanedText);
     } catch {
       return NextResponse.json(
-        { error: 'Erreur de format. Reessayez.' },
+        { error: 'Erreur de format. Réessayez.' },
         { status: 500 }
       );
     }
@@ -139,6 +139,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('Section suggestion error:', error);
-    return NextResponse.json({ error: 'Erreur de generation.' }, { status: 500 });
+    return NextResponse.json({ error: 'Erreur de génération.' }, { status: 500 });
   }
 }

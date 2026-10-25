@@ -26,7 +26,7 @@ export async function DELETE(
     // Verify practitioner owns this slug
     const practitioner = await getPractitionerBySlug(params.slug);
     if (!practitioner || practitioner.id !== authData.user.id) {
-      return NextResponse.json({ error: 'Non autorise.' }, { status: 403 });
+      return NextResponse.json({ error: 'Non autorisé.' }, { status: 403 });
     }
 
     await deleteWaitlistEntry(params.id, practitioner.id);

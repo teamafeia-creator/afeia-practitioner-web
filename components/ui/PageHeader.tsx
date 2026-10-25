@@ -19,7 +19,7 @@ export function PageHeader({
       )}
     >
       <div>
-        <h1 className="text-[28px] font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>{title}</h1>
+        <h1 className="font-serif text-[28px] font-medium text-charcoal" style={{ letterSpacing: '-0.02em' }}>{title}</h1>
         {subtitle ? <p className="mt-1 text-sm text-stone">{subtitle}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}

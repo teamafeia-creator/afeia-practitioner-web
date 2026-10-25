@@ -95,7 +95,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting('Bonjour');
-    else if (hour < 18) setGreeting('Bon apres-midi');
+    else if (hour < 18) setGreeting('Bon après-midi');
     else setGreeting('Bonsoir');
   }, []);
 
@@ -195,7 +195,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       if (err instanceof Error && err.message.includes('401')) {
-        showToast.error('Session expiree. Veuillez vous reconnecter.');
+        showToast.error('Session expirée. Veuillez vous reconnecter.');
         router.replace('/login');
       } else {
         showToast.error('Erreur lors du chargement du tableau de bord');
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                 onClick={() => router.push('/agenda')}
                 className="bg-surface hover:bg-gray-50"
               >
-                Nouvelle seance
+                Nouvelle séance
               </Button>
             </div>
           </div>
@@ -400,10 +400,10 @@ export default function DashboardPage() {
                   />
                 </div>
                 <h4 className="font-serif text-xl text-charcoal mb-2">
-                  Aucune seance prevue aujourd&apos;hui
+                  Aucune séance prévue aujourd&apos;hui
                 </h4>
                 <p className="text-[#8B95A5] text-sm max-w-sm">
-                  Planifiez votre prochaine seance en quelques clics.
+                  Planifiez votre prochaine séance en quelques clics.
                 </p>
                 <Button
                   variant="primary"
@@ -423,12 +423,12 @@ export default function DashboardPage() {
               <h2 className="text-xl font-semibold font-serif text-charcoal mb-4" style={{ letterSpacing: '-0.02em' }}>
                 <span className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-gold" />
-                  Seances recentes sans notes
+                  Séances récentes sans notes
                 </span>
               </h2>
               <div className="bg-surface border border-divider rounded-xl p-4 border-l-4 border-l-gold shadow-card">
                 <p className="text-sm text-charcoal mb-3">
-                  N&apos;oubliez pas de rediger vos notes pour ces seances :
+                  N&apos;oubliez pas de rédiger vos notes pour ces séances :
                 </p>
                 <div className="space-y-2">
                   {recentWithoutNotes.slice(0, 5).map((apt) => (
@@ -461,7 +461,7 @@ export default function DashboardPage() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold font-serif text-charcoal" style={{ letterSpacing: '-0.02em' }}>
-                  Activite recente
+                  Activité récente
                 </h2>
                 <Button
                   variant="ghost"
@@ -508,7 +508,7 @@ export default function DashboardPage() {
                 {recontactConsultants.length > 5 && (
                   <div className="p-4 bg-cream/50 text-center">
                     <span className="text-xs text-stone">
-                      +{recontactConsultants.length - 5} autres consultants a relancer
+                      +{recontactConsultants.length - 5} autres consultants à relancer
                     </span>
                   </div>
                 )}
@@ -522,7 +522,7 @@ export default function DashboardPage() {
           {/* To-do counters */}
           <section>
             <h2 className="text-xl font-semibold font-serif text-charcoal mb-4" style={{ letterSpacing: '-0.02em' }}>
-              A faire
+              À faire
             </h2>
             <div className="space-y-3">
               {/* Consultants to recontact */}
@@ -535,7 +535,7 @@ export default function DashboardPage() {
                     <Users className="h-5 w-5 text-terracotta" />
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-charcoal">Consultants a relancer</div>
+                    <div className="text-sm font-medium text-charcoal">Consultants à relancer</div>
                     <div className="text-xs text-stone">+ de {RECONTACT_DAYS} jours sans contact</div>
                   </div>
                 </div>
@@ -555,7 +555,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-charcoal">Conseillanciers en brouillon</div>
-                    <div className="text-xs text-stone">A finaliser et partager</div>
+                    <div className="text-xs text-stone">À finaliser et partager</div>
                   </div>
                 </div>
                 <span className="flex h-8 min-w-[32px] items-center justify-center rounded-full bg-sage text-ink text-sm font-semibold px-2">
@@ -602,7 +602,7 @@ export default function DashboardPage() {
                 <StatCard
                   icon={<Calendar className="h-5 w-5" />}
                   value={stats.sessionsCount}
-                  label="Seances ce mois"
+                  label="Séances ce mois"
                   color="#6DD4B8"
                 />
               </div>

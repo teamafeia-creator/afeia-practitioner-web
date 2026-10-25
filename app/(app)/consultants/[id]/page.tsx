@@ -12,8 +12,7 @@ import { getConsultantById } from '@/lib/queries';
 import { supabase } from '@/lib/supabase';
 import { useDeleteConsultant } from '@/hooks/useConsultants';
 import type { ConsultantWithDetails } from '@/lib/types';
-import { Trash2, Download } from 'lucide-react';
-import { T } from '@/lib/terminology';
+import { Trash2 } from 'lucide-react';
 
 export default function ConsultantDetailPage() {
   const params = useParams<{ id: string }>();
@@ -73,8 +72,8 @@ export default function ConsultantDetailPage() {
       await deleteConsultantMutation.mutateAsync(consultantId);
       setShowDeleteModal(false);
       setToast({
-        title: 'Consultant supprime',
-        description: 'Le dossier consultant a ete supprime avec succes.',
+        title: 'Consultant supprimé',
+        description: 'Le dossier consultant a été supprimé avec succès.',
         variant: 'success'
       });
       // Rediriger vers la liste des consultants
@@ -155,10 +154,10 @@ export default function ConsultantDetailPage() {
       if (!accessToken) {
         setToast({
           title: 'Erreur',
-          description: 'Session expiree. Veuillez vous reconnecter.',
+          description: 'Session expirée. Veuillez vous reconnecter.',
           variant: 'error'
         });
-        return { success: false, error: 'Session expiree.' };
+        return { success: false, error: 'Session expirée.' };
       }
 
       const consultantName = consultant.name || 'Consultant';
@@ -200,8 +199,8 @@ export default function ConsultantDetailPage() {
   useEffect(() => {
     if (searchParams.get('created') === '1') {
       setToast({
-        title: 'Consultant cree',
-        description: 'Votre consultant a bien ete cree. Le code d\'activation est affiche ci-dessous.',
+        title: 'Consultant créé',
+        description: 'Votre consultant a bien été créé. Le code d\'activation est affiché ci-dessous.',
         variant: 'success'
       });
     }
@@ -405,7 +404,7 @@ export default function ConsultantDetailPage() {
             )}
             {consultant.phone && (
               <div>
-                <p className="text-sm text-stone">Telephone</p>
+                <p className="text-sm text-stone">Téléphone</p>
                 <p className="text-charcoal">{consultant.phone}</p>
               </div>
             )}
@@ -418,7 +417,7 @@ export default function ConsultantDetailPage() {
           </div>
           <div className="mt-6 pt-4 border-t border-divider flex justify-between items-center">
             <Button variant="secondary" onClick={() => router.push('/consultants')}>
-              Retour a la liste
+              Retour à la liste
             </Button>
             <Button
               variant="ghost"
@@ -436,15 +435,15 @@ export default function ConsultantDetailPage() {
           isOpen={showDeleteModal}
           onClose={() => setShowDeleteModal(false)}
           title="Supprimer le consultant"
-          description="Cette action est irreversible. Le dossier du consultant sera marque comme supprime."
+          description="Cette action est irréversible. Le dossier du consultant sera marqué comme supprimé."
         >
           <div className="space-y-4">
             <p className="text-sm text-stone">
-              Etes-vous sur de vouloir supprimer le dossier de <strong>{consultantDisplayName}</strong> ?
+              Etes-vous sûr de vouloir supprimer le dossier de <strong>{consultantDisplayName}</strong> ?
             </p>
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <p className="text-sm text-red-800">
-                Cette action supprimera definitivement l&apos;acces a ce dossier consultant.
+                Cette action supprimera définitivement l&apos;accès à ce dossier consultant.
               </p>
             </div>
           </div>
@@ -476,22 +475,11 @@ export default function ConsultantDetailPage() {
 
   return (
     <>
-      <div className="flex justify-end items-center gap-3 mb-4">
-        {consultant.is_demo && (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-stone/10 text-stone border border-stone/20">
-            Demo
-          </span>
-        )}
-        <Button
-          variant="secondary"
-          onClick={handleExportDossier}
-          loading={exportingPdf}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {T.labelExportDossier}
-        </Button>
-      </div>
-      <ConsultantTabs consultant={consultant} />
+      <ConsultantTabs
+        consultant={consultant}
+        onExportDossier={handleExportDossier}
+        exportingDossier={exportingPdf}
+      />
       {toast ? (
         <Toast
           title={toast.title}

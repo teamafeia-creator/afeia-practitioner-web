@@ -95,7 +95,7 @@ export default function AdminFichesPage() {
       } catch (err) {
         console.error('[admin] loadFiches error:', err);
         if (!isMounted) return;
-        showToast.error('Erreur reseau lors du chargement des fiches.');
+        showToast.error('Erreur réseau lors du chargement des fiches.');
         setFiches([]);
         setTotal(0);
       } finally {
@@ -120,14 +120,14 @@ export default function AdminFichesPage() {
       });
 
       if (!response.ok) {
-        showToast.error('Erreur lors de la mise a jour.');
+        showToast.error('Erreur lors de la mise à jour.');
         return;
       }
 
-      showToast.success(fiche.is_published ? 'Fiche depubliee.' : 'Fiche publiee.');
+      showToast.success(fiche.is_published ? 'Fiche dépubliée.' : 'Fiche publiée.');
       setRefreshKey((v) => v + 1);
     } catch {
-      showToast.error('Erreur reseau.');
+      showToast.error('Erreur réseau.');
     } finally {
       setTogglingId(null);
     }
@@ -147,12 +147,12 @@ export default function AdminFichesPage() {
         return;
       }
 
-      showToast.success('Fiche supprimee.');
+      showToast.success('Fiche supprimée.');
       setDeleteModalOpen(false);
       setFicheToDelete(null);
       setRefreshKey((v) => v + 1);
     } catch {
-      showToast.error('Erreur reseau.');
+      showToast.error('Erreur réseau.');
     } finally {
       setDeleting(false);
     }
@@ -162,7 +162,7 @@ export default function AdminFichesPage() {
     <div className="space-y-6">
       <AdminHeader
         title="Fiches AFEIA"
-        subtitle={`${total} fiche${total > 1 ? 's' : ''} au total, ${publishedCount} publiee${publishedCount > 1 ? 's' : ''}`}
+        subtitle={`${total} fiche${total > 1 ? 's' : ''} au total, ${publishedCount} publiée${publishedCount > 1 ? 's' : ''}`}
         actions={
           <Button
             onClick={() => router.push('/admin/fiches/nouvelle')}
@@ -185,7 +185,7 @@ export default function AdminFichesPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-500">Categorie</label>
+            <label className="text-xs font-medium text-slate-500">Catégorie</label>
             <Select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -206,10 +206,10 @@ export default function AdminFichesPage() {
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
               <th className="py-2 px-3">Titre</th>
-              <th className="py-2 px-3">Categorie</th>
+              <th className="py-2 px-3">Catégorie</th>
               <th className="py-2 px-3">Statut</th>
               <th className="py-2 px-3">Lecture</th>
-              <th className="py-2 px-3">Cree le</th>
+              <th className="py-2 px-3">Créé le</th>
               <th className="py-2 px-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -226,7 +226,7 @@ export default function AdminFichesPage() {
             ) : fiches.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-3 py-8 text-center text-sm text-slate-400">
-                  Aucune fiche trouvee.
+                  Aucune fiche trouvée.
                 </td>
               </tr>
             ) : (
@@ -250,7 +250,7 @@ export default function AdminFichesPage() {
                   <td className="py-2 px-3">
                     {fiche.is_published ? (
                       <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                        Publie
+                        Publié
                       </span>
                     ) : (
                       <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
@@ -327,7 +327,7 @@ export default function AdminFichesPage() {
         }}
         onConfirm={handleDelete}
         title="Supprimer la fiche"
-        message={`Etes-vous sur de vouloir supprimer la fiche "${ficheToDelete?.title ?? ''}" ? Cette action est irreversible.`}
+        message={`Etes-vous sûr de vouloir supprimer la fiche "${ficheToDelete?.title ?? ''}" ? Cette action est irréversible.`}
         confirmText="Supprimer"
         cancelText="Annuler"
         variant="danger"

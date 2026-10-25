@@ -144,7 +144,7 @@ export default function AdminFicheEditorPage() {
       return;
     }
     if (!form.category) {
-      showToast.error('La categorie est requise.');
+      showToast.error('La catégorie est requise.');
       return;
     }
 
@@ -177,10 +177,10 @@ export default function AdminFicheEditorPage() {
         return;
       }
 
-      showToast.success(isEditMode ? 'Fiche mise a jour.' : 'Fiche creee.');
+      showToast.success(isEditMode ? 'Fiche mise à jour.' : 'Fiche créée.');
       router.push('/admin/fiches');
     } catch {
-      showToast.error('Erreur reseau.');
+      showToast.error('Erreur réseau.');
     } finally {
       setSaving(false);
     }
@@ -198,7 +198,7 @@ export default function AdminFicheEditorPage() {
     <div className="space-y-6">
       <AdminHeader
         title={isEditMode ? 'Modifier la fiche' : 'Nouvelle fiche AFEIA'}
-        subtitle={isEditMode ? form.title : 'Creez une nouvelle fiche educative AFEIA.'}
+        subtitle={isEditMode ? form.title : 'Créez une nouvelle fiche éducative AFEIA.'}
         actions={
           <Button
             variant="ghost"
@@ -220,7 +220,7 @@ export default function AdminFicheEditorPage() {
             placeholder="Ex: Les bases de l'alimentation anti-inflammatoire"
           />
           <Select
-            label="Categorie"
+            label="Catégorie"
             value={form.category}
             onChange={(e) => update('category', e.target.value)}
           >
@@ -234,10 +234,10 @@ export default function AdminFicheEditorPage() {
 
         {/* Summary */}
         <Textarea
-          label="Resume (1-2 phrases)"
+          label="Résumé (1-2 phrases)"
           value={form.summary}
           onChange={(e) => update('summary', e.target.value)}
-          placeholder="Decrivez brievement le contenu de cette fiche..."
+          placeholder="Décrivez brièvement le contenu de cette fiche..."
           rows={2}
           className="min-h-[80px]"
         />
@@ -298,7 +298,7 @@ export default function AdminFicheEditorPage() {
                   className="h-4 w-4 rounded border-slate-300 text-sage focus:ring-sage/30"
                 />
                 <span className="text-sm text-charcoal">
-                  {form.is_published ? 'Publie' : 'Brouillon'}
+                  {form.is_published ? 'Publié' : 'Brouillon'}
                 </span>
               </label>
             </div>
@@ -318,7 +318,7 @@ export default function AdminFicheEditorPage() {
               ) : (
                 <Eye className="h-3 w-3" />
               )}
-              {previewMode ? 'Editer' : 'Apercu'}
+              {previewMode ? 'Éditer' : 'Aperçu'}
             </button>
           </div>
           {previewMode ? (
@@ -329,7 +329,7 @@ export default function AdminFicheEditorPage() {
             <textarea
               value={form.content_markdown}
               onChange={(e) => update('content_markdown', e.target.value)}
-              placeholder="## Introduction&#10;&#10;Ecrivez votre contenu en Markdown..."
+              placeholder="## Introduction&#10;&#10;Écrivez votre contenu en Markdown..."
               rows={16}
               className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-charcoal font-mono placeholder:text-stone focus:border-sage focus:outline-none focus:ring-1 focus:ring-sage"
             />
@@ -347,7 +347,7 @@ export default function AdminFicheEditorPage() {
             loading={saving}
             disabled={!form.title.trim() || !form.content_markdown.trim() || !form.category}
           >
-            {isEditMode ? 'Enregistrer' : 'Creer la fiche'}
+            {isEditMode ? 'Enregistrer' : 'Créer la fiche'}
           </Button>
         </div>
       </div>

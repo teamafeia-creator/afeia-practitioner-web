@@ -38,7 +38,7 @@ export function ContraindicationValidationModal({
               <AlertTriangle className="h-5 w-5 text-red-600" />
             </div>
             <h3 className="text-lg font-semibold text-charcoal">
-              Alertes de contre-indications non resolues
+              Alertes de contre-indications non résolues
             </h3>
           </div>
           <button
@@ -75,7 +75,7 @@ export function ContraindicationValidationModal({
               className="mt-0.5 rounded border-gray-300 text-sage focus:ring-sage/30"
             />
             <span className="text-sm text-charcoal">
-              Je confirme avoir pris connaissance de ces alertes et j&apos;assume la responsabilite de mes recommandations.
+              Je confirmé avoir pris connaissance de ces alertes et j&apos;assume la responsabilité de mes recommandations.
             </span>
           </label>
 
@@ -83,8 +83,8 @@ export function ContraindicationValidationModal({
           <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
             <span className="text-blue-500 text-sm mt-0.5">ℹ️</span>
             <p className="text-xs text-blue-700">
-              AFEIA fournit des alertes informatives. Elles ne constituent pas un avis medical.
-              En cas de doute, orientez votre consultant vers son medecin traitant.
+              AFEIA fournit des alertes informatives. Elles ne constituent pas un avis médical.
+              En cas de doute, orientez votre consultant vers son médecin traitant.
             </p>
           </div>
         </div>
@@ -102,7 +102,7 @@ export function ContraindicationValidationModal({
             }}
             disabled={!acknowledged || loading}
           >
-            {loading ? 'Validation...' : 'Valider quand meme'}
+            {loading ? 'Validation...' : 'Valider quand même'}
           </Button>
         </div>
       </div>

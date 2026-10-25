@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET;
 
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ message: 'Non autorise' }, { status: 401 });
+      return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
     }
 
     const deleted = await cleanupExpiredEntries();
@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
       success: true,
       deleted,
       message: deleted > 0
-        ? `${deleted} entree(s) nettoyee(s).`
-        : 'Aucune entree a nettoyer.',
+        ? `${deleted} entrée(s) nettoyée(s).`
+        : 'Aucune entrée à nettoyer.',
     });
   } catch (error) {
     console.error('Error in waitlist cleanup:', error);

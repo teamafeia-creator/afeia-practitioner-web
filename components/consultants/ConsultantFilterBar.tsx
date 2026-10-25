@@ -120,7 +120,7 @@ function getActiveChips(
     chips.push({
       key: 'lastActivity',
       filterKey: 'lastActivity',
-      label: `Activite: ${LAST_ACTIVITY_LABELS[filters.lastActivity]}`,
+      label: `Activité: ${LAST_ACTIVITY_LABELS[filters.lastActivity]}`,
       value: filters.lastActivity,
     });
   }
@@ -147,7 +147,7 @@ function getActiveChips(
     chips.push({
       key: `adherenceLevel-${v}`,
       filterKey: 'adherenceLevel',
-      label: `Adhesion: ${ADHERENCE_LABELS[v]}`,
+      label: `Adhésion: ${ADHERENCE_LABELS[v]}`,
       value: v,
     })
   );
@@ -271,7 +271,7 @@ export function ConsultantFilterBar({
               />
             </FilterSection>
 
-            <FilterSection title="Derniere activite">
+            <FilterSection title="Dernière activité">
               <RadioGroup
                 options={Object.entries(LAST_ACTIVITY_LABELS).map(([value, label]) => ({ value, label }))}
                 value={filters.lastActivity}
@@ -298,7 +298,7 @@ export function ConsultantFilterBar({
               />
             </FilterSection>
 
-            <FilterSection title="Adhesion">
+            <FilterSection title="Adhésion">
               <CheckboxGroup
                 options={Object.entries(ADHERENCE_LABELS).map(([value, label]) => ({ value, label }))}
                 values={filters.adherenceLevel}

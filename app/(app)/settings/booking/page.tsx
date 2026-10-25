@@ -190,7 +190,7 @@ export default function BookingSettingsPage() {
       if (!validation.hasConsultationTypes) {
         setToast({
           title: 'Impossible d\'activer le booking',
-          description: 'Vous devez avoir au moins un type de consultation actif et reservable en ligne.',
+          description: 'Vous devez avoir au moins un type de consultation actif et réservable en ligne.',
           variant: 'error',
         });
         return;
@@ -198,7 +198,7 @@ export default function BookingSettingsPage() {
       if (!validation.hasAvailability) {
         setToast({
           title: 'Impossible d\'activer le booking',
-          description: 'Vous devez configurer vos horaires de disponibilite.',
+          description: 'Vous devez configurer vos horaires de disponibilité.',
           variant: 'error',
         });
         return;
@@ -208,7 +208,7 @@ export default function BookingSettingsPage() {
     setSaving(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('Non authentifie');
+      if (!userData.user) throw new Error('Non authentifié');
 
       const { error } = await supabase
         .from('practitioners')
@@ -237,7 +237,7 @@ export default function BookingSettingsPage() {
         cancellation_policy_text: form.cancellation_policy_text || null,
       });
       setValidation(prev => ({ ...prev, hasSlug: !!form.booking_slug }));
-      setToast({ title: 'Configuration enregistree', variant: 'success' });
+      setToast({ title: 'Configuration enregistrée', variant: 'success' });
     } catch (error: unknown) {
       const message =
         error instanceof Error
@@ -283,7 +283,7 @@ export default function BookingSettingsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Prise de RDV en ligne"
-        subtitle="Permettez a vos consultants de prendre rendez-vous directement depuis une page dediee."
+        subtitle="Permettez à vos consultants de prendre rendez-vous directement depuis une page dédiée."
       />
 
       {/* Activation toggle */}
@@ -316,10 +316,10 @@ export default function BookingSettingsPage() {
               </div>
               <ul className="text-xs text-stone space-y-1 ml-6">
                 <li className={validation.hasSlug ? 'text-sage' : ''}>
-                  {validation.hasSlug ? '\u2713' : '\u2717'} Slug personnalise defini
+                  {validation.hasSlug ? '\u2713' : '\u2717'} Slug personnalisé défini
                 </li>
                 <li className={validation.hasConsultationTypes ? 'text-sage' : ''}>
-                  {validation.hasConsultationTypes ? '\u2713' : '\u2717'} Au moins un type de consultation reservable en ligne{' '}
+                  {validation.hasConsultationTypes ? '\u2713' : '\u2717'} Au moins un type de consultation réservable en ligne{' '}
                   {!validation.hasConsultationTypes && (
                     <button onClick={() => router.push('/settings/consultation-types')} className="text-sage underline">
                       Configurer
@@ -327,7 +327,7 @@ export default function BookingSettingsPage() {
                   )}
                 </li>
                 <li className={validation.hasAvailability ? 'text-sage' : ''}>
-                  {validation.hasAvailability ? '\u2713' : '\u2717'} Horaires de disponibilite configures{' '}
+                  {validation.hasAvailability ? '\u2713' : '\u2717'} Horaires de disponibilité configurés{' '}
                   {!validation.hasAvailability && (
                     <button onClick={() => router.push('/settings/availability')} className="text-sage underline">
                       Configurer
@@ -350,7 +350,7 @@ export default function BookingSettingsPage() {
             <div className="flex items-end gap-2">
               <div className="flex-1">
                 <Input
-                  label="Slug personnalise"
+                  label="Slug personnalisé"
                   value={form.booking_slug}
                   onChange={(e) => {
                     const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -360,19 +360,19 @@ export default function BookingSettingsPage() {
                 />
               </div>
               <Button variant="ghost" size="sm" onClick={suggestSlug}>
-                Suggerer
+                Suggérer
               </Button>
             </div>
             {form.booking_slug && (
               <div className="mt-2 flex items-center gap-2">
                 {slugChecking ? (
-                  <span className="text-xs text-stone">Verification...</span>
+                  <span className="text-xs text-stone">Vérification...</span>
                 ) : slugAvailable === true ? (
                   <span className="text-xs text-sage flex items-center gap-1">
                     <Check className="h-3 w-3" /> Disponible
                   </span>
                 ) : slugAvailable === false ? (
-                  <span className="text-xs text-terracotta">Ce slug est deja utilise</span>
+                  <span className="text-xs text-terracotta">Ce slug est déjà utilisé</span>
                 ) : null}
               </div>
             )}
@@ -409,7 +409,7 @@ export default function BookingSettingsPage() {
             <Textarea
               value={form.booking_intro_text}
               onChange={(e) => setForm(prev => ({ ...prev, booking_intro_text: e.target.value }))}
-              placeholder="Bienvenue ! Choisissez le type de seance qui vous convient."
+              placeholder="Bienvenue ! Choisissez le type de séance qui vous convient."
               className="min-h-[80px]"
             />
           </div>
@@ -421,7 +421,7 @@ export default function BookingSettingsPage() {
               placeholder="12 rue des Lilas, 69003 Lyon"
             />
             <Input
-              label="Telephone"
+              label="Téléphone"
               value={form.booking_phone}
               onChange={(e) => setForm(prev => ({ ...prev, booking_phone: e.target.value }))}
               placeholder="06 12 34 56 78"
@@ -437,7 +437,7 @@ export default function BookingSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Select
-            label="Delai minimum d'annulation"
+            label="Délai minimum d'annulation"
             value={String(form.cancellation_policy_hours || 0)}
             onChange={(e) => setForm(prev => ({ ...prev, cancellation_policy_hours: parseInt(e.target.value) || 0 }))}
           >
@@ -448,7 +448,7 @@ export default function BookingSettingsPage() {
           </Select>
           <div>
             <label className="block text-[13px] font-medium text-stone mb-1">
-              Texte personnalise
+              Texte personnalisé
             </label>
             <Textarea
               value={form.cancellation_policy_text}
@@ -463,25 +463,25 @@ export default function BookingSettingsPage() {
       {/* Video conferencing */}
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold">Visioconference</h2>
+          <h2 className="text-sm font-semibold">Visioconférence</h2>
         </CardHeader>
         <CardContent className="space-y-4">
           <Select
-            label="Mode de visioconference"
+            label="Mode de visioconférence"
             value={form.video_provider}
             onChange={(e) => setForm(prev => ({ ...prev, video_provider: e.target.value as 'external' | 'daily' }))}
           >
             <option value="external">Lien externe (Google Meet, Zoom, etc.)</option>
-            <option value="daily">Visioconference integree AFEIA</option>
+            <option value="daily">Visioconférence intégrée AFEIA</option>
           </Select>
 
           {form.video_provider === 'daily' ? (
             <div className="flex items-start gap-3 p-3 bg-sage/5 border border-sage/15 rounded-lg">
               <CheckCircle className="h-5 w-5 text-sage flex-shrink-0 mt-0.5" />
               <div className="text-sm text-charcoal">
-                <p className="font-medium">Visioconference integree activee</p>
+                <p className="font-medium">Visioconférence intégrée activée</p>
                 <p className="text-stone mt-1">
-                  Les salles de visioconference seront creees automatiquement pour chaque rendez-vous en visio.
+                  Les salles de visioconférence seront créées automatiquement pour chaque rendez-vous en visio.
                   Vos consultants recevront un lien de connexion par email.
                 </p>
               </div>
@@ -490,8 +490,8 @@ export default function BookingSettingsPage() {
             <div className="flex items-start gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
               <Video className="h-5 w-5 text-stone flex-shrink-0 mt-0.5" />
               <div className="text-sm text-stone">
-                Vous pourrez saisir manuellement un lien de visioconference (Google Meet, Zoom, etc.)
-                lors de la creation de chaque rendez-vous.
+                Vous pourrez saisir manuellement un lien de visioconférence (Google Meet, Zoom, etc.)
+                lors de la création de chaque rendez-vous.
               </div>
             </div>
           )}

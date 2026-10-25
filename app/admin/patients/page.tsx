@@ -62,7 +62,7 @@ function formatRelativeTime(dateString: string | null): string {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMinutes < 1) return "A l'instant";
+  if (diffMinutes < 1) return "À l'instant";
   if (diffMinutes < 60) return `il y a ${diffMinutes}min`;
   if (diffHours < 24) return `il y a ${diffHours}h`;
   if (diffDays === 1) return 'Hier';
@@ -196,14 +196,14 @@ export default function AdminPatientsPage() {
           />
           <AdminMetricCard
             icon={Smartphone}
-            label="App mobile installee"
+            label="App mobile installée"
             value="—"
-            subtext="Donnees non disponibles"
+            subtext="Données non disponibles"
             accentColor="blue"
           />
           <AdminMetricCard
             icon={Radio}
-            label="Circular connecte"
+            label="Circular connecté"
             value={metrics.circularCount}
             subtext={metrics.premiumCount > 0
               ? `${Math.round((metrics.circularCount / metrics.premiumCount) * 100)}% des premium`
@@ -269,7 +269,7 @@ export default function AdminPatientsPage() {
               <option value="">Tous</option>
               <option value="activated">Active</option>
               <option value="pending">En attente</option>
-              <option value="expired">Expire</option>
+              <option value="expired">Expiré</option>
             </Select>
           </div>
           <div>
@@ -279,8 +279,8 @@ export default function AdminPatientsPage() {
               onChange={(e) => { setCircularFilter(e.target.value); setPage(1); }}
             >
               <option value="">Tous</option>
-              <option value="connected">Connecte</option>
-              <option value="disconnected">Non connecte</option>
+              <option value="connected">Connecté</option>
+              <option value="disconnected">Non connecté</option>
             </Select>
           </div>
           <div>
@@ -290,7 +290,7 @@ export default function AdminPatientsPage() {
               onChange={(e) => setSortField(e.target.value)}
             >
               <option value="created_at">Date inscription</option>
-              <option value="updated_at">Derniere activite</option>
+              <option value="updated_at">Dernière activité</option>
               <option value="full_name">Nom</option>
             </Select>
             <Button
@@ -299,7 +299,7 @@ export default function AdminPatientsPage() {
               className="mt-1 text-xs text-slate-500"
               onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
             >
-              {sortDirection === 'asc' ? 'Croissant' : 'Decroissant'}
+              {sortDirection === 'asc' ? 'Croissant' : 'Décroissant'}
             </Button>
           </div>
         </div>
@@ -317,7 +317,7 @@ export default function AdminPatientsPage() {
                 <th className="py-2 px-3">Code d&apos;activation</th>
                 <th className="py-2 px-3">Circular</th>
                 <th className="py-2 px-3">Journal</th>
-                <th className="py-2 px-3">Derniere activite</th>
+                <th className="py-2 px-3">Dernière activité</th>
                 <th className="py-2 px-3">Inscrit le</th>
                 <th className="py-2 px-3 text-right">Actions</th>
               </tr>
@@ -335,7 +335,7 @@ export default function AdminPatientsPage() {
               ) : patients.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-3 py-8 text-center text-sm text-slate-400">
-                    Aucun patient trouve.
+                    Aucun patient trouvé.
                   </td>
                 </tr>
               ) : (
@@ -404,7 +404,7 @@ export default function AdminPatientsPage() {
                       {patient.circular_enabled ? (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          Connecte
+                          Connecté
                         </span>
                       ) : (
                         <span className="text-xs text-slate-400">Non</span>
@@ -413,7 +413,7 @@ export default function AdminPatientsPage() {
                     {/* Journal */}
                     <td className="py-2 px-3 text-slate-600">
                       {patient.journal_entries_count > 0
-                        ? `${patient.journal_entries_count} entrees`
+                        ? `${patient.journal_entries_count} entrées`
                         : '—'}
                     </td>
                     {/* Last activity */}
@@ -455,7 +455,7 @@ export default function AdminPatientsPage() {
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
           >
-            Precedent
+            Précédent
           </Button>
           <Button
             variant="outline"

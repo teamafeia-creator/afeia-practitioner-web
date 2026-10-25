@@ -45,7 +45,7 @@ export default function MorningReviewPage() {
             onClick={() => refetch()}
             className="text-sm text-sage hover:text-sage-deep font-medium"
           >
-            Reessayer
+            Réessayer
           </button>
         </div>
       </div>
@@ -82,9 +82,9 @@ export default function MorningReviewPage() {
       {/* Consultants sans donnees suffisantes */}
       {consultantsSummary.some(c => c.attentionLevel === 'insufficient') && (
         <div className="glass-card p-4 md:p-6">
-          <h2 className="text-lg font-semibold text-charcoal mb-3">Donnees insuffisantes</h2>
+          <h2 className="text-lg font-semibold text-charcoal mb-3">Données insuffisantes</h2>
           <p className="text-sm text-stone mb-3">
-            Ces consultants n&apos;ont pas encore assez de donnees pour etre evalues.
+            Ces consultants n&apos;ont pas encore assez de données pour être évalués.
           </p>
           <div className="space-y-2">
             {consultantsSummary
@@ -96,7 +96,7 @@ export default function MorningReviewPage() {
                 >
                   <span className="text-sm text-charcoal">{summary.consultant.name}</span>
                   <span className="text-xs text-stone">
-                    Cree le {new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(new Date(summary.consultant.created_at))}
+                    Créé le {new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(new Date(summary.consultant.created_at))}
                   </span>
                 </div>
               ))

@@ -22,7 +22,7 @@ export function InvoiceDetail({ invoice }: Props) {
         <CardContent>
           <dl className="space-y-3">
             <div className="flex justify-between">
-              <dt className="text-sm text-stone">Numero</dt>
+              <dt className="text-sm text-stone">Numéro</dt>
               <dd>
                 <InvoiceNumberDisplay numero={invoice.numero} />
               </dd>
@@ -34,7 +34,7 @@ export function InvoiceDetail({ invoice }: Props) {
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-sm text-stone">Date emission</dt>
+              <dt className="text-sm text-stone">Date émission</dt>
               <dd className="text-sm text-charcoal">
                 {formatDate(invoice.date_emission)}
               </dd>

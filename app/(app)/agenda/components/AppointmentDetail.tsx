@@ -39,17 +39,17 @@ const LOCATION_ICONS: Record<string, React.ReactNode> = {
 const LOCATION_LABELS: Record<string, string> = {
   in_person: 'Au cabinet',
   video: 'Visio',
-  phone: 'Telephone',
-  home_visit: 'A domicile',
+  phone: 'Téléphone',
+  home_visit: 'À domicile',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  scheduled: 'Planifie',
-  confirmed: 'Confirme',
+  scheduled: 'Planifié',
+  confirmed: 'Confirmé',
   in_progress: 'En cours',
-  completed: 'Termine',
-  cancelled: 'Annule',
-  rescheduled: 'Reporte',
+  completed: 'Terminé',
+  cancelled: 'Annulé',
+  rescheduled: 'Reporté',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -104,7 +104,7 @@ export function AppointmentDetail({
     setProcessing(true);
     try {
       await completeAppointment(appointment!.id);
-      showToast.success('Seance marquee comme terminee');
+      showToast.success('Séance marquée comme terminée');
       setShowCompletionPrompt(true);
       onUpdated();
     } catch (err) {
@@ -136,7 +136,7 @@ export function AppointmentDetail({
           }
         });
       }
-      showToast.success('Seance annulee');
+      showToast.success('Séance annulée');
       setShowCancelModal(false);
       onUpdated();
       onClose();
@@ -168,7 +168,7 @@ export function AppointmentDetail({
             >
               {/* Header */}
               <div className="sticky top-0 bg-surface border-b border-neutral-100 px-5 py-4 flex items-center justify-between z-10">
-                <h2 className="text-lg font-semibold text-charcoal">Detail de la seance</h2>
+                <h2 className="text-lg font-semibold text-charcoal">Détail de la séance</h2>
                 <button
                   onClick={onClose}
                   className="p-1 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
@@ -191,7 +191,7 @@ export function AppointmentDetail({
                   {isPast && isActive && (
                     <span className="flex items-center gap-1 text-xs text-amber-600">
                       <AlertTriangle className="h-3 w-3" />
-                      Notes a rediger
+                      Notes à rédiger
                     </span>
                   )}
                 </div>
@@ -265,7 +265,7 @@ export function AppointmentDetail({
                         <div className="flex items-center gap-2">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-sage/10 text-sage">
                             <Video className="h-3 w-3" />
-                            Visio integree
+                            Visio intégrée
                           </span>
                         </div>
                         {isInWindow ? (
@@ -279,7 +279,7 @@ export function AppointmentDetail({
                           </Button>
                         ) : (
                           <div className="text-xs text-stone bg-neutral-50 p-2 rounded-lg">
-                            Le lien sera disponible 15 min avant le debut de la seance.
+                            Le lien sera disponible 15 min avant le début de la séance.
                           </div>
                         )}
                       </div>
@@ -327,7 +327,7 @@ export function AppointmentDetail({
                       loading={processing}
                       icon={<CheckCircle className="w-4 h-4" />}
                     >
-                      Marquer comme terminee
+                      Marquer comme terminée
                     </Button>
                     <Button
                       variant="outline"
@@ -343,7 +343,7 @@ export function AppointmentDetail({
                       onClick={() => setShowCancelModal(true)}
                       icon={<XCircle className="w-4 h-4" />}
                     >
-                      Annuler cette seance
+                      Annuler cette séance
                     </Button>
                   </div>
                 )}
@@ -357,17 +357,17 @@ export function AppointmentDetail({
       <Modal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
-        title="Annuler la seance"
+        title="Annuler la séance"
         size="sm"
       >
         <div className="space-y-4">
           <p className="text-sm text-neutral-600">
-            Etes-vous sur d&apos;annuler la seance du{' '}
+            Etes-vous sur d&apos;annuler la séance du{' '}
             {dateTimeFormatter.format(new Date(appointment.starts_at))} avec {patientName} ?
           </p>
 
           <Select
-            label="Annule par"
+            label="Annulé par"
             value={cancelledBy}
             onChange={(e) => setCancelledBy(e.target.value as 'practitioner' | 'consultant')}
           >
@@ -400,11 +400,11 @@ export function AppointmentDetail({
           setShowCompletionPrompt(false);
           onClose();
         }}
-        title="Seance terminee"
+        title="Séance terminée"
         size="sm"
       >
         <p className="text-sm text-neutral-600 mb-4">
-          La seance avec {patientName} est terminee. Que souhaitez-vous faire ?
+          La séance avec {patientName} est terminée. Que souhaitez-vous faire ?
         </p>
         <div className="space-y-2">
           <Button
@@ -417,7 +417,7 @@ export function AppointmentDetail({
             }}
             icon={<FileText className="w-4 h-4" />}
           >
-            Rediger les notes de seance
+            Rédiger les notes de séance
           </Button>
           <Button
             variant="outline"
@@ -428,7 +428,7 @@ export function AppointmentDetail({
               if (patientId) router.push(`/consultants/${patientId}?tab=Conseillancier`);
             }}
           >
-            Creer/mettre a jour le conseillancier
+            Créer/mettre à jour le conseillancier
           </Button>
           <Button
             variant="ghost"

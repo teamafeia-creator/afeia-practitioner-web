@@ -46,15 +46,15 @@ const LOCATION_ICONS: Record<string, React.ReactNode> = {
 const LOCATION_LABELS: Record<string, string> = {
   in_person: 'Au cabinet',
   video: 'Visio',
-  home_visit: 'A domicile',
+  home_visit: 'À domicile',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  scheduled: 'Planifie',
-  confirmed: 'Confirme',
+  scheduled: 'Planifié',
+  confirmed: 'Confirmé',
   in_progress: 'En cours',
-  completed: 'Termine',
-  cancelled: 'Annule',
+  completed: 'Terminé',
+  cancelled: 'Annulé',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -67,10 +67,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 const REG_STATUS_LABELS: Record<string, string> = {
   registered: 'Inscrit',
-  confirmed: 'Confirme',
-  attended: 'Present',
+  confirmed: 'Confirmé',
+  attended: 'Présent',
   no_show: 'Absent',
-  cancelled: 'Annule',
+  cancelled: 'Annulé',
 };
 
 const REG_STATUS_COLORS: Record<string, string> = {
@@ -165,7 +165,7 @@ export function GroupSessionDetail({
     setProcessing(true);
     try {
       await completeGroupSession(displaySession.id);
-      showToast.success('Seance marquee comme terminee');
+      showToast.success('Séance marquée comme terminée');
       onUpdated();
       await loadSession();
     } catch {
@@ -178,8 +178,8 @@ export function GroupSessionDetail({
   async function handleCancel() {
     setProcessing(true);
     try {
-      await cancelGroupSession(displaySession.id, cancelReason || 'Annulee par le praticien');
-      showToast.success('Seance annulee');
+      await cancelGroupSession(displaySession.id, cancelReason || 'Annulée par le praticien');
+      showToast.success('Séance annulée');
       setShowCancelModal(false);
       onUpdated();
       onClose();
@@ -194,8 +194,8 @@ export function GroupSessionDetail({
     try {
       await updateRegistrationStatus(regId, status);
       showToast.success(
-        status === 'attended' ? 'Marque present' :
-        status === 'no_show' ? 'Marque absent' : 'Inscription annulee'
+        status === 'attended' ? 'Marqué présent' :
+        status === 'no_show' ? 'Marqué absent' : 'Inscription annulée'
       );
       await loadSession();
       onUpdated();
@@ -267,7 +267,7 @@ export function GroupSessionDetail({
             >
               {/* Header */}
               <div className="sticky top-0 bg-surface border-b border-neutral-100 px-5 py-4 flex items-center justify-between z-10">
-                <h2 className="text-lg font-semibold text-charcoal">Detail de l&apos;atelier</h2>
+                <h2 className="text-lg font-semibold text-charcoal">Détail de l&apos;atelier</h2>
                 <button
                   onClick={onClose}
                   className="p-1 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
@@ -388,7 +388,7 @@ export function GroupSessionDetail({
                               <button
                                 onClick={() => handleUpdateRegStatus(reg.id, 'attended')}
                                 className="p-1 rounded text-green-600 hover:bg-green-50"
-                                title="Marquer present"
+                                title="Marquer présent"
                               >
                                 <CheckCircle className="h-3.5 w-3.5" />
                               </button>
@@ -461,7 +461,7 @@ export function GroupSessionDetail({
                       loading={processing}
                       icon={<CheckCircle className="w-4 h-4" />}
                     >
-                      Marquer comme terminee
+                      Marquer comme terminée
                     </Button>
                     <Button
                       variant="destructive"
@@ -469,7 +469,7 @@ export function GroupSessionDetail({
                       onClick={() => setShowCancelModal(true)}
                       icon={<XCircle className="w-4 h-4" />}
                     >
-                      Annuler cette seance
+                      Annuler cette séance
                     </Button>
                   </div>
                 )}
@@ -483,7 +483,7 @@ export function GroupSessionDetail({
       <Modal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
-        title="Annuler la seance collective"
+        title="Annuler la séance collective"
         size="sm"
       >
         <div className="space-y-4">
@@ -491,7 +491,7 @@ export function GroupSessionDetail({
             Etes-vous sur d&apos;annuler l&apos;atelier &quot;{displaySession?.title}&quot; ?
             {activeRegistrations.length > 0 && (
               <span className="block mt-1 text-amber-600">
-                {activeRegistrations.length} participant(s) inscrit(s) seront impactes.
+                {activeRegistrations.length} participant(s) inscrit(s) seront impactés.
               </span>
             )}
           </p>
@@ -554,7 +554,7 @@ export function GroupSessionDetail({
               </div>
               <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
                 {filteredConsultants.length === 0 ? (
-                  <div className="p-3 text-sm text-stone">Aucun consultant trouve</div>
+                  <div className="p-3 text-sm text-stone">Aucun consultant trouvé</div>
                 ) : (
                   filteredConsultants.slice(0, 15).map((c) => (
                     <button
@@ -585,7 +585,7 @@ export function GroupSessionDetail({
                 placeholder="email@exemple.fr"
               />
               <Input
-                label="Telephone"
+                label="Téléphone"
                 value={manualForm.phone}
                 onChange={(e) => setManualForm((f) => ({ ...f, phone: e.target.value }))}
                 placeholder="06 12 34 56 78"

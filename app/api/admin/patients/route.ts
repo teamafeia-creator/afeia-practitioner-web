@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('[admin] patients list error:', error);
-      return NextResponse.json({ error: 'Erreur lors de la recuperation des patients.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur lors de la récupération des patients.' }, { status: 500 });
     }
 
     const patients = data ?? [];

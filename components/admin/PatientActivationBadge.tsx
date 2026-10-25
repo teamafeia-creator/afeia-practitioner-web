@@ -19,7 +19,7 @@ const statusConfig: Record<ActivationStatus, { label: string; classes: string }>
     classes: 'bg-amber-100 text-amber-700',
   },
   expired: {
-    label: 'Expire',
+    label: 'Expiré',
     classes: 'bg-red-100 text-red-700',
   },
 };

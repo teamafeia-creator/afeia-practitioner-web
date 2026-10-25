@@ -76,7 +76,7 @@ function getDisplayName(item: ConsultantRow | InvitationRow): string {
   if (item.full_name) return item.full_name;
   const parts = [item.first_name, item.last_name].filter(Boolean);
   if (parts.length > 0) return parts.join(' ');
-  return item.email || 'Non renseigne';
+  return item.email || 'Non renseigné';
 }
 
 export default function ConsultantsPage() {
@@ -194,15 +194,15 @@ export default function ConsultantsPage() {
   useEffect(() => {
     if (searchParams.get('deleted') === '1') {
       setToast({
-        title: 'Consultant supprime',
-        description: 'Le dossier a ete supprime definitivement.',
+        title: 'Consultant supprimé',
+        description: 'Le dossier a été supprimé définitivement.',
         variant: 'success'
       });
     }
     if (searchParams.get('created') === '1') {
       setToast({
-        title: 'Invitation envoyee',
-        description: 'Le code d\'activation a ete envoye par email.',
+        title: 'Invitation envoyée',
+        description: 'Le code d\'activation a été envoyé par email.',
         variant: 'success'
       });
       loadData();
@@ -278,8 +278,8 @@ export default function ConsultantsPage() {
       if (result.success) {
         const codeDisplay = result.code ? `\n\nCode OTP : ${result.code}` : '';
         setToast({
-          title: 'Code renvoye',
-          description: `Un nouveau code a ete envoye a ${email}${codeDisplay}`,
+          title: 'Code renvoyé',
+          description: `Un nouveau code a été envoyé à ${email}${codeDisplay}`,
           variant: 'success'
         });
       } else {
@@ -307,8 +307,8 @@ export default function ConsultantsPage() {
       const result = await invitationService.cancelInvitation(invitationId);
       if (result.success) {
         setToast({
-          title: 'Invitation annulee',
-          description: `L'invitation pour ${email} a ete annulee`,
+          title: 'Invitation annulée',
+          description: `L'invitation pour ${email} a été annulée`,
           variant: 'success'
         });
         loadData();
@@ -463,11 +463,11 @@ export default function ConsultantsPage() {
             Aucun consultant
           </h4>
           <p className="text-[#8B95A5] text-sm max-w-sm mb-4">
-            {search ? 'Aucun consultant ne correspond a votre recherche.' : 'Commencez par ajouter votre premier consultant.'}
+            {search ? 'Aucun consultant ne correspond à votre recherche.' : 'Commencez par ajouter votre premier consultant.'}
           </p>
           <Link href="/consultants/new">
             <Button variant="primary" icon={<Plus className="h-4 w-4" />}>
-              Creer un consultant
+              Créer un consultant
             </Button>
           </Link>
         </div>
@@ -529,7 +529,7 @@ export default function ConsultantsPage() {
                     </span>
                     {consultant.is_demo && (
                       <span className="px-2 py-0.5 rounded-2xl text-[11px] font-medium bg-stone/10 text-stone border border-stone/20">
-                        Demo
+                        Démo
                       </span>
                     )}
                   </div>
@@ -606,7 +606,7 @@ export default function ConsultantsPage() {
                             'px-2 py-0.5 rounded-2xl text-xs font-medium',
                             isExpired ? 'badge-info' : 'badge-urgent'
                           )}>
-                            {isExpired ? 'Expire' : 'En attente'}
+                            {isExpired ? 'Expiré' : 'En attente'}
                           </span>
                         </div>
                         <div className="flex items-center gap-3 text-[13px] text-stone">

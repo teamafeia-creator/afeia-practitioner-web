@@ -118,7 +118,7 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error('Exception PDF drawing generation:', err);
+    console.error('Exception PDF drawing génération:', err);
     return NextResponse.json(
       { error: 'Erreur lors de la génération du PDF.' },
       { status: 500 }

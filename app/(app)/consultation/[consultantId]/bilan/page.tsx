@@ -301,7 +301,7 @@ export default function BilanVisuelPage() {
       {slideKey === 'sommeil_hrv' && (
         <PresentationSlide
           title="Sommeil et HRV"
-          subtitle="Données de la bague connectée"
+          subtitle="Données de l'objet connecté"
           slideNumber={currentSlide + 1}
           totalSlides={totalSlides}
         >

@@ -29,7 +29,7 @@ export function InvoiceList({ invoices, loading }: Props) {
           <FileText className="h-12 w-12 text-stone/40 mx-auto mb-4" />
           <p className="text-stone text-sm">Aucune facture</p>
           <p className="text-stone/70 text-xs mt-1">
-            Les factures apparaitront ici une fois creees.
+            Les factures apparaîtront ici une fois créées.
           </p>
         </div>
       </div>
@@ -43,7 +43,7 @@ export function InvoiceList({ invoices, loading }: Props) {
           <thead>
             <tr className="border-b border-neutral-100 text-left">
               <th className="px-4 py-3 font-medium text-stone text-xs uppercase tracking-wide">
-                Numero
+                Numéro
               </th>
               <th className="px-4 py-3 font-medium text-stone text-xs uppercase tracking-wide">
                 Consultant

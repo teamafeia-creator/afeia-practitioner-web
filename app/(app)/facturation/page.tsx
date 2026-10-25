@@ -132,7 +132,7 @@ export default function FacturationPage() {
       <Toaster />
       <PageHeader
         title="Facturation"
-        subtitle="Gerez vos factures et suivez votre chiffre d'affaires"
+        subtitle="Gérez vos factures et suivez votre chiffre d'affaires"
         actions={
           <div className="flex gap-2">
             {settingsConfigured && (
@@ -169,11 +169,11 @@ export default function FacturationPage() {
                       className="w-full text-left px-3 py-2 text-sm text-charcoal hover:bg-sage-light/50 flex items-center gap-2"
                     >
                       <FileSpreadsheet className="h-3.5 w-3.5 text-stone" />
-                      Annee
+                      Année
                     </button>
                     <div className="border-t border-divider my-1" />
                     <div className="px-3 py-1.5 text-xs font-medium text-stone uppercase tracking-wider">
-                      Recapitulatif PDF
+                      Récapitulatif PDF
                     </div>
                     <button
                       onClick={() => handleExportPDF('month')}
@@ -206,7 +206,7 @@ export default function FacturationPage() {
                 size="sm"
                 icon={<Settings className="h-4 w-4" />}
               >
-                Parametres
+                Paramètres
               </Button>
             </Link>
             {settingsConfigured && (
@@ -229,7 +229,7 @@ export default function FacturationPage() {
             Configurez votre facturation
           </h3>
           <p className="text-sm text-stone mb-4">
-            Renseignez votre SIRET et vos informations legales pour commencer a
+            Renseignez votre SIRET et vos informations légales pour commencer à
             facturer.
           </p>
           <Link href="/settings/facturation">

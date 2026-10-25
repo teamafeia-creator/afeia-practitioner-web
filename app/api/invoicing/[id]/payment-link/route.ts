@@ -11,7 +11,7 @@ export async function POST(
     const { id } = await params;
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -38,7 +38,7 @@ export async function POST(
     const invoice = invoiceData as ConsultationInvoice;
 
     if (invoice.status === 'paid') {
-      return NextResponse.json({ message: 'Facture deja payee' }, { status: 400 });
+      return NextResponse.json({ message: 'Facture déjà payée' }, { status: 400 });
     }
 
     // Recuperer le compte Stripe du praticien
@@ -50,7 +50,7 @@ export async function POST(
 
     if (!settings?.stripe_account_id || !settings.stripe_charges_enabled) {
       return NextResponse.json(
-        { message: 'Stripe Connect non configure ou incomplet' },
+        { message: 'Stripe Connect non configuré ou incomplet' },
         { status: 400 }
       );
     }
@@ -94,9 +94,9 @@ export async function POST(
       expires_at: expiresAt,
     });
   } catch (error) {
-    console.error('Erreur creation Payment Link:', error);
+    console.error('Erreur création Payment Link:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la creation du lien de paiement' },
+      { message: 'Erreur lors de la création du lien de paiement' },
       { status: 500 }
     );
   }

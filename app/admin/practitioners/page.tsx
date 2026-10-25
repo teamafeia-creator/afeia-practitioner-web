@@ -41,7 +41,7 @@ function formatRelativeTime(dateString: string | null): string {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMinutes < 1) return "A l'instant";
+  if (diffMinutes < 1) return "À l'instant";
   if (diffMinutes < 60) return `Il y a ${diffMinutes}min`;
   if (diffHours < 24) return `Il y a ${diffHours}h`;
   if (diffDays === 1) return 'Hier';
@@ -108,7 +108,7 @@ export default function AdminPractitionersPage() {
 
     try {
       await deletePractitionerMutation.mutateAsync(practitionerToDelete.id);
-      showToast.success('Le praticien a bien ete supprime.');
+      showToast.success('Le praticien a bien été supprimé.');
       setDeleteModalOpen(false);
       setPractitionerToDelete(null);
       setPage(1);
@@ -170,7 +170,7 @@ export default function AdminPractitionersPage() {
       } catch (err) {
         console.error('[admin] loadPractitioners error:', err);
         if (!isMounted) return;
-        showToast.error('Erreur reseau lors du chargement des praticiens.');
+        showToast.error('Erreur réseau lors du chargement des praticiens.');
         setRows([]);
         setTotal(0);
         setLoadError('Erreur de chargement.');
@@ -203,7 +203,7 @@ export default function AdminPractitionersPage() {
       return;
     }
 
-    showToast.success('Invitation envoyee.');
+    showToast.success('Invitation envoyée.');
     setInviteOpen(false);
     setInviteForm({ email: '', full_name: '' });
     setPage(1);
@@ -290,11 +290,11 @@ export default function AdminPractitionersPage() {
               <option value="">Tous</option>
               <option value="active">Actif</option>
               <option value="past_due">En retard</option>
-              <option value="canceled">Annule</option>
+              <option value="canceled">Annulé</option>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-500">Sante</label>
+            <label className="text-xs font-medium text-slate-500">Santé</label>
             <Select
               value={healthFilter}
               onChange={(event) => {
@@ -324,7 +324,7 @@ export default function AdminPractitionersPage() {
               className="mt-1 text-xs text-slate-500"
               onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
             >
-              {sortDirection === 'asc' ? 'Croissant' : 'Decroissant'}
+              {sortDirection === 'asc' ? 'Croissant' : 'Décroissant'}
             </Button>
           </div>
         </div>
@@ -338,9 +338,9 @@ export default function AdminPractitionersPage() {
               <th className="py-2 px-3">Nom</th>
               <th className="py-2 px-3">Statut</th>
               <th className="py-2 px-3">Abonnement</th>
-              <th className="py-2 px-3">Sante</th>
-              <th className="py-2 px-3">Derniere connexion</th>
-              <th className="py-2 px-3">Cree le</th>
+              <th className="py-2 px-3">Santé</th>
+              <th className="py-2 px-3">Dernière connexion</th>
+              <th className="py-2 px-3">Créé le</th>
               <th className="py-2 px-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -357,7 +357,7 @@ export default function AdminPractitionersPage() {
             ) : filteredRows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-3 py-8 text-center text-sm text-slate-400">
-                  {loadError ? 'Erreur de chargement.' : 'Aucun praticien trouve.'}
+                  {loadError ? 'Erreur de chargement.' : 'Aucun praticien trouvé.'}
                 </td>
               </tr>
             ) : (
@@ -449,7 +449,7 @@ export default function AdminPractitionersPage() {
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
           >
-            Precedent
+            Précédent
           </Button>
           <Button
             variant="outline"
@@ -467,7 +467,7 @@ export default function AdminPractitionersPage() {
         isOpen={inviteOpen}
         onClose={() => setInviteOpen(false)}
         title="Inviter un praticien"
-        description="L'invitation cree un compte et envoie un email de connexion."
+        description="L'invitation crée un compte et envoie un email de connexion."
       >
         <div className="space-y-3">
           <div>
@@ -498,11 +498,11 @@ export default function AdminPractitionersPage() {
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         title="Supprimer le praticien"
-        description="Cette action est irreversible. Le compte praticien et toutes ses donnees seront supprimes."
+        description="Cette action est irréversible. Le compte praticien et toutes ses données seront supprimés."
       >
         <div className="space-y-4">
           <p className="text-sm text-slate-500">
-            Etes-vous sur de vouloir supprimer le praticien{' '}
+            Etes-vous sûr de vouloir supprimer le praticien{' '}
             <strong className="text-slate-800">
               {practitionerToDelete?.full_name || practitionerToDelete?.email}
             </strong>{' '}
@@ -510,7 +510,7 @@ export default function AdminPractitionersPage() {
           </p>
           <div className="rounded-lg border border-red-200 bg-red-50 p-3">
             <p className="text-sm text-red-800">
-              Attention : Cette action supprimera egalement tous les consultants associes a ce
+              Attention : Cette action supprimera également tous les consultants associés à ce
               praticien.
             </p>
           </div>

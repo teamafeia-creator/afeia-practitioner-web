@@ -22,7 +22,7 @@ interface GroupSessionFormProps {
 const LOCATION_OPTIONS: { value: 'in_person' | 'video' | 'home_visit'; label: string }[] = [
   { value: 'in_person', label: 'Au cabinet' },
   { value: 'video', label: 'Visio' },
-  { value: 'home_visit', label: 'A domicile' },
+  { value: 'home_visit', label: 'À domicile' },
 ];
 
 function generateTimeOptions(): string[] {
@@ -139,7 +139,7 @@ export function GroupSessionForm({
 
   async function handleSave() {
     if (!form.consultation_type_id) {
-      showToast.error('Veuillez selectionner un type de seance');
+      showToast.error('Veuillez sélectionner un type de séance');
       return;
     }
     if (!form.title.trim()) {
@@ -164,7 +164,7 @@ export function GroupSessionForm({
           max_participants: form.max_participants,
           notes_internal: form.notes_internal.trim() || null,
         });
-        showToast.success('Atelier modifie');
+        showToast.success('Atelier modifié');
       } else {
         await createGroupSession({
           consultation_type_id: form.consultation_type_id,
@@ -177,7 +177,7 @@ export function GroupSessionForm({
           max_participants: form.max_participants,
           notes_internal: form.notes_internal.trim() || null,
         });
-        showToast.success('Atelier cree');
+        showToast.success('Atelier créé');
       }
 
       onSaved();
@@ -199,7 +199,7 @@ export function GroupSessionForm({
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
         {/* Consultation type */}
         <Select
-          label="Type de seance collective *"
+          label="Type de séance collective *"
           value={form.consultation_type_id}
           onChange={(e) => handleTypeChange(e.target.value)}
         >
@@ -214,7 +214,7 @@ export function GroupSessionForm({
 
         {consultationTypes.length === 0 && (
           <p className="text-xs text-amber-600 bg-amber-50 p-3 rounded-lg">
-            Aucun type de seance collective configure. Creez-en un dans Parametres &gt; Types de seance.
+            Aucun type de séance collective configuré. Creez-en un dans Paramètres &gt; Types de séance.
           </p>
         )}
 
@@ -223,7 +223,7 @@ export function GroupSessionForm({
           label="Titre *"
           value={form.title}
           onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-          placeholder="Ex: Atelier meditation collective"
+          placeholder="Ex: Atelier méditation collective"
         />
 
         {/* Description */}
@@ -246,7 +246,7 @@ export function GroupSessionForm({
             onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
           />
           <Select
-            label="Debut *"
+            label="Début *"
             value={form.start_time}
             onChange={(e) => {
               const ct = consultationTypes.find((t) => t.id === form.consultation_type_id);
@@ -284,7 +284,7 @@ export function GroupSessionForm({
         </Select>
 
         <Input
-          label={form.location_type === 'video' ? 'Lien visio' : 'Adresse / Details du lieu'}
+          label={form.location_type === 'video' ? 'Lien visio' : 'Adresse / Détails du lieu'}
           value={form.location_details}
           onChange={(e) => setForm((f) => ({ ...f, location_details: e.target.value }))}
           placeholder={form.location_type === 'video' ? 'https://meet.google.com/...' : 'Adresse du lieu...'}
@@ -306,7 +306,7 @@ export function GroupSessionForm({
           <Textarea
             value={form.notes_internal}
             onChange={(e) => setForm((f) => ({ ...f, notes_internal: e.target.value }))}
-            placeholder="Notes reservees au praticien..."
+            placeholder="Notes réservées au praticien..."
             className="mt-1 min-h-[80px]"
           />
         </div>
@@ -317,7 +317,7 @@ export function GroupSessionForm({
           Annuler
         </Button>
         <Button variant="primary" onClick={handleSave} loading={saving}>
-          {editSession ? 'Enregistrer' : 'Creer l\'atelier'}
+          {editSession ? 'Enregistrer' : 'Créer l\'atelier'}
         </Button>
       </ModalFooter>
     </Modal>

@@ -81,14 +81,14 @@ export function InvoiceModal({
 
       if (status === 'paid') {
         showToast.success(
-          `Facture ${invoice.numero} creee et envoyee a ${consultantName}`
+          `Facture ${invoice.numero} créée et envoyée à ${consultantName}`
         );
       } else if (status === 'issued') {
         showToast.success(
-          `Facture ${invoice.numero} creee (en attente de paiement)`
+          `Facture ${invoice.numero} créée (en attente de paiement)`
         );
       } else {
-        showToast.success('Brouillon de facture cree');
+        showToast.success('Brouillon de facture créé');
       }
 
       onSuccess();
@@ -98,7 +98,7 @@ export function InvoiceModal({
       const message =
         error instanceof Error && error.message !== 'Erreur'
           ? error.message
-          : 'Une erreur est survenue lors de la creation de la facture';
+          : 'Une erreur est survenue lors de la création de la facture';
       showToast.error(message);
     } finally {
       setLoading(false);
@@ -153,17 +153,17 @@ export function InvoiceModal({
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
           >
-            <option value="especes">Especes</option>
-            <option value="cheque">Cheque</option>
+            <option value="especes">Espèces</option>
+            <option value="cheque">Chèque</option>
             <option value="cb">Carte bancaire</option>
             <option value="virement">Virement</option>
-            <option value="non_paye">Non paye (emettre la facture)</option>
+            <option value="non_paye">Non payé (émettre la facture)</option>
           </Select>
         )}
 
         {paymentMethod === 'cheque' && !createAsDraft && (
           <Textarea
-            placeholder="Numero de cheque (optionnel)"
+            placeholder="Numéro de chèque (optionnel)"
             value={paymentNotes}
             onChange={(e) => setPaymentNotes(e.target.value)}
             className="min-h-[60px]"
@@ -191,7 +191,7 @@ export function InvoiceModal({
           {createAsDraft
             ? 'Enregistrer le brouillon'
             : paymentMethod === 'non_paye'
-              ? 'Emettre la facture'
+              ? 'Émettre la facture'
               : 'Valider et facturer'}
         </Button>
       </ModalFooter>

@@ -73,7 +73,7 @@ export default function ConsultantDemoPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="bg-red-50 text-red-600 p-6 rounded-lg">
-          Consultant TEST01 introuvable. Verifiez que le script SQL a bien ete execute.
+          Consultant TEST01 introuvable. Vérifiez que le script SQL a bien été execute.
         </div>
       </div>
     )
@@ -214,7 +214,7 @@ export default function ConsultantDemoPage() {
 
         {/* Infos debug */}
         <div className="bg-gray-100 p-4 rounded-lg text-xs">
-          <p className="font-semibold mb-2">Mode developpement</p>
+          <p className="font-semibold mb-2">Mode développement</p>
           <p>Consultant ID: {consultant.id}</p>
           <p>Practitioner ID: {consultant.practitioner_id}</p>
           <p>Plan actif: {plan ? 'Oui' : 'Non'}</p>

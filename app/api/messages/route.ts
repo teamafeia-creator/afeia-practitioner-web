@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       .order('name', { ascending: true });
 
     if (consultantsError) {
-      console.error('Erreur recuperation consultants:', consultantsError);
+      console.error('Erreur récupération consultants:', consultantsError);
       return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
     }
 

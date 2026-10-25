@@ -37,8 +37,8 @@ export function ActivationCodeModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Consultant cree avec succes"
-      description={`Le code d'activation a ete envoye a ${consultantName}.`}
+      title="Consultant créé avec succès"
+      description={`Le code d'activation a été envoyé à ${consultantName}.`}
       size="md"
       closeOnOverlayClick={false}
       closeOnEscape={false}
@@ -84,7 +84,7 @@ export function ActivationCodeModal({
         <div className="flex items-center gap-3 p-4 bg-neutral-50 rounded-lg">
           <Mail className="h-5 w-5 text-stone" />
           <div>
-            <p className="text-sm text-charcoal font-medium">Email envoye a</p>
+            <p className="text-sm text-charcoal font-medium">Email envoyé à</p>
             <p className="text-sm text-sage-dark">{consultantEmail}</p>
           </div>
         </div>
@@ -102,7 +102,7 @@ export function ActivationCodeModal({
           onClick={handleCopyCode}
           icon={copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
         >
-          {copied ? 'Code copie' : 'Copier le code'}
+          {copied ? 'Code copié' : 'Copier le code'}
         </Button>
         <Button
           variant="primary"

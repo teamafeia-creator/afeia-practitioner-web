@@ -44,7 +44,7 @@ function StatusBadge({ status }: { status: string | null }) {
   const labels: Record<string, string> = {
     active: 'Actif',
     past_due: 'En retard',
-    canceled: 'Annule',
+    canceled: 'Annulé',
   };
 
   return (
@@ -65,7 +65,7 @@ function PaymentBadge({ failed }: { failed: boolean | null }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
         <AlertTriangle className="h-3 w-3" />
-        Echec
+        Échec
       </span>
     );
   }
@@ -132,7 +132,7 @@ export default function AdminBillingPage() {
       } catch (err) {
         console.error('[admin] loadBilling error:', err);
         if (!isMounted) return;
-        showToast.error('Erreur reseau lors du chargement du billing.');
+        showToast.error('Erreur réseau lors du chargement du billing.');
         setRows([]);
         setTotal(0);
       } finally {
@@ -171,7 +171,7 @@ export default function AdminBillingPage() {
               <option value="">Tous</option>
               <option value="active">Actif</option>
               <option value="past_due">En retard</option>
-              <option value="canceled">Annule</option>
+              <option value="canceled">Annulé</option>
             </Select>
           </div>
           <div>
@@ -186,7 +186,7 @@ export default function AdminBillingPage() {
               }}
             >
               <option value="">Tous</option>
-              <option value="failed">Echoue</option>
+              <option value="failed">Échoué</option>
               <option value="ok">OK</option>
             </Select>
           </div>
@@ -202,7 +202,7 @@ export default function AdminBillingPage() {
         ) : rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-sm text-slate-500">
             <CreditCard className="mb-2 h-8 w-8 text-slate-300" />
-            Aucune donnee billing.
+            Aucune donnée billing.
           </div>
         ) : (
           <>
@@ -285,7 +285,7 @@ export default function AdminBillingPage() {
                   disabled={page <= 1}
                   onClick={() => setPage(page - 1)}
                 >
-                  Precedent
+                  Précédent
                 </Button>
                 <Button
                   variant="outline"

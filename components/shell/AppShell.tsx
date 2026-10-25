@@ -2,7 +2,6 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/cn';
@@ -25,15 +24,20 @@ import {
   Receipt,
   BarChart3,
   HelpCircle,
-  Library
+  Library,
+  Leaf,
+  Sun,
+  Watch
 } from 'lucide-react';
 import { useMessageNotifications } from '@/hooks/useMessageNotifications';
+import { useMorningReview } from '@/hooks/useMorningReview';
 
 const NAV_GROUPS = [
   {
     label: 'Suivi',
     items: [
       { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+      { href: '/morning-review', label: 'Revue du matin', icon: Sun, showReviewBadge: true },
       { href: '/consultants', label: 'Consultants', icon: Users },
       { href: '/agenda', label: 'Agenda', icon: Calendar, showWaitlistBadge: true },
     ]
@@ -66,7 +70,7 @@ const ADMIN_NAV = [
   { href: '/admin/practitioners', label: 'Praticiens', icon: Users },
   { href: '/admin/consultants', label: 'Consultants', icon: Users },
   { href: '/admin/billing', label: 'Billing', icon: ClipboardList },
-  { href: '/admin/bague-connectee', label: 'Bague connectee', icon: MessageSquare }
+  { href: '/admin/bague-connectee', label: 'Objets connectés', icon: Watch }
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -85,6 +89,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { unreadCount: unreadMessages } = useMessageNotifications();
   const [waitlistCount, setWaitlistCount] = useState(0);
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
+  const { data: morningReview } = useMorningReview();
+  // Même seuil que la file d'attention de la revue du matin
+  const reviewCount = useMemo(
+    () => (morningReview?.consultantsSummary ?? []).filter((c) => c.attentionScore >= 40).slice(0, 8).length,
+    [morningReview]
+  );
 
   const active = useMemo(() => {
     const match = [...ALL_NAV, ...ADMIN_NAV, { href: '/settings' }].find((n) => pathname.startsWith(n.href));
@@ -261,10 +271,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean; showWaitlistBadge?: boolean; children?: { href: string; label: string }[] }, onClick?: () => void) => {
+  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean; showWaitlistBadge?: boolean; showReviewBadge?: boolean; children?: { href: string; label: string }[] }, onClick?: () => void) => {
     const Icon = item.icon;
     const showBadge = item.showBadge && unreadMessages > 0;
     const showWaitlist = item.showWaitlistBadge && waitlistCount > 0;
+    const showReview = item.showReviewBadge && reviewCount > 0;
     const hasChildren = item.children && item.children.length > 0;
 
     if (hasChildren) {
@@ -286,22 +297,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 return next;
               });
             }}
+            aria-expanded={isMenuOpen}
             className={cn(
-              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative',
+              'flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150 relative',
               isParentActive
-                ? 'text-white'
+                ? 'text-sage'
                 : 'text-sidebar-text hover:bg-sidebar-hover'
             )}
           >
             {isParentActive && (
               <motion.div
                 layoutId="sidebar-active"
-                className="absolute inset-0 bg-sidebar-active rounded-lg"
+                className="absolute inset-0 bg-sage-light rounded-lg"
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               />
             )}
             <div className="relative z-10 flex w-full items-center gap-3">
-              <Icon className="h-5 w-5" />
+              <Icon className="h-5 w-5" aria-hidden="true" />
               <span className="flex-1 text-left">{item.label}</span>
               <ChevronDown
                 className={cn(
@@ -327,11 +339,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       key={child.href}
                       href={child.href}
                       onClick={onClick}
+                      aria-current={isChildActive ? 'page' : undefined}
                       className={cn(
-                        'block pl-11 pr-3 py-1.5 text-xs font-medium transition-colors duration-150 rounded-md',
+                        'flex min-h-[44px] items-center pl-11 pr-3 text-[13px] font-medium transition-colors duration-150 rounded-md',
                         isChildActive
-                          ? 'text-white bg-white/10'
-                          : 'text-sidebar-text/70 hover:text-sidebar-text hover:bg-sidebar-hover'
+                          ? 'text-sage'
+                          : 'text-stone hover:text-sidebar-text hover:bg-sidebar-hover'
                       )}
                     >
                       {child.label}
@@ -352,10 +365,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         key={item.href}
         href={item.href}
         onClick={onClick}
+        aria-current={isActive ? 'page' : undefined}
         className={cn(
-          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative',
+          'flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150 relative',
           isActive
-            ? 'text-white'
+            ? 'text-sage'
             : 'text-sidebar-text hover:bg-sidebar-hover'
         )}
       >
@@ -363,26 +377,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {isActive && (
           <motion.div
             layoutId="sidebar-active"
-            className="absolute inset-0 bg-sidebar-active rounded-lg"
+            className="absolute inset-0 bg-sage-light rounded-lg"
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           />
         )}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="relative">
-            <Icon className="h-5 w-5" />
-            {showBadge && (
-              <motion.span
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-terracotta text-[10px] font-bold text-ink px-1"
-              >
-                {unreadMessages > 9 ? '9+' : unreadMessages}
-              </motion.span>
-            )}
-          </div>
-          <span>{item.label}</span>
+        <div className="relative z-10 flex w-full items-center gap-3">
+          <Icon className={cn('h-5 w-5', item.showReviewBadge && !isActive && 'text-terracotta')} aria-hidden="true" />
+          <span className="flex-1">{item.label}</span>
+          {showBadge && (
+            <span
+              className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-terracotta px-1.5 text-[10px] font-semibold tabular-nums text-ink"
+              aria-label={`${unreadMessages} message${unreadMessages > 1 ? 's' : ''} non lu${unreadMessages > 1 ? 's' : ''}`}
+            >
+              {unreadMessages > 99 ? '99+' : unreadMessages}
+            </span>
+          )}
+          {showReview && (
+            <span
+              className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-terracotta-light px-1.5 text-[10px] font-semibold tabular-nums text-terracotta"
+              aria-label={`${reviewCount} cas en attente`}
+            >
+              {reviewCount}
+            </span>
+          )}
           {showWaitlist && (
-            <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white/15 text-[10px] font-medium text-sidebar-text px-1.5">
+            <span
+              className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white/10 px-1.5 text-[10px] font-medium tabular-nums text-sidebar-text"
+              aria-label={`${waitlistCount} en liste d'attente`}
+            >
               {waitlistCount > 99 ? '99+' : waitlistCount}
             </span>
           )}
@@ -396,23 +418,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Logo */}
       <Link
         href="/dashboard"
-        className="flex items-center gap-3 px-5 py-5 border-b border-white/10"
+        className="flex items-center gap-3 px-5 py-5 border-b border-divider"
         onClick={onNavigate}
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-          <Image src="/afeia_symbol_white.svg" alt="Afeia" width={24} height={24} />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-light" aria-hidden="true">
+          <Leaf className="h-5 w-5 text-sage" />
         </div>
         <div>
-          <div className="text-base font-semibold text-white">Afeia</div>
-          <div className="text-xs text-sidebar-text/60">Espace praticien</div>
+          <div className="font-serif text-xl leading-tight text-charcoal">Afeia</div>
+          <div className="text-xs text-stone">Espace praticien</div>
         </div>
       </Link>
 
       {/* Navigation groups */}
-      <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto" aria-label="Navigation principale">
         {NAV_GROUPS.map((group) => (
           <div key={group.label} className="space-y-1">
-            <div className="px-3 text-[11px] font-medium tracking-wider text-mist/70" style={{ fontVariant: 'small-caps' }}>
+            <div className="px-3 pb-1 text-[11px] font-medium uppercase tracking-wider text-mist">
               {group.label}
             </div>
             {group.items.map((item) => renderNavItem(item, onNavigate))}
@@ -421,7 +443,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {isAdmin && (
           <div className="space-y-1">
-            <div className="px-3 text-[11px] font-medium tracking-wider text-mist/70" style={{ fontVariant: 'small-caps' }}>
+            <div className="px-3 pb-1 text-[11px] font-medium uppercase tracking-wider text-mist">
               Admin
             </div>
             {ADMIN_NAV.map((item) => {
@@ -432,14 +454,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   onClick={onNavigate}
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150',
+                    'flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150',
                     isActive
-                      ? 'bg-terracotta text-ink'
+                      ? 'bg-terracotta-light text-terracotta'
                       : 'text-sidebar-text hover:bg-sidebar-hover'
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-5 w-5" aria-hidden="true" />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -447,49 +470,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        {/* Settings - separated */}
-        <div className="pt-2 border-t border-white/10">
+      </nav>
+
+      {/* Pied de sidebar : praticien + paramètres */}
+      <div className="border-t border-divider p-3">
+        <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">
+          <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-charcoal truncate">
+              {userName || userEmail || 'Mon compte'}
+            </div>
+            <div className="text-xs text-stone truncate">Naturopathe</div>
+          </div>
           <Link
             href="/settings"
             onClick={onNavigate}
+            aria-label="Paramètres"
+            aria-current={active === '/settings' ? 'page' : undefined}
             className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 relative',
+              'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg transition-colors',
               active === '/settings'
-                ? 'text-white'
-                : 'text-sidebar-text hover:bg-sidebar-hover'
+                ? 'bg-sage-light text-sage'
+                : 'text-stone hover:text-charcoal hover:bg-sidebar-hover'
             )}
           >
-            {active === '/settings' && (
-              <motion.div
-                layoutId="sidebar-active"
-                className="absolute inset-0 bg-sidebar-active rounded-lg"
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              />
-            )}
-            <div className="relative z-10 flex items-center gap-3">
-              <Settings className="h-5 w-5" />
-              <span>Parametres</span>
-            </div>
+            <Settings className="h-5 w-5" aria-hidden="true" />
           </Link>
-        </div>
-      </nav>
-
-      {/* User section at bottom */}
-      <div className="border-t border-white/10 p-4">
-        <div className="flex items-center gap-3">
-          <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-white truncate">
-              {userName || 'Naturopathe'}
-            </div>
-            <div className="text-xs text-sidebar-text/60 truncate">{userEmail}</div>
-          </div>
           <button
+            type="button"
             onClick={logout}
-            className="p-2 rounded-lg text-sidebar-text/60 hover:text-white hover:bg-white/10 transition-colors"
-            title="Deconnexion"
+            aria-label="Se déconnecter"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-stone transition-colors hover:text-charcoal hover:bg-sidebar-hover"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -498,18 +511,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen text-charcoal">
-      {/* Desktop Sidebar — 240px, charcoal */}
-      <aside className="hidden lg:flex lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-[240px] lg:flex-col glass-sidebar z-50">
+      {/* Sidebar bureau — 248px */}
+      <aside className="hidden lg:flex lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-[248px] lg:flex-col glass-sidebar z-50">
         {renderSidebarContent()}
       </aside>
 
       {/* Tablet/Mobile Header with hamburger */}
-      <header className="fixed top-0 right-0 left-0 lg:left-[240px] h-16 glass-header z-40 px-4 lg:px-6">
+      <header className="fixed top-0 right-0 left-0 lg:left-[248px] h-16 glass-header z-40 px-4 lg:px-6">
         <div className="h-full flex items-center justify-between">
           {/* Hamburger — always visible on tablet and mobile */}
           <button
             onClick={() => setMobileOpen(true)}
-            className="lg:hidden p-2 rounded-lg text-charcoal hover:bg-cream transition-colors"
+            className="lg:hidden flex h-11 w-11 items-center justify-center rounded-lg text-charcoal hover:bg-surface transition-colors"
             aria-label="Ouvrir le menu"
           >
             <Menu className="h-6 w-6" />
@@ -517,10 +530,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Mobile logo */}
           <Link href="/dashboard" className="lg:hidden flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage">
-              <Image src="/afeia_symbol_white.svg" alt="Afeia" width={18} height={18} />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage-light" aria-hidden="true">
+              <Leaf className="h-4 w-4 text-sage" />
             </div>
-            <span className="font-semibold text-charcoal">Afeia</span>
+            <span className="font-serif text-lg text-charcoal">Afeia</span>
           </Link>
 
           {/* Spacer for desktop */}
@@ -563,7 +576,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       className="w-full px-4 py-3 text-left text-sm font-medium text-charcoal transition-colors hover:bg-cream flex items-center gap-2"
                     >
                       <LogOut className="h-4 w-4" />
-                      Se deconnecter
+                      Se déconnecter
                     </button>
                   </motion.div>
                 )}
@@ -574,8 +587,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="pt-16 lg:pl-[240px] min-h-screen">
-        <div className="p-4 md:p-6 lg:p-8">
+      <main className="pt-16 lg:pl-[248px] min-h-screen">
+        <div className="mx-auto w-full max-w-content px-4 py-6 md:px-8 md:py-8">
           {children}
         </div>
       </main>
@@ -597,13 +610,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="absolute left-0 top-0 h-full w-[280px] bg-sidebar-bg shadow-xl flex flex-col"
+              className="absolute left-0 top-0 h-full w-[280px] max-w-[85vw] bg-sidebar-bg shadow-xl flex flex-col"
             >
               {/* Close button */}
               <div className="absolute top-4 right-4 z-10">
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="p-2 rounded-lg text-sidebar-text/60 hover:text-white hover:bg-white/10 transition-colors"
+                  aria-label="Fermer le menu"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg text-stone hover:text-charcoal hover:bg-white/10 transition-colors"
                 >
                   <X className="h-5 w-5" />
                 </button>

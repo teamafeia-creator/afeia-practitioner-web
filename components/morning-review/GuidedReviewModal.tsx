@@ -82,9 +82,9 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
 
   if (priorityConsultants.length === 0) {
     return (
-      <Modal isOpen onClose={onClose} title="Revue guidee" size="lg">
+      <Modal isOpen onClose={onClose} title="Revue guidée" size="lg">
         <div className="text-center py-8">
-          <p className="text-stone">Aucun consultant ne necessite d&apos;attention particuliere.</p>
+          <p className="text-stone">Aucun consultant ne nécessite d&apos;attention particulière.</p>
           <Button variant="primary" onClick={onClose} className="mt-4">
             Fermer
           </Button>
@@ -161,11 +161,11 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
                   <TrendIcon trend={lastWeekStats.moodTrend} />
                 </div>
                 <div className="bg-neutral-50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-stone mb-1">Energie</p>
+                  <p className="text-xs text-stone mb-1">Énergie</p>
                   <TrendIcon trend={lastWeekStats.energyTrend} />
                 </div>
                 <div className="bg-neutral-50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-stone mb-1">Adhesion</p>
+                  <p className="text-xs text-stone mb-1">Adhésion</p>
                   <div className="flex items-center justify-center gap-1">
                     <span className="text-sm font-semibold text-charcoal">
                       {Math.round(lastWeekStats.averageAdherence * 100)}%
@@ -175,7 +175,7 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
                 </div>
               </div>
 
-              {/* Bague connectée stats */}
+              {/* Objet connecté stats */}
               {bagueConnecteeStats && (
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="bg-neutral-50 rounded-lg p-3">
@@ -257,7 +257,7 @@ export function GuidedReviewModal({ consultantsSummary, onClose }: GuidedReviewM
               className="text-sm text-stone hover:text-charcoal disabled:opacity-30 flex items-center gap-1 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
-              Precedent
+              Précédent
             </button>
 
             <div className="flex gap-3">

@@ -13,12 +13,12 @@ import {
 } from 'lucide-react';
 
 const ACTION_CONFIG: Record<string, { label: string; icon: typeof Plus; color: string }> = {
-  created: { label: 'Facture creee', icon: Plus, color: 'text-sage' },
-  issued: { label: 'Facture emise', icon: FileText, color: 'text-terracotta' },
-  paid: { label: 'Paiement enregistre', icon: Check, color: 'text-sage' },
-  cancelled: { label: 'Facture annulee', icon: X, color: 'text-accent-danger' },
-  sent: { label: 'Email envoye', icon: Send, color: 'text-sage' },
-  updated: { label: 'Facture modifiee', icon: Edit3, color: 'text-stone' },
+  created: { label: 'Facture créée', icon: Plus, color: 'text-sage' },
+  issued: { label: 'Facture émise', icon: FileText, color: 'text-terracotta' },
+  paid: { label: 'Paiement enregistré', icon: Check, color: 'text-sage' },
+  cancelled: { label: 'Facture annulée', icon: X, color: 'text-accent-danger' },
+  sent: { label: 'Email envoyé', icon: Send, color: 'text-sage' },
+  updated: { label: 'Facture modifiée', icon: Edit3, color: 'text-stone' },
 };
 
 interface Props {
@@ -59,7 +59,7 @@ export function InvoiceHistoryTimeline({ history }: Props) {
                   </p>
                   {entry.metadata && entry.action === 'sent' && (
                     <p className="text-xs text-stone mt-0.5">
-                      Envoye a {(entry.metadata as Record<string, string>).email}
+                      Envoyé à {(entry.metadata as Record<string, string>).email}
                     </p>
                   )}
                 </div>

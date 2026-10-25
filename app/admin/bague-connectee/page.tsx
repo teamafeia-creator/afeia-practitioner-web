@@ -36,7 +36,7 @@ function SyncStatusBadge({ status }: { status: string | null }) {
     success: {
       className: 'bg-emerald-100 text-emerald-700',
       icon: <CheckCircle2 className="h-3 w-3" />,
-      label: 'Succes',
+      label: 'Succès',
     },
     error: {
       className: 'bg-red-100 text-red-700',
@@ -91,7 +91,7 @@ export default function AdminBagueConnecteePage() {
       });
 
       if (!response.ok) {
-        showToast.error('Erreur lors du chargement bague connect\u00e9e.');
+        showToast.error('Erreur lors du chargement des objets connect\u00e9s.');
         setRows([]);
         setTotal(0);
         return;
@@ -102,7 +102,7 @@ export default function AdminBagueConnecteePage() {
       setTotal(data.total ?? 0);
     } catch (err) {
       console.error('[admin] loadBagueConnectee error:', err);
-      showToast.error('Erreur r\u00e9seau lors du chargement bague connect\u00e9e.');
+      showToast.error('Erreur r\u00e9seau lors du chargement des objets connect\u00e9s.');
       setRows([]);
       setTotal(0);
     } finally {
@@ -142,7 +142,7 @@ export default function AdminBagueConnecteePage() {
   return (
     <div className="space-y-6">
       <AdminHeader
-        title="Bague connect\u00e9e"
+        title="Objets connect\u00e9s"
         subtitle="Consultants activ\u00e9s et synchronisation manuelle."
       />
 
@@ -155,7 +155,7 @@ export default function AdminBagueConnecteePage() {
         ) : rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-sm text-slate-500">
             <Radio className="mb-2 h-8 w-8 text-slate-300" />
-            Aucun consultant avec bague connect{'\u00e9'}e activ{'\u00e9'}e.
+            Aucun consultant avec objet connect{'\u00e9'} activ{'\u00e9'}.
           </div>
         ) : (
           <>
@@ -165,7 +165,7 @@ export default function AdminBagueConnecteePage() {
                   <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                     <th className="px-5 py-3">Consultant</th>
                     <th className="px-5 py-3">Praticien</th>
-                    <th className="px-5 py-3">Derniere sync</th>
+                    <th className="px-5 py-3">Dernière sync</th>
                     <th className="px-5 py-3">Statut</th>
                     <th className="px-5 py-3 text-right">Actions</th>
                   </tr>
@@ -235,7 +235,7 @@ export default function AdminBagueConnecteePage() {
                   disabled={page <= 1}
                   onClick={() => setPage(page - 1)}
                 >
-                  Precedent
+                  Précédent
                 </Button>
                 <Button
                   variant="outline"

@@ -100,7 +100,7 @@ export default function AgendaPage() {
         await linkReschedule(editAppointment.id, appointment.id);
         // Fire-and-forget: notify waitlist entries about the old freed slot
         triggerWaitlistNotification(editAppointment.id);
-        showToast.success('Seance reportee');
+        showToast.success('Séance reportée');
       } catch {
         // The appointment was already created, just refresh
       }
@@ -146,7 +146,7 @@ export default function AgendaPage() {
                   onClick={handleCreateAppointment}
                   className="w-full text-left px-4 py-3 text-sm text-charcoal hover:bg-sage-light/50 rounded-t-lg transition-colors"
                 >
-                  <div className="font-medium">Seance individuelle</div>
+                  <div className="font-medium">Séance individuelle</div>
                   <div className="text-xs text-stone">Rendez-vous 1:1</div>
                 </button>
                 <button
@@ -157,7 +157,7 @@ export default function AgendaPage() {
                     <Users className="h-3.5 w-3.5" />
                     Atelier
                   </div>
-                  <div className="text-xs text-stone">Seance collective</div>
+                  <div className="text-xs text-stone">Séance collective</div>
                 </button>
               </div>
             </>

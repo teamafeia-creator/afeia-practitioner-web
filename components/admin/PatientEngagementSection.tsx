@@ -37,7 +37,7 @@ function formatRelativeTime(dateString: string | null): string {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMinutes < 1) return "A l'instant";
+  if (diffMinutes < 1) return "À l'instant";
   if (diffMinutes < 60) return `il y a ${diffMinutes}min`;
   if (diffHours < 24) return `il y a ${diffHours}h`;
   if (diffDays === 1) return 'hier';
@@ -93,7 +93,7 @@ export function PatientEngagementSection({
       <div className="divide-y divide-slate-100">
         <EngagementRow
           icon={Clock}
-          label="Derniere activite"
+          label="Dernière activité"
           value={formatRelativeTime(engagement.last_activity)}
           detail={formatDateTime(engagement.last_activity)}
         />
@@ -106,26 +106,26 @@ export function PatientEngagementSection({
         <EngagementRow
           icon={Radio}
           label="Circular"
-          value={circularEnabled ? 'Connecte' : 'Non connecte'}
+          value={circularEnabled ? 'Connecté' : 'Non connecté'}
           detail={circularEnabled && lastCircularSyncAt
-            ? `Derniere sync ${formatRelativeTime(lastCircularSyncAt)}`
+            ? `Dernière sync ${formatRelativeTime(lastCircularSyncAt)}`
             : undefined}
         />
         <EngagementRow
           icon={BookOpen}
           label="Journal"
           value={engagement.journal_entries_count > 0
-            ? `${engagement.journal_entries_count} entrees`
+            ? `${engagement.journal_entries_count} entrées`
             : '—'}
           detail={engagement.journal_entries_count > 0
-            ? `${engagement.journal_frequency} entrees/sem. — dernier ${formatRelativeTime(engagement.last_journal_entry)}`
+            ? `${engagement.journal_frequency} entrées/sem. — dernier ${formatRelativeTime(engagement.last_journal_entry)}`
             : undefined}
         />
         <EngagementRow
           icon={ClipboardList}
           label="Questionnaires"
           value={engagement.questionnaires_count > 0
-            ? `${engagement.questionnaires_count} recu(s)`
+            ? `${engagement.questionnaires_count} reçu(s)`
             : '—'}
           detail={engagement.last_questionnaire
             ? `Dernier ${formatRelativeTime(engagement.last_questionnaire)}`
@@ -135,7 +135,7 @@ export function PatientEngagementSection({
           icon={MessageSquare}
           label="Messages"
           value={engagement.messages_count > 0
-            ? `${engagement.messages_count} echanges`
+            ? `${engagement.messages_count} échanges`
             : '—'}
           detail={engagement.last_message
             ? `Dernier ${formatRelativeTime(engagement.last_message)}`

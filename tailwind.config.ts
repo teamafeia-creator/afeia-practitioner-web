@@ -43,8 +43,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
-        serif: ['Source Serif 4', 'Lora', 'Georgia', 'serif']
+        sans: ['var(--font-inter)', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+        serif: ['var(--font-source-serif)', 'Source Serif 4', 'Georgia', 'serif']
       },
       colors: {
         // Palette alignée sur le thème de l'app mobile (lib/core/theme/app_theme.dart)
@@ -230,8 +230,11 @@ export default {
       transitionTimingFunction: {
         'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)'
       },
+      maxWidth: {
+        content: '1180px'
+      },
       spacing: {
-        'sidebar': '240px',
+        'sidebar': '248px',
         'header': '64px'
       }
     }

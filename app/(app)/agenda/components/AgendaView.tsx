@@ -31,8 +31,8 @@ interface AgendaViewProps {
 }
 
 const messages = {
-  allDay: 'Journee',
-  previous: 'Precedent',
+  allDay: 'Journée',
+  previous: 'Précédent',
   next: 'Suivant',
   today: "Aujourd'hui",
   month: 'Mois',
@@ -41,14 +41,14 @@ const messages = {
   agenda: 'Liste',
   date: 'Date',
   time: 'Heure',
-  event: 'Seance',
-  noEventsInRange: 'Aucune seance sur cette periode',
+  event: 'Séance',
+  noEventsInRange: 'Aucune séance sur cette période',
   showMore: (total: number) => `+ ${total} de plus`,
 };
 
 function getEventName(appointment: Appointment): string {
   const patient = appointment.patient;
-  if (!patient) return appointment.booking_name || 'Seance';
+  if (!patient) return appointment.booking_name || 'Séance';
   return patient.name || [patient.first_name, patient.last_name].filter(Boolean).join(' ') || 'Consultant';
 }
 
