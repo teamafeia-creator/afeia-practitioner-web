@@ -159,9 +159,9 @@ export default function QuestionnairesPage() {
       case 'pending':
         return <Badge variant="pending">En attente</Badge>;
       case 'linked_to_consultant':
-        return <Badge variant="completed">Associe</Badge>;
+        return <Badge variant="completed">Associé</Badge>;
       case 'archived':
-        return <Badge variant="archived">Archive</Badge>;
+        return <Badge variant="archived">Archivé</Badge>;
       default:
         return null;
     }
@@ -206,10 +206,10 @@ export default function QuestionnairesPage() {
 
       {/* Info banner */}
       <div className="glass-card bg-sage-light/30 p-4 text-sm text-charcoal">
-        <p className="font-medium text-sage">Comment ca marche ?</p>
+        <p className="font-medium text-sage">Comment ça marche ?</p>
         <p className="mt-1 text-stone">
           Partagez le lien public avec vos consultants. Ils peuvent remplir le questionnaire avant leur
-          premiere consultation. Creez ensuite leur dossier consultant en un clic.
+          première consultation. Créez ensuite leur dossier consultant en un clic.
         </p>
       </div>
 
@@ -242,7 +242,7 @@ export default function QuestionnairesPage() {
                     <span className="text-charcoal">{q.email}</span>
                     {q.phone && (
                       <span className="ml-3">
-                        Tel: <span className="text-charcoal">{q.phone}</span>
+                        Tél: <span className="text-charcoal">{q.phone}</span>
                       </span>
                     )}
                   </p>

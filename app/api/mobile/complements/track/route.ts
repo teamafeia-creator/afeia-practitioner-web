@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error tracking complement:', error);
+    console.error('Error tracking complément:', error);
     return NextResponse.json(
       { message: 'Erreur lors du suivi du complément' },
       { status: 500 }

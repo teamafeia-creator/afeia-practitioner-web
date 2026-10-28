@@ -5,8 +5,8 @@ import { useMemo } from 'react';
 
 const DAY_NAMES = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const MONTH_NAMES = [
-  'Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre',
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
 ];
 
 interface MiniCalendarProps {
@@ -143,7 +143,7 @@ export function MiniCalendar({
 
       {loading && (
         <div className="text-center text-xs text-stone">
-          Chargement des disponibilites...
+          Chargement des disponibilités...
         </div>
       )}
     </div>

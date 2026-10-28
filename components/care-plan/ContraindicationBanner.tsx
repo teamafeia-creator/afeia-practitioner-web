@@ -70,7 +70,7 @@ export function ContraindicationBanner({
               <span>{infoCount} info{infoCount > 1 ? 's' : ''}</span>
             )}
             <span className="text-xs ml-2 opacity-75">
-              — {expanded ? 'Masquer' : 'Voir les details'}
+              — {expanded ? 'Masquer' : 'Voir les détails'}
             </span>
           </span>
         </div>
@@ -91,7 +91,7 @@ export function ContraindicationBanner({
             />
           ))}
           <p className="text-xs text-gray-500 italic mt-2">
-            Information non exhaustive a titre indicatif. En cas de doute, orientez votre consultant vers son medecin traitant.
+            Information non exhaustive à titre indicatif. En cas de doute, orientez votre consultant vers son médecin traitant.
           </p>
         </div>
       )}

@@ -89,13 +89,13 @@ function VideoCallUI({
           </div>
           <h2 className="text-xl font-semibold text-white">Erreur de connexion</h2>
           <p className="text-white/60 text-sm">
-            Impossible de se connecter a la visioconference. Verifiez votre connexion internet et reessayez.
+            Impossible de se connecter à la visioconférence. Vérifiez votre connexion internet et réessayez.
           </p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-2 bg-[#6DD4B8] text-ink rounded-lg hover:bg-sage-deep transition-colors"
           >
-            Reessayer
+            Réessayer
           </button>
         </div>
       </div>

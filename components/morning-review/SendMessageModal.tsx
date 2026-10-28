@@ -23,11 +23,11 @@ const MESSAGE_TEMPLATES = [
 function getTemplateContent(id: string, name: string): string {
   switch (id) {
     case 'check_in':
-      return `Bonjour ${name}, j'ai remarque que vous n'avez pas partage votre journal depuis quelques jours. Tout va bien de votre cote ? Je suis la si vous avez besoin.`;
+      return `Bonjour ${name}, j'ai remarque que vous n'avez pas partagé votre journal depuis quelques jours. Tout va bien de votre côté ? Je suis là si vous avez besoin.`;
     case 'encouragement':
-      return `Bonjour ${name} ! Je voulais vous feliciter pour votre belle progression cette semaine. Continuez comme ca, vous etes sur le bon chemin !`;
+      return `Bonjour ${name} ! Je voulais vous féliciter pour votre belle progression cette semaine. Continuez comme ça, vous êtes sur le bon chemin !`;
     case 'adjustment':
-      return `Bonjour ${name}, je remarque que l'adhesion semble un peu difficile ces derniers temps. Que diriez-vous qu'on ajuste ensemble votre programme pour le rendre plus adapte ?`;
+      return `Bonjour ${name}, je remarque que l'adhésion semble un peu difficile ces derniers temps. Que diriez-vous qu'on ajuste ensemble votre programme pour le rendre plus adapte ?`;
     default:
       return '';
   }
@@ -42,7 +42,7 @@ export function SendMessageModal({ consultantName, consultantId, templateMessage
 
     try {
       await sendMutation.mutateAsync({ consultantId, message: message.trim() });
-      showToast.success('Message envoye');
+      showToast.success('Message envoyé');
       onSent();
     } catch {
       showToast.error('Erreur lors de l\'envoi du message');
@@ -53,7 +53,7 @@ export function SendMessageModal({ consultantName, consultantId, templateMessage
     <Modal
       isOpen
       onClose={onClose}
-      title={`Message a ${consultantName}`}
+      title={`Message à ${consultantName}`}
       size="lg"
     >
       <div>
@@ -78,7 +78,7 @@ export function SendMessageModal({ consultantName, consultantId, templateMessage
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           className="w-full h-32 p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-sage/30 focus:border-sage text-sm resize-none"
-          placeholder="Ecrivez votre message..."
+          placeholder="Écrivez votre message..."
           autoFocus
         />
 

@@ -43,8 +43,8 @@ interface AppointmentFormProps {
 const LOCATION_OPTIONS: { value: LocationType; label: string }[] = [
   { value: 'in_person', label: 'Au cabinet' },
   { value: 'video', label: 'Visio' },
-  { value: 'phone', label: 'Telephone' },
-  { value: 'home_visit', label: 'A domicile' },
+  { value: 'phone', label: 'Téléphone' },
+  { value: 'home_visit', label: 'À domicile' },
 ];
 
 function generateTimeOptions(): string[] {
@@ -200,11 +200,11 @@ export function AppointmentForm({
 
   async function handleSave() {
     if (!form.consultant_id) {
-      showToast.error('Veuillez selectionner un consultant');
+      showToast.error('Veuillez sélectionner un consultant');
       return;
     }
     if (!form.consultation_type_id) {
-      showToast.error('Veuillez selectionner un type de seance');
+      showToast.error('Veuillez sélectionner un type de séance');
       return;
     }
 
@@ -228,7 +228,7 @@ export function AppointmentForm({
           video_link: videoLinkValue,
           notes_internal: form.notes_internal || null,
         });
-        showToast.success('Seance modifiee');
+        showToast.success('Séance modifiée');
       } else {
         result = await createNativeAppointment({
           consultant_id: form.consultant_id,
@@ -240,7 +240,7 @@ export function AppointmentForm({
           notes_internal: form.notes_internal || null,
         });
         const consultantName = selectedConsultant ? getConsultantDisplayName(selectedConsultant) : 'le consultant';
-        showToast.success(`Seance creee avec ${consultantName}`);
+        showToast.success(`Séance créée avec ${consultantName}`);
       }
 
       // Provision Daily room for video appointments
@@ -260,10 +260,10 @@ export function AppointmentForm({
             const provisionData = await provisionRes.json();
             result = { ...result, video_link: provisionData.video_link, video_room_name: provisionData.video_room_name };
           } else {
-            showToast.error('La salle de visio n\'a pas pu etre creee automatiquement. Vous pouvez ajouter un lien manuellement.');
+            showToast.error('La salle de visio n\'a pas pu être créée automatiquement. Vous pouvez ajouter un lien manuellement.');
           }
         } catch {
-          showToast.error('La salle de visio n\'a pas pu etre creee automatiquement.');
+          showToast.error('La salle de visio n\'a pas pu être créée automatiquement.');
         }
       }
 
@@ -298,7 +298,7 @@ export function AppointmentForm({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editAppointment ? 'Modifier la seance' : 'Nouvelle seance'}
+      title={editAppointment ? 'Modifier la séance' : 'Nouvelle séance'}
       size="lg"
     >
       <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
@@ -343,7 +343,7 @@ export function AppointmentForm({
                 {showSearch && (
                   <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-surface rounded-lg shadow-lg ring-1 ring-black/5">
                     {filteredConsultants.length === 0 ? (
-                      <div className="p-3 text-sm text-stone">Aucun consultant trouve</div>
+                      <div className="p-3 text-sm text-stone">Aucun consultant trouvé</div>
                     ) : (
                       filteredConsultants.slice(0, 20).map((c) => (
                         <button
@@ -369,7 +369,7 @@ export function AppointmentForm({
 
         {/* Consultation type */}
         <Select
-          label="Type de seance *"
+          label="Type de séance *"
           value={form.consultation_type_id}
           onChange={(e) => handleTypeChange(e.target.value)}
         >
@@ -391,7 +391,7 @@ export function AppointmentForm({
             onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
           />
           <Select
-            label="Debut *"
+            label="Début *"
             value={form.start_time}
             onChange={(e) => {
               const ct = consultationTypes.find((t) => t.id === form.consultation_type_id);
@@ -419,7 +419,7 @@ export function AppointmentForm({
 
         {conflictWarning && (
           <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
-            Attention : ce creneau chevauche un rendez-vous existant.
+            Attention : ce créneau chevauche un rendez-vous existant.
           </div>
         )}
 
@@ -440,8 +440,8 @@ export function AppointmentForm({
               <Video className="h-4 w-4 text-sage flex-shrink-0" />
               <span className="text-sm text-charcoal">
                 {editAppointment?.video_link
-                  ? 'Salle de visioconference creee automatiquement.'
-                  : 'La salle de visioconference sera creee automatiquement.'}
+                  ? 'Salle de visioconférence créée automatiquement.'
+                  : 'La salle de visioconférence sera créée automatiquement.'}
               </span>
             </div>
           ) : (
@@ -461,7 +461,7 @@ export function AppointmentForm({
           <Textarea
             value={form.notes_internal}
             onChange={(e) => setForm((f) => ({ ...f, notes_internal: e.target.value }))}
-            placeholder="Notes reservees au praticien..."
+            placeholder="Notes réservées au praticien..."
             className="mt-1 min-h-[80px]"
           />
         </div>
@@ -472,7 +472,7 @@ export function AppointmentForm({
           Annuler
         </Button>
         <Button variant="primary" onClick={handleSave} loading={saving}>
-          {editAppointment ? 'Enregistrer' : 'Creer la seance'}
+          {editAppointment ? 'Enregistrer' : 'Créer la séance'}
         </Button>
       </ModalFooter>
     </Modal>

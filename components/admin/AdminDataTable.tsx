@@ -23,7 +23,7 @@ export function AdminDataTable<T>({
   columns,
   rows,
   isLoading = false,
-  emptyMessage = 'Aucune donnee disponible',
+  emptyMessage = 'Aucune donnée disponible',
   footer,
   className
 }: AdminDataTableProps<T>) {

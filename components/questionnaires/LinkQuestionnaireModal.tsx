@@ -226,7 +226,7 @@ export function LinkQuestionnaireModal({
         {/* Selected consultant summary */}
         {selectedConsultant && (
           <div className="text-sm text-charcoal bg-sage-light rounded-sm p-3 border border-sage/20">
-            Consultant selectionne : <strong>{getDisplayName(selectedConsultant)}</strong>
+            Consultant sélectionné : <strong>{getDisplayName(selectedConsultant)}</strong>
           </div>
         )}
       </div>

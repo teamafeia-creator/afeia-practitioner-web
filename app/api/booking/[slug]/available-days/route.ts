@@ -12,7 +12,7 @@ export async function GET(
 
     if (!month || !consultationTypeId) {
       return NextResponse.json(
-        { error: 'Les parametres month et consultation_type_id sont requis.' },
+        { error: 'Les paramètres month et consultation_type_id sont requis.' },
         { status: 400 }
       );
     }
@@ -34,14 +34,14 @@ export async function GET(
     const practitioner = await getPractitionerPublicInfo(params.slug);
     if (!practitioner) {
       return NextResponse.json(
-        { error: 'Praticien non trouve.' },
+        { error: 'Praticien non trouvé.' },
         { status: 404 }
       );
     }
 
     if (!practitioner.booking_enabled) {
       return NextResponse.json(
-        { error: 'La reservation en ligne n\'est pas activee.' },
+        { error: 'La réservation en ligne n\'est pas activée.' },
         { status: 403 }
       );
     }

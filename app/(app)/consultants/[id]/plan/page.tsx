@@ -118,7 +118,7 @@ export default function CreatePlanPage() {
       recommendations: recommendations
         .filter((r) => r.title.trim() !== '')
         .map((r) => ({
-          category: r.category || 'General',
+          category: r.category || 'Général',
           title: r.title,
           details: r.details || undefined,
         })),
@@ -147,14 +147,14 @@ export default function CreatePlanPage() {
       const result = await createPlan(consultantId, content);
 
       if (!result) {
-        setError('Erreur lors de la creation du plan.');
+        setError('Erreur lors de la création du plan.');
         setSaving(false);
         return;
       }
 
       setToast({
-        title: 'Plan enregistre',
-        description: 'Le plan a ete cree en brouillon.',
+        title: 'Plan enregistré',
+        description: 'Le plan a été créé en brouillon.',
         variant: 'success',
       });
 
@@ -181,7 +181,7 @@ export default function CreatePlanPage() {
       const result = await createPlan(consultantId, content);
 
       if (!result) {
-        setError('Erreur lors de la creation du plan.');
+        setError('Erreur lors de la création du plan.');
         setSaving(false);
         return;
       }
@@ -191,14 +191,14 @@ export default function CreatePlanPage() {
 
       if (!shared) {
         setToast({
-          title: 'Plan cree',
-          description: 'Le plan a ete cree mais non partage. Reessayez de le partager.',
+          title: 'Plan créé',
+          description: 'Le plan a été créé mais non partagé. Réessayez de le partager.',
           variant: 'info',
         });
       } else {
         setToast({
-          title: 'Plan envoye',
-          description: `Le plan a ete partage avec ${consultant?.name || 'le consultant'}.`,
+          title: 'Plan envoyé',
+          description: `Le plan a été partagé avec ${consultant?.name || 'le consultant'}.`,
           variant: 'success',
         });
       }
@@ -267,7 +267,7 @@ export default function CreatePlanPage() {
       {/* Title & Description */}
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold">Informations generales</h2>
+          <h2 className="text-sm font-semibold">Informations générales</h2>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -282,7 +282,7 @@ export default function CreatePlanPage() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description generale du plan..."
+              placeholder="Description générale du plan..."
               className="w-full rounded-xl border border-black/10 bg-surface p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
               rows={3}
             />
@@ -338,11 +338,11 @@ export default function CreatePlanPage() {
                   onChange={(e) => updateRecommendation(idx, 'category', e.target.value)}
                   className="rounded-xl border border-black/10 bg-surface px-3 py-2 text-sm focus:border-sage focus:outline-none"
                 >
-                  <option value="">Categorie...</option>
+                  <option value="">Catégorie...</option>
                   <option value="Alimentation">Alimentation</option>
-                  <option value="Hygiene de vie">Hygiene de vie</option>
+                  <option value="Hygiene de vie">Hygiène de vie</option>
                   <option value="Sommeil">Sommeil</option>
-                  <option value="Activite physique">Activite physique</option>
+                  <option value="Activite physique">Activité physique</option>
                   <option value="Gestion du stress">Gestion du stress</option>
                   <option value="Autre">Autre</option>
                 </select>
@@ -361,7 +361,7 @@ export default function CreatePlanPage() {
               <textarea
                 value={rec.details}
                 onChange={(e) => updateRecommendation(idx, 'details', e.target.value)}
-                placeholder="Details et explications..."
+                placeholder="Détails et explications..."
                 className="w-full rounded-xl border border-black/10 bg-surface p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
                 rows={2}
               />
@@ -374,7 +374,7 @@ export default function CreatePlanPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Complements alimentaires</h2>
+            <h2 className="text-sm font-semibold">Compléments alimentaires</h2>
             <Button variant="secondary" onClick={addSupplement}>
               + Ajouter
             </Button>
@@ -387,7 +387,7 @@ export default function CreatePlanPage() {
                 <Input
                   value={supp.name}
                   onChange={(e) => updateSupplement(idx, 'name', e.target.value)}
-                  placeholder="Nom du complement"
+                  placeholder="Nom du complément"
                   className="flex-1"
                 />
                 <Input
@@ -421,7 +421,7 @@ export default function CreatePlanPage() {
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Notes supplementaires pour le consultant..."
+            placeholder="Notes supplémentaires pour le consultant..."
             className="w-full rounded-xl border border-black/10 bg-surface p-3 text-sm focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/30"
             rows={4}
           />

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = notifySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Donnees invalides.' }, { status: 400 });
+      return NextResponse.json({ error: 'Données invalides.' }, { status: 400 });
     }
 
     const supabase = createSupabaseAdminClient();
@@ -50,12 +50,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (aptError || !appointment) {
-      return NextResponse.json({ error: 'Rendez-vous non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Rendez-vous non trouvé.' }, { status: 404 });
     }
 
     // Verify the caller is the practitioner who owns this appointment
     if (appointment.practitioner_id !== authData.user.id) {
-      return NextResponse.json({ error: 'Non autorise.' }, { status: 403 });
+      return NextResponse.json({ error: 'Non autorisé.' }, { status: 403 });
     }
 
     if (!appointment.consultation_type_id || !appointment.consultation_type) {

@@ -44,7 +44,7 @@ const LOCATION_ICONS: Record<string, React.ReactNode> = {
 const LOCATION_LABELS: Record<string, string> = {
   in_person: 'Au cabinet',
   video: 'Visio',
-  home_visit: 'A domicile',
+  home_visit: 'À domicile',
 };
 
 export function BookingStepGroupSession({
@@ -71,7 +71,7 @@ export function BookingStepGroupSession({
         const data = await res.json();
         setSessions(data.sessions || []);
       } catch {
-        setError('Impossible de charger les seances disponibles.');
+        setError('Impossible de charger les séances disponibles.');
       } finally {
         setLoading(false);
       }
@@ -89,12 +89,12 @@ export function BookingStepGroupSession({
           <ArrowLeft className="h-5 w-5 text-charcoal" />
         </button>
         <h2 className="text-lg font-semibold text-charcoal">
-          Choisissez une seance
+          Choisissez une séance
         </h2>
       </div>
 
       {loading && (
-        <div className="text-center py-12 text-stone text-sm">Chargement des seances...</div>
+        <div className="text-center py-12 text-stone text-sm">Chargement des séances...</div>
       )}
 
       {error && (
@@ -106,8 +106,8 @@ export function BookingStepGroupSession({
       {!loading && !error && sessions.length === 0 && (
         <div className="text-center py-12 space-y-2">
           <Users className="h-10 w-10 mx-auto text-stone/40" />
-          <p className="text-stone text-sm">Aucune seance disponible pour le moment.</p>
-          <p className="text-stone/60 text-xs">Revenez bientot ou contactez le praticien.</p>
+          <p className="text-stone text-sm">Aucune séance disponible pour le moment.</p>
+          <p className="text-stone/60 text-xs">Revenez bientôt ou contactez le praticien.</p>
         </div>
       )}
 

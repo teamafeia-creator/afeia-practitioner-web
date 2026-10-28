@@ -12,7 +12,7 @@ export async function GET(
 
     if (!date || !consultationTypeId) {
       return NextResponse.json(
-        { error: 'Les parametres date et consultation_type_id sont requis.' },
+        { error: 'Les paramètres date et consultation_type_id sont requis.' },
         { status: 400 }
       );
     }
@@ -27,7 +27,7 @@ export async function GET(
     const practitioner = await getPractitionerBySlug(params.slug);
     if (!practitioner) {
       return NextResponse.json(
-        { error: 'Praticien non trouve.' },
+        { error: 'Praticien non trouvé.' },
         { status: 404 }
       );
     }
@@ -35,7 +35,7 @@ export async function GET(
     const ct = practitioner.consultation_types.find(t => t.id === consultationTypeId);
     if (!ct) {
       return NextResponse.json(
-        { error: 'Type de consultation non trouve.' },
+        { error: 'Type de consultation non trouvé.' },
         { status: 404 }
       );
     }

@@ -24,7 +24,7 @@ export async function GET(
       .single();
 
     if (error || !practitioner) {
-      return NextResponse.json({ error: 'Praticien non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Praticien non trouvé.' }, { status: 404 });
     }
 
     // Fetch enriched data in parallel
@@ -146,7 +146,7 @@ export async function PATCH(
 
     if (error) {
       console.error('Erreur update practitioner:', error);
-      return NextResponse.json({ error: 'Erreur lors de la mise a jour.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur lors de la mise à jour.' }, { status: 500 });
     }
 
     // Determine specific action for audit log
@@ -194,7 +194,7 @@ export async function DELETE(
       .single();
 
     if (practError || !practitioner) {
-      return NextResponse.json({ error: 'Praticien non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Praticien non trouvé.' }, { status: 404 });
     }
 
     const { error: authDeleteError } = await supabase.auth.admin.deleteUser(practitionerId);
@@ -210,16 +210,16 @@ export async function DELETE(
       .eq('id', practitionerId);
 
     if (remainingError) {
-      console.error('Erreur verification suppression praticien:', remainingError);
+      console.error('Erreur vérification suppression praticien:', remainingError);
       return NextResponse.json(
-        { error: 'Erreur lors de la verification de suppression.' },
+        { error: 'Erreur lors de la vérification de suppression.' },
         { status: 500 }
       );
     }
 
     if ((remainingCount ?? 0) > 0) {
       return NextResponse.json(
-        { error: 'Le praticien est toujours present apres suppression.' },
+        { error: 'Le praticien est toujours présent après suppression.' },
         { status: 500 }
       );
     }
@@ -236,7 +236,7 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Praticien supprime avec succes.',
+      message: 'Praticien supprimé avec succès.',
       practitionerId,
     });
   } catch (err) {

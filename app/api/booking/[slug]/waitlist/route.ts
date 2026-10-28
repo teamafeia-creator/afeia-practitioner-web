@@ -6,7 +6,7 @@ import { createSupabaseAuthClient } from '@/lib/server/supabaseAdmin';
 
 const waitlistInsertSchema = z.object({
   email: z.string().email('Format email invalide.'),
-  first_name: z.string().min(2, 'Le prenom doit contenir au moins 2 caracteres.'),
+  first_name: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères.'),
   phone: z.string().optional(),
   consultation_type_id: z.string().uuid().optional(),
   preferred_time_of_day: z.enum(['morning', 'afternoon', 'evening', 'any']),
@@ -25,7 +25,7 @@ export async function POST(
 
     const parsed = waitlistInsertSchema.safeParse(body);
     if (!parsed.success) {
-      const firstError = parsed.error.errors[0]?.message || 'Donnees invalides.';
+      const firstError = parsed.error.errors[0]?.message || 'Données invalides.';
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
@@ -35,7 +35,7 @@ export async function POST(
     const practitioner = await getPractitionerBySlug(params.slug);
     if (!practitioner) {
       return NextResponse.json(
-        { error: 'Praticien non trouve.' },
+        { error: 'Praticien non trouvé.' },
         { status: 404 }
       );
     }
@@ -44,7 +44,7 @@ export async function POST(
     const isDuplicate = await hasActiveWaitlistEntry(practitioner.id, data.email);
     if (isDuplicate) {
       return NextResponse.json(
-        { error: 'DUPLICATE', message: 'Vous etes deja inscrit(e) sur la liste d\'attente.' },
+        { error: 'DUPLICATE', message: 'Vous êtes déjà inscrit(e) sur la liste d\'attente.' },
         { status: 409 }
       );
     }
@@ -54,7 +54,7 @@ export async function POST(
       const typeExists = practitioner.consultation_types.some(t => t.id === data.consultation_type_id);
       if (!typeExists) {
         return NextResponse.json(
-          { error: 'Type de consultation non trouve.' },
+          { error: 'Type de consultation non trouvé.' },
           { status: 400 }
         );
       }
@@ -104,7 +104,7 @@ export async function GET(
     // Verify practitioner owns this slug
     const practitioner = await getPractitionerBySlug(params.slug);
     if (!practitioner || practitioner.id !== authData.user.id) {
-      return NextResponse.json({ error: 'Non autorise.' }, { status: 403 });
+      return NextResponse.json({ error: 'Non autorisé.' }, { status: 403 });
     }
 
     const entries = await getActiveWaitlistEntries(practitioner.id);

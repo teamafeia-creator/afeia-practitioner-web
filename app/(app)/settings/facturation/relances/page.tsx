@@ -84,7 +84,7 @@ export default function ReminderSettingsPage() {
         throw new Error(err.message);
       }
 
-      showToast.success('Parametres de relance enregistres');
+      showToast.success('Paramètres de relance enregistrés');
     } catch (error) {
       showToast.error(
         error instanceof Error ? error.message : 'Erreur lors de la sauvegarde'
@@ -110,7 +110,7 @@ export default function ReminderSettingsPage() {
       <Toaster />
       <PageHeader
         title="Relances automatiques"
-        subtitle="Configurez les rappels envoyes automatiquement pour les factures impayees"
+        subtitle="Configurez les rappels envoyés automatiquement pour les factures impayées"
         actions={
           <Link href="/settings/facturation">
             <Button
@@ -118,7 +118,7 @@ export default function ReminderSettingsPage() {
               size="sm"
               icon={<ArrowLeft className="h-4 w-4" />}
             >
-              Retour parametres
+              Retour paramètres
             </Button>
           </Link>
         }
@@ -147,7 +147,7 @@ export default function ReminderSettingsPage() {
                   Activer les relances automatiques
                 </span>
                 <p className="text-xs text-stone mt-0.5">
-                  Un email de rappel sera envoye automatiquement aux consultants pour les factures impayees.
+                  Un email de rappel sera envoyé automatiquement aux consultants pour les factures impayées.
                 </p>
               </div>
             </label>
@@ -158,7 +158,7 @@ export default function ReminderSettingsPage() {
           <>
             <Card>
               <CardHeader>
-                <CardTitle>Delais de relance</CardTitle>
+                <CardTitle>Délais de relance</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -169,7 +169,7 @@ export default function ReminderSettingsPage() {
                     className="rounded border-sage/30 text-sage focus:ring-sage/30"
                   />
                   <span className="text-sm text-charcoal">
-                    Relance a J+7 (7 jours apres emission)
+                    Relance à J+7 (7 jours après émission)
                   </span>
                 </label>
 
@@ -181,7 +181,7 @@ export default function ReminderSettingsPage() {
                     className="rounded border-sage/30 text-sage focus:ring-sage/30"
                   />
                   <span className="text-sm text-charcoal">
-                    Relance a J+15 (15 jours apres emission)
+                    Relance à J+15 (15 jours après émission)
                   </span>
                 </label>
 
@@ -193,7 +193,7 @@ export default function ReminderSettingsPage() {
                     className="rounded border-sage/30 text-sage focus:ring-sage/30"
                   />
                   <span className="text-sm text-charcoal">
-                    Relance a J+30 (30 jours apres emission)
+                    Relance à J+30 (30 jours après émission)
                   </span>
                 </label>
               </CardContent>
@@ -201,11 +201,11 @@ export default function ReminderSettingsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Templates d&apos;email personnalises</CardTitle>
+                <CardTitle>Templates d&apos;email personnalisés</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-xs text-stone">
-                  Personnalisez le contenu des emails de relance. Laissez vide pour utiliser le template par defaut.
+                  Personnalisez le contenu des emails de relance. Laissez vide pour utiliser le template par défaut.
                   Variables disponibles : {'{nom_consultant}'}, {'{prenom_consultant}'}, {'{numero_facture}'}, {'{montant}'}, {'{date_emission}'}.
                 </p>
 

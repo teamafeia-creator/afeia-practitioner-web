@@ -31,7 +31,7 @@ export async function GET(
       consultant: data
     });
   } catch (error) {
-    console.error('[admin] consultant detail error:', error);
+    console.error('[admin] consultant détail error:', error);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }

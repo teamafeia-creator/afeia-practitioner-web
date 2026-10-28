@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const allowed = await isAdminEmail(normalizedEmail);
 
     if (!allowed) {
-      return NextResponse.json({ error: 'Acces refuse.' }, { status: 403 });
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     }
 
     const requiredPassword = process.env.ADMIN_PASSWORD;

@@ -65,13 +65,13 @@ export default function NewPlanPage({ params }: { params: Promise<{ id: string }
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Erreur lors de la creation du plan');
+        throw new Error(data.error || 'Erreur lors de la création du plan');
       }
 
       router.push(`/consultants/${consultantId}`);
     } catch (err) {
       console.error('Erreur:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors de la creation du plan');
+      setError(err instanceof Error ? err.message : 'Erreur lors de la création du plan');
     } finally {
       setSaving(false);
     }
@@ -103,7 +103,7 @@ export default function NewPlanPage({ params }: { params: Promise<{ id: string }
 
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold">Informations generales</h2>
+          <h2 className="text-sm font-semibold">Informations générales</h2>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -113,7 +113,7 @@ export default function NewPlanPage({ params }: { params: Promise<{ id: string }
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Plan d'hygiene vitale personnalise"
+              placeholder="Ex: Plan d'hygiène vitale personnalisé"
             />
           </div>
 
@@ -124,7 +124,7 @@ export default function NewPlanPage({ params }: { params: Promise<{ id: string }
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description generale du plan et objectifs..."
+              placeholder="Description générale du plan et objectifs..."
               rows={3}
             />
           </div>
@@ -147,7 +147,7 @@ export default function NewPlanPage({ params }: { params: Promise<{ id: string }
           <Card className="border-dashed">
             <CardContent className="py-8 text-center">
               <p className="text-stone">
-                Aucune section ajoutee. Cliquez sur &quot;Ajouter une section&quot; pour commencer.
+                Aucune section ajoutée. Cliquez sur &quot;Ajouter une section&quot; pour commencer.
               </p>
             </CardContent>
           </Card>
@@ -200,7 +200,7 @@ export default function NewPlanPage({ params }: { params: Promise<{ id: string }
           loading={saving}
           disabled={!title.trim()}
         >
-          Creer le plan
+          Créer le plan
         </Button>
       </div>
     </div>

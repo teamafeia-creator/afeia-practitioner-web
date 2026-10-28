@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Erreur liste templates:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la recuperation des templates' },
+      { message: 'Erreur lors de la récupération des templates' },
       { status: 500 }
     );
   }
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -98,12 +98,12 @@ export async function POST(request: NextRequest) {
       console.error('Validation template:', messages);
       return NextResponse.json({ message: messages }, { status: 400 });
     }
-    console.error('Erreur creation template:', {
+    console.error('Erreur création template:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
     return NextResponse.json(
-      { message: 'Erreur lors de la creation du template' },
+      { message: 'Erreur lors de la création du template' },
       { status: 500 }
     );
   }

@@ -41,7 +41,6 @@ type ProfileFormState = {
   photo_url: string;
   specialties: string[];
   siret: string;
-  adeli_number: string;
   formations: string;
   years_experience: string;
   cabinet_address: string;
@@ -59,7 +58,6 @@ function buildFormState(data: Record<string, unknown> | null): ProfileFormState 
     photo_url: (data?.photo_url as string) ?? '',
     specialties: (data?.specialties as string[]) ?? [],
     siret: (data?.siret as string) ?? '',
-    adeli_number: (data?.adeli_number as string) ?? '',
     formations: (data?.formations as string) ?? '',
     years_experience: data?.years_experience != null ? String(data.years_experience) : '',
     cabinet_address: (data?.cabinet_address as string) ?? '',
@@ -229,7 +227,6 @@ export default function SettingsPage() {
         photo_url: formState.photo_url || null,
         specialties: formState.specialties,
         siret: siretValue || null,
-        adeli_number: formState.adeli_number.trim() || null,
         formations: formState.formations.trim() || null,
         years_experience: yearsExp ? Number(yearsExp) : null,
         cabinet_address: formState.cabinet_address.trim() || null,
@@ -247,7 +244,6 @@ export default function SettingsPage() {
         first_name: formState.first_name.trim(),
         last_name: formState.last_name.trim(),
         siret: siretValue,
-        adeli_number: formState.adeli_number.trim(),
         formations: formState.formations.trim(),
         years_experience: yearsExp,
         cabinet_address: formState.cabinet_address.trim(),
@@ -454,12 +450,6 @@ export default function SettingsPage() {
                     maxLength={14}
                   />
                   <Input
-                    label="Numéro ADELI / Certification"
-                    value={formState.adeli_number}
-                    onChange={(e) => updateField('adeli_number', e.target.value)}
-                    placeholder="Ex : 759312345"
-                  />
-                  <Input
                     label="Années d'expérience"
                     type="number"
                     min={0}
@@ -471,7 +461,6 @@ export default function SettingsPage() {
               ) : (
                 <>
                   <ReadOnlyField label="Numéro SIRET" value={savedState?.siret || ''} />
-                  <ReadOnlyField label="Numéro ADELI / Certification" value={savedState?.adeli_number || ''} />
                   <ReadOnlyField label="Années d'expérience" value={savedState?.years_experience ? `${savedState.years_experience} ans` : ''} />
                 </>
               )}
@@ -584,14 +573,14 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Agenda</h2>
-              <p className="text-xs text-stone">Configurez vos types de seances et disponibilites.</p>
+              <p className="text-xs text-stone">Configurez vos types de séances et disponibilités.</p>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/consultation-types')}>
-                Types de seance
+                Types de séance
               </Button>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/availability')}>
-                Disponibilites
+                Disponibilités
               </Button>
               <Button variant="primary" className="w-full" onClick={() => router.push('/settings/booking')}>
                 Prise de RDV en ligne
@@ -621,7 +610,7 @@ export default function SettingsPage() {
                 <Badge variant="premium">Premium</Badge>
               </div>
               <div className="rounded-lg bg-surface/60 p-3 text-sm text-charcoal border border-divider">
-                Bague connectée (sommeil, HRV, activité) activée pour les consultants Premium.
+                Objet connecté (sommeil, HRV, activité) activé pour les consultants Premium.
               </div>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/abonnement')}>
                 Voir mon abonnement
@@ -632,7 +621,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <h2 className="text-sm font-semibold">Notifications</h2>
-              <p className="text-xs text-stone">Preferences de communication.</p>
+              <p className="text-xs text-stone">Préférences de communication.</p>
             </CardHeader>
             <CardContent>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/facturation/relances')}>
@@ -643,12 +632,12 @@ export default function SettingsPage() {
 
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold">Donnees et RGPD</h2>
-              <p className="text-xs text-stone">Vie privee et protection des donnees.</p>
+              <h2 className="text-sm font-semibold">Données et RGPD</h2>
+              <p className="text-xs text-stone">Vie privée et protection des données.</p>
             </CardHeader>
             <CardContent>
               <Button variant="secondary" className="w-full" onClick={() => router.push('/settings/rgpd')}>
-                Gerer mes donnees
+                Gérer mes données
               </Button>
             </CardContent>
           </Card>

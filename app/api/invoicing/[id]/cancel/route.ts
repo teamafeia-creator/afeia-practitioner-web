@@ -8,7 +8,7 @@ export async function POST(
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -34,12 +34,12 @@ export async function POST(
     }
 
     if (invoice.status === 'cancelled') {
-      return NextResponse.json({ message: 'Facture deja annulee' }, { status: 400 });
+      return NextResponse.json({ message: 'Facture déjà annulée' }, { status: 400 });
     }
 
     if (invoice.status === 'paid') {
       return NextResponse.json(
-        { message: 'Une facture payee ne peut pas etre annulee en V1' },
+        { message: 'Une facture payée ne peut pas être annulée en V1' },
         { status: 400 }
       );
     }

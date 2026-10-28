@@ -38,11 +38,11 @@ export async function POST(
       .single();
 
     if (consultantError || !consultant) {
-      return NextResponse.json({ error: 'Consultant non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Consultant non trouvé.' }, { status: 404 });
     }
 
     if (consultant.practitioner_id !== practitionerId) {
-      return NextResponse.json({ error: 'Acces refuse.' }, { status: 403 });
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     }
 
     // 3. Parser le body
@@ -69,8 +69,8 @@ export async function POST(
       .single();
 
     if (createError) {
-      console.error('Erreur creation plan:', createError);
-      return NextResponse.json({ error: 'Erreur lors de la creation du plan.' }, { status: 500 });
+      console.error('Erreur création plan:', createError);
+      return NextResponse.json({ error: 'Erreur lors de la création du plan.' }, { status: 500 });
     }
 
     return NextResponse.json(plan, { status: 201 });
@@ -110,11 +110,11 @@ export async function GET(
       .single();
 
     if (consultantError || !consultant) {
-      return NextResponse.json({ error: 'Consultant non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Consultant non trouvé.' }, { status: 404 });
     }
 
     if (consultant.practitioner_id !== practitionerId) {
-      return NextResponse.json({ error: 'Acces refuse.' }, { status: 403 });
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     }
 
     // 3. Recuperer les plans du consultant
@@ -125,8 +125,8 @@ export async function GET(
       .order('created_at', { ascending: false });
 
     if (plansError) {
-      console.error('Erreur recuperation plans:', plansError);
-      return NextResponse.json({ error: 'Erreur lors de la recuperation des plans.' }, { status: 500 });
+      console.error('Erreur récupération plans:', plansError);
+      return NextResponse.json({ error: 'Erreur lors de la récupération des plans.' }, { status: 500 });
     }
 
     return NextResponse.json({ plans: plans || [] });

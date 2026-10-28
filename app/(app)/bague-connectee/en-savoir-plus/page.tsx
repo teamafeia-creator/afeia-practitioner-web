@@ -17,12 +17,12 @@ const FAQS = [
   {
     question: 'Est-ce médical ?',
     answer:
-      'Non. La bague connectée ne remplace aucun diagnostic médical. Il s\u2019agit d\u2019un outil d\u2019observation et de suivi.'
+      'Non. L\u2019objet connecté ne remplace aucun diagnostic médical. Il s\u2019agit d\u2019un outil d\u2019observation et de suivi.'
   },
   {
     question: 'Faut-il un abonnement ?',
     answer:
-      'Oui, la bague connectée est incluse dans l\u2019offre Premium AFEIA pour accéder au suivi biométrique.'
+      'Oui, l\u2019objet connecté est inclus dans l\u2019offre Premium AFEIA pour accéder au suivi biométrique.'
   },
   {
     question: 'Quelles données sont visibles ?',
@@ -32,7 +32,7 @@ const FAQS = [
   {
     question: 'Comment relier un consultant ?',
     answer:
-      'Le consultant active la bague connectée et donne son consentement depuis son espace. La liaison est sécurisée.'
+      'Le consultant active l\u2019objet connecté et donne son consentement depuis son espace. La liaison est sécurisée.'
   }
 ];
 
@@ -50,7 +50,7 @@ export default function BagueConnecteeLearnMorePage() {
   return (
     <PageShell className="space-y-10">
       <PageHeader
-        title="Bague connectée x AFEIA"
+        title="Objet connecté x AFEIA"
         subtitle="Suivi biométrique intelligent au service de la naturopathie."
       />
 
@@ -58,9 +58,9 @@ export default function BagueConnecteeLearnMorePage() {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone">
-              Bague connectée
+              Objet connecté
             </p>
-            <h1 className="text-3xl font-semibold text-charcoal md:text-4xl">Bague connectée x AFEIA</h1>
+            <h1 className="text-3xl font-semibold text-charcoal md:text-4xl">Objet connecté x AFEIA</h1>
             <p className="text-sm text-charcoal md:text-base">
               Une lecture douce des signaux du corps pour enrichir votre accompagnement, sans
               surcharger le consultant ni les consultations.
@@ -68,10 +68,10 @@ export default function BagueConnecteeLearnMorePage() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link href="/billing/manage" className={cn(actionBase, actionVariants.primary)}>
-              Activer la bague connectée
+              Activer l&apos;objet connecté
             </Link>
             <Link href="#comprendre-bague-connectee" className={cn(actionBase, actionVariants.secondary)}>
-              Comprendre la bague connectée
+              Comprendre l&apos;objet connecté
             </Link>
           </div>
         </div>
@@ -79,7 +79,7 @@ export default function BagueConnecteeLearnMorePage() {
 
       <section id="comprendre-bague-connectee" className="space-y-5">
         <div>
-          <h2 className="text-lg font-semibold text-charcoal">Ce que mesure la bague connectée</h2>
+          <h2 className="text-lg font-semibold text-charcoal">Ce que mesure l&apos;objet connecté</h2>
           <p className="text-sm text-charcoal">
             Des indicateurs pensés pour comprendre l&apos;équilibre global, pas pour médicaliser la pratique.
           </p>

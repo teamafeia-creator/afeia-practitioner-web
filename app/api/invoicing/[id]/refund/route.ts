@@ -13,7 +13,7 @@ export async function POST(
     const { id } = await params;
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -47,14 +47,14 @@ export async function POST(
 
     if (factureOriginale.status !== 'paid') {
       return NextResponse.json(
-        { message: 'Seules les factures payees peuvent etre remboursees' },
+        { message: 'Seules les factures payées peuvent être remboursées' },
         { status: 400 }
       );
     }
 
     // Construire le motif
     const motifLabels: Record<string, string> = {
-      consultation_annulee: 'Consultation annulee',
+      consultation_annulee: 'Consultation annulée',
       erreur_facturation: 'Erreur de facturation',
       geste_commercial: 'Geste commercial',
       autre: validatedData.motif_detail || 'Autre',
@@ -68,7 +68,7 @@ export async function POST(
         practitioner_id: userId,
         consultant_id: factureOriginale.consultant_id,
         consultation_id: factureOriginale.consultation_id,
-        description: `Avoir relatif a la facture ${factureOriginale.numero}`,
+        description: `Avoir relatif à la facture ${factureOriginale.numero}`,
         montant: -Math.abs(Number(factureOriginale.montant)),
         annee_fiscale: getCurrentFiscalYear(),
         status: 'paid',
@@ -127,9 +127,9 @@ export async function POST(
       const messages = error.errors.map((err) => err.message).join(', ');
       return NextResponse.json({ message: messages }, { status: 400 });
     }
-    console.error('Erreur creation avoir:', error);
+    console.error('Erreur création avoir:', error);
     return NextResponse.json(
-      { message: "Erreur lors de la creation de l'avoir" },
+      { message: "Erreur lors de la création de l'avoir" },
       { status: 500 }
     );
   }

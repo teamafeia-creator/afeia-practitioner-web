@@ -33,20 +33,20 @@ export function CompletionScreen({ reviewedCount, actionsTaken, durationMs, onCl
         <CheckCircle className="w-10 h-10 text-sage" />
       </div>
 
-      <h2 className="text-2xl font-semibold text-charcoal mb-2">Revue terminee !</h2>
+      <h2 className="text-2xl font-semibold text-charcoal mb-2">Revue terminée !</h2>
       <p className="text-stone mb-6">
         Vous avez parcouru {reviewedCount} consultant{reviewedCount > 1 ? 's' : ''} en {minutes} min {seconds.toString().padStart(2, '0')} sec.
       </p>
 
       {hasActions && (
         <div className="bg-neutral-50 rounded-lg p-4 mb-6 text-left max-w-sm mx-auto">
-          <h3 className="font-medium text-charcoal mb-2">Actions effectuees :</h3>
+          <h3 className="font-medium text-charcoal mb-2">Actions effectuées :</h3>
           <ul className="space-y-1 text-sm text-stone">
             {stats.messagesCount > 0 && (
-              <li>&bull; {stats.messagesCount} message{stats.messagesCount > 1 ? 's' : ''} envoye{stats.messagesCount > 1 ? 's' : ''}</li>
+              <li>&bull; {stats.messagesCount} message{stats.messagesCount > 1 ? 's' : ''} envoyé{stats.messagesCount > 1 ? 's' : ''}</li>
             )}
             {stats.notesCount > 0 && (
-              <li>&bull; {stats.notesCount} observation{stats.notesCount > 1 ? 's' : ''} notee{stats.notesCount > 1 ? 's' : ''}</li>
+              <li>&bull; {stats.notesCount} observation{stats.notesCount > 1 ? 's' : ''} notée{stats.notesCount > 1 ? 's' : ''}</li>
             )}
             {stats.snoozedCount > 0 && (
               <li>&bull; {stats.snoozedCount} consultant{stats.snoozedCount > 1 ? 's' : ''} mis en pause</li>

@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ complements: formattedComplements });
   } catch (error) {
-    console.error('Error getting complements:', error);
+    console.error('Error getting compléments:', error);
     return NextResponse.json(
       { message: 'Erreur lors de la récupération des compléments' },
       { status: 500 }

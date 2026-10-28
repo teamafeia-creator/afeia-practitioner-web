@@ -36,7 +36,7 @@ function buildActivationEmail(params: {
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <h1 style="color: #2B5651; margin-bottom: 24px;">Bienvenue ${consultantName}</h1>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          Votre naturopathe vous invite a rejoindre AFEIA. Voici votre code d'activation :
+          Votre naturopathe vous invite à rejoindre AFEIA. Voici votre code d'activation :
         </p>
         <div style="text-align: center; margin: 32px 0;">
           <span style="font-size: 40px; font-weight: bold; letter-spacing: 8px; color: #2B5651; background: #E8F5F3; padding: 16px 32px; border-radius: 8px; display: inline-block;">
@@ -47,11 +47,11 @@ function buildActivationEmail(params: {
           Ce code expire dans ${expiresInDays} jours.
         </p>
         <p style="color: #666; font-size: 14px;">
-          Telechargez l'application AFEIA et utilisez ce code pour activer votre compte.
+          Téléchargez l'application AFEIA et utilisez ce code pour activer votre compte.
         </p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;">
         <p style="color: #999; font-size: 12px; text-align: center;">
-          AFEIA - Votre assistant sante personnalise
+          AFEIA - Votre assistant santé personnalisé
         </p>
       </div>
     </body>
@@ -61,13 +61,13 @@ function buildActivationEmail(params: {
   const textContent = `
 Bienvenue ${consultantName}
 
-Votre naturopathe vous invite a rejoindre AFEIA. Voici votre code d'activation : ${code}
+Votre naturopathe vous invite à rejoindre AFEIA. Voici votre code d'activation : ${code}
 
 Ce code expire dans ${expiresInDays} jours.
 
-Telechargez l'application AFEIA et utilisez ce code pour activer votre compte.
+Téléchargez l'application AFEIA et utilisez ce code pour activer votre compte.
 
-AFEIA - Votre assistant sante personnalise
+AFEIA - Votre assistant santé personnalisé
   `.trim();
 
   return {
@@ -119,11 +119,11 @@ export async function POST(request: Request) {
 
     try {
       await sendEmail(emailPayload);
-      console.log('Email envoye avec succes a', normalizedEmail);
+      console.log('Email envoyé avec succès à', normalizedEmail);
 
       return NextResponse.json({
         ok: true,
-        message: `Email envoye avec succes a ${normalizedEmail}`,
+        message: `Email envoyé avec succès à ${normalizedEmail}`,
         code: code,
         sentToEmail: normalizedEmail
       });

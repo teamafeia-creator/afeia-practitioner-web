@@ -75,11 +75,11 @@ export default function CreatePlanPage() {
 
       if (itemsError) throw itemsError
 
-      alert('Plan cree avec succes !')
+      alert('Plan créé avec succès !')
       router.push('/consultant/demo')
     } catch (err) {
       console.error(err)
-      alert('Erreur lors de la creation du plan')
+      alert('Erreur lors de la création du plan')
     } finally {
       setCreating(false)
     }

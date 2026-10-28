@@ -104,7 +104,7 @@ export default function StripeConnectSettingsPage() {
               size="sm"
               icon={<ArrowLeft className="h-4 w-4" />}
             >
-              Retour parametres
+              Retour paramètres
             </Button>
           </Link>
         }
@@ -123,7 +123,7 @@ export default function StripeConnectSettingsPage() {
                     <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-amber-800">
-                        Parametres de facturation requis
+                        Paramètres de facturation requis
                       </p>
                       <p className="text-sm text-amber-700 mt-1">
                         Veuillez d&apos;abord configurer votre SIRET et votre adresse de
@@ -136,7 +136,7 @@ export default function StripeConnectSettingsPage() {
                           className="mt-2"
                           icon={<ArrowLeft className="h-4 w-4" />}
                         >
-                          Configurer mes parametres
+                          Configurer mes paramètres
                         </Button>
                       </Link>
                     </div>
@@ -151,7 +151,7 @@ export default function StripeConnectSettingsPage() {
                 <ul className="text-sm text-stone space-y-1.5">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-sage mt-0.5 shrink-0" />
-                    Envoyez des liens de paiement a vos consultants
+                    Envoyez des liens de paiement à vos consultants
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-sage mt-0.5 shrink-0" />
@@ -159,7 +159,7 @@ export default function StripeConnectSettingsPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-sage mt-0.5 shrink-0" />
-                    Les factures sont marquees comme payees automatiquement
+                    Les factures sont marquées comme payées automatiquement
                   </li>
                 </ul>
               </div>
@@ -177,9 +177,9 @@ export default function StripeConnectSettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 {isConnected ? (
-                  <Badge variant="success">Connecte</Badge>
+                  <Badge variant="success">Connecté</Badge>
                 ) : (
-                  <Badge variant="attention">Configuration incomplete</Badge>
+                  <Badge variant="attention">Configuration incomplète</Badge>
                 )}
               </div>
 
@@ -232,8 +232,8 @@ export default function StripeConnectSettingsPage() {
               {!isConnected && (
                 <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
                   <p className="text-sm text-amber-800">
-                    Votre compte Stripe n&apos;est pas encore entierement configure.
-                    Completez la configuration pour pouvoir recevoir des paiements.
+                    Votre compte Stripe n&apos;est pas encore entièrement configuré.
+                    Complétez la configuration pour pouvoir recevoir des paiements.
                   </p>
                   <Button
                     variant="outline"
@@ -243,7 +243,7 @@ export default function StripeConnectSettingsPage() {
                     loading={onboardingLoading}
                     icon={<ExternalLink className="h-4 w-4" />}
                   >
-                    Completer la configuration
+                    Compléter la configuration
                   </Button>
                 </div>
               )}
@@ -252,7 +252,7 @@ export default function StripeConnectSettingsPage() {
                 <div className="rounded-lg bg-sage-light/50 border border-divider p-3">
                   <p className="text-sm text-charcoal">
                     Votre compte Stripe est actif. Vous pouvez envoyer des liens de paiement
-                    a vos consultants depuis la page de detail de chaque facture.
+                    à vos consultants depuis la page de détail de chaque facture.
                   </p>
                 </div>
               )}
@@ -268,7 +268,7 @@ export default function StripeConnectSettingsPage() {
                     size="sm"
                     icon={<ExternalLink className="h-4 w-4" />}
                   >
-                    Acceder a mon dashboard Stripe
+                    Accéder à mon dashboard Stripe
                   </Button>
                 </a>
               </div>

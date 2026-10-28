@@ -62,7 +62,7 @@ export default function VideoConsultationPage() {
 
           if (!res.ok) {
             const data = await res.json();
-            setState({ type: 'error', message: data.error || 'Impossible d\'acceder a la consultation.' });
+            setState({ type: 'error', message: data.error || 'Impossible d\'accéder à la consultation.' });
             return;
           }
 
@@ -84,7 +84,7 @@ export default function VideoConsultationPage() {
           // Practitioner mode: verify auth
           const { data: userData, error: authError } = await supabase.auth.getUser();
           if (authError || !userData.user) {
-            setState({ type: 'error', message: 'Veuillez vous connecter pour acceder a la consultation.' });
+            setState({ type: 'error', message: 'Veuillez vous connecter pour accéder à la consultation.' });
             return;
           }
 
@@ -101,17 +101,17 @@ export default function VideoConsultationPage() {
             .single();
 
           if (aptError || !appointment) {
-            setState({ type: 'error', message: 'Rendez-vous non trouve.' });
+            setState({ type: 'error', message: 'Rendez-vous non trouvé.' });
             return;
           }
 
           if (appointment.practitioner_id !== userData.user.id) {
-            setState({ type: 'error', message: 'Vous n\'etes pas le praticien de ce rendez-vous.' });
+            setState({ type: 'error', message: 'Vous n\'êtes pas le praticien de ce rendez-vous.' });
             return;
           }
 
           if (!appointment.video_room_name) {
-            setState({ type: 'error', message: 'Ce rendez-vous n\'a pas de salle de visioconference.' });
+            setState({ type: 'error', message: 'Ce rendez-vous n\'a pas de salle de visioconférence.' });
             return;
           }
 
@@ -160,7 +160,7 @@ export default function VideoConsultationPage() {
           });
         }
       } catch (error) {
-        console.error('Video page init error:', error);
+        console.error('Vidéo page init error:', error);
         setState({ type: 'error', message: 'Une erreur est survenue.' });
       }
     }
@@ -176,10 +176,10 @@ export default function VideoConsultationPage() {
             <Video className="h-8 w-8 text-sage" />
           </div>
           <h1 className="text-xl font-semibold text-charcoal">
-            Consultation terminee
+            Consultation terminée
           </h1>
           <p className="text-sm text-[#8B95A5]">
-            Merci pour votre consultation. Vous pouvez fermer cette fenetre.
+            Merci pour votre consultation. Vous pouvez fermer cette fenêtre.
           </p>
           {!consultantToken && (
             <button
@@ -187,7 +187,7 @@ export default function VideoConsultationPage() {
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#6DD4B8] text-ink rounded-lg hover:bg-sage-deep transition-colors text-sm font-medium"
             >
               <ArrowLeft className="h-4 w-4" />
-              Retour a l&apos;agenda
+              Retour à l&apos;agenda
             </button>
           )}
         </div>
@@ -214,7 +214,7 @@ export default function VideoConsultationPage() {
             <AlertCircle className="h-8 w-8 text-red-500" />
           </div>
           <h1 className="text-xl font-semibold text-charcoal">
-            Acces impossible
+            Accès impossible
           </h1>
           <p className="text-sm text-[#8B95A5]">{state.message}</p>
         </div>

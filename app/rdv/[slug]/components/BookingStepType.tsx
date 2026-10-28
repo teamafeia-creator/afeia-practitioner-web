@@ -23,7 +23,7 @@ export function BookingStepType({
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-charcoal">
-        Choisissez votre type de seance
+        Choisissez votre type de séance
       </h2>
 
       <div className="space-y-3">

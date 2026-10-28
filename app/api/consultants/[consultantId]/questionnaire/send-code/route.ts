@@ -94,7 +94,7 @@ export async function POST(
   const code = generateNumericOTP();
   const codeHash = hashQuestionnaireCode(code);
 
-  console.log('[questionnaire] Code OTP genere:', code);
+  console.log('[questionnaire] Code OTP généré:', code);
   console.log('[questionnaire] Email:', consultant.email);
 
   const { error: revokeError } = await supabase
@@ -143,10 +143,10 @@ export async function POST(
     // Don't fail the request - continue with email sending
     // The practitioner web flow will still work via consultant_questionnaire_codes
   } else {
-    console.log('[questionnaire] Code stocke dans otp_codes avec succes');
+    console.log('[questionnaire] Code stocke dans otp_codes avec succès');
     console.log('[questionnaire] Email:', consultant.email.toLowerCase().trim());
     console.log('[questionnaire] Code:', code);
-    console.log('[questionnaire] Expire:', expiresAt.toISOString());
+    console.log('[questionnaire] Expiré:', expiresAt.toISOString());
   }
 
   // Also store the code in consultant_invitations for mobile app
@@ -171,7 +171,7 @@ export async function POST(
         code_expires_at: expiresAt.toISOString()
       })
       .eq('id', existingInvitation.id);
-    console.log('[questionnaire] Invitation mise a jour dans consultant_invitations');
+    console.log('[questionnaire] Invitation mise à jour dans consultant_invitations');
   } else {
     // Create new invitation
     const { error: invitationError } = await supabase
@@ -188,9 +188,9 @@ export async function POST(
       });
 
     if (invitationError) {
-      console.error('[questionnaire] Erreur creation invitation:', invitationError);
+      console.error('[questionnaire] Erreur création invitation:', invitationError);
     } else {
-      console.log('[questionnaire] Invitation creee dans consultant_invitations');
+      console.log('[questionnaire] Invitation créée dans consultant_invitations');
     }
   }
 
@@ -204,7 +204,7 @@ export async function POST(
 
   try {
     await sendEmail(emailPayload);
-    console.log(`[questionnaire] EMAIL ENVOYE AVEC SUCCES a ${consultant.email}`);
+    console.log(`[questionnaire] EMAIL ENVOYE AVEC SUCCÈS à ${consultant.email}`);
     console.log(`Code OTP: ${code}`);
 
     // TOUJOURS retourner le code au naturopathe pour faciliter le support
@@ -219,7 +219,7 @@ export async function POST(
     const errorMessage = emailError instanceof Error ? emailError.message : 'Inconnue';
     const errorStack = emailError instanceof Error ? emailError.stack : undefined;
     console.error('[questionnaire] ERREUR ENVOI EMAIL:', emailError);
-    console.error('Details:', errorMessage, errorStack);
+    console.error('Détails:', errorMessage, errorStack);
 
     return NextResponse.json({
       error: `Impossible d'envoyer l'email. Erreur: ${errorMessage}. Vérifiez la configuration Resend.`,

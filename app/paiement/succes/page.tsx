@@ -9,16 +9,16 @@ export default function PaymentSuccessPage() {
       <div className="glass-card rounded-lg p-8 text-center max-w-md w-full">
         <CheckCircle2 className="h-16 w-16 text-sage mx-auto mb-4" />
         <h1 className="text-xl font-semibold text-charcoal mb-2">
-          Paiement recu
+          Paiement reçu
         </h1>
         <p className="text-sm text-stone mb-6">
-          Votre paiement a ete traite avec succes. Vous recevrez une confirmation par email.
+          Votre paiement a été traite avec succès. Vous recevrez une confirmation par email.
         </p>
         <Link
           href="/"
           className="text-sm text-sage hover:text-sage/80 underline underline-offset-2"
         >
-          Retour a l&apos;accueil
+          Retour à l&apos;accueil
         </Link>
       </div>
     </div>

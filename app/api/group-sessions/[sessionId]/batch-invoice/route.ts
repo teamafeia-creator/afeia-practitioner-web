@@ -19,7 +19,7 @@ export async function POST(
       .single();
 
     if (sessionError || !session) {
-      return NextResponse.json({ error: 'Seance introuvable.' }, { status: 404 });
+      return NextResponse.json({ error: 'Séance introuvable.' }, { status: 404 });
     }
 
     // Get attended registrations with consultant_id
@@ -34,7 +34,7 @@ export async function POST(
     }
 
     if (!attendees || attendees.length === 0) {
-      return NextResponse.json({ error: 'Aucun participant present a facturer.' }, { status: 400 });
+      return NextResponse.json({ error: 'Aucun participant présent à facturer.' }, { status: 400 });
     }
 
     // Supabase may return the join as array or object depending on context

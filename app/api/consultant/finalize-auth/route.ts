@@ -349,7 +349,7 @@ export async function POST(request: NextRequest) {
     let userId = userLookup?.id ?? null;
 
     if (!userId) {
-      console.warn('[auth] finalize-auth: aucun user trouve, creation optionnelle');
+      console.warn('[auth] finalize-auth: aucun user trouvé, création optionnelle');
       const { data: createdUser, error: createError } =
         await supabaseAdmin.auth.admin.createUser({
           email,
@@ -367,7 +367,7 @@ export async function POST(request: NextRequest) {
 
       userId = createdUser.user?.id ?? null;
     } else {
-      console.log('[auth] finalize-auth: user trouve', userId);
+      console.log('[auth] finalize-auth: user trouvé', userId);
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         userId,
         { password: newPassword }
@@ -381,7 +381,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      console.log('[auth] finalize-auth: mot de passe mis a jour');
+      console.log('[auth] finalize-auth: mot de passe mis à jour');
     }
 
     if (!userId) {
@@ -414,7 +414,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        console.log('[auth] finalize-auth: membership cree');
+        console.log('[auth] finalize-auth: membership créé');
       } else if (membership.consultant_user_id !== userId) {
         const { error: membershipUpdateError } = await supabaseAdmin
           .from('consultant_memberships')
@@ -429,9 +429,9 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        console.log('[auth] finalize-auth: membership mis a jour');
+        console.log('[auth] finalize-auth: membership mis à jour');
       } else {
-        console.log('[auth] finalize-auth: membership deja correct');
+        console.log('[auth] finalize-auth: membership déjà correct');
       }
     }
 
@@ -457,7 +457,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('[auth] finalize-auth: termine pour', email, userId);
+    console.log('[auth] finalize-auth: terminé pour', email, userId);
 
     return NextResponse.json({
       ok: true,

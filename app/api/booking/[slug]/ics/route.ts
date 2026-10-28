@@ -32,7 +32,7 @@ export async function GET(
 
     if (error || !appointment) {
       return NextResponse.json(
-        { error: 'Rendez-vous non trouve.' },
+        { error: 'Rendez-vous non trouvé.' },
         { status: 404 }
       );
     }
@@ -46,7 +46,7 @@ export async function GET(
 
     if (practitioner?.booking_slug !== params.slug) {
       return NextResponse.json(
-        { error: 'Rendez-vous non trouve.' },
+        { error: 'Rendez-vous non trouvé.' },
         { status: 404 }
       );
     }

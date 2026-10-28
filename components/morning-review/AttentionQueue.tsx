@@ -31,7 +31,7 @@ export function AttentionQueue({ consultantsSummary, onStartGuidedReview, onActi
         </div>
         <h3 className="text-lg font-semibold text-charcoal">Tout va bien !</h3>
         <p className="text-stone mt-2">
-          Aucun consultant ne necessite votre attention particuliere aujourd&apos;hui.
+          Aucun consultant ne nécessite votre attention particulière aujourd&apos;hui.
         </p>
       </motion.div>
     );
@@ -52,7 +52,7 @@ export function AttentionQueue({ consultantsSummary, onStartGuidedReview, onActi
           onClick={onStartGuidedReview}
           className="text-sm text-sage hover:text-sage-deep font-medium whitespace-nowrap"
         >
-          Commencer la revue guidee &rarr;
+          Commencer la revue guidée &rarr;
         </button>
       </div>
 

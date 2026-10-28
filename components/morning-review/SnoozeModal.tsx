@@ -20,9 +20,9 @@ type SnoozePreset = {
 };
 
 const PRESETS: SnoozePreset[] = [
-  { label: 'En pause temporaire (vacances, deplacement)', value: 'vacation', days: 14 },
+  { label: 'En pause temporaire (vacances, déplacement)', value: 'vacation', days: 14 },
   { label: 'Suivi espace (rythme mensuel)', value: 'spaced_followup', days: 30 },
-  { label: 'Autre duree', value: 'other', days: null },
+  { label: 'Autre durée', value: 'other', days: null },
 ];
 
 function addDays(date: Date, days: number): Date {

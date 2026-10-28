@@ -11,14 +11,14 @@ const PAGE_SIZE = 20;
 
 const ACTION_LABELS: Record<string, string> = {
   'admin.login': 'Connexion admin',
-  'practitioner.update': 'Praticien modifie',
+  'practitioner.update': 'Praticien modifié',
   'practitioner.suspend': 'Praticien suspendu',
-  'practitioner.delete': 'Praticien supprime',
+  'practitioner.delete': 'Praticien supprimé',
   'practitioner.password_reset': 'Reset mot de passe',
-  'practitioner.invite': 'Invitation envoyee',
-  'admin.create': 'Admin ajoute',
-  'admin.delete': 'Admin supprime',
-  'admin.logout': 'Deconnexion admin',
+  'practitioner.invite': 'Invitation envoyée',
+  'admin.create': 'Admin ajouté',
+  'admin.delete': 'Admin supprimé',
+  'admin.logout': 'Déconnexion admin',
 };
 
 type AuditLog = {
@@ -158,7 +158,7 @@ export default function SettingsAuditLogsPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-500">
-              Periode
+              Période
             </label>
             <Select
               value={period}
@@ -224,7 +224,7 @@ export default function SettingsAuditLogsPage() {
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-sm text-slate-500">
             <FileText className="mb-2 h-8 w-8 text-slate-300" />
-            Aucun log pour les filtres selectionnes.
+            Aucun log pour les filtres sélectionnés.
           </div>
         ) : (
           <>
@@ -236,7 +236,7 @@ export default function SettingsAuditLogsPage() {
                     <th className="px-5 py-3">Admin</th>
                     <th className="px-5 py-3">Action</th>
                     <th className="px-5 py-3">Cible</th>
-                    <th className="px-5 py-3">Details</th>
+                    <th className="px-5 py-3">Détails</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -274,7 +274,7 @@ export default function SettingsAuditLogsPage() {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3">
               <span className="text-sm text-slate-500">
-                Page {page} / {totalPages || 1} ({total} resultats)
+                Page {page} / {totalPages || 1} ({total} résultats)
               </span>
               <div className="flex gap-2">
                 <Button
@@ -283,7 +283,7 @@ export default function SettingsAuditLogsPage() {
                   disabled={page <= 1}
                   onClick={() => setPage(page - 1)}
                 >
-                  Precedent
+                  Précédent
                 </Button>
                 <Button
                   variant="outline"

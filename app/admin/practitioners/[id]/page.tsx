@@ -27,7 +27,7 @@ export default async function AdminPractitionerDetailPage({ params }: PageProps)
       .maybeSingle();
 
     if (error) {
-      console.error('[admin] practitioner detail error:', error);
+      console.error('[admin] practitioner détail error:', error);
       return (
         <div className="space-y-6">
           <div className="rounded-lg border border-slate-200 bg-surface p-6">
@@ -97,7 +97,7 @@ export default async function AdminPractitionerDetailPage({ params }: PageProps)
       />
     );
   } catch (error) {
-    console.error('[admin] practitioner detail exception:', error);
+    console.error('[admin] practitioner détail exception:', error);
     return (
       <div className="space-y-6">
         <div className="rounded-lg border border-slate-200 bg-surface p-6">

@@ -87,7 +87,7 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error getting resource detail:', error);
+    console.error('Error getting resource détail:', error);
     return NextResponse.json(
       { message: 'Erreur lors de la récupération de la fiche' },
       { status: 500 }

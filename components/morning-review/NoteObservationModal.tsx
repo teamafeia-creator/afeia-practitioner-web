@@ -22,7 +22,7 @@ export function NoteObservationModal({ consultantName, consultantId, onClose, on
 
     try {
       await saveMutation.mutateAsync({ consultantId, content: content.trim() });
-      showToast.success('Observation enregistree');
+      showToast.success('Observation enregistrée');
       onSaved();
     } catch {
       showToast.error('Erreur lors de l\'enregistrement');
@@ -38,7 +38,7 @@ export function NoteObservationModal({ consultantName, consultantId, onClose, on
     >
       <div>
         <p className="text-sm text-stone mb-3">
-          Cette note sera ajoutee a vos observations privees pour ce consultant.
+          Cette note sera ajoutée à vos observations privées pour ce consultant.
         </p>
 
         <textarea

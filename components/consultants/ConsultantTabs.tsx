@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader } from '../ui/Card';
 import { EmptyState } from '../ui/EmptyState';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { TabsPills } from '../ui/TabsPills';
 import { Textarea } from '../ui/Textarea';
 import { Toast } from '../ui/Toast';
 import {
@@ -45,6 +44,8 @@ import { GenerateButton } from '../ai/GenerateButton';
 import { SectionSuggestButton } from '../ai/SectionSuggestButton';
 import { MedicalAlertBanner } from '../ai/MedicalAlertBanner';
 import { AIStatusBar } from '../ai/AIStatusBar';
+import { DossierHeader } from './DossierHeader';
+import { DossierNav, type DossierNavBadge, type DossierNavGroup } from './DossierNav';
 import type { BlockSection } from '../../lib/blocks-types';
 import {
   User,
@@ -253,13 +254,19 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
   [T.tabMessages]: { title: T.tabMessages, description: T.descMessages },
 };
 
+// Anciens libellés encore présents dans des liens ?tab=…
+const LEGACY_TAB_ALIASES: Record<string, Tab> = {
+  'Dossier médical': T.tabDossierMedical,
+  'Bague connectée': T.tabBagueConnectee,
+};
+
 const SIDEBAR_GROUPS = [
   {
-    label: 'Identite',
+    label: 'Identité',
     items: [
-      { tab: T.tabProfil as Tab, label: 'Synthese', icon: User },
-      { tab: T.tabDossierMedical as Tab, label: 'Dossier medical', icon: Heart },
-      { tab: T.tabAnamnese as Tab, label: 'Anamnese', icon: ClipboardList },
+      { tab: T.tabProfil as Tab, label: 'Synthèse', icon: User },
+      { tab: T.tabDossierMedical as Tab, label: 'Dossier de santé', icon: Heart },
+      { tab: T.tabAnamnese as Tab, label: 'Anamnèse', icon: ClipboardList },
       { tab: T.tabBilanTerrain as Tab, label: 'Bilan de terrain', icon: Leaf },
     ],
   },
@@ -273,17 +280,17 @@ const SIDEBAR_GROUPS = [
     ],
   },
   {
-    label: 'Donnees',
+    label: 'Données',
     items: [
-      { tab: T.tabBagueConnectee as Tab, label: 'Bague connectee', icon: Watch },
+      { tab: T.tabBagueConnectee as Tab, label: 'Objet connecté', icon: Watch },
       { tab: T.tabSchemas as Tab, label: 'Schémas corporels', icon: Pencil },
       { tab: T.tabDocuments as Tab, label: 'Documents', icon: FileUp },
     ],
   },
   {
-    label: 'Communications',
+    label: 'Échanges',
     items: [
-      { tab: T.tabNotesSeance as Tab, label: 'Notes privees', icon: StickyNote },
+      { tab: T.tabNotesSeance as Tab, label: 'Notes privées', icon: StickyNote },
       { tab: T.tabMessages as Tab, label: 'Messages', icon: MessageSquare },
     ],
   },
@@ -424,12 +431,12 @@ function buildJournalForm(entry?: JournalEntry): Partial<JournalEntry> {
 }
 
 const APPOINTMENT_STATUS_LABEL: Record<string, string> = {
-  scheduled: 'Planifie',
-  confirmed: 'Confirme',
+  scheduled: 'Planifié',
+  confirmed: 'Confirmé',
   in_progress: 'En cours',
-  cancelled: 'Annule',
-  completed: 'Termine',
-  rescheduled: 'Reporte',
+  cancelled: 'Annulé',
+  completed: 'Terminé',
+  rescheduled: 'Reporté',
 };
 
 const APPOINTMENT_STATUS_VARIANT: Record<string, 'info' | 'attention' | 'success'> = {
@@ -512,12 +519,21 @@ function IrisPhotoThumbnail({ photo, size }: { photo: ConsultantIrisPhoto; size:
   );
 }
 
-export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetails }) {
+export function ConsultantTabs({
+  consultant,
+  onExportDossier,
+  exportingDossier,
+}: {
+  consultant: ConsultantWithDetails;
+  onExportDossier?: () => void;
+  exportingDossier?: boolean;
+}) {
   const router = useRouter();
   const [consultantState, setConsultantState] = useState<ConsultantWithDetails>(consultant);
   const searchParams = useSearchParams();
   const initialTab = useMemo<Tab>(() => {
-    const requested = searchParams.get('tab');
+    const raw = searchParams.get('tab');
+    const requested = raw ? LEGACY_TAB_ALIASES[raw] ?? raw : null;
     return TABS.includes(requested as Tab) ? (requested as Tab) : 'Profil';
   }, [searchParams]);
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -750,6 +766,34 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
   } = useContraindications(consultant.id, substanceNamesFromPlan);
 
   const isPremium = consultantState.is_premium;
+  const isDemo = consultantState.is_demo === true;
+
+  const navGroups = useMemo<DossierNavGroup<Tab>[]>(() => {
+    const anamnesisFilled = Object.values(anamnesisAnswers).some((value) => value && value.trim() !== '');
+    const terrainFilled = Object.entries(terrainData).some(
+      ([key, value]) => !['id', 'consultant_id', 'practitioner_id', 'created_at', 'updated_at'].includes(key) && value !== null && value !== undefined && value !== ''
+    );
+    const latestPlan = plans.reduce<ConsultantPlan | null>(
+      (latest, plan) => (!latest || plan.version > latest.version ? plan : latest),
+      null
+    );
+    const unreadMessages = messages.filter((message) => message.sender === 'consultant' && !message.read_at).length;
+
+    const badges: Partial<Record<Tab, DossierNavBadge | null>> = {
+      [T.tabAnamnese]: anamnesisFilled ? { kind: 'done' } : { kind: 'todo' },
+      [T.tabBilanTerrain]: terrainFilled ? { kind: 'done' } : { kind: 'todo' },
+      [T.tabConseillancier]: latestPlan ? { kind: 'version', version: latestPlan.version } : null,
+      [T.tabBagueConnectee]: isPremium ? null : { kind: 'premium' },
+      [T.tabMessages]: unreadMessages > 0 ? { kind: 'unread', count: unreadMessages } : null,
+    };
+
+    return SIDEBAR_GROUPS.map((group) => ({
+      label: group.label,
+      items: group.items
+        .filter((item) => !('cycleOnly' in item && item.cycleOnly) || cycleIsTracking)
+        .map((item) => ({ id: item.tab, label: item.label, icon: item.icon, badge: badges[item.tab] ?? null })),
+    }));
+  }, [anamnesisAnswers, terrainData, plans, messages, isPremium, cycleIsTracking]);
   const wearableSummaries = useMemo(
     () => consultantState.wearable_summaries ?? [],
     [consultantState.wearable_summaries]
@@ -843,7 +887,11 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       .sort((a, b) => a.starts.getTime() - b.starts.getTime())[0];
   }, [sortedAppointments]);
 
-  const activeMeta = TAB_META[tab];
+  const activeMeta = {
+    ...TAB_META[tab],
+    // Le titre suit le libellé de la navigation du dossier
+    title: SIDEBAR_GROUPS.flatMap((group) => group.items).find((item) => item.tab === tab)?.label ?? TAB_META[tab].title,
+  };
 
   useEffect(() => {
     setConsultantState(consultant);
@@ -1631,111 +1679,56 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
 
   return (
     <div className="space-y-4">
-      {/* Persistent Header */}
-      <div className="glass-card p-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-sage-light text-lg font-semibold text-sage">
-              {getInitials(consultantState.name)}
-            </div>
-            <div>
-              <p className="text-xs tracking-wide text-stone" style={{ fontVariant: 'small-caps' }}>Dossier consultant</p>
-              <h1 className="text-2xl font-semibold font-serif text-charcoal">
-                {consultantState.name ?? 'Consultant'}
-              </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-stone">
-                <Badge variant={isPremium ? 'premium' : 'standard'}>
-                  {isPremium ? 'Premium' : 'Standard'}
-                </Badge>
-                {cycleIsTracking && cycleContext ? (
-                  <CyclePhaseBadge phase={cycleContext.phase} cycleDay={cycleContext.cycleDay} compact />
-                ) : null}
-                {consultantState.age ? <span>{consultantState.age} ans</span> : null}
-                {consultantState.city ? <span>· {consultantState.city}</span> : null}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {(consultantState.journal_entries?.length ?? 0) >= 7 && (
-              <Button
-                variant="secondary"
-                onClick={() => window.open(`/consultation/${consultant.id}/bilan`, '_blank')}
-              >
-                <BarChart3 className="mr-1 h-4 w-4" />
-                Bilan visuel
-              </Button>
-            )}
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setTab('Profil');
-                setProfileEditing(true);
-              }}
-            >
-              Modifier le profil
-            </Button>
-            {tab !== 'Rendez-vous' ? (
-              <Button variant="primary" onClick={openAppointmentModal}>
-                Planifier RDV
-              </Button>
+      <DossierHeader
+        name={consultantState.name}
+        age={consultantState.age}
+        city={consultantState.city}
+        followedSince={consultantState.activated_at ?? consultantState.created_at}
+        isPremium={isPremium}
+        cycleTracking={cycleIsTracking}
+        extraBadges={
+          <>
+            {cycleIsTracking && cycleContext ? (
+              <CyclePhaseBadge phase={cycleContext.phase} cycleDay={cycleContext.cycleDay} compact />
             ) : null}
+            {isDemo ? (
+              <span className="inline-flex items-center rounded-full border border-stone/20 bg-stone/10 px-2.5 py-0.5 text-xs font-medium text-stone">
+                Démo
+              </span>
+            ) : null}
+          </>
+        }
+        extraActions={
+          (consultantState.journal_entries?.length ?? 0) >= 7 ? (
             <Button
-              variant="destructive"
-              onClick={() => setDeleteModalOpen(true)}
+              variant="ghost"
+              onClick={() => window.open(`/consultation/${consultant.id}/bilan`, '_blank')}
+              icon={<BarChart3 className="h-4 w-4" aria-hidden="true" />}
             >
-              Supprimer
+              Bilan visuel
             </Button>
-          </div>
-        </div>
-      </div>
+          ) : null
+        }
+        onMessage={() => setTab(T.tabMessages as Tab)}
+        onPlanSession={openAppointmentModal}
+        onEdit={() => {
+          setTab(T.tabProfil as Tab);
+          setProfileEditing(true);
+        }}
+        onExport={onExportDossier}
+        exporting={exportingDossier}
+        onDelete={() => setDeleteModalOpen(true)}
+      />
 
-      {/* Mobile: horizontal tabs */}
-      <div className="lg:hidden">
-        <TabsPills tabs={TABS} active={tab} onChange={setTab} />
-      </div>
-
-      {/* Desktop: Sidebar + Content layout */}
-      <div className="flex gap-6">
-        {/* Secondary Sidebar — desktop only */}
-        <aside className="hidden lg:block w-[180px] shrink-0">
-          <nav className="sticky top-20 space-y-4">
-            {SIDEBAR_GROUPS.map((group) => (
-              <div key={group.label}>
-                <div className="px-3 mb-1 text-[11px] font-medium tracking-wider text-mist" style={{ fontVariant: 'small-caps' }}>
-                  {group.label}
-                </div>
-                <div className="space-y-0.5">
-                  {group.items.filter((item) => !(item as any).cycleOnly || consultantState.cycle_profile?.is_tracking).map((item) => {
-                    const isActive = tab === item.tab;
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.tab}
-                        onClick={() => setTab(item.tab)}
-                        className={cn(
-                          'w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors',
-                          isActive
-                            ? 'bg-sage text-ink shadow-sm'
-                            : 'text-stone hover:bg-cream hover:text-charcoal'
-                        )}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </nav>
-        </aside>
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <DossierNav groups={navGroups} active={tab} onChange={setTab} className="lg:shrink-0" />
 
         {/* Content Area */}
         <div className="flex-1 min-w-0">
-          {/* Section description */}
-          <div className="rounded-xl bg-surface px-4 py-3 border border-divider mb-4">
-            <h2 className="text-sm font-semibold text-charcoal">{activeMeta.title}</h2>
-            <p className="text-xs text-stone">{activeMeta.description}</p>
+          {/* Titre unique de l'onglet */}
+          <div className="mb-4">
+            <h2 className="font-serif text-2xl font-medium text-charcoal">{activeMeta.title}</h2>
+            <p className="mt-1 text-sm text-stone">{activeMeta.description}</p>
           </div>
 
       {tab === 'Profil' && (
@@ -1749,7 +1742,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold">Informations consultant</h2>
+                  <h3 className="text-sm font-semibold">Informations consultant</h3>
                   <p className="text-xs text-stone">Profil et coordonnées du consultant.</p>
                 </div>
                 {!profileEditing ? (
@@ -1882,7 +1875,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             )}
           >
             <CardHeader>
-              <h2 className="text-sm font-semibold">Motif de consultation</h2>
+              <h3 className="text-sm font-semibold">Motif de consultation</h3>
               {profileEditing ? (
                 <EditBanner label="Modifiez le motif avant d’enregistrer." />
               ) : null}
@@ -1911,7 +1904,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           {/* ─── Card Informations administratives ───── */}
           <Card className={cn('transition', profileEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
             <CardHeader>
-              <h2 className="text-sm font-semibold">{T.labelInfosAdmin}</h2>
+              <h3 className="text-sm font-semibold">{T.labelInfosAdmin}</h3>
               {profileEditing ? <EditBanner label="Complétez les informations administratives." /> : null}
             </CardHeader>
             <CardContent>
@@ -1971,7 +1964,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           {/* ─── Card Contacts médicaux et urgence ───── */}
           <Card className={cn('transition', profileEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
             <CardHeader>
-              <h2 className="text-sm font-semibold">{T.labelContactsMedicaux}</h2>
+              <h3 className="text-sm font-semibold">{T.labelContactsMedicaux}</h3>
               {profileEditing ? <EditBanner label="Renseignez les contacts médicaux." /> : null}
             </CardHeader>
             <CardContent>
@@ -2006,7 +1999,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold">Suivi du cycle menstruel</h2>
+                  <h3 className="text-sm font-semibold">Suivi du cycle menstruel</h3>
                   <p className="text-xs text-stone">Activez le suivi du cycle pour ce consultant.</p>
                 </div>
                 {cycleIsTracking ? (
@@ -2026,7 +2019,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               ) : (
                 <div className="flex flex-col gap-3">
                   <p className="text-sm text-stone">
-                    Le suivi du cycle menstruel permet de corréler les symptômes, l&apos;énergie et les données de sommeil/HRV avec les phases du cycle. Activez-le pour afficher l&apos;onglet Cycle et les indicateurs de phase dans le journal et la bague connectée.
+                    Le suivi du cycle menstruel permet de corréler les symptômes, l&apos;énergie et les données de sommeil/HRV avec les phases du cycle. Activez-le pour afficher l&apos;onglet Cycle et les indicateurs de phase dans le journal et l&apos;objet connecté.
                   </p>
                   <Button variant="primary" onClick={handleActivateCycleTracking} loading={cycleActivating}>
                     Activer le suivi du cycle
@@ -2039,7 +2032,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           <Card>
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <h2 className="text-sm font-semibold">{T.labelLiensFamiliaux}</h2>
+                <h3 className="text-sm font-semibold">{T.labelLiensFamiliaux}</h3>
                 <Button variant="secondary" onClick={() => {
                   setRelationshipForm({ related_consultant_id: '', relationship_type: 'parent', label: '' });
                   setConsultantSearch('');
@@ -2087,7 +2080,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         </div>
       )}
 
-      {/* ═══════════════ DOSSIER MÉDICAL TAB ═══════════════ */}
+      {/* ═══════════════ DOSSIER DE SANTÉ TAB ═══════════════ */}
       {tab === T.tabDossierMedical && (
         <div className="space-y-4">
           {/* ─── Antécédents ───── */}
@@ -2095,7 +2088,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold">{T.labelAntecedents}</h2>
+                  <h3 className="text-sm font-semibold">{T.labelAntecedents}</h3>
                   <p className="text-xs text-stone">Antécédents personnels, familiaux et chirurgicaux.</p>
                 </div>
                 <Button variant="secondary" onClick={() => {
@@ -2161,7 +2154,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold">{T.labelAllergies}</h2>
+                  <h3 className="text-sm font-semibold">{T.labelAllergies}</h3>
                   <p className="text-xs text-stone">Allergies, intolérances et sensibilités.</p>
                 </div>
                 <Button variant="secondary" onClick={() => {
@@ -2228,7 +2221,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold">{T.labelTraitements}</h2>
+                  <h3 className="text-sm font-semibold">{T.labelTraitements}</h3>
                   <p className="text-xs text-stone">Accompagnements et traitements actuels.</p>
                 </div>
                 <Button variant="secondary" onClick={() => {
@@ -2289,14 +2282,14 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               onClick={() => router.push(`/agenda`)}
               icon={<span className="text-sm">+</span>}
             >
-              Planifier une seance
+              Planifier une séance
             </Button>
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             {/* Upcoming appointments */}
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold">Prochaines seances</h2>
+                <h3 className="text-sm font-semibold">Prochaines séances</h3>
               </CardHeader>
               <CardContent>
                 {(() => {
@@ -2308,8 +2301,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     return (
                       <EmptyState
                         icon="calendar"
-                        title="A planifier"
-                        description="Aucune seance programmee pour le moment."
+                        title="À planifier"
+                        description="Aucune séance programmée pour le moment."
                         action={
                           <Button variant="primary" onClick={() => router.push('/agenda')}>
                             Ouvrir l&apos;agenda
@@ -2354,7 +2347,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             {/* History */}
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold">Historique des seances</h2>
+                <h3 className="text-sm font-semibold">Historique des séances</h3>
               </CardHeader>
               <CardContent>
                 {(() => {
@@ -2365,8 +2358,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                     return (
                       <EmptyState
                         icon="appointments"
-                        title="Aucune seance passee"
-                        description="L'historique des seances apparaitra ici."
+                        title="Aucune séance passee"
+                        description="L'historique des séances apparaîtra ici."
                       />
                     );
                   }
@@ -2394,7 +2387,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                                 {APPOINTMENT_STATUS_LABEL[appointment.status] || appointment.status}
                               </Badge>
                               {appointment.status === 'completed' && !appointment.notes_internal && !appointment.notes && (
-                                <span className="text-xs text-amber-600">Notes a rediger</span>
+                                <span className="text-xs text-amber-600">Notes à rédiger</span>
                               )}
                             </div>
                           </div>
@@ -2415,8 +2408,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       {tab === 'Anamnèse' && (
         <Card className={cn(anamnesisEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
           <CardHeader>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold">Anamnèse</h2>
+            <div className="flex flex-wrap items-center justify-end gap-2">
               {!anamnesisEditing ? (
                 <Button variant="secondary" onClick={() => setAnamnesisEditing(true)}>
                   Modifier
@@ -2520,10 +2512,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           <Card className={cn(terrainEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Leaf className="h-4 w-4 text-sage" />
-                  <h2 className="text-sm font-semibold">Bilan de terrain</h2>
-                </div>
+                <p className="text-xs text-stone">Constitution, surcharges, émonctoires et iridologie.</p>
                 {!terrainEditing ? (
                   <Button variant="secondary" onClick={() => setTerrainEditing(true)}>
                     Modifier
@@ -2994,7 +2983,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           <Card>
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold">Profil du cycle</h2>
+                <h3 className="text-sm font-semibold">Profil du cycle</h3>
                 {!cycleProfileEditing && (
                   <Button variant="secondary" onClick={() => setCycleProfileEditing(true)}>
                     Modifier
@@ -3056,7 +3045,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           {/* ─── Section 2: Calendrier du cycle ───── */}
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold">Calendrier du cycle</h2>
+              <h3 className="text-sm font-semibold">Calendrier du cycle</h3>
             </CardHeader>
             <CardContent>
               <CycleCalendar
@@ -3072,7 +3061,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           {/* ─── Section 3: Symptômes du cycle en cours ───── */}
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold">Symptômes du cycle en cours</h2>
+              <h3 className="text-sm font-semibold">Symptômes du cycle en cours</h3>
             </CardHeader>
             <CardContent>
               <SymptomGrid entries={cycleEntries} cycleProfile={cycleProfile} />
@@ -3082,7 +3071,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           {/* ─── Section 4: Superposition cycle × données ───── */}
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold">Superposition cycle × données de suivi</h2>
+              <h3 className="text-sm font-semibold">Superposition cycle × données de suivi</h3>
               <p className="text-xs text-stone">Sélectionnez 1 ou 2 variables pour les superposer aux phases du cycle.</p>
             </CardHeader>
             <CardContent>
@@ -3098,7 +3087,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           {/* ─── Section 5: Corrélations ───── */}
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold">Corrélations par phase</h2>
+              <h3 className="text-sm font-semibold">Corrélations par phase</h3>
               <p className="text-xs text-stone">Moyennes des indicateurs de suivi par phase du cycle.</p>
             </CardHeader>
             <CardContent>
@@ -3114,7 +3103,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           {/* ─── Section 6: Historique des cycles ───── */}
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold">Historique des cycles</h2>
+              <h3 className="text-sm font-semibold">Historique des cycles</h3>
             </CardHeader>
             <CardContent>
               {cycleHistory.length === 0 ? (
@@ -3163,8 +3152,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
       {tab === T.tabBagueConnectee && (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Bague connectée</h2>
+            <div className="flex items-center justify-end">
               {isPremium ? <Badge variant="active">Actif</Badge> : <Badge variant="attention">Non activé</Badge>}
             </div>
           </CardHeader>
@@ -3223,10 +3211,10 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 </div>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-charcoal">
-                    <p className="text-sm font-semibold">Fonctionnalité Bague connectée verrouillée</p>
+                    <p className="text-sm font-semibold">Fonctionnalité Objet connecté verrouillée</p>
                   </div>
                   <p>
-                    Proposez l&apos;offre Premium a votre client afin d&apos;avoir acces a cette fonctionnalite.
+                    Proposez l&apos;offre Premium à votre client afin d&apos;avoir accès à cette fonctionnalité.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="primary" onClick={handleUpgradePremium} loading={premiumLoading}>
@@ -3244,8 +3232,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             ) : wearableSummaries.length === 0 ? (
               <EmptyState
                 icon="inbox"
-                title="Aucune donnée bague connectée disponible"
-                description="Les donnees s'afficheront des la premiere synchronisation."
+                title="Aucune donnée d'objet connecté disponible"
+                description="Les données s'afficheront des la première synchronisation."
               />
             ) : (
               <div className="space-y-4">
@@ -3291,8 +3279,8 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 ) : (
                   <EmptyState
                     icon="notifications"
-                    title="Aucun insight bague connectée disponible"
-                    description="Les suggestions apparaitront apres analyse."
+                    title="Aucun insight d'objet connecté disponible"
+                    description="Les suggestions apparaîtront après analyse."
                   />
                 )}
               </div>
@@ -3308,7 +3296,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold">Journal enrichi</h2>
+                  <h3 className="text-sm font-semibold">Journal enrichi</h3>
                   <span className="text-xs text-stone">
                     {journalForm.date ? formatDate(journalForm.date) : 'Aucune entrée'}
                   </span>
@@ -3538,7 +3526,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           <Card>
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold">Indicateurs de suivi</h2>
+                <h3 className="text-sm font-semibold">Indicateurs de suivi</h3>
                 <Button variant="secondary" size="sm" onClick={() => { setEditingIndicator(null); setShowIndicatorForm(true); }}>
                   <Settings className="h-3.5 w-3.5 mr-1" /> Personnaliser
                 </Button>
@@ -3593,7 +3581,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           {observanceItems.length > 0 && observanceSummary ? (
             <Card>
               <CardHeader>
-                <h2 className="text-sm font-semibold">Observance du programme</h2>
+                <h3 className="text-sm font-semibold">Observance du programme</h3>
               </CardHeader>
               <CardContent>
                 <ObservanceChart summary={observanceSummary} />
@@ -3615,7 +3603,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
           {/* ─── Section 5: Historique ───── */}
           <Card>
             <CardHeader>
-              <h2 className="text-sm font-semibold">Historique</h2>
+              <h3 className="text-sm font-semibold">Historique</h3>
             </CardHeader>
             <CardContent>
               {/* Transit Timeline */}
@@ -3717,7 +3705,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
         <Card className={cn(noteEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold">Notes privées de consultation</h2>
+              <h3 className="text-sm font-semibold">Notes privées de consultation</h3>
               {!noteEditing ? (
                 <Button variant="secondary" onClick={() => setNoteEditing(true)}>
                   Modifier
@@ -3734,9 +3722,9 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-charcoal">Notes privees</p>
+                <p className="text-sm font-semibold text-charcoal">Notes privées</p>
                 <p className="mt-1 text-xs text-stone">
-                  Visibles uniquement par le naturopathe. Non partagees avec le consultant.
+                  Visibles uniquement par le naturopathe. Non partagées avec le consultant.
                 </p>
               </div>
             </div>
@@ -3878,7 +3866,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-sm font-semibold">Versions du {T.conseillancierLower}</h2>
+                  <h3 className="text-sm font-semibold">Versions du {T.conseillancierLower}</h3>
                   <p className="text-xs text-stone">
                     {T.descConseillancier}
                   </p>
@@ -3967,9 +3955,9 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <h2 className="text-sm font-semibold">
+                    <h3 className="text-sm font-semibold">
                       {T.conseillancier} v{activePlan.version}
-                    </h2>
+                    </h3>
                     <p className="text-xs text-stone">
                       {canEditPlan
                         ? 'Version brouillon (modifiable).'
@@ -4212,16 +4200,12 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
 
       {tab === T.tabDocuments && (
         <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold">{T.tabDocuments}</h2>
-            <p className="text-xs text-stone">{T.descDocuments}</p>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-5">
             {!consultant.analysis_results || consultant.analysis_results.length === 0 ? (
               <EmptyState
                 icon="documents"
-                title="Aucun resultat d'analyse"
-                description="Les resultats d'analyses medicaux apparaitront ici lorsqu'ils seront disponibles."
+                title="Aucun résultat d'analyse"
+                description="Les résultats d'analyses médicaux apparaîtront ici lorsqu'ils seront disponibles."
               />
             ) : (
               <div className="space-y-3">
@@ -4273,10 +4257,7 @@ export function ConsultantTabs({ consultant }: { consultant: ConsultantWithDetai
 
       {tab === 'Messages' && (
         <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold">Messages</h2>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-5">
             {messages.length === 0 ? (
               <EmptyState
                 icon="messages"

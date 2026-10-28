@@ -23,7 +23,7 @@ function fakeAiSummary(notes: string) {
     'Résumé (proposition IA — à valider) :',
     ...keyPoints,
     '',
-    'Note : aucune interpretation medicale, uniquement un resume des elements saisis.'
+    'Note : aucune interprétation médicale, uniquement un résumé des éléments saisis.'
   ].join('\n');
 }
 
@@ -245,7 +245,7 @@ export default function ConsultationPage() {
               <div className="rounded-2xl bg-surface ring-1 ring-black/5 p-3">
                 <div className="text-xs text-stone">Prochaine action</div>
                 <div className="mt-1 text-sm text-charcoal">
-                  {consultant?.is_premium ? 'Analyser la semaine bague connectée et ajuster le plan.' : 'Finaliser les objectifs mesurables.'}
+                  {consultant?.is_premium ? 'Analyser la semaine de l’objet connecté et ajuster le plan.' : 'Finaliser les objectifs mesurables.'}
                 </div>
               </div>
             </CardContent>

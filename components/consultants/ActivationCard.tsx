@@ -39,8 +39,8 @@ export function ActivationCard({
       await navigator.clipboard.writeText(displayCode);
       setCopied(true);
       setToast({
-        title: 'Code copie',
-        description: 'Le code a ete copie dans le presse-papier.',
+        title: 'Code copié',
+        description: 'Le code a été copié dans le presse-papier.',
         variant: 'success'
       });
       setTimeout(() => setCopied(false), 2000);
@@ -62,8 +62,8 @@ export function ActivationCard({
           setDisplayCode(result.code);
         }
         setToast({
-          title: 'Code renvoye',
-          description: `Un nouvel email a ete envoye a ${consultantEmail}.`,
+          title: 'Code renvoyé',
+          description: `Un nouvel email a été envoyé à ${consultantEmail}.`,
           variant: 'success'
         });
       } else {
@@ -95,9 +95,9 @@ export function ActivationCard({
     const diffMs = date.getTime() - now.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays <= 0) return 'Expire';
-    if (diffDays === 1) return 'Expire dans 1 jour';
-    return `Expire dans ${diffDays} jours`;
+    if (diffDays <= 0) return 'Expiré';
+    if (diffDays === 1) return 'Expiré dans 1 jour';
+    return `Expiré dans ${diffDays} jours`;
   };
 
   if (isHidden) {
@@ -220,7 +220,7 @@ export function ActivationCard({
               icon={copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               className="flex-1"
             >
-              {copied ? 'Code copie' : 'Copier le code'}
+              {copied ? 'Code copié' : 'Copier le code'}
             </Button>
             <Button
               variant="outline"
@@ -245,8 +245,8 @@ export function ActivationCard({
 
           {/* Info text */}
           <p className="text-xs text-stone mt-4 text-center">
-            Le consultant recevra un email a {consultantEmail} avec les instructions d&apos;activation.
-            Cette carte disparaitra automatiquement une fois le compte active.
+            Le consultant recevra un email à {consultantEmail} avec les instructions d&apos;activation.
+            Cette carte disparaîtra automatiquement une fois le compte active.
           </p>
         </motion.div>
       </AnimatePresence>

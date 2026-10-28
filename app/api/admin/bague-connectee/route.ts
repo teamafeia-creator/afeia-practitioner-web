@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('[admin] bague-connectee fetch error:', error);
-      return NextResponse.json({ error: 'Erreur lors du chargement bague connectée.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur lors du chargement des objets connectés.' }, { status: 500 });
     }
 
     return NextResponse.json({ consultants: data ?? [], total: count ?? 0 });

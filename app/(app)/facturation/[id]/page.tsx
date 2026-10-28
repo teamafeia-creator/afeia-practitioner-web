@@ -77,7 +77,7 @@ export default function InvoiceDetailPage() {
       <div className="space-y-6">
         <PageHeader title="Facture introuvable" />
         <div className="glass-card rounded-lg p-8 text-center text-stone">
-          Cette facture n&apos;existe pas ou vous n&apos;y avez pas acces.
+          Cette facture n&apos;existe pas ou vous n&apos;y avez pas accès.
         </div>
       </div>
     );

@@ -124,10 +124,10 @@ export default function ConsultationTypesPage() {
 
       if (editingId) {
         await updateConsultationType(editingId, payload);
-        showToast.success('Type de seance mis a jour');
+        showToast.success('Type de séance mis à jour');
       } else {
         await createConsultationType(payload as Parameters<typeof createConsultationType>[0]);
-        showToast.success('Type de seance cree');
+        showToast.success('Type de séance créé');
       }
 
       setModalOpen(false);
@@ -143,7 +143,7 @@ export default function ConsultationTypesPage() {
     try {
       await updateConsultationType(ct.id, { is_active: !ct.is_active });
       await loadTypes();
-      showToast.success(ct.is_active ? 'Type desactive' : 'Type reactive');
+      showToast.success(ct.is_active ? 'Type désactivé' : 'Type reactive');
     } catch {
       showToast.error('Erreur lors de la modification');
     }
@@ -154,7 +154,7 @@ export default function ConsultationTypesPage() {
     try {
       await deleteConsultationType(ct.id);
       await loadTypes();
-      showToast.success('Type supprime');
+      showToast.success('Type supprimé');
     } catch {
       showToast.error('Erreur lors de la suppression');
     }
@@ -170,7 +170,7 @@ export default function ConsultationTypesPage() {
         newTypes.map((t, i) => updateConsultationType(t.id, { sort_order: i }))
       );
     } catch {
-      showToast.error('Erreur lors du reordonnement');
+      showToast.error('Erreur lors du réordonnement');
       await loadTypes();
     }
   }
@@ -185,7 +185,7 @@ export default function ConsultationTypesPage() {
         newTypes.map((t, i) => updateConsultationType(t.id, { sort_order: i }))
       );
     } catch {
-      showToast.error('Erreur lors du reordonnement');
+      showToast.error('Erreur lors du réordonnement');
       await loadTypes();
     }
   }
@@ -201,8 +201,8 @@ export default function ConsultationTypesPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <PageHeader
-          title="Types de seance"
-          subtitle="Configurez vos types de consultation, durees et tarifs."
+          title="Types de séance"
+          subtitle="Configurez vos types de consultation, durées et tarifs."
         />
       </div>
 
@@ -216,7 +216,7 @@ export default function ConsultationTypesPage() {
         <div className="glass-card p-8 text-center text-stone">Chargement...</div>
       ) : types.length === 0 ? (
         <div className="glass-card p-8 text-center text-stone">
-          Aucun type de seance configure.
+          Aucun type de séance configuré.
         </div>
       ) : (
         <div className="space-y-3">
@@ -269,7 +269,7 @@ export default function ConsultationTypesPage() {
                 <button
                   onClick={() => handleToggleActive(ct)}
                   className="p-2 rounded-lg hover:bg-surface/50 transition-colors"
-                  title={ct.is_active ? 'Desactiver' : 'Reactiver'}
+                  title={ct.is_active ? 'Désactiver' : 'Réactiver'}
                 >
                   {ct.is_active ? (
                     <ToggleRight className="h-5 w-5 text-sage" />
@@ -299,7 +299,7 @@ export default function ConsultationTypesPage() {
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingId ? 'Modifier le type de seance' : 'Nouveau type de seance'}
+        title={editingId ? 'Modifier le type de séance' : 'Nouveau type de séance'}
         size="lg"
       >
         <div className="space-y-4">
@@ -307,13 +307,13 @@ export default function ConsultationTypesPage() {
             label="Nom"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="Ex: Premiere consultation"
+            placeholder="Ex: Première consultation"
             required
           />
 
           <div className="grid grid-cols-2 gap-4">
             <Select
-              label="Duree"
+              label="Durée"
               value={form.duration_minutes}
               onChange={(e) => setForm((f) => ({ ...f, duration_minutes: Number(e.target.value) }))}
             >
@@ -352,7 +352,7 @@ export default function ConsultationTypesPage() {
           </div>
 
           <Select
-            label="Buffer apres la seance"
+            label="Buffer après la séance"
             value={form.buffer_minutes}
             onChange={(e) => setForm((f) => ({ ...f, buffer_minutes: Number(e.target.value) }))}
           >
@@ -383,7 +383,7 @@ export default function ConsultationTypesPage() {
             >
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-stone" />
-                <span className="text-[13px] font-medium text-stone">Seance collective</span>
+                <span className="text-[13px] font-medium text-stone">Séance collective</span>
               </div>
               {form.is_group ? (
                 <ToggleRight className="h-5 w-5 text-sage" />
@@ -413,7 +413,7 @@ export default function ConsultationTypesPage() {
             Annuler
           </Button>
           <Button variant="primary" onClick={handleSave} loading={saving}>
-            {editingId ? 'Enregistrer' : 'Creer'}
+            {editingId ? 'Enregistrer' : 'Créer'}
           </Button>
         </ModalFooter>
       </Modal>

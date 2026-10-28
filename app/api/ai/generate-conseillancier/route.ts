@@ -54,11 +54,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (consultantError || !consultant) {
-      return NextResponse.json({ error: 'Consultant non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Consultant non trouvé.' }, { status: 404 });
     }
 
     if (consultant.practitioner_id !== practitionerId) {
-      return NextResponse.json({ error: 'Acces refuse.' }, { status: 403 });
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     }
 
     // 4. Check AI quota
@@ -125,9 +125,9 @@ export async function POST(request: NextRequest) {
     // 7. Build prompts
     const systemPrompt = buildSystemPrompt(aiProfile);
 
-    let userPrompt = `Redige un conseillancier complet et personnalise pour ce consultant.\n\n${contextText}`;
+    let userPrompt = `Rédigé un conseillancier complet et personnalisé pour ce consultant.\n\n${contextText}`;
     if (inputSafety.hasMedicalAlerts) {
-      userPrompt += `\n\nATTENTION : Des signaux d'alerte medicaux ont ete detectes dans le bilan : ${inputSafety.alerts.join(', ')}. Tu DOIS inclure un avertissement de consultation medicale dans les sections concernees.`;
+      userPrompt += `\n\nATTENTION : Des signaux d'alerte médicaux ont été détectés dans le bilan : ${inputSafety.alerts.join(', ')}. Tu DOIS inclure un avertissement de consultation médicale dans les sections concernées.`;
     }
 
     // 8. Call Anthropic API
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json(
-        { error: 'Erreur de format dans la reponse IA. Veuillez reessayer.' },
+        { error: 'Erreur de format dans la réponse IA. Veuillez réessayer.' },
         { status: 500 }
       );
     }
@@ -296,12 +296,12 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error: unknown) {
-    console.error('AI generation error:', error);
+    console.error('AI génération error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
 
     return NextResponse.json(
       {
-        error: 'Erreur lors de la generation. Veuillez reessayer.',
+        error: 'Erreur lors de la génération. Veuillez réessayer.',
         details: process.env.NODE_ENV === 'development' ? message : undefined,
       },
       { status: 500 }

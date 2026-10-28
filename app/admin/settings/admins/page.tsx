@@ -34,7 +34,7 @@ export default function SettingsAdminsPage() {
       setAdmins(data.admins ?? []);
     } catch (err) {
       console.error('[admin] loadAdmins error:', err);
-      showToast.error('Erreur reseau lors du chargement des admins.');
+      showToast.error('Erreur réseau lors du chargement des admins.');
       setAdmins([]);
     } finally {
       setLoading(false);
@@ -63,12 +63,12 @@ export default function SettingsAdminsPage() {
         return;
       }
 
-      showToast.success('Admin ajoute.');
+      showToast.success('Admin ajouté.');
       setEmail('');
       loadAdmins();
     } catch (err) {
       console.error('[admin] handleAddAdmin error:', err);
-      showToast.error("Erreur reseau lors de l'ajout de l'admin.");
+      showToast.error("Erreur réseau lors de l'ajout de l'admin.");
     } finally {
       setAdding(false);
     }
@@ -93,7 +93,7 @@ export default function SettingsAdminsPage() {
       loadAdmins();
     } catch (err) {
       console.error('[admin] handleRemoveAdmin error:', err);
-      showToast.error("Erreur reseau lors de la suppression de l'admin.");
+      showToast.error("Erreur réseau lors de la suppression de l'admin.");
     } finally {
       setRemovingEmail(null);
     }
@@ -103,7 +103,7 @@ export default function SettingsAdminsPage() {
     <div className="space-y-6">
       <AdminHeader
         title="Admins"
-        subtitle="Gerer la liste des emails autorises a acceder a l'espace admin."
+        subtitle="Gérer la liste des emails autorisés à accéder à l'espace admin."
       />
 
       {/* Add admin form */}
@@ -148,7 +148,7 @@ export default function SettingsAdminsPage() {
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                 <th className="px-5 py-3">Email</th>
-                <th className="px-5 py-3">Ajoute le</th>
+                <th className="px-5 py-3">Ajouté le</th>
                 <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>

@@ -50,7 +50,7 @@ export async function POST(
     const practitioner = await getPractitionerBySlug(params.slug);
     if (!practitioner) {
       return NextResponse.json(
-        { error: 'Praticien non trouve.' },
+        { error: 'Praticien non trouvé.' },
         { status: 404 }
       );
     }
@@ -67,14 +67,14 @@ export async function POST(
 
     if (sessionError || !session) {
       return NextResponse.json(
-        { error: 'Seance introuvable.' },
+        { error: 'Séance introuvable.' },
         { status: 404 }
       );
     }
 
     if (!['scheduled', 'confirmed'].includes(session.status)) {
       return NextResponse.json(
-        { error: 'Cette seance n\'accepte plus d\'inscriptions.' },
+        { error: 'Cette séance n\'accepte plus d\'inscriptions.' },
         { status: 400 }
       );
     }
@@ -86,7 +86,7 @@ export async function POST(
     const currentCount = countData ?? 0;
     if (currentCount >= session.max_participants) {
       return NextResponse.json(
-        { error: 'FULL', message: 'Cette seance est complete.' },
+        { error: 'FULL', message: 'Cette séance est complete.' },
         { status: 409 }
       );
     }
@@ -102,7 +102,7 @@ export async function POST(
 
     if (existing) {
       return NextResponse.json(
-        { error: 'DUPLICATE', message: 'Cette adresse email est deja inscrite a cette seance.' },
+        { error: 'DUPLICATE', message: 'Cette adresse email est déjà inscrite à cette séance.' },
         { status: 409 }
       );
     }
@@ -165,9 +165,9 @@ export async function POST(
     }).format(endsAt)}`;
 
     const locationText = session.location_type === 'video'
-      ? 'Visioconference'
+      ? 'Visioconférence'
       : session.location_type === 'home_visit'
-        ? 'A domicile'
+        ? 'À domicile'
         : (session.location_details || practitioner.booking_address || 'Au cabinet');
 
     // Send confirmation email to participant

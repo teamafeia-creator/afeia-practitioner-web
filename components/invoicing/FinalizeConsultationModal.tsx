@@ -79,11 +79,11 @@ export function FinalizeConsultationModal({
 
       if (isPaid) {
         showToast.success(
-          `Facture ${invoice.numero} creee et envoyee a ${consultantName}`
+          `Facture ${invoice.numero} créée et envoyée à ${consultantName}`
         );
       } else {
         showToast.success(
-          `Facture ${invoice.numero} creee (en attente de paiement)`
+          `Facture ${invoice.numero} créée (en attente de paiement)`
         );
       }
 
@@ -140,20 +140,20 @@ export function FinalizeConsultationModal({
         </div>
 
         <Select
-          label="Comment le consultant a-t-il paye ?"
+          label="Comment le consultant a-t-il payé ?"
           value={paymentMethod}
           onChange={(e) => setPaymentMethod(e.target.value)}
         >
-          <option value="especes">Especes ({formatCurrency(montant)})</option>
-          <option value="cheque">Cheque</option>
+          <option value="especes">Espèces ({formatCurrency(montant)})</option>
+          <option value="cheque">Chèque</option>
           <option value="cb">Carte bancaire</option>
           <option value="virement">Virement</option>
-          <option value="non_paye">Non paye (emettre la facture)</option>
+          <option value="non_paye">Non payé (émettre la facture)</option>
         </Select>
 
         {paymentMethod === 'cheque' && (
           <Textarea
-            placeholder="Numero de cheque (optionnel)"
+            placeholder="Numéro de chèque (optionnel)"
             value={paymentNotes}
             onChange={(e) => setPaymentNotes(e.target.value)}
             className="min-h-[60px]"

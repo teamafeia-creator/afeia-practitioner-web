@@ -20,7 +20,7 @@ export default function RgpdPage() {
     try {
       const response = await fetch('/api/me');
       if (!response.ok) {
-        throw new Error('Impossible de recuperer vos donnees.');
+        throw new Error('Impossible de récupérer vos données.');
       }
       const data = await response.json();
 
@@ -61,8 +61,8 @@ export default function RgpdPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Confidentialite et donnees"
-        subtitle="Gerez vos donnees personnelles conformement au RGPD."
+        title="Confidentialité et données"
+        subtitle="Gérez vos données personnelles conformément au RGPD."
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -75,10 +75,10 @@ export default function RgpdPage() {
               </div>
               <div>
                 <h2 className="font-serif text-base font-semibold text-charcoal">
-                  Exporter mes donnees
+                  Exporter mes données
                 </h2>
                 <p className="text-[13px] text-stone">
-                  Telechargez une copie de vos donnees personnelles au format JSON.
+                  Téléchargez une copie de vos données personnelles au format JSON.
                 </p>
               </div>
             </div>
@@ -91,7 +91,7 @@ export default function RgpdPage() {
               loading={downloadLoading}
               onClick={handleDownloadData}
             >
-              Telecharger mes donnees
+              Télécharger mes données
             </Button>
           </CardContent>
         </Card>
@@ -105,10 +105,10 @@ export default function RgpdPage() {
               </div>
               <div>
                 <h2 className="font-serif text-base font-semibold text-charcoal">
-                  Politique de confidentialite
+                  Politique de confidentialité
                 </h2>
                 <p className="text-[13px] text-stone">
-                  Consultez notre politique de protection des donnees personnelles.
+                  Consultez notre politique de protection des données personnelles.
                 </p>
               </div>
             </div>
@@ -144,7 +144,7 @@ export default function RgpdPage() {
                   Supprimer mon compte
                 </h2>
                 <p className="text-[13px] text-stone">
-                  Supprimez definitivement votre compte et toutes vos donnees.
+                  Supprimez définitivement votre compte et toutes vos données.
                 </p>
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function RgpdPage() {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteAccount}
         title="Supprimer votre compte"
-        message="Cette action est irreversible. Toutes vos donnees personnelles, vos consultants, vos documents et votre historique seront definitivement supprimes. Etes-vous certain de vouloir continuer ?"
+        message="Cette action est irréversible. Toutes vos données personnelles, vos consultants, vos documents et votre historique seront définitivement supprimés. Etes-vous certain de vouloir continuer ?"
         confirmText="Oui, supprimer mon compte"
         cancelText="Annuler"
         variant="danger"

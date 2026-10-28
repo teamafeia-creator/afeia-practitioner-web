@@ -56,8 +56,8 @@ function SummaryPDF({
   });
 
   const paymentLabels: Record<string, string> = {
-    especes: 'Especes',
-    cheque: 'Cheque',
+    especes: 'Espèces',
+    cheque: 'Chèque',
     cb: 'Carte bancaire',
     virement: 'Virement',
     stripe: 'Paiement en ligne',
@@ -167,7 +167,7 @@ function SummaryPDF({
             React.createElement(
               Text,
               { style: styles.col5 },
-              inv.is_avoir ? 'Avoir' : inv.status === 'paid' ? 'Payee' : inv.status === 'issued' ? 'En attente' : inv.status
+              inv.is_avoir ? 'Avoir' : inv.status === 'paid' ? 'Payée' : inv.status === 'issued' ? 'En attente' : inv.status
             )
           )
         )
@@ -190,7 +190,7 @@ export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
       }
       case 'year':
         startDate = new Date(now.getFullYear(), 0, 1);
-        periodLabel = `Annee ${now.getFullYear()}`;
+        periodLabel = `Année ${now.getFullYear()}`;
         break;
       case 'month':
       default:
@@ -247,7 +247,7 @@ export async function GET(request: NextRequest) {
 
     if (!settings) {
       return NextResponse.json(
-        { message: 'Parametres de facturation non configures' },
+        { message: 'Paramètres de facturation non configurés' },
         { status: 400 }
       );
     }

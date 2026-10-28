@@ -371,7 +371,7 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error('Exception dossier PDF generation:', err);
+    console.error('Exception dossier PDF génération:', err);
     return NextResponse.json(
       { error: 'Erreur lors de la génération du PDF.' },
       { status: 500 }

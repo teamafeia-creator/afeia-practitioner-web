@@ -86,7 +86,7 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
 
         {/* Settings section */}
         <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-          Parametres
+          Paramètres
         </div>
         {settingsNav.map((item) => {
           const active = isActive(item.href);
@@ -119,7 +119,7 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
             className="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors"
           >
             <LogOut className="h-3.5 w-3.5" />
-            Deconnexion
+            Déconnexion
           </button>
         </div>
         <Link

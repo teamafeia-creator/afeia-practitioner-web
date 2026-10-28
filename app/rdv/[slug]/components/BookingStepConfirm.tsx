@@ -60,7 +60,7 @@ export function BookingStepConfirm({
 
       <div>
         <h2 className="text-xl font-semibold text-charcoal">
-          {isGroupSession ? 'Inscription confirmee !' : 'Rendez-vous confirme !'}
+          {isGroupSession ? 'Inscription confirmée !' : 'Rendez-vous confirmé !'}
         </h2>
       </div>
 
@@ -69,11 +69,11 @@ export function BookingStepConfirm({
         <div className="flex items-center gap-2 text-sm">
           <span className="text-stone">Date :</span>
           <span className="font-medium text-charcoal capitalize">
-            {dateFormatter.format(startsAt)} a {timeFormatter.format(startsAt)}
+            {dateFormatter.format(startsAt)} à {timeFormatter.format(startsAt)}
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-stone">Seance :</span>
+          <span className="text-stone">Séance :</span>
           <span className="font-medium text-charcoal">
             {confirmation.consultation_type_name}{confirmation.duration_minutes > 0 ? ` (${confirmation.duration_minutes} min)` : ''}
           </span>
@@ -99,11 +99,11 @@ export function BookingStepConfirm({
           <div className="flex items-center gap-2">
             <Video className="h-5 w-5 text-sage" />
             <span className="text-sm font-semibold text-charcoal">
-              Consultation en visioconference
+              Consultation en visioconférence
             </span>
           </div>
           <p className="text-sm text-stone">
-            Le lien sera actif 15 minutes avant votre consultation. Il a aussi ete envoye par email.
+            Le lien sera actif 15 minutes avant votre consultation. Il a aussi été envoyé par email.
           </p>
           {(() => {
             const now = new Date();
@@ -123,7 +123,7 @@ export function BookingStepConfirm({
               </a>
             ) : (
               <div className="text-xs text-stone text-center">
-                Le bouton sera actif 15 minutes avant le debut.
+                Le bouton sera actif 15 minutes avant le début.
               </div>
             );
           })()}
@@ -131,7 +131,7 @@ export function BookingStepConfirm({
       )}
 
       <p className="text-sm text-stone">
-        Un email de confirmation vous a ete envoye a{' '}
+        Un email de confirmation vous a été envoyé à{' '}
         <span className="font-medium">{email}</span>
       </p>
 
@@ -144,7 +144,7 @@ export function BookingStepConfirm({
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-sage/20 bg-surface/80 px-5 py-2.5 text-sm font-medium text-sage hover:bg-sage-light/50 transition-colors"
           >
             <Download className="h-4 w-4" />
-            Ajouter a mon agenda
+            Ajouter à mon agenda
           </a>
         )}
         <button

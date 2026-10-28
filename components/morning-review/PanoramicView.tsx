@@ -79,24 +79,24 @@ export function PanoramicView({ consultantsSummary }: PanoramicViewProps) {
                 {counts.attention > 0 && (
                   <>
                     <span className="inline-block w-2 h-2 rounded-full mr-2" style={{ backgroundColor: ATTENTION_COLORS.attention }} />
-                    {counts.attention} a surveiller
+                    {counts.attention} à surveiller
                   </>
                 )}
                 {counts.urgent > 0 && (
                   <>
                     {counts.attention > 0 ? <>{' '}&bull;{' '}</> : null}
                     <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ backgroundColor: ATTENTION_COLORS.urgent }} />
-                    {counts.urgent} necessitent attention
+                    {counts.urgent} nécessitent attention
                   </>
                 )}
                 {counts.attention === 0 && counts.urgent === 0 && (
-                  <span>Aucun consultant ne necessite d&apos;attention particuliere</span>
+                  <span>Aucun consultant ne nécessite d&apos;attention particulière</span>
                 )}
               </p>
               {counts.insufficient > 0 && (
                 <p>
                   <span className="inline-block w-2 h-2 rounded-full mr-2" style={{ backgroundColor: ATTENTION_COLORS.insufficient }} />
-                  {counts.insufficient} avec donnees insuffisantes
+                  {counts.insufficient} avec données insuffisantes
                 </p>
               )}
             </div>

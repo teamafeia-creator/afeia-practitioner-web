@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
               href="/admin/settings/admins"
               className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-surface px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
-              Gerer les admins
+              Gérer les admins
             </Link>
           }
         />
@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
             <div className="relative">
               <AdminMetricCard
                 icon={AlertCircle}
-                label="Paiements echoues"
+                label="Paiements échoués"
                 value={metrics.failedPayments}
                 accentColor="red"
               />
@@ -163,7 +163,7 @@ export default function AdminDashboardPage() {
             </div>
             <AdminMetricCard
               icon={Activity}
-              label="Taux d'activite"
+              label="Taux d'activité"
               value={`${metrics.activityRate}%`}
               accentColor="teal"
               progress={metrics.activityRate}
@@ -217,7 +217,7 @@ export default function AdminDashboardPage() {
               <p className="text-xs text-amber-600 mt-0.5">
                 Ces patients ont un code d&apos;activation non utilise.{' '}
                 <Link href="/admin/patients?activation=pending" className="underline hover:text-amber-800">
-                  Voir les details
+                  Voir les détails
                 </Link>
               </p>
             </div>
@@ -228,7 +228,7 @@ export default function AdminDashboardPage() {
         {!loading && alerts.length > 0 && (
           <div className="rounded-lg border border-slate-200 bg-surface p-5">
             <h2 className="text-base font-semibold text-slate-800">
-              A traiter
+              À traiter
             </h2>
             <div className="mt-3 space-y-2">
               {alerts.slice(0, 10).map((alert) => (
@@ -248,7 +248,7 @@ export default function AdminDashboardPage() {
         {!loading && activity.length > 0 && (
           <div className="rounded-lg border border-slate-200 bg-surface p-5">
             <h2 className="text-base font-semibold text-slate-800">
-              Activite recente
+              Activité récente
             </h2>
             <div className="mt-3 divide-y divide-slate-100">
               {activity.map((event) => (

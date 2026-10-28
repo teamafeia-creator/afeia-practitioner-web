@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Erreur liste praticiens:', error);
-      return NextResponse.json({ error: 'Erreur lors de la recuperation des praticiens.' }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur lors de la récupération des praticiens.' }, { status: 500 });
     }
 
     return NextResponse.json({ practitioners: data || [], total: count ?? 0 });

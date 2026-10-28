@@ -40,11 +40,11 @@ export async function GET(
       .single();
 
     if (consultantError || !consultant) {
-      return NextResponse.json({ error: 'Consultant non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Consultant non trouvé.' }, { status: 404 });
     }
 
     if (consultant.practitioner_id !== practitionerId) {
-      return NextResponse.json({ error: 'Acces refuse.' }, { status: 403 });
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     }
 
     if (!consultant.email) {

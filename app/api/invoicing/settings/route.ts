@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ settings: data || null });
   } catch (error) {
-    console.error('Erreur recuperation parametres:', error);
+    console.error('Erreur récupération paramètres:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la recuperation des parametres' },
+      { message: 'Erreur lors de la récupération des paramètres' },
       { status: 500 }
     );
   }
@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -78,9 +78,9 @@ export async function PUT(request: NextRequest) {
       const messages = error.errors.map((e) => e.message).join(', ');
       return NextResponse.json({ message: messages }, { status: 400 });
     }
-    console.error('Erreur sauvegarde parametres:', error);
+    console.error('Erreur sauvegarde paramètres:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la sauvegarde des parametres' },
+      { message: 'Erreur lors de la sauvegarde des paramètres' },
       { status: 500 }
     );
   }

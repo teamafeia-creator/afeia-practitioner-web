@@ -44,7 +44,7 @@ export function InvoiceStatsDisplay({ stats, loading }: Props) {
       bg: 'bg-terracotta/10',
     },
     {
-      label: 'Factures payees',
+      label: 'Factures payées',
       value: String(stats.nb_factures_payees),
       icon: Receipt,
       color: 'text-sage',

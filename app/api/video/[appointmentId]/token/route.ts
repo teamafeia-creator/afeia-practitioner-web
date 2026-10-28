@@ -33,11 +33,11 @@ export async function GET(
       .single();
 
     if (aptError || !appointment) {
-      return NextResponse.json({ error: 'Rendez-vous non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Rendez-vous non trouvé.' }, { status: 404 });
     }
 
     if (appointment.practitioner_id !== practitionerId) {
-      return NextResponse.json({ error: 'Acces refuse.' }, { status: 403 });
+      return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
     }
 
     if (!appointment.video_room_name) {
@@ -61,7 +61,7 @@ export async function GET(
     });
 
     if (!meetingToken) {
-      return NextResponse.json({ error: 'Impossible de generer le token de visio.' }, { status: 502 });
+      return NextResponse.json({ error: 'Impossible de générer le token de visio.' }, { status: 502 });
     }
 
     const domain = process.env.DAILY_DOMAIN || 'afeia.daily.co';
@@ -71,7 +71,7 @@ export async function GET(
       roomUrl: `https://${domain}/${appointment.video_room_name}`,
     });
   } catch (error) {
-    console.error('Error in GET video token:', error);
+    console.error('Error in GET vidéo token:', error);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }
@@ -101,7 +101,7 @@ export async function POST(
       .single();
 
     if (aptError || !appointment) {
-      return NextResponse.json({ error: 'Rendez-vous non trouve.' }, { status: 404 });
+      return NextResponse.json({ error: 'Rendez-vous non trouvé.' }, { status: 404 });
     }
 
     if (!appointment.video_room_name) {
@@ -109,7 +109,7 @@ export async function POST(
     }
 
     if (appointment.status === 'cancelled') {
-      return NextResponse.json({ error: 'Ce rendez-vous a ete annule.' }, { status: 410 });
+      return NextResponse.json({ error: 'Ce rendez-vous a été annulé.' }, { status: 410 });
     }
 
     // Check time window: 15 min before starts_at until ends_at + 30 min
@@ -121,7 +121,7 @@ export async function POST(
 
     if (now < windowStart || now > windowEnd) {
       return NextResponse.json(
-        { error: 'La consultation n\'est pas encore accessible. Le lien sera actif 15 minutes avant le debut.' },
+        { error: 'La consultation n\'est pas encore accessible. Le lien sera actif 15 minutes avant le début.' },
         { status: 403 }
       );
     }
@@ -143,7 +143,7 @@ export async function POST(
     });
 
     if (!meetingToken) {
-      return NextResponse.json({ error: 'Impossible de generer le token de visio.' }, { status: 502 });
+      return NextResponse.json({ error: 'Impossible de générer le token de visio.' }, { status: 502 });
     }
 
     const domain = process.env.DAILY_DOMAIN || 'afeia.daily.co';
@@ -157,7 +157,7 @@ export async function POST(
       startsAt: appointment.starts_at,
     });
   } catch (error) {
-    console.error('Error in POST video token:', error);
+    console.error('Error in POST vidéo token:', error);
     return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }

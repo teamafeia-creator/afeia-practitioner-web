@@ -12,7 +12,7 @@ interface MorningReviewHeaderProps {
 function getContextualGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return 'Bonjour';
-  if (hour < 18) return 'Bon apres-midi';
+  if (hour < 18) return 'Bon après-midi';
   return 'Bonsoir';
 }
 
@@ -47,7 +47,7 @@ export function MorningReviewHeader({ practitionerName, urgentCount }: MorningRe
         >
           <Bell className="w-4 h-4" />
           <span>
-            {urgentCount} consultant{urgentCount > 1 ? 's necessitent' : ' necessite'} votre attention
+            {urgentCount} consultant{urgentCount > 1 ? 's nécessitent' : ' necessite'} votre attention
           </span>
         </motion.div>
       )}

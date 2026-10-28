@@ -44,10 +44,10 @@ export function InvoiceTemplatesManager({
 
       if (!response.ok) throw new Error('Erreur');
 
-      showToast.success('Templates par defaut crees');
+      showToast.success('Templates par défaut créés');
       onRefresh();
     } catch {
-      showToast.error('Erreur lors de la creation des templates');
+      showToast.error('Erreur lors de la création des templates');
     } finally {
       setLoading(false);
     }
@@ -85,10 +85,10 @@ export function InvoiceTemplatesManager({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Erreur lors de la creation du template');
+        throw new Error(errorData?.message || 'Erreur lors de la création du template');
       }
 
-      showToast.success('Template cree');
+      showToast.success('Template créé');
       setShowCreateModal(false);
       setLabel('');
       setDescription('');
@@ -96,7 +96,7 @@ export function InvoiceTemplatesManager({
       setDuree(60);
       onRefresh();
     } catch (err) {
-      showToast.error(err instanceof Error ? err.message : 'Erreur lors de la creation du template');
+      showToast.error(err instanceof Error ? err.message : 'Erreur lors de la création du template');
     } finally {
       setLoading(false);
     }
@@ -112,7 +112,7 @@ export function InvoiceTemplatesManager({
           {templates.length === 0 ? (
             <div className="text-center py-6">
               <p className="text-sm text-stone mb-4">
-                Aucun template configure. Creez des templates pour accelerer
+                Aucun template configuré. Créez des templates pour accélérer
                 la facturation.
               </p>
               <Button
@@ -122,7 +122,7 @@ export function InvoiceTemplatesManager({
                 onClick={handleInitDefaults}
                 loading={loading}
               >
-                Creer les templates par defaut
+                Créer les templates par défaut
               </Button>
             </div>
           ) : (
@@ -178,16 +178,16 @@ export function InvoiceTemplatesManager({
             label="Nom du template"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder="Ex: Premiere consultation"
+            placeholder="Ex: Première consultation"
           />
           <Input
             label="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Ex: Bilan de vitalite + conseillancier"
+            placeholder="Ex: Bilan de vitalité + conseillancier"
           />
           <Input
-            label="Montant par defaut (EUR)"
+            label="Montant par défaut (EUR)"
             type="number"
             step="0.01"
             min="0"
@@ -195,7 +195,7 @@ export function InvoiceTemplatesManager({
             onChange={(e) => setMontant(parseFloat(e.target.value) || 0)}
           />
           <Input
-            label="Duree par defaut (minutes)"
+            label="Durée par défaut (minutes)"
             type="number"
             min="0"
             value={duree}
@@ -210,7 +210,7 @@ export function InvoiceTemplatesManager({
             Annuler
           </Button>
           <Button onClick={handleCreate} loading={loading}>
-            Creer
+            Créer
           </Button>
         </ModalFooter>
       </Modal>

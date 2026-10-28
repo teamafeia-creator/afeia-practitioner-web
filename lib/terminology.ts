@@ -34,7 +34,7 @@ export const T = {
   tabProfil: 'Profil',
   tabRendezVous: 'Rendez-vous',
   tabAnamnese: 'Anamnèse',
-  tabBagueConnectee: 'Bague connectée',
+  tabBagueConnectee: 'Objet connecté',
   tabJournal: 'Journal',
   tabNotesSeance: 'Notes de séance',
   tabConseillancier: 'Conseillancier',
@@ -88,8 +88,8 @@ export const T = {
   tabBilanTerrain: 'Bilan de terrain',
   descBilanTerrain: 'Constitution, tempérament, diathèse, émonctoires, surcharges et iridologie.',
 
-  // ─── Dossier médical (onglet enrichi) ──────────
-  tabDossierMedical: 'Dossier médical',
+  // ─── Dossier de santé (onglet enrichi) ─────────
+  tabDossierMedical: 'Dossier de santé',
   descDossierMedical: 'Antécédents, allergies et intolérances, traitements en cours.',
   labelAntecedents: 'Antécédents',
   labelAllergies: 'Allergies et intolérances',

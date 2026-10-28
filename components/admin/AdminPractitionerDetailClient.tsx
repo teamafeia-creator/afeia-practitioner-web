@@ -65,7 +65,7 @@ function formatRelativeTime(dateStr: string | null): string {
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-  if (minutes < 1) return "A l'instant";
+  if (minutes < 1) return "À l'instant";
   if (minutes < 60) return `Il y a ${minutes}min`;
   if (hours < 24) return `Il y a ${hours}h`;
   if (days === 1) return 'Hier';
@@ -106,14 +106,14 @@ export function AdminPractitionerDetailClient({
         }),
       });
       if (!response.ok) {
-        showToast.error('Erreur lors de la mise a jour.');
+        showToast.error('Erreur lors de la mise à jour.');
       } else {
-        showToast.success('Infos mises a jour.');
+        showToast.success('Infos mises à jour.');
         router.refresh();
       }
     } catch (err) {
       console.error('[admin] saveChanges error:', err);
-      showToast.error('Erreur reseau lors de la mise a jour.');
+      showToast.error('Erreur réseau lors de la mise à jour.');
     } finally {
       setSaving(false);
     }
@@ -129,13 +129,13 @@ export function AdminPractitionerDetailClient({
         body: JSON.stringify({ email: practitioner.email }),
       });
       if (!response.ok) {
-        showToast.error('Erreur lors de la reinitialisation.');
+        showToast.error('Erreur lors de la réinitialisation.');
         return;
       }
-      showToast.success('Email de reinitialisation envoye.');
+      showToast.success('Email de réinitialisation envoyé.');
     } catch (err) {
       console.error('[admin] triggerPasswordReset error:', err);
-      showToast.error('Erreur reseau lors de la reinitialisation.');
+      showToast.error('Erreur réseau lors de la réinitialisation.');
     }
   }
 
@@ -181,7 +181,7 @@ export function AdminPractitionerDetailClient({
                 {practitioner.status === 'suspended' ? 'Suspendu' : 'Actif'}
               </span>
               <span className="text-slate-300">|</span>
-              <span>Derniere connexion: {formatRelativeTime(practitioner.last_login_at)}</span>
+              <span>Dernière connexion: {formatRelativeTime(practitioner.last_login_at)}</span>
             </div>
           </div>
           {/* Health score */}
@@ -217,7 +217,7 @@ export function AdminPractitionerDetailClient({
             }}
           >
             <Ban className="mr-1.5 h-3.5 w-3.5" />
-            {practitioner.status === 'suspended' ? 'Reactiver' : 'Suspendre'}
+            {practitioner.status === 'suspended' ? 'Réactiver' : 'Suspendre'}
           </Button>
           {subscription?.customer_id && (
             <a
@@ -267,7 +267,7 @@ export function AdminPractitionerDetailClient({
               <div className="mt-1 text-sm text-slate-800">
                 {practitioner.subscription_status ?? 'Free'}
               </div>
-              <div className="text-[10px] text-slate-400">Gere via Stripe</div>
+              <div className="text-[10px] text-slate-400">Géré via Stripe</div>
             </div>
           </div>
           <div className="flex justify-end">
@@ -302,11 +302,11 @@ export function AdminPractitionerDetailClient({
                   'rounded-full px-2 py-0.5 text-xs font-medium',
                   subscription.payment_failed ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
                 )}>
-                  {subscription.payment_failed ? 'Echoue' : 'A jour'}
+                  {subscription.payment_failed ? 'Échoué' : 'À jour'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Prochaine echeance</span>
+                <span className="text-slate-500">Prochaine échéance</span>
                 <span className="text-slate-800">
                   {subscription.current_period_end
                     ? new Date(subscription.current_period_end).toLocaleDateString('fr-FR')
@@ -345,7 +345,7 @@ export function AdminPractitionerDetailClient({
                   <th className="px-3 py-2">Nom</th>
                   <th className="px-3 py-2">Email</th>
                   <th className="px-3 py-2">Statut</th>
-                  <th className="px-3 py-2">Cree le</th>
+                  <th className="px-3 py-2">Créé le</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -370,7 +370,7 @@ export function AdminPractitionerDetailClient({
             </table>
           </div>
         ) : (
-          <p className="text-sm text-slate-400">Aucun consultant associe</p>
+          <p className="text-sm text-slate-400">Aucun consultant associé</p>
         )}
       </div>
 

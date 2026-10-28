@@ -183,7 +183,7 @@ export function NoAppointments({ action }: { action?: React.ReactNode }) {
     <EmptyState
       image="/images/sage-tisane.jpg"
       title="Aucun rendez-vous"
-      description="Vous n'avez aucun rendez-vous programme. Planifiez votre premiere seance."
+      description="Vous n'avez aucun rendez-vous programme. Planifiez votre première séance."
       action={action}
     />
   );
@@ -194,7 +194,7 @@ export function NoMessages({ action }: { action?: React.ReactNode }) {
     <EmptyState
       image="/images/eucalyptus-minimal.jpg"
       title="Aucun message"
-      description="Vous n'avez pas encore de conversations. Les messages de vos consultants apparaitront ici."
+      description="Vous n'avez pas encore de conversations. Les messages de vos consultants apparaîtront ici."
       action={action}
     />
   );
@@ -205,7 +205,7 @@ export function NoNotifications() {
     <EmptyState
       icon="notifications"
       title="Aucune notification"
-      description="Vous etes a jour ! Les nouvelles notifications apparaitront ici."
+      description="Vous êtes à jour ! Les nouvelles notifications apparaîtront ici."
       size="sm"
     />
   );
@@ -215,11 +215,11 @@ export function NoSearchResults({ query }: { query?: string }) {
   return (
     <EmptyState
       icon="search"
-      title="Aucun resultat"
+      title="Aucun résultat"
       description={
         query
-          ? `Aucun resultat trouve pour "${query}". Essayez avec d'autres termes.`
-          : "Aucun resultat trouve. Essayez avec d'autres criteres de recherche."
+          ? `Aucun résultat trouvé pour "${query}". Essayez avec d'autres termes.`
+          : "Aucun résultat trouvé. Essayez avec d'autres critères de recherche."
       }
     />
   );

@@ -76,8 +76,8 @@ export default function NewConsultantPage() {
         }
 
         setToast({
-          title: 'Consultant demo cree',
-          description: `${name.trim()} a ete cree en mode demonstration (sans code OTP).`,
+          title: 'Consultant démo créé',
+          description: `${name.trim()} a été créé en mode démonstration (sans code OTP).`,
           variant: 'success'
         });
 
@@ -91,7 +91,7 @@ export default function NewConsultantPage() {
           }, 1000);
         }
 
-        console.log('Consultant demo cree avec ID:', result.consultantId);
+        console.log('Consultant démo créé avec ID:', result.consultantId);
       } else {
         // Mode normal : creation avec OTP
         const result = await invitationService.createInvitation({
@@ -117,8 +117,8 @@ export default function NewConsultantPage() {
         } else {
           // Pas de code, rediriger directement
           setToast({
-            title: 'Consultant cree',
-            description: `Un email a ete envoye a ${trimmedEmail}.`,
+            title: 'Consultant créé',
+            description: `Un email a été envoyé à ${trimmedEmail}.`,
             variant: 'success'
           });
           if (result.consultantId) {
@@ -132,8 +132,8 @@ export default function NewConsultantPage() {
           }
         }
 
-        console.log('Consultant cree avec ID:', result.consultantId);
-        console.log('Invitation creee avec ID:', result.invitationId);
+        console.log('Consultant créé avec ID:', result.consultantId);
+        console.log('Invitation créée avec ID:', result.invitationId);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
@@ -226,7 +226,7 @@ export default function NewConsultantPage() {
             ) : null}
 
             <Button type="submit" loading={loading} className="w-full">
-              {isDemo ? 'Créer le consultant demo' : 'Envoyer le code d\'activation'}
+              {isDemo ? 'Créer le consultant démo' : 'Envoyer le code d\'activation'}
             </Button>
           </form>
         </CardContent>

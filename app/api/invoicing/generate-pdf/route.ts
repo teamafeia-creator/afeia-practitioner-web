@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '').trim();
     if (!token) {
-      return NextResponse.json({ message: 'Non authentifie' }, { status: 401 });
+      return NextResponse.json({ message: 'Non authentifié' }, { status: 401 });
     }
 
     const supabaseAuth = createSupabaseAuthClient();
@@ -58,9 +58,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Erreur generation PDF:', error);
+    console.error('Erreur génération PDF:', error);
     return NextResponse.json(
-      { message: 'Erreur lors de la generation du PDF' },
+      { message: 'Erreur lors de la génération du PDF' },
       { status: 500 }
     );
   }
