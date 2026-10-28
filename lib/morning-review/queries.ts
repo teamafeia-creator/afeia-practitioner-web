@@ -324,7 +324,11 @@ export async function sendMessageFromReview(
     throw new Error('Erreur lors de l\'envoi du message');
   }
 
-  return logReviewAction(user.id, consultantId, 'send_message', { source: 'morning_review' });
+  try {
+    return await logReviewAction(user.id, consultantId, 'send_message', { source: 'morning_review' });
+  } catch {
+    throw new Error('Le message est envoyé, mais le consultant n’a pas pu être marqué comme traité. Rechargez la page.');
+  }
 }
 
 /**
@@ -344,8 +348,10 @@ export async function saveObservationNote(
     .eq('practitioner_id', user.id)
     .maybeSingle();
 
+  const text = content.trim();
+  if (!text) throw new Error('La note est vide.');
   const previous = (existing?.content as string | null | undefined)?.trim() ?? '';
-  const merged = previous ? `${previous}\n\n${content}` : content;
+  const merged = previous ? `${previous}\n\n${text}` : text;
 
   const { error } = await supabase
     .from('practitioner_notes')
@@ -360,10 +366,15 @@ export async function saveObservationNote(
     );
 
   if (error) {
-    throw new Error('Erreur lors de l\'enregistrement de la note');
+    console.error('[revue du matin] note privée', error);
+    throw new Error(`La note n’a pas été enregistrée (${error.message}).`);
   }
 
-  return logReviewAction(user.id, consultantId, 'note_observation', { source: 'morning_review' });
+  try {
+    return await logReviewAction(user.id, consultantId, 'note_observation', { source: 'morning_review', appended: text });
+  } catch {
+    throw new Error('La note est enregistrée, mais le consultant n’a pas pu être marqué comme traité. Rechargez la page.');
+  }
 }
 
 // === Revue du matin : actions consignées ===
@@ -375,6 +386,8 @@ export interface ReviewAction {
   consultant_id: string;
   type: ReviewActionType;
   created_at: string;
+  /** Texte ajouté aux notes privées (pour pouvoir l'annuler). */
+  appended?: string | null;
 }
 
 async function logReviewAction(
@@ -383,11 +396,15 @@ async function logReviewAction(
   type: ReviewActionType | 'review_completed',
   metadata: Record<string, unknown> = {}
 ): Promise<string | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('practitioner_actions')
     .insert({ practitioner_id: practitionerId, consultant_id: consultantId, type, metadata })
     .select('id')
     .single();
+  if (error) {
+    console.error('[revue du matin] action non consignée', type, error);
+    throw new Error('L’action n’a pas pu être consignée.');
+  }
   return (data?.id as string | undefined) ?? null;
 }
 
@@ -428,6 +445,27 @@ export async function undoReviewAction(action: ReviewAction): Promise<void> {
   if (action.type === 'remind_tomorrow') {
     await unsnoozeConsultant(action.consultant_id);
   }
+  // Annuler une note : on retire le texte ajouté s'il est toujours en fin de note.
+  if (action.type === 'note_observation' && action.appended) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: note } = await supabase
+        .from('practitioner_notes')
+        .select('content')
+        .eq('consultant_id', action.consultant_id)
+        .eq('practitioner_id', user.id)
+        .maybeSingle();
+      const current = ((note?.content as string | null) ?? '').trimEnd();
+      if (current.endsWith(action.appended)) {
+        const next = current.slice(0, current.length - action.appended.length).trimEnd();
+        await supabase
+          .from('practitioner_notes')
+          .update({ content: next, updated_at: new Date().toISOString() })
+          .eq('consultant_id', action.consultant_id)
+          .eq('practitioner_id', user.id);
+      }
+    }
+  }
   const { error } = await supabase.from('practitioner_actions').delete().eq('id', action.id);
   if (error) throw new Error('Erreur lors de l\'annulation');
 }
@@ -457,7 +495,7 @@ export async function fetchReviewActivity(): Promise<{
   const remindCounts: Record<string, number> = {};
   const firstRemind: Record<string, string> = {};
   for (const row of data ?? []) {
-    const r = row as ReviewAction & { metadata?: { source?: string } | null };
+    const r = row as ReviewAction & { metadata?: { source?: string; appended?: string } | null };
     if (!r.consultant_id) continue;
     if (r.type === 'remind_tomorrow') {
       remindCounts[r.consultant_id] = (remindCounts[r.consultant_id] ?? 0) + 1;
@@ -465,7 +503,7 @@ export async function fetchReviewActivity(): Promise<{
     }
     const fromReview = r.type !== 'send_message' && r.type !== 'note_observation' ? true : r.metadata?.source === 'morning_review';
     if (fromReview && new Date(r.created_at) >= startOfDay) {
-      today.push({ id: r.id, consultant_id: r.consultant_id, type: r.type, created_at: r.created_at });
+      today.push({ id: r.id, consultant_id: r.consultant_id, type: r.type, created_at: r.created_at, appended: r.metadata?.appended ?? null });
     }
   }
   return { today, remindCounts, firstRemind };

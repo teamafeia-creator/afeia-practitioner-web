@@ -76,7 +76,7 @@ export default function MorningReviewPage() {
   const queryClient = useQueryClient();
   const review = useMorningReview();
   const activity = useReviewActivity();
-  const [composing, setComposing] = useState<string | null>(null);
+  const [composing, setComposing] = useState<{ id: string; kind: 'message' | 'note' } | null>(null);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const completedLogged = useRef(false);
@@ -150,7 +150,7 @@ export default function MorningReviewPage() {
   };
 
   const undo = (a: ReviewAction, name: string) =>
-    run(a.id, () => undoReviewAction(a), a.type === 'send_message' ? `Le message reste envoyé. ${name} revient dans la file.` : `${name} revient dans la file.`);
+    run(a.id, () => undoReviewAction(a), a.type === 'send_message' ? `Le message reste envoyé. ${name} revient dans la file.` : a.type === 'note_observation' && a.appended ? `Note retirée. ${name} revient dans la file.` : `${name} revient dans la file.`);
 
   const resetAll = async () => {
     setBusy('all');
@@ -247,11 +247,11 @@ export default function MorningReviewPage() {
               days={days}
               snoozes={snoozes}
               busy={busy === s.consultant.id}
-              composing={composing === s.consultant.id}
+              composing={composing?.id === s.consultant.id ? composing.kind : null}
               draft={draft}
               onDraft={setDraft}
               onCompose={() => {
-                setComposing(s.consultant.id);
+                setComposing({ id: s.consultant.id, kind: 'message' });
                 setDraft(s.suggestedActions.find((a) => a.templateMessage)?.templateMessage ?? `Bonjour ${firstNameOf(s)}, `);
               }}
               onCancel={() => setComposing(null)}
@@ -262,14 +262,17 @@ export default function MorningReviewPage() {
                 }
                 void run(s.consultant.id, () => sendMessageFromReview(s.consultant.id, draft.trim()), `Message envoyé à ${firstNameOf(s)}`);
               }}
-              onNote={() =>
-                run(s.consultant.id, () =>
-                  saveObservationNote(
-                    s.consultant.id,
-                    `Revue du matin du ${dateFmt.format(new Date())} : ${s.primarySignal?.message ?? 'signal à surveiller'}.`
-                  )
-                )
-              }
+              onNote={() => {
+                setComposing({ id: s.consultant.id, kind: 'note' });
+                setDraft(`Revue du matin du ${dateFmt.format(new Date())} : ${s.primarySignal?.message ?? 'signal à surveiller'}. `);
+              }}
+              onSaveNote={() => {
+                if (!draft.trim()) {
+                  showToast.error('La note est vide.');
+                  return;
+                }
+                void run(s.consultant.id, () => saveObservationNote(s.consultant.id, draft.trim()), `Ajouté aux notes privées de ${firstNameOf(s)}`);
+              }}
               onSnooze={() => run(s.consultant.id, () => remindTomorrow(s.consultant.id))}
               onSeen={() => run(s.consultant.id, () => markReviewSeen(s.consultant.id))}
             />
@@ -347,13 +350,14 @@ function ReviewCard(props: {
   days: number;
   snoozes: number;
   busy: boolean;
-  composing: boolean;
+  composing: 'message' | 'note' | null;
   draft: string;
   onDraft: (v: string) => void;
   onCompose: () => void;
   onCancel: () => void;
   onSend: () => void;
   onNote: () => void;
+  onSaveNote: () => void;
   onSnooze: () => void;
   onSeen: () => void;
 }) {
@@ -419,7 +423,35 @@ function ReviewCard(props: {
         </div>
       )}
 
-      {props.composing ? (
+      {props.composing === 'note' ? (
+        <div className="flex flex-col gap-2.5">
+          <label htmlFor={`note-${id}`} className="flex items-center gap-1.5 text-[13px] text-stone">
+            <span aria-hidden="true">🔒</span> Note privée sur {first}, ajoutée à la suite de vos notes · invisible pour {first}
+          </label>
+          <textarea
+            id={`note-${id}`}
+            rows={3}
+            autoFocus
+            value={props.draft}
+            onChange={(e) => props.onDraft(e.target.value)}
+            className="w-full resize-y rounded-[10px] border border-divider bg-surface-raised px-3.5 py-3 text-sm leading-normal text-charcoal outline-none focus:border-sage"
+          />
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={props.onCancel} className="h-11 rounded-[10px] border border-divider px-4 text-sm text-charcoal">
+              Annuler
+            </button>
+            <button
+              type="button"
+              onClick={props.onSaveNote}
+              disabled={busy}
+              className="flex h-11 items-center gap-2 rounded-[10px] bg-sage px-[18px] text-sm font-semibold text-ink hover:bg-sage-deep disabled:opacity-70"
+            >
+              {busy && <Spinner size="sm" />}
+              Ajouter aux notes
+            </button>
+          </div>
+        </div>
+      ) : props.composing === 'message' ? (
         <div className="flex flex-col gap-2.5">
           <label htmlFor={`msg-${id}`} className="text-[13px] text-stone">Message à {first}</label>
           <textarea
