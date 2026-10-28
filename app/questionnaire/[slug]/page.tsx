@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getPublishedQuestionnaire } from '@/lib/server/questionnaire';
 import { QuestionnaireFlow } from './QuestionnaireFlow';
 
 export const dynamic = 'force-dynamic';
@@ -36,12 +37,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PublicQuestionnairePage({ params }: Props) {
-  const p = await load(params.slug);
+  const [p, questionnaire] = await Promise.all([load(params.slug), getPublishedQuestionnaire()]);
   if (!p) notFound();
   const name = p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'votre praticien';
   return (
     <QuestionnaireFlow
       slug={params.slug}
+      sections={questionnaire.sections}
       practitioner={{ id: p.id, name, city: cityOf(p.booking_address), bookingEnabled: !!p.booking_enabled }}
     />
   );

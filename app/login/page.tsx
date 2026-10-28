@@ -41,7 +41,9 @@ function LoginForm() {
         setError(
           signInError.message.includes('Invalid login credentials')
             ? 'Adresse e-mail ou mot de passe incorrect.'
-            : signInError.message
+            : /not confirmed/i.test(signInError.message)
+              ? 'Confirmez d’abord votre adresse e-mail avec le lien reçu à l’inscription.'
+              : signInError.message
         );
         return;
       }

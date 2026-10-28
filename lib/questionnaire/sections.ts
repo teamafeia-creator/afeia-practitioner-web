@@ -7,7 +7,12 @@ export type PublicQuestion = {
   label: string;
   help: string;
   placeholder?: string;
+  /** Réponses proposées : choix unique, ou choix multiples si `multi`. */
   options?: string[];
+  multi?: boolean;
+  required?: boolean;
+  /** Affiche l'avertissement « voir avec son médecin » sous la question. */
+  warn?: boolean;
 };
 
 export type PublicSection = {
@@ -25,7 +30,7 @@ export const PUBLIC_SECTIONS: PublicSection[] = [
     questions: [
       { key: 'general_profession', label: 'Profession et rythme de travail', help: 'Votre métier, vos horaires, ce qui rend vos journées faciles ou chargées.', placeholder: 'Ex. assistante de direction, temps plein, beaucoup d’écrans, je rentre vers 19 h.' },
       { key: 'general_antecedents', label: 'Antécédents médicaux ou familiaux', help: 'Les problèmes de santé passés ou actuels, chez vous ou dans votre famille proche.', placeholder: 'Ex. hypothyroïdie depuis 2021, ma mère a du diabète.' },
-      { key: 'general_traitements', label: 'Traitements, compléments ou suivis actuels', help: 'Médicaments (avec la dose si vous la connaissez), compléments alimentaires, autres thérapeutes.', placeholder: 'Ex. Lévothyroxine 75 µg le matin, magnésium de temps en temps, ostéopathe deux fois par an.' },
+      { key: 'general_traitements', label: 'Traitements, compléments ou suivis actuels', help: 'Médicaments (avec la dose si vous la connaissez), compléments alimentaires, autres thérapeutes.', placeholder: 'Ex. Lévothyroxine 75 µg le matin, magnésium de temps en temps, ostéopathe deux fois par an.', warn: true },
     ],
   },
   {

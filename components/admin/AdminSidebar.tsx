@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -15,6 +16,8 @@ import {
   FileText,
   LogOut,
   ArrowRight,
+  BadgeCheck,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
@@ -26,12 +29,14 @@ type NavItem = {
 
 const mainNav: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { label: 'Inscriptions', href: '/admin/inscriptions', icon: BadgeCheck },
   { label: 'Praticiens', href: '/admin/practitioners', icon: Users },
   { label: 'Patients', href: '/admin/patients', icon: UserCheck },
   { label: 'Billing', href: '/admin/billing', icon: CreditCard },
   { label: 'Circular', href: '/admin/circular', icon: Radio },
   { label: 'Blocs', href: '/admin/blocs', icon: Layers },
   { label: 'Fiches AFEIA', href: '/admin/fiches', icon: BookOpen },
+  { label: 'Questionnaire', href: '/admin/questionnaire', icon: ClipboardList },
 ];
 
 const settingsNav: NavItem[] = [
@@ -46,6 +51,19 @@ type AdminSidebarProps = {
 
 export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
   const pathname = usePathname();
+  const [pendingSignups, setPendingSignups] = useState(0);
+
+  // Badge « Inscriptions » : demandes en attente de validation.
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/admin/inscriptions?count=1', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : { pending: 0 }))
+      .then((d: { pending?: number }) => alive && setPendingSignups(d.pending ?? 0))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [pathname]);
 
   function isActive(href: string) {
     if (href === '/admin') return pathname === '/admin';
@@ -76,7 +94,12 @@ export function AdminSidebar({ adminEmail, onLogout }: AdminSidebarProps) {
               )}
             >
               <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === '/admin/inscriptions' && pendingSignups > 0 ? (
+                <span className="flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-terracotta px-1.5 text-xs font-semibold text-ink">
+                  {pendingSignups}
+                </span>
+              ) : null}
             </Link>
           );
         })}

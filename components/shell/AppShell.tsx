@@ -136,9 +136,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       const { data: practitioner } = await supabase
         .from('practitioners')
-        .select('full_name')
+        .select('full_name, account_status')
         .eq('id', data.session.user.id)
         .single();
+
+      // Espace fermé tant que l'inscription n'est pas validée par l'équipe Afeia.
+      const accountStatus = (practitioner as { account_status?: string | null } | null)?.account_status;
+      if (accountStatus && accountStatus !== 'validated') {
+        router.replace('/compte/verification');
+        return;
+      }
 
       if (practitioner?.full_name) {
         setUserName(practitioner.full_name);

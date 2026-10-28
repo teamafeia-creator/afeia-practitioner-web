@@ -117,6 +117,7 @@ Ce document liste **toutes** les décisions prises pendant les revues du canevas
 | 7 | Facturation (KPI, séances sans facture, rappel URSSAF, onglets, tableau, export, détail papier, paiement / lien / avoir / annulation, nouvelle facture) et statistiques (périodes, comparaison, séances par semaine, CA 12 mois, motifs, accompagnement) | fait |
 | 8 | Questionnaire public `/questionnaire/[slug]` et prise de rendez-vous `/rdv/[slug]` (lieu, acompte Stripe, erreurs explicites, annulation par lien) | fait |
 | 4 | Messages (bandeau médicament informatif), questionnaires préliminaires (liste + détail, doublon, conclusion), correction de la fusion d'anamnèse | fait |
+| 9 | Inscription en 3 étapes, espace fermé tant que le compte n'est pas validé, écran admin « Inscriptions » (Pappers, concordance, décisions motivées), éditeur admin du questionnaire versionné | fait |
 
 Choix faits en attendant une décision :
 - le type « Consultation visio » n'est plus créé pour les nouveaux comptes ; les types existants des praticiens ne sont **pas** modifiés ;
@@ -134,3 +135,12 @@ Choix faits en attendant une décision :
 - annulation par le consultant : lien personnel dans l'e-mail (`/rdv/annuler/{jeton}`), remboursement si au-delà du délai d'annulation du praticien (24 h par défaut), acompte conservé sinon ; annulation par le praticien dans l'agenda = remboursement ;
 - l'ancien questionnaire `/questionnaire` (avec liste de praticiens) reste en place pour les liens déjà diffusés ;
 - l'ancienneté d'un consultant dans la revue du matin est mémorisée par navigateur ; le nombre de reports vient des actions enregistrées.
+- inscription : le compte est créé côté serveur (`/api/signup`), l'e-mail de confirmation part depuis Afeia ; statut `practitioners.account_status` (`pending_validation`, `validated`, `info_requested`, `rejected`) ; les comptes existants sont `validated` ; un praticien non validé est redirigé vers `/compte/verification` (suivi de la demande, réponse au complément avec nouveaux documents) ;
+- l'accès est fermé dans l'interface ; les routes API praticien ne vérifient pas encore le statut (un compte non validé n'a de toute façon aucun consultant) ;
+- SIRET : contrôle du format (14 chiffres + clé de Luhn) à la saisie, puis Pappers côté serveur (`PAPPERS_API_KEY`) ; sans clé, le contrôle est « Non vérifié » et se fait à la main ;
+- concordance des documents : interface `DocumentExtractor` (`lib/server/documentExtractor.ts`) prête à brancher un service d'OCR ; aucun service n'est branché, la concordance est donc « Lecture manuelle » ;
+- documents dans un espace de stockage privé (`practitioner-verification`), ouverts par l'admin via des liens valables 5 min ; la pièce d'identité est supprimée 10 min après une décision de validation ou de refus (fenêtre d'annulation), les documents restent en cas de complément ;
+- « Annuler la décision » est possible pendant 10 min ; l'e-mail déjà envoyé au praticien n'est pas rappelé ;
+- charte de pratique et conditions d'utilisation : page `/charte` (texte à faire relire) ;
+- questionnaire : tables `questionnaire_versions` / `_sections` / `_questions` ; un seul brouillon, enregistré automatiquement ; « Publier » crée la version N+1 ; tant qu'aucune version n'est publiée, le contenu d'origine (`lib/questionnaire/sections.ts`) reste en ligne ; un questionnaire déjà ouvert garde la version chargée ; les réponses aux nouvelles questions sont rangées dans l'anamnèse sous leur clé (affichage dans l'onglet Anamnèse : lot 10) ;
+- « Tester comme un consultant » ouvre `/admin/questionnaire/apercu` (brouillon, rien n'est envoyé).

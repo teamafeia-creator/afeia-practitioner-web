@@ -4,15 +4,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Check, Info } from 'lucide-react';
 import { Spinner } from '@/components/ui/Spinner';
 import { submitPreliminaryQuestionnaire } from '@/services/preliminary-questionnaire';
-import { PUBLIC_SECTIONS as SECTIONS } from '@/lib/questionnaire/sections';
+import { PUBLIC_SECTIONS, type PublicSection } from '@/lib/questionnaire/sections';
 
 type Practitioner = { id: string; name: string; city: string | null; bookingEnabled: boolean };
 type Contact = { first: string; last: string; email: string; phone: string };
 type Draft = { step: number; c: Contact; r: Record<string, string>; skipped: Record<string, boolean> };
 
-const N = SECTIONS.length; // 13
-const REVIEW = N + 1;
-const DONE = N + 2;
 
 const initials = (name: string) =>
   name
@@ -23,7 +20,23 @@ const initials = (name: string) =>
     .join('')
     .toUpperCase();
 
-export function QuestionnaireFlow({ slug, practitioner }: { slug: string; practitioner: Practitioner }) {
+export function QuestionnaireFlow({
+  slug,
+  practitioner,
+  sections,
+  preview = false,
+}: {
+  slug: string;
+  practitioner: Practitioner;
+  /** Rubriques de la version publiée (par défaut : contenu d'origine). */
+  sections?: PublicSection[];
+  /** Aperçu admin : rien n'est envoyé ni gardé en brouillon. */
+  preview?: boolean;
+}) {
+  const SECTIONS = sections?.length ? sections : PUBLIC_SECTIONS;
+  const N = SECTIONS.length;
+  const REVIEW = N + 1;
+  const DONE = N + 2;
   const KEY = `afeia.questionnaire.${slug}`;
   const [step, setStep] = useState(0);
   const [c, setC] = useState<Contact>({ first: '', last: '', email: '', phone: '' });
@@ -41,6 +54,10 @@ export function QuestionnaireFlow({ slug, practitioner }: { slug: string; practi
 
   // Brouillon local
   useEffect(() => {
+    if (preview) {
+      setRestored(true);
+      return;
+    }
     try {
       const raw = window.localStorage.getItem(KEY);
       if (raw) {
@@ -54,16 +71,16 @@ export function QuestionnaireFlow({ slug, practitioner }: { slug: string; practi
       /* pas de brouillon */
     }
     setRestored(true);
-  }, [KEY]);
+  }, [KEY, REVIEW, preview]);
 
   useEffect(() => {
-    if (!restored || step === DONE) return;
+    if (preview || !restored || step === DONE) return;
     try {
       window.localStorage.setItem(KEY, JSON.stringify({ step, c, r, skipped } satisfies Draft));
     } catch {
       /* stockage indisponible */
     }
-  }, [KEY, restored, step, c, r, skipped]);
+  }, [KEY, DONE, preview, restored, step, c, r, skipped]);
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(c.email.trim());
   const phoneDigits = c.phone.replace(/\D/g, '').replace(/^33(?=\d{9}$)/, '0');
@@ -93,6 +110,16 @@ export function QuestionnaireFlow({ slug, practitioner }: { slug: string; practi
   async function submit() {
     if (!consent) {
       setTried(true);
+      return;
+    }
+    const missing = SECTIONS.findIndex((s) => s.questions.some((q) => q.required && !(r[q.key] ?? '').trim()));
+    if (missing >= 0) {
+      go(missing + 1);
+      setTried(true);
+      return;
+    }
+    if (preview) {
+      go(DONE);
       return;
     }
     setSending(true);
@@ -131,7 +158,7 @@ export function QuestionnaireFlow({ slug, practitioner }: { slug: string; practi
 
   const navItems = useMemo(
     () => [{ t: 'Vos coordonnées', n: 0 }, ...SECTIONS.map((s, i) => ({ t: s.title, n: i + 1 })), { t: 'Vérification', n: REVIEW }],
-    []
+    [SECTIONS, REVIEW]
   );
 
   const input = 'h-12 rounded-xl border bg-cream px-3.5 text-[15px] text-charcoal outline-none placeholder:text-mist focus:border-sage';
@@ -281,7 +308,7 @@ export function QuestionnaireFlow({ slug, practitioner }: { slug: string; practi
               <div role="note" className="flex items-start gap-2.5 rounded-xl bg-sage-light px-3.5 py-3">
                 <Info className="mt-0.5 h-4 w-4 flex-none text-sage" aria-hidden="true" />
                 <span className="text-sm leading-normal text-[#CFEFE5]">
-                  Les questions sont facultatives, mais plus vos réponses sont précises, mieux {pName} pourra préparer votre séance. Répondez avec vos mots, sans chercher la bonne réponse.
+                  {sec.questions.some((q) => q.required) ? 'Les questions marquées d’un * sont nécessaires, les autres sont facultatives' : 'Les questions sont facultatives'}, mais plus vos réponses sont précises, mieux {pName} pourra préparer votre séance. Répondez avec vos mots, sans chercher la bonne réponse.
                 </span>
               </div>
               {sec.questions.map((q) => {
@@ -291,19 +318,27 @@ export function QuestionnaireFlow({ slug, practitioner }: { slug: string; practi
                   <div key={q.key} className="flex flex-col gap-2">
                     <label htmlFor={q.options ? undefined : id} id={`${id}-label`} className="text-[15px] font-medium">
                       {q.label}
+                      {q.required ? <span className="text-terracotta" aria-hidden="true"> *</span> : null}
+                      {q.required ? <span className="sr-only"> (obligatoire)</span> : null}
                     </label>
                     <span id={`${id}-help`} className="-mt-1 text-[13px] leading-normal text-stone">{q.help}</span>
                     {q.options ? (
-                      <div role="radiogroup" aria-labelledby={`${id}-label`} aria-describedby={`${id}-help`} className="flex flex-wrap gap-2">
+                      <div role={q.multi ? 'group' : 'radiogroup'} aria-labelledby={`${id}-label`} aria-describedby={`${id}-help`} className="flex flex-wrap gap-2">
                         {q.options.map((o) => {
-                          const on = value === o;
+                          const picked = q.multi ? value.split(', ').filter(Boolean) : [value];
+                          const on = picked.includes(o);
+                          const toggle = () => {
+                            if (!q.multi) return setV(sec.id, q.key, on ? '' : o);
+                            const next = on ? picked.filter((x) => x !== o) : [...picked, o];
+                            setV(sec.id, q.key, q.options!.filter((x) => next.includes(x)).join(', '));
+                          };
                           return (
                             <button
                               key={o}
                               type="button"
-                              role="radio"
+                              role={q.multi ? 'checkbox' : 'radio'}
                               aria-checked={on}
-                              onClick={() => setV(sec.id, q.key, on ? '' : o)}
+                              onClick={toggle}
                               className="h-11 min-w-[96px] rounded-full border px-[18px] text-sm font-medium"
                               style={{ borderColor: on ? '#6DD4B8' : '#3A4252', background: on ? '#6DD4B8' : 'transparent', color: on ? '#0A0E14' : '#E8EDF4' }}
                             >
@@ -323,7 +358,10 @@ export function QuestionnaireFlow({ slug, practitioner }: { slug: string; practi
                         className="min-h-[96px] w-full resize-y rounded-xl border border-divider bg-cream px-3.5 py-3 text-[15px] leading-[1.55] text-charcoal outline-none placeholder:text-mist focus:border-sage"
                       />
                     )}
-                    {q.key === 'general_traitements' && (
+                    {tried && q.required && !value.trim() ? (
+                      <span role="alert" className="text-[13px] text-terracotta">Cette réponse est nécessaire pour continuer.</span>
+                    ) : null}
+                    {q.warn && (
                       <div role="note" className="flex items-start gap-2 rounded-[10px] border border-[#5C4F1E] bg-[#332D17] px-3 py-2">
                         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-none text-[#F2C94C]" aria-hidden="true" />
                         <span className="text-[13px] leading-[1.45] text-[#F5E3A8]">
@@ -337,17 +375,29 @@ export function QuestionnaireFlow({ slug, practitioner }: { slug: string; practi
               <div className="flex flex-wrap items-center gap-2.5 border-t border-divider pt-1.5">
                 <button type="button" onClick={() => go(step - 1)} className="h-12 rounded-xl border border-divider px-[18px] text-[15px]">← Précédent</button>
                 <span className="flex-1" />
+                {!sec.questions.some((q) => q.required) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSkipped((x) => ({ ...x, [sec.id]: true }));
+                      go(step + 1);
+                    }}
+                    className="h-12 px-3 text-sm text-stone hover:text-charcoal"
+                  >
+                    Passer
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
-                    setSkipped((x) => ({ ...x, [sec.id]: true }));
+                    if (sec.questions.some((q) => q.required && !(r[q.key] ?? '').trim())) {
+                      setTried(true);
+                      return;
+                    }
                     go(step + 1);
                   }}
-                  className="h-12 px-3 text-sm text-stone hover:text-charcoal"
+                  className="h-12 rounded-xl bg-sage px-[22px] text-[15px] font-semibold text-ink"
                 >
-                  Passer
-                </button>
-                <button type="button" onClick={() => go(step + 1)} className="h-12 rounded-xl bg-sage px-[22px] text-[15px] font-semibold text-ink">
                   {step === N ? 'Vérifier mes réponses →' : `Suivant : ${SECTIONS[step].title} →`}
                 </button>
               </div>
