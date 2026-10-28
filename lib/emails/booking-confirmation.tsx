@@ -22,6 +22,8 @@ interface BookingEmailData {
   /** Lien d'annulation pour le consultant. */
   cancelUrl?: string | null;
   isVisio?: boolean;
+  /** Séance déplacée : ancien horaire (« jeudi 30 octobre 2026 à 14:15 »). Le gabarit annonce alors le changement. */
+  previousDateFormatted?: string | null;
 }
 
 export function buildConfirmationEmail(data: BookingEmailData) {
@@ -61,7 +63,15 @@ export function buildConfirmationEmail(data: BookingEmailData) {
     ? `<p style="margin-top:16px;font-size:13px;color:#666;">Besoin d'annuler ? <a href="${escapeHtml(data.cancelUrl)}" style="color:#2B5651;">Annuler ce rendez-vous</a>${data.depositEuros ? ` (acompte remboursé jusqu'à ${data.cancellationPolicyHours ?? 24} h avant la séance, conservé ensuite)` : ''}.</p>`
     : '';
 
-  const subject = `Confirmation de votre rendez-vous avec ${data.practitionerName}`;
+  const moved = !!data.previousDateFormatted;
+  const subject = moved
+    ? `Nouvel horaire pour votre rendez-vous avec ${data.practitionerName}`
+    : `Confirmation de votre rendez-vous avec ${data.practitionerName}`;
+  const title = moved ? 'Votre rendez-vous a été déplacé' : 'Rendez-vous confirme !';
+  const previousLine = moved
+    ? `<p style="margin:0 0 4px;font-size:13px;color:#999;">Ancien horaire : <s>${escapeHtml(data.previousDateFormatted ?? '')}</s></p>
+       <p style="margin:0 0 8px;font-size:13px;color:#666;">Nouvel horaire :</p>`
+    : '';
 
   const html = `
 <!DOCTYPE html>
@@ -73,10 +83,11 @@ export function buildConfirmationEmail(data: BookingEmailData) {
       <div style="text-align:center;margin-bottom:24px;">
         <div style="display:inline-block;width:48px;height:48px;background:#2B5651;border-radius:50%;line-height:48px;color:white;font-size:20px;">&#10003;</div>
       </div>
-      <h1 style="text-align:center;font-size:20px;color:#1a1a1a;margin:0 0 8px;">Rendez-vous confirme !</h1>
+      <h1 style="text-align:center;font-size:20px;color:#1a1a1a;margin:0 0 8px;">${title}</h1>
       <p style="text-align:center;color:#666;font-size:14px;margin:0 0 24px;">Bonjour ${escapeHtml(data.consultantFirstName)},</p>
 
       <div style="background:#f0f7f6;border-radius:8px;padding:20px;margin:16px 0;">
+        ${previousLine}
         <p style="margin:4px 0;">&#128197; <strong>${escapeHtml(data.dateFormatted)} a ${escapeHtml(data.timeFormatted)}</strong></p>
         <p style="margin:4px 0;">&#128336; ${escapeHtml(data.consultationTypeName)} (${data.durationMinutes} min)</p>
         <p style="margin:4px 0;">&#128100; ${escapeHtml(data.practitionerName)}</p>
@@ -98,11 +109,11 @@ export function buildConfirmationEmail(data: BookingEmailData) {
 </body>
 </html>`;
 
-  const text = `Rendez-vous confirme !
+  const text = `${title}
 
 Bonjour ${data.consultantFirstName},
 
-Votre rendez-vous est confirme :
+${moved ? `Votre rendez-vous du ${data.previousDateFormatted} est déplacé. Nouvel horaire :` : 'Votre rendez-vous est confirme :'}
 - ${data.dateFormatted} a ${data.timeFormatted}
 - ${data.consultationTypeName} (${data.durationMinutes} min)
 - Avec ${data.practitionerName}

@@ -5,6 +5,8 @@ import { notifyWaitlistForAppointment } from '@/lib/server/waitlist-notify';
 
 const notifySchema = z.object({
   appointmentId: z.string().uuid(),
+  /** Séance déplacée : début de l'ancien créneau, celui qui se libère. */
+  freedStartsAt: z.string().datetime({ offset: true }).optional(),
 });
 
 /**
@@ -33,7 +35,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides.' }, { status: 400 });
     }
 
-    const result = await notifyWaitlistForAppointment(parsed.data.appointmentId, authData.user.id);
+    const result = await notifyWaitlistForAppointment(
+      parsed.data.appointmentId,
+      authData.user.id,
+      parsed.data.freedStartsAt ? new Date(parsed.data.freedStartsAt) : undefined
+    );
     if (result.notFound) return NextResponse.json({ error: 'Rendez-vous non trouvé.' }, { status: 404 });
     if (result.forbidden) return NextResponse.json({ error: 'Non autorisé.' }, { status: 403 });
     return NextResponse.json({ notified: result.notified });

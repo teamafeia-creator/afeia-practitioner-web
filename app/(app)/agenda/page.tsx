@@ -1,18 +1,18 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { Modal } from '@/components/ui/Modal';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
-import { cancelAppointment, getAppointmentsForRange, getConsultationTypes, ensureDefaultConsultationTypes, linkReschedule } from '@/lib/queries/appointments';
+import { cancelAppointment, checkAppointmentConflict, getAppointmentsForRange, getConsultationTypes, ensureDefaultConsultationTypes, linkReschedule, updateNativeAppointment } from '@/lib/queries/appointments';
 import { getGroupSessionsForRange } from '@/lib/queries/group-sessions';
 import { triggerWaitlistNotification } from '@/lib/waitlist-trigger';
 import { ConsultationTypeForm } from '@/components/agenda/ConsultationTypeForm';
 import type { Appointment, ConsultationType, GroupSession } from '@/lib/types';
-import { AgendaGrid, addDays, sameDay, startOfWeek, type AgendaEvent, type AgendaView } from './components/AgendaGrid';
+import { AgendaGrid, SNAP_MIN, addDays, hmFull, sameDay, startOfWeek, type AgendaEvent, type AgendaView, type MovePreview } from './components/AgendaGrid';
 import { SelectedCard, TypesPanel, WaitlistPanel, type SelectedInfo, type WaitlistRow } from './components/SidePanels';
 import { AppointmentForm } from './components/AppointmentForm';
 import { AppointmentDetail } from './components/AppointmentDetail';
@@ -25,10 +25,46 @@ const dayLong = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeri
 
 type GroupWithCount = GroupSession & { registration_count: number };
 
+/** Déplacement déposé, en attente de confirmation. */
+type PendingMove = { apt: Appointment; start: Date; end: Date; firstName: string; email: string | null; notify: boolean };
+
+/**
+ * Effets d'un déplacement (e-mail au consultant, liste d'attente), envoyés à la fin du délai « Annuler ».
+ * originalStart : horaire avant le premier déplacement non encore envoyé.
+ */
+type DeferredMove = { originalStart: string; currentStart: string; notify: boolean; token: string; timer: ReturnType<typeof setTimeout> };
+
+const UNDO_MS = 8000;
+const moveDayFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+const moveDayYearFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
 function appointmentName(a: Appointment): string {
   const p = a.patient;
   if (!p) return a.booking_name || 'Séance';
   return p.name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Consultant';
+}
+
+function appointmentFirstName(a: Appointment): string {
+  return a.patient?.first_name || appointmentName(a).split(' ')[0];
+}
+
+function flushMove(id: string, m: DeferredMove, keepalive: boolean) {
+  if (m.currentStart === m.originalStart) return;
+  if (m.notify) {
+    void fetch(`/api/appointments/${id}/notify-reschedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${m.token}` },
+      body: JSON.stringify({ previousStartsAt: m.originalStart }),
+      keepalive,
+    })
+      .then((r) => (r.ok ? null : r.json().then((b) => showToast.error(b?.error ?? 'L’e-mail de changement d’horaire n’a pas pu être envoyé.'))))
+      .catch(() => undefined);
+  }
+  // Liste d'attente : seulement si un créneau à venir se libère plus tôt que la nouvelle heure
+  const freed = new Date(m.originalStart);
+  if (freed < new Date(m.currentStart) && freed.getTime() > Date.now()) {
+    triggerWaitlistNotification(id, { freedStartsAt: m.originalStart, token: m.token, keepalive });
+  }
 }
 
 function AgendaPageInner() {
@@ -57,6 +93,30 @@ function AgendaPageInner() {
   const [groupDetailOpen, setGroupDetailOpen] = useState(false);
   const [editGroup, setEditGroup] = useState<GroupSession | null>(null);
   const [typeModal, setTypeModal] = useState(false);
+
+  // Glisser-déposer
+  const [allTypes, setAllTypes] = useState<ConsultationType[]>([]);
+  const [preview, setPreview] = useState<MovePreview | null>(null);
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
+  const [moving, setMoving] = useState(false);
+  const deferred = useRef(new Map<string, DeferredMove>());
+
+  // Effets en attente envoyés si l'on quitte la page avant la fin du délai « Annuler »
+  useEffect(() => {
+    const pending = deferred.current;
+    const flushAll = () => {
+      pending.forEach((m, id) => {
+        clearTimeout(m.timer);
+        flushMove(id, m, true);
+      });
+      pending.clear();
+    };
+    window.addEventListener('pagehide', flushAll);
+    return () => {
+      window.removeEventListener('pagehide', flushAll);
+      flushAll();
+    };
+  }, []);
 
   // Vue Jour par défaut sur petit écran
   useEffect(() => {
@@ -109,6 +169,7 @@ function AgendaPageInner() {
     try {
       await ensureDefaultConsultationTypes();
       const t = await getConsultationTypes();
+      setAllTypes(t);
       setTypes(t.filter((x) => x.is_active && !x.is_group));
     } catch {
       setTypes([]);
@@ -183,6 +244,157 @@ function AgendaPageInner() {
           consultantId: null,
         }
       : null;
+
+  // ----- Déplacement d'une séance (glisser-déposer ou Alt + flèches) -----
+
+  /** Raison du refus si la séance ne peut pas être déplacée. */
+  function moveRefusal(e: AgendaEvent): string | null {
+    if (e.kind === 'group') return 'Les séances de groupe ne se déplacent pas dans la grille : ouvrez l’atelier pour changer son horaire.';
+    const apt = appointments.find((a) => a.id === e.id);
+    if (!apt) return 'Cette séance est introuvable : rechargez la page.';
+    if (apt.status === 'cancelled' || apt.status === 'rescheduled') return 'Cette séance est annulée : son horaire ne peut plus être changé.';
+    if (apt.status === 'completed' || new Date(apt.starts_at).getTime() <= Date.now()) return 'Cette séance est passée : son horaire ne peut plus être changé.';
+    return null;
+  }
+
+  /** Chevauchement avec une autre séance, temps tampon du type compris (même règle que le formulaire). */
+  async function slotConflict(apt: Appointment, start: Date, end: Date): Promise<string | null> {
+    const buffer = allTypes.find((t) => t.id === apt.consultation_type_id)?.buffer_minutes ?? 0;
+    const conflict = await checkAppointmentConflict(
+      new Date(start.getTime() - buffer * 60000).toISOString(),
+      new Date(end.getTime() + buffer * 60000).toISOString(),
+      apt.id
+    );
+    if (!conflict) return null;
+    return buffer
+      ? `Ce créneau chevauche une autre séance (${buffer} min de battement compris).`
+      : 'Ce créneau chevauche une autre séance.';
+  }
+
+  function canStartMove(e: AgendaEvent): boolean {
+    const refusal = moveRefusal(e);
+    if (refusal) showToast.error(refusal, { id: 'move-refused' });
+    return !refusal;
+  }
+
+  async function requestMove(e: AgendaEvent, start: Date) {
+    const refusal = moveRefusal(e);
+    if (refusal) {
+      showToast.error(refusal, { id: 'move-refused' });
+      return;
+    }
+    const apt = appointments.find((a) => a.id === e.id)!;
+    const end = new Date(start.getTime() + (new Date(apt.ends_at).getTime() - new Date(apt.starts_at).getTime()));
+    if (start.getTime() === new Date(apt.starts_at).getTime()) return;
+    if (start.getTime() <= Date.now()) {
+      showToast.error('Ce nouvel horaire est déjà passé : choisissez une heure à venir.', { id: 'move-refused' });
+      return;
+    }
+    setPreview({ id: apt.id, start, end });
+    const conflict = await slotConflict(apt, start, end);
+    if (conflict) {
+      setPreview(null);
+      showToast.error(conflict, { id: 'move-refused' });
+      return;
+    }
+    const email = apt.patient?.email || apt.booking_email || null;
+    setPendingMove({ apt, start, end, firstName: appointmentFirstName(apt), email, notify: !!email });
+  }
+
+  function closeMove() {
+    setPendingMove(null);
+    setPreview(null);
+  }
+
+  async function confirmMove() {
+    if (!pendingMove) return;
+    const { apt, start, end, notify, email } = pendingMove;
+    const before = { starts_at: apt.starts_at, ends_at: apt.ends_at };
+    setMoving(true);
+    try {
+      // Mise à jour sur place : acompte, lien visio, jeton d'annulation et facture liée restent attachés à la séance
+      const updated = await updateNativeAppointment(apt.id, { starts_at: start.toISOString(), ends_at: end.toISOString() });
+      setAppointments((list) => list.map((a) => (a.id === apt.id ? { ...a, starts_at: updated.starts_at, ends_at: updated.ends_at } : a)));
+    } catch {
+      showToast.error('La séance n’a pas pu être déplacée. Réessayez.');
+      setMoving(false);
+      return;
+    }
+    setMoving(false);
+    closeMove();
+
+    const { data: sess } = await supabase.auth.getSession();
+    const prev = deferred.current.get(apt.id);
+    if (prev) clearTimeout(prev.timer);
+    const effects = {
+      originalStart: prev?.originalStart ?? before.starts_at,
+      currentStart: start.toISOString(),
+      notify: (prev?.notify ?? false) || (notify && !!email),
+      token: sess.session?.access_token ?? prev?.token ?? '',
+    };
+    scheduleEffects(apt.id, effects);
+    showToast.success('Séance déplacée', {
+      id: `move-${apt.id}`,
+      duration: UNDO_MS,
+      action: { label: 'Annuler', onClick: () => void undoMove(apt, before, effects) },
+    });
+  }
+
+  function scheduleEffects(id: string, m: Omit<DeferredMove, 'timer'>) {
+    const timer = setTimeout(() => {
+      deferred.current.delete(id);
+      flushMove(id, { ...m, timer }, false);
+    }, UNDO_MS + 500);
+    deferred.current.set(id, { ...m, timer });
+  }
+
+  async function undoMove(apt: Appointment, before: { starts_at: string; ends_at: string }, sent: Omit<DeferredMove, 'timer'>) {
+    const start = new Date(before.starts_at);
+    const end = new Date(before.ends_at);
+    const conflict = await slotConflict(apt, start, end);
+    if (conflict) {
+      showToast.error('L’horaire d’origine a été pris entre-temps : la séance reste à son nouvel horaire.');
+      return;
+    }
+    try {
+      await updateNativeAppointment(apt.id, { starts_at: before.starts_at, ends_at: before.ends_at });
+    } catch {
+      showToast.error('L’horaire d’origine n’a pas pu être rétabli.');
+      return;
+    }
+    setAppointments((list) => list.map((a) => (a.id === apt.id ? { ...a, ...before } : a)));
+    const m = deferred.current.get(apt.id);
+    if (m) {
+      clearTimeout(m.timer);
+      deferred.current.delete(apt.id);
+      // Retour à l'horaire déjà annoncé : plus rien à prévenir ; sinon le déplacement précédent reste à annoncer
+      if (before.starts_at !== m.originalStart) scheduleEffects(apt.id, { ...m, currentStart: before.starts_at });
+    } else {
+      // Délai dépassé (toast laissé ouvert au survol) : le nouvel horaire a déjà été annoncé, on annonce le retour
+      scheduleEffects(apt.id, { ...sent, originalStart: sent.currentStart, currentStart: before.starts_at });
+    }
+    showToast.success('Horaire d’origine rétabli');
+  }
+
+  // Alt + flèches haut / bas : séance sélectionnée déplacée de 15 min
+  const keyMove = useRef<(k: KeyboardEvent) => void>(() => undefined);
+  keyMove.current = (k: KeyboardEvent) => {
+    if (!k.altKey || (k.key !== 'ArrowUp' && k.key !== 'ArrowDown')) return;
+    if (!selectedId || pendingMove || preview || formOpen || detailOpen || groupFormOpen || groupDetailOpen || typeModal) return;
+    const target = k.target as HTMLElement | null;
+    if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+    const e = events.find((x) => x.id === selectedId);
+    if (!e) return;
+    k.preventDefault();
+    void requestMove(e, new Date(e.start.getTime() + (k.key === 'ArrowUp' ? -SNAP_MIN : SNAP_MIN) * 60000));
+  };
+  useEffect(() => {
+    const onKey = (k: KeyboardEvent) => keyMove.current(k);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const moveDayLabel = (d: Date) => (d.getFullYear() === new Date().getFullYear() ? moveDayFmt : moveDayYearFmt).format(d);
 
   // En-tête
   const isDay = view === 'jour';
@@ -316,6 +528,9 @@ function AgendaPageInner() {
               setView('jour');
             }}
             onSlot={(d) => openNew(d)}
+            onMoveStart={view === 'liste' ? undefined : canStartMove}
+            onMove={view === 'liste' ? undefined : (e, start) => void requestMove(e, start)}
+            preview={preview}
           />
         </div>
 
@@ -436,6 +651,48 @@ function AgendaPageInner() {
         }}
         onUpdated={refresh}
       />
+
+      <Modal isOpen={!!pendingMove} onClose={() => !moving && closeMove()} title="Déplacer la séance" size="sm">
+        {pendingMove && (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-charcoal">
+              Déplacer la séance de {pendingMove.firstName} au {moveDayLabel(pendingMove.start)}, {hmFull(pendingMove.start)} ?
+            </p>
+            {pendingMove.email ? (
+              <label className="flex items-center gap-2.5 text-sm text-charcoal">
+                <input
+                  type="checkbox"
+                  checked={pendingMove.notify}
+                  onChange={(ev) => setPendingMove((m) => (m ? { ...m, notify: ev.target.checked } : m))}
+                  className="h-4 w-4 accent-[#6DD4B8]"
+                />
+                Prévenir {pendingMove.firstName} par e-mail
+              </label>
+            ) : (
+              <p className="text-[13px] text-stone">Pas d’e-mail dans le dossier : pensez à prévenir {pendingMove.firstName} vous-même.</p>
+            )}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeMove}
+                disabled={moving}
+                className="h-10 rounded-[10px] px-4 text-sm font-medium text-charcoal hover:bg-surface-raised"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmMove()}
+                disabled={moving}
+                autoFocus
+                className="h-10 rounded-[10px] bg-sage px-4 text-sm font-semibold text-ink hover:bg-sage-deep disabled:opacity-60"
+              >
+                {moving ? 'Déplacement…' : 'Déplacer'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal isOpen={typeModal} onClose={() => setTypeModal(false)} title="Nouveau type de séance">
         <div className="p-1">
