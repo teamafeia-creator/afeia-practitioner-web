@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/cn';
 import { Button } from '../ui/Button';
 import { NotificationDropdown } from '../notifications/NotificationDropdown';
+import { HeaderSearch } from './HeaderSearch';
 import { supabase } from '../../lib/supabase';
 import { Avatar } from '../ui/Avatar';
 import {
@@ -30,6 +31,8 @@ import {
   Watch
 } from 'lucide-react';
 import { useMessageNotifications } from '@/hooks/useMessageNotifications';
+import { useReviewActivity } from '@/hooks/useReviewActivity';
+import { getReviewQueue } from '@/lib/morning-review/queue';
 import { useMorningReview } from '@/hooks/useMorningReview';
 
 const NAV_GROUPS = [
@@ -93,9 +96,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
   const { data: morningReview } = useMorningReview();
   // Même seuil que la file d'attention de la revue du matin
+  const { data: reviewActivity } = useReviewActivity();
   const reviewCount = useMemo(
-    () => (morningReview?.consultantsSummary ?? []).filter((c) => c.attentionScore >= 40).slice(0, 8).length,
-    [morningReview]
+    () =>
+      getReviewQueue(
+        morningReview?.consultantsSummary ?? [],
+        new Set((reviewActivity?.today ?? []).map((a) => a.consultant_id))
+      ).length,
+    [morningReview, reviewActivity]
   );
 
   const active = useMemo(() => {
@@ -541,7 +549,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Tablet/Mobile Header with hamburger */}
       <header className="fixed top-0 right-0 left-0 lg:left-[248px] h-16 glass-header z-40 px-4 lg:px-6">
-        <div className="h-full flex items-center justify-between">
+        <div className="h-full flex items-center justify-between gap-3">
           {/* Hamburger — always visible on tablet and mobile */}
           <button
             onClick={() => setMobileOpen(true)}
@@ -559,8 +567,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="font-serif text-lg text-charcoal">Afeia</span>
           </Link>
 
-          {/* Spacer for desktop */}
-          <div className="hidden lg:block" />
+          <HeaderSearch />
+          <div className="flex-1" />
 
           {/* Header actions */}
           <div className="flex items-center gap-3">

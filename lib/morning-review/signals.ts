@@ -17,7 +17,7 @@ export function identifyPrimarySignal(
     return {
       category: 'presence',
       severity: 'urgent',
-      message: `${name} a envoye ${consultant.unreadMessagesCount} message${plural ? 's' : ''} en attente de reponse`,
+      message: `${name} a envoyé ${consultant.unreadMessagesCount} message${plural ? 's' : ''} en attente de réponse`,
       iconName: 'MessageSquare',
     };
   }
@@ -30,7 +30,7 @@ export function identifyPrimarySignal(
     return {
       category: 'presence',
       severity: 'urgent',
-      message: `${name} n'a pas partage son journal depuis ${daysJournal} jours`,
+      message: `${name} n’a pas partagé son journal depuis ${daysJournal} jours`,
       iconName: 'FileText',
     };
   }
@@ -40,7 +40,7 @@ export function identifyPrimarySignal(
     return {
       category: 'adherence',
       severity: 'attention',
-      message: `${name} semble rencontrer des difficultes avec les nouvelles habitudes (adhesion a ${Math.round(lastWeekStats.averageAdherence * 100)}% cette semaine)`,
+      message: `${name} semble rencontrer des difficultés avec les nouvelles habitudes (observance à ${Math.round(lastWeekStats.averageAdherence * 100)} % cette semaine)`,
       iconName: 'AlertTriangle',
     };
   }
@@ -60,7 +60,7 @@ export function identifyPrimarySignal(
     return {
       category: 'energy',
       severity: 'attention',
-      message: `L'energie de ${name} est en retrait cette semaine`,
+      message: `L’énergie de ${name} est en retrait cette semaine`,
       iconName: 'Zap',
     };
   }
@@ -70,7 +70,7 @@ export function identifyPrimarySignal(
     return {
       category: 'sleep',
       severity: 'attention',
-      message: `Le sommeil de ${name} montre des nuits courtes depuis plusieurs jours (${bagueConnecteeStats.averageSleep.toFixed(1)}h en moyenne)`,
+      message: `Le sommeil de ${name} montre des nuits courtes depuis plusieurs jours (${bagueConnecteeStats.averageSleep.toFixed(1).replace('.', ',')} h en moyenne)`,
       iconName: 'Moon',
     };
   }
@@ -80,7 +80,7 @@ export function identifyPrimarySignal(
     return {
       category: 'recovery',
       severity: 'info',
-      message: `La variabilite cardiaque de ${name} suggere un besoin de recuperation accru`,
+      message: `La variabilité cardiaque de ${name} suggère un besoin de récupération accru`,
       iconName: 'Heart',
     };
   }
@@ -90,7 +90,7 @@ export function identifyPrimarySignal(
     return {
       category: 'progress',
       severity: 'positive',
-      message: `Belle progression de ${name} : adhesion a ${Math.round(lastWeekStats.averageAdherence * 100)}%`,
+      message: `Belle progression de ${name} : observance à ${Math.round(lastWeekStats.averageAdherence  * 100)} %`,
       iconName: 'TrendingUp',
     };
   }
@@ -100,7 +100,7 @@ export function identifyPrimarySignal(
     return {
       category: 'balance',
       severity: 'positive',
-      message: `${name} maintient un bel equilibre depuis plusieurs semaines`,
+      message: `${name} maintient un bel équilibre depuis plusieurs semaines`,
       iconName: 'Leaf',
     };
   }
@@ -113,7 +113,7 @@ export function generateSuggestedActions(
   primarySignal?: Signal
 ): SuggestedAction[] {
   const actions: SuggestedAction[] = [];
-  const name = consultant.name ?? 'votre consultant';
+  const name = (consultant as typeof consultant & { first_name?: string | null }).first_name || (consultant.name ?? '').split(' ')[0] || '';
 
   if (primarySignal) {
     switch (primarySignal.category) {
@@ -122,7 +122,7 @@ export function generateSuggestedActions(
           type: 'send_message',
           label: 'Prendre des nouvelles',
           description: 'Envoyer un message pour prendre de ses nouvelles',
-          templateMessage: `Bonjour ${name}, j'ai remarque que vous n'avez pas partage votre journal depuis quelques jours. Tout va bien de votre cote ? Je suis la si vous avez besoin.`,
+          templateMessage: `Bonjour${name ? ' ' + name : ''}, j’ai remarqué que vous n’avez pas partagé votre journal depuis quelques jours. Tout va bien de votre côté ? Je suis là si vous avez besoin.`,
           iconName: 'MessageSquare',
         });
         break;
@@ -137,8 +137,8 @@ export function generateSuggestedActions(
         actions.push({
           type: 'send_message',
           label: 'Proposer un ajustement',
-          description: 'Discuter des difficultes rencontrees',
-          templateMessage: `Bonjour ${name}, je remarque que l'adhesion semble un peu difficile ces derniers temps. Que diriez-vous qu'on ajuste ensemble votre programme pour le rendre plus adapte ?`,
+          description: 'Discuter des difficultés rencontrées',
+          templateMessage: `Bonjour${name ? ' ' + name : ''}, je remarque que les nouvelles habitudes semblent un peu difficiles ces derniers temps. Que diriez-vous qu’on ajuste ensemble vos recommandations pour les rendre plus simples ?`,
           iconName: 'MessageSquare',
         });
         break;
@@ -147,15 +147,15 @@ export function generateSuggestedActions(
       case 'energy':
         actions.push({
           type: 'send_message',
-          label: 'Message d\'ecoute',
-          description: 'Apporter du soutien et de l\'ecoute',
-          templateMessage: `Bonjour ${name}, je vois que vous traversez un moment un peu difficile. N'hesitez pas a m'en parler, je suis la pour vous accompagner.`,
+          label: 'Message d’écoute',
+          description: 'Apporter du soutien et de l’écoute',
+          templateMessage: `Bonjour${name ? ' ' + name : ''}, je vois que vous traversez un moment un peu difficile. N’hésitez pas à m’en parler, je suis là pour vous accompagner.`,
           iconName: 'MessageSquare',
         });
         actions.push({
           type: 'schedule_call',
           label: 'Proposer un appel',
-          description: 'Planifier un point telephonique',
+          description: 'Planifier un point téléphonique',
           iconName: 'Phone',
         });
         break;
@@ -164,15 +164,15 @@ export function generateSuggestedActions(
       case 'recovery':
         actions.push({
           type: 'note_observation',
-          label: 'Noter l\'observation',
-          description: 'Documenter pour le prochain RDV',
+          label: 'Noter l’observation',
+          description: 'Garder une trace pour la prochaine séance',
           iconName: 'FileEdit',
         });
         actions.push({
           type: 'send_message',
-          label: 'Conseils sommeil/recuperation',
-          description: 'Partager des conseils adaptes',
-          templateMessage: `Bonjour ${name}, j'ai remarque que votre sommeil/recuperation semble perturbe ces derniers jours. Prenez-vous le temps de vous reposer ? N'hesitez pas si vous souhaitez qu'on en discute.`,
+          label: 'Conseils sommeil et récupération',
+          description: 'Partager des conseils adaptés',
+          templateMessage: `Bonjour${name ? ' ' + name : ''}, j’ai remarqué que vos nuits semblent plus agitées ces derniers jours. Prenez-vous le temps de vous reposer ? N’hésitez pas si vous souhaitez qu'on en discute.`,
           iconName: 'MessageSquare',
         });
         break;
@@ -181,9 +181,9 @@ export function generateSuggestedActions(
       case 'balance':
         actions.push({
           type: 'celebrate',
-          label: 'Feliciter',
-          description: 'Envoyer un message d\'encouragement',
-          templateMessage: `Bravo ${name} ! Je vois que vous maintenez un bel equilibre et que les nouvelles habitudes s'ancrent bien. Continuez comme ca !`,
+          label: 'Féliciter',
+          description: 'Envoyer un message d’encouragement',
+          templateMessage: `Bravo${name ? ' ' + name : ''} ! Je vois que vous maintenez un bel équilibre et que les nouvelles habitudes s’ancrent bien. Continuez comme ça !`,
           iconName: 'PartyPopper',
         });
         break;
