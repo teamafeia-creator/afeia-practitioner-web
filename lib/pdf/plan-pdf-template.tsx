@@ -49,7 +49,7 @@ function Header({ data }: { data: PlanPdfData }) {
           <Text style={styles.headerMetaValue}>{data.consultantName}</Text>
         </View>
         <View style={styles.headerMetaCol}>
-          <Text style={styles.headerMetaLabel}>Naturopathe</Text>
+          <Text style={styles.headerMetaLabel}>Praticien</Text>
           <Text style={styles.headerMetaValue}>{data.practitionerName}</Text>
         </View>
         <View style={styles.headerMetaCol}>

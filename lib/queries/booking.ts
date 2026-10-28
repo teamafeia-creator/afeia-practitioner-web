@@ -21,6 +21,10 @@ export interface PractitionerPublicProfile {
   booking_phone: string | null;
   cancellation_policy_hours: number | null;
   cancellation_policy_text: string | null;
+  /** Acompte en ligne : pourcentage par défaut et disponibilité du paiement (Stripe Connect actif). */
+  deposit_percent: number;
+  online_payment: boolean;
+  booking_phone_display?: string | null;
   consultation_types: Array<{
     id: string;
     name: string;
@@ -32,6 +36,7 @@ export interface PractitionerPublicProfile {
     sort_order: number;
     is_group: boolean;
     price_per_participant: boolean;
+    deposit_percent?: number | null;
   }>;
 }
 
@@ -81,15 +86,34 @@ export async function getPractitionerBySlug(slug: string): Promise<PractitionerP
     );
   }
 
+  // Acompte : réglages lus à part, pour ne jamais casser la page si la migration manque
+  let depositPercent = 30;
+  let onlinePayment = false;
+  const typeDeposits = new Map<string, number | null>();
+  try {
+    const [{ data: dep }, { data: billing }, { data: typeDep }] = await Promise.all([
+      supabase.from('practitioners').select('booking_deposit_percent').eq('id', practitioner.id).maybeSingle(),
+      supabase.from('practitioner_billing_settings').select('stripe_charges_enabled, stripe_account_id').eq('practitioner_id', practitioner.id).maybeSingle(),
+      supabase.from('consultation_types').select('id, deposit_percent').eq('practitioner_id', practitioner.id),
+    ]);
+    if (dep && typeof (dep as { booking_deposit_percent?: number }).booking_deposit_percent === 'number') depositPercent = (dep as { booking_deposit_percent: number }).booking_deposit_percent;
+    onlinePayment = !!(billing as { stripe_charges_enabled?: boolean; stripe_account_id?: string | null } | null)?.stripe_charges_enabled && !!(billing as { stripe_account_id?: string | null }).stripe_account_id;
+    ((typeDep ?? []) as { id: string; deposit_percent: number | null }[]).forEach((t) => typeDeposits.set(t.id, t.deposit_percent));
+  } catch (err) {
+    console.warn('[booking] deposit settings unavailable', err);
+  }
+
   return {
     id: practitioner.id,
     full_name: practitioner.full_name,
+    deposit_percent: depositPercent,
+    online_payment: onlinePayment,
     booking_intro_text: practitioner.booking_intro_text,
     booking_address: practitioner.booking_address,
     booking_phone: practitioner.booking_phone,
     cancellation_policy_hours: practitioner.cancellation_policy_hours,
     cancellation_policy_text: practitioner.cancellation_policy_text,
-    consultation_types: types || [],
+    consultation_types: ((types || []) as unknown as PractitionerPublicProfile['consultation_types']).map((t) => ({ ...t, deposit_percent: typeDeposits.get(t.id) ?? null })),
   };
 }
 

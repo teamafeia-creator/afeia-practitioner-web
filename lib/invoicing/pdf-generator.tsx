@@ -186,7 +186,7 @@ export function InvoicePDFDocument({
             <Text style={[styles.text, styles.textBold]}>
               {practitioner_snapshot.prenom} {practitioner_snapshot.nom}
             </Text>
-            <Text style={styles.text}>Naturopathe</Text>
+            <Text style={styles.text}>Praticien</Text>
             <Text style={styles.text}>
               {practitioner_snapshot.adresse}
             </Text>

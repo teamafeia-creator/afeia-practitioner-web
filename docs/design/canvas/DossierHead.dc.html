@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>En-tête du dossier consultant</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+</style>
+</helmet>
+<header style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4; background: #0A0E14; padding-bottom: 18px; border-bottom: 1px solid #2A3140">
+  <a href="Consultants.dc.html" style="font-size: 14px; text-decoration: none">← Consultants</a>
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 18px">
+    <span style="width: 60px; height: 60px; border-radius: 30px; background: #6DD4B8; color: #0A0E14; font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">AB</span>
+    <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 30px; line-height: 1.1">Amina Benali</h1>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 14px; color: #8B95A5">
+        <span>22 ans</span><span>Montpellier</span><span>Suivie depuis déc. 2025</span>
+        <span style="font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: #23383B; color: #6DD4B8">Standard</span>
+        <span style="font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: #3A2733; color: #F0C2D8">Cycle suivi</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px">
+      <a href="Messages.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 14px">Message</a>
+      <a href="#" style="display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 10px; background: #6DD4B8; color: #0A0E14; text-decoration: none; font-size: 14px; font-weight: 600">Planifier une séance</a>
+      <button type="button" aria-label="Plus d'actions : modifier, exporter, supprimer" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+      </button>
+    </div>
+  </div>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":150}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -134,7 +134,6 @@ export const invitationService = {
 
       // 4. Générer code unique
       const code = Math.floor(100000 + Math.random() * 900000).toString();
-      console.log('[invitation] Code genere:', code);
 
       // Préparer les données
       const firstName = data.firstName || data.name?.split(' ')[0] || '';
@@ -286,7 +285,6 @@ export const invitationService = {
                   .from('consultant_invitations')
                   .update({ invitation_code: emailResult.code })
                   .eq('id', invitationId);
-                console.log('[invitation] Code mis a jour:', emailResult.code);
               }
             } else {
               console.warn('[invitation] Erreur email (API fallback):', emailResult.error);
@@ -302,7 +300,6 @@ export const invitationService = {
 
       console.log('[invitation] INVITATION CREEE AVEC SUCCES');
       console.log('Email:', normalizedEmail);
-      console.log('Code:', code);
       console.log('Consultant ID:', consultantId);
       console.log('Invitation ID:', invitationId);
       console.log('Praticien ID:', practitionerId);
@@ -472,7 +469,6 @@ export const invitationService = {
 
       console.log('[invitation] CODE RENVOYE');
       console.log('Email:', normalizedEmail);
-      console.log('Nouveau code:', emailCode);
 
       return {
         success: true,

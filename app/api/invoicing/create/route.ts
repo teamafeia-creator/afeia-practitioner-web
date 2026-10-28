@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
         practitioner_id: userId,
         consultant_id: validatedData.consultant_id,
         consultation_id: validatedData.consultation_id,
+        appointment_id: validatedData.appointment_id ?? null,
         template_id: validatedData.template_id,
         description: validatedData.description,
         montant: validatedData.montant,

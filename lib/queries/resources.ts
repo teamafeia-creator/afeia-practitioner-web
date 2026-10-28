@@ -87,6 +87,17 @@ export function slugify(text: string): string {
     .replace(/^-|-$/g, '');
 }
 
+/** Adresse unique : « titre », puis « titre-2 », « titre-3 »… */
+async function uniqueSlug(title: string, excludeId?: string): Promise<string> {
+  const base = slugify(title) || 'fiche';
+  const { data } = await supabase.from('educational_resources').select('id, slug').like('slug', `${base}%`);
+  const taken = new Set((data ?? []).filter((r: { id: string }) => r.id !== excludeId).map((r: { slug: string | null }) => r.slug));
+  if (!taken.has(base)) return base;
+  let i = 2;
+  while (taken.has(`${base}-${i}`)) i += 1;
+  return `${base}-${i}`;
+}
+
 type CreateResourceData = {
   title: string;
   summary?: string;
@@ -105,7 +116,7 @@ export async function createResource(
   practitionerId: string,
   data: CreateResourceData
 ): Promise<EducationalResource | null> {
-  const slug = slugify(data.title);
+  const slug = await uniqueSlug(data.title);
 
   const { data: created, error } = await supabase
     .from('educational_resources')
@@ -144,7 +155,7 @@ export async function updateResource(
   const updateData: Record<string, unknown> = {};
   if (data.title !== undefined) {
     updateData.title = data.title;
-    updateData.slug = slugify(data.title);
+    updateData.slug = await uniqueSlug(data.title, resourceId);
   }
   if (data.summary !== undefined) updateData.summary = data.summary;
   if (data.content_type !== undefined) updateData.content_type = data.content_type;
@@ -184,7 +195,8 @@ export async function deleteResource(
     .eq('practitioner_id', practitionerId)
     .single();
 
-  if (resource?.file_path) {
+  // Ne supprime que les fichiers déposés par ce praticien (une copie de fiche AFEIA partage le fichier d'origine)
+  if (resource?.file_path && resource.file_path.startsWith(`${practitionerId}/`)) {
     await supabase.storage
       .from('educational-resources')
       .remove([resource.file_path]);

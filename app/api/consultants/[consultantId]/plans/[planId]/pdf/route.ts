@@ -75,7 +75,7 @@ export async function GET(
 
     const pdfData: PlanPdfData = {
       consultantName,
-      practitionerName: practitioner?.full_name || 'Naturopathe',
+      practitionerName: practitioner?.full_name || 'Praticien',
       date: plan.shared_at || plan.updated_at || plan.created_at,
       version: plan.version || 1,
       status: plan.status || 'draft',

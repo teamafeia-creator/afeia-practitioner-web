@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Dossier — Anamnèse</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1400px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="consultants" hint-size="100%,1400px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px 40px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 24px">
+      <dc-import name="DossierHead" hint-size="100%,150px"></dc-import>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+        <div style="flex: 1 1 200px; max-width: 220px; min-width: 0">
+          <dc-import name="DossierNav" active="anamnese" hint-size="100%,760px"></dc-import>
+        </div>
+
+        <div style="flex: 999 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 26px">Anamnèse</h2>
+              <span style="font-size: 14px; color: #8B95A5">Recueillie le 15 déc. 2025 · 7 rubriques sur 8 renseignées</span>
+            </div>
+            <div style="display: flex; gap: 8px">
+              <button type="button" onClick="{{toggleAll}}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">{{toggleLabel}}</button>
+              <a href="#" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 14px">Modifier</a>
+            </div>
+          </div>
+
+          <section aria-label="Points clés" style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6l-5 3.6 1.9-5.8L4 8.8h6.1z"></path></svg>
+              <h3 style="margin: 0; font-size: 15px; font-weight: 600">Points clés</h3>
+              <span style="font-size: 12px; color: #8B95A5">résumé à relire, généré depuis l'anamnèse</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <sc-for list="{{keys}}" as="k" hint-placeholder-count="5">
+                <span style="font-size: 14px; padding: 8px 12px; border-radius: 10px; background: {{k.bg}}; color: {{k.fg}}">{{k.l}}</span>
+              </sc-for>
+            </div>
+          </section>
+
+          <sc-for list="{{sections}}" as="s" hint-placeholder-count="6">
+            <section style="background: #151A23; border: 1px solid #2A3140; border-radius: 16px; overflow: hidden">
+              <button type="button" onClick="{{s.toggle}}" aria-expanded="{{s.expanded}}" style="width: 100%; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 20px; border: 0; background: transparent; color: #E8EDF4; text-align: left; cursor: pointer">
+                <span style="flex: 1; font-size: 16px; font-weight: 600">{{s.t}}</span>
+                <span style="font-size: 13px; color: #8B95A5">{{s.count}}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B95A5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: {{s.rot}}; transition: transform 200ms ease"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+              <sc-if value="{{s.open}}" hint-placeholder-val="{{true}}">
+                <dl style="margin: 0; padding: 4px 20px 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px 28px">
+                  <sc-for list="{{s.fields}}" as="f" hint-placeholder-count="2">
+                    <div style="display: flex; flex-direction: column; gap: 6px">
+                      <dt style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #8B95A5">{{f.l}}</dt>
+                      <dd style="margin: 0; font-size: 15px; line-height: 1.6; max-width: 62ch">{{f.v}}</dd>
+                    </div>
+                  </sc-for>
+                </dl>
+              </sc-if>
+            </section>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { open: { motif: true, gen: true, alim: true } };
+  }
+  renderVals() {
+    const open = this.state.open;
+    const data = [
+      { id: 'motif', t: 'Motif de consultation', fields: [
+        ['Motif principal', 'Migraines cataméniales 3 à 4 fois par mois, aggravées par le stress des examens et la surconsommation de café.'],
+        ['Objectifs recherchés', 'Réduire la fréquence et l’intensité des migraines, diminuer le café, mieux gérer le stress des partiels.']] },
+      { id: 'gen', t: 'Informations générales', fields: [
+        ['Profession et rythme', 'Étudiante en 3e année de droit, stage prévu au semestre prochain.'],
+        ['Antécédents personnels / familiaux', 'Migraines depuis la puberté (15 ans), aggravées depuis l’entrée en fac. Mère migraineuse également.'],
+        ['Traitements et compléments actuels', 'Ibuprofène 400 mg en crise (2 à 3 fois par mois). Triptan prescrit mais non utilisé (peur des effets secondaires).']] },
+      { id: 'profil', t: 'Profil personnel et émotionnel', fields: [
+        ['Tempérament général', 'Studieuse, perfectionniste, anxieuse avant les examens, sociable par ailleurs.'],
+        ['Émotions dominantes', 'Anxiété de performance, peur de l’échec, culpabilité quand une migraine empêche de travailler.']] },
+      { id: 'alim', t: 'Alimentation et hydratation', fields: [
+        ['Habitudes alimentaires', 'Irrégulières : saute le petit-déjeuner, mange sur le pouce à la fac, cuisine simple le soir en colocation.'],
+        ['Hydratation quotidienne', 'Insuffisante.'],
+        ['Grignotage, alcool, sucre', 'Café 5 fois par jour, peu de fruits et légumes, fast-food 1 à 2 fois par semaine.']] },
+      { id: 'dig', t: 'Digestion et transit', fields: [
+        ['Inconfort, ballonnements', 'Nausées pendant les crises de migraine. Sinon rien à signaler.'],
+        ['Transit', 'Régulier.'],
+        ['Intolérances perçues', 'Aucune connue, hormis le chocolat qui peut déclencher des migraines.']] },
+      { id: 'som', t: 'Sommeil et énergie', fields: [
+        ['Qualité du sommeil', 'Variable : bonne en période normale, très perturbée avant les examens (difficultés d’endormissement).'],
+        ['Énergie au réveil', 'Moyenne.']] },
+      { id: 'act', t: 'Activité physique et posture', fields: [
+        ['Activité physique', 'Yoga une fois par semaine avec une amie, marche pour aller à la fac (20 min), pas de sport régulier.'],
+        ['Posture, douleurs', 'Penchée sur les livres, cervicalgies fréquentes, bureau non ergonomique.']] },
+      { id: 'stress', t: 'Stress et équilibre intérieur', fields: [
+        ['Niveau de stress perçu', '[À renseigner]'],
+        ['Stratégies de gestion', '[À renseigner]']] }
+    ];
+    const allOpen = data.every((d) => open[d.id]);
+    return {
+      toggleLabel: allOpen ? 'Tout replier' : 'Tout déplier',
+      toggleAll: () => {
+        const next = {};
+        if (!allOpen) data.forEach((d) => { next[d.id] = true; });
+        this.setState({ open: next });
+      },
+      keys: [
+        { l: 'Migraines 3–4 / mois, liées au cycle', bg: '#3A2733', fg: '#F0C2D8' },
+        { l: 'Café 5 / jour', bg: '#373131', fg: '#E8A87C' },
+        { l: 'Saute le petit-déjeuner', bg: '#373131', fg: '#E8A87C' },
+        { l: 'Stress des examens', bg: '#1F2640', fg: '#A9B8EC' },
+        { l: 'Ibuprofène en crise', bg: '#2A3140', fg: '#C9CFDA' }
+      ],
+      sections: data.map((d) => ({
+        t: d.t,
+        count: d.fields.length + ' champs',
+        open: !!open[d.id],
+        expanded: open[d.id] ? 'true' : 'false',
+        rot: open[d.id] ? 'rotate(180deg)' : 'none',
+        toggle: () => this.setState({ open: { ...this.state.open, [d.id]: !this.state.open[d.id] } }),
+        fields: d.fields.map((f) => ({ l: f[0], v: f[1] }))
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

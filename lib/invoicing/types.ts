@@ -25,6 +25,7 @@ export interface ConsultationInvoice {
   practitioner_id: string;
   consultant_id: string;
   consultation_id: string | null;
+  appointment_id?: string | null;
 
   numero: string | null;
   date_emission: string | null;

@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Consultants</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1300px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="consultants" hint-size="100%,1120px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 20px">
+      <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 36px; line-height: 1.1">Consultants</h1>
+          <p style="margin: 0; font-size: 15px; color: #8B95A5">13 actifs · 6 en Premium · 2 invitations en attente</p>
+        </div>
+        <a href="#" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; background: #6DD4B8; color: #0A0E14; text-decoration: none; font-size: 14px; font-weight: 600">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          Nouveau consultant
+        </a>
+      </section>
+
+
+      <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+          <label style="flex: 1 1 280px; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; box-sizing: border-box; background: #0A0E14; border: 1px solid #2A3140; border-radius: 10px; color: #8B95A5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+            <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rechercher un consultant</span>
+            <input type="search" value="{{q}}" onInput="{{onSearch}}" placeholder="Nom, e-mail ou téléphone" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #E8EDF4; font: 14px Inter, system-ui, sans-serif">
+          </label>
+          <span style="font-size: 13px; color: #8B95A5">{{countLabel}}</span>
+          <sc-if value="{{anyFilter}}" hint-placeholder-val="{{false}}">
+            <button type="button" onClick="{{clear}}" style="height: 36px; padding: 0 10px; border-radius: 8px; border: 0; background: transparent; color: #6DD4B8; font-size: 13px; cursor: pointer">Réinitialiser</button>
+          </sc-if>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px">
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #8B95A5">
+            Offre
+            <select id="f-offre" value="{{offre}}" onChange="{{onOffre}}" style="height: 40px; padding: 0 32px 0 12px; border-radius: 10px; background: #151A23; border: 1px solid {{offreBorder}}; color: #E8EDF4; font: 14px Inter, system-ui, sans-serif; cursor: pointer"><option value="tous">Toutes</option><option value="Premium">Premium</option><option value="Standard">Standard</option></select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #8B95A5">
+            Dernière séance
+            <select id="f-last" value="{{last}}" onChange="{{onLast}}" style="height: 40px; padding: 0 32px 0 12px; border-radius: 10px; background: #151A23; border: 1px solid {{lastBorder}}; color: #E8EDF4; font: 14px Inter, system-ui, sans-serif; cursor: pointer"><option value="tous">Toutes</option><option value="m1">Moins d’un mois</option><option value="m3">1 à 3 mois</option><option value="old">Plus de 3 mois</option><option value="none">Jamais vu</option></select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #8B95A5">
+            Prochain RDV
+            <select id="f-next" value="{{next}}" onChange="{{onNext}}" style="height: 40px; padding: 0 32px 0 12px; border-radius: 10px; background: #151A23; border: 1px solid {{nextBorder}}; color: #E8EDF4; font: 14px Inter, system-ui, sans-serif; cursor: pointer"><option value="tous">Tous</option><option value="planned">Planifié</option><option value="todo">À planifier</option></select>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid {{relBorder}}; background: {{relBg}}; color: #E8EDF4; font-size: 14px; cursor: pointer">
+            <input type="checkbox" checked="{{rel}}" onChange="{{onRel}}" style="width: 16px; height: 16px; accent-color: #E8A87C">
+            À relancer <span style="color: #8B95A5">{{relCount}}</span>
+          </label>
+        </div>
+      </div>
+
+      <sc-if value="{{showInvites}}" hint-placeholder-val="{{true}}">
+      <section aria-label="Invitations en attente" style="background: #151A23; border: 1px solid #2A3140; border-radius: 16px; overflow: hidden">
+        <button type="button" onClick="{{toggleInvites}}" aria-expanded="{{invExpanded}}" aria-controls="inv-list" style="width: 100%; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 20px; border: 0; background: transparent; color: #E8EDF4; text-align: left; cursor: pointer">
+          <span style="font-size: 16px; font-weight: 600">Invitations en attente</span>
+          <span style="min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 11px; background: #373131; color: #E8A87C; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{invCount}}</span>
+          <span style="flex: 1; font-size: 13px; color: #8B95A5">{{invSummary}}</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B95A5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: {{invRot}}; transition: transform 200ms ease"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        <sc-if value="{{invOpen}}" hint-placeholder-val="{{true}}">
+          <div id="inv-list" style="display: flex; flex-direction: column; border-top: 1px solid #2A3140">
+            <sc-for list="{{invites}}" as="i" hint-placeholder-count="2">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 20px; border-top: {{i.border}}">
+              <span style="width: 36px; height: 36px; border-radius: 18px; border: 1px dashed #5C6573; color: #C9CFDA; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{i.ini}}</span>
+              <span style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px">
+                <span style="font-weight: 500">{{i.n}}</span>
+                <span style="font-size: 13px; color: #8B95A5">{{i.sub}}</span>
+              </span>
+              <span style="font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: {{i.bg}}; color: {{i.fg}}">{{i.st}}</span>
+              <a href="#" style="display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 13px">Renvoyer le code</a>
+              <a href="#" style="display: inline-flex; align-items: center; height: 36px; padding: 0 8px; color: #F2A3A3; text-decoration: none; font-size: 13px">Annuler</a>
+            </div>
+          </sc-for>
+          </div>
+        </sc-if>
+      </section>
+      </sc-if>
+
+      <div style="overflow-x: auto; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+        <table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px">
+          <thead>
+            <tr style="text-align: left; color: #8B95A5; font-size: 13px">
+              <th scope="col" aria-sort="{{sortN.aria}}" style="font-weight: 500; padding: 8px 14px"><button type="button" onClick="{{sortN.go}}" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 6px; border: 0; background: transparent; color: {{sortN.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">Consultant <span aria-hidden="true">{{sortN.icon}}</span></button></th>
+              <th scope="col" style="font-weight: 500; padding: 14px 12px">Offre</th>
+              <th scope="col" aria-sort="{{sortL.aria}}" style="font-weight: 500; padding: 8px 6px"><button type="button" onClick="{{sortL.go}}" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 6px; border: 0; background: transparent; color: {{sortL.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">Dernière séance <span aria-hidden="true">{{sortL.icon}}</span></button></th>
+              <th scope="col" aria-sort="{{sortX.aria}}" style="font-weight: 500; padding: 8px 6px"><button type="button" onClick="{{sortX.go}}" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 6px; border: 0; background: transparent; color: {{sortX.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">Prochain RDV <span aria-hidden="true">{{sortX.icon}}</span></button></th>
+              <th scope="col" style="font-weight: 500; padding: 14px 20px 14px 12px; text-align: right"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+              <tr style="border-top: 1px solid #2A3140">
+                <td style="padding: 12px 20px">
+                  <a href="{{r.href}}" style="display: flex; align-items: center; gap: 12px; color: #E8EDF4; text-decoration: none">
+                    <span style="width: 36px; height: 36px; border-radius: 18px; background: {{r.c}}; color: #0A0E14; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{r.ini}}</span>
+                    <span style="display: flex; flex-direction: column; gap: 2px">
+                      <span style="font-weight: 500">{{r.n}}</span>
+                      <span style="font-size: 13px; color: #8B95A5">{{r.city}}</span>
+                    </span>
+                  </a>
+                </td>
+                <td style="padding: 12px">
+                  <span style="font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: {{r.offBg}}; color: {{r.offFg}}">{{r.off}}</span>
+                </td>
+                <td style="padding: 12px"><span style="display: flex; flex-direction: column; gap: 2px"><span style="color: {{r.lastC}}">{{r.last}}</span><span style="font-size: 12px; color: {{r.agoC}}">{{r.ago}}</span></span></td>
+                <td style="padding: 12px; color: {{r.nextC}}">{{r.next}}</td>
+                <td style="padding: 12px 20px 12px 12px; text-align: right">
+                  <sc-if value="{{r.canRelance}}" hint-placeholder-val="{{true}}">
+                    <button type="button" onClick="{{r.openRelance}}" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #5A4636; background: #373131; color: #E8A87C; font-size: 13px; font-weight: 500; cursor: pointer">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg>
+                      Relancer
+                    </button>
+                  </sc-if>
+                  <sc-if value="{{r.relanced}}" hint-placeholder-val="{{false}}">
+                    <span style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 4px; color: #6DD4B8; font-size: 13px">✓ Relancé aujourd'hui</span>
+                  </sc-if>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+          <p style="margin: 0; padding: 32px; text-align: center; font-size: 14px; color: #8B95A5">Aucun consultant ne correspond. <button type="button" onClick="{{clear}}" style="border: 0; background: transparent; color: #6DD4B8; font-size: 14px; cursor: pointer; text-decoration: underline">Effacer les filtres</button></p>
+        </sc-if>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; border-top: 1px solid #2A3140; font-size: 13px; color: #8B95A5">
+          <span>{{pageLabel}}</span>
+          <div style="display: flex; gap: 6px">
+            <button type="button" onClick="{{prevPage}}" disabled="{{isFirst}}" aria-label="Page précédente" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: {{prevFg}}; font-size: 13px; cursor: pointer">‹ Précédente</button>
+            <button type="button" onClick="{{nextPage}}" disabled="{{isLast}}" aria-label="Page suivante" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: {{nextFg}}; font-size: 13px; cursor: pointer">Suivante ›</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 50; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="dialog" aria-modal="true" aria-labelledby="relance-title" style="width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 16px; padding: 24px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <span style="width: 40px; height: 40px; border-radius: 20px; background: {{m.c}}; color: #0A0E14; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{m.ini}}</span>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <h2 id="relance-title" style="margin: 0; font-size: 18px; font-weight: 600">Relancer {{m.n}}</h2>
+            <span style="font-size: 13px; color: #8B95A5">Dernière séance : {{m.last}} · {{m.ago}}</span>
+          </div>
+          <button type="button" onClick="{{closeModal}}" aria-label="Fermer" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">×</button>
+        </div>
+        <div role="group" aria-label="Canal" style="display: flex; gap: 6px; padding: 4px; border-radius: 12px; background: #0A0E14; border: 1px solid #2A3140">
+          <sc-for list="{{channels}}" as="ch" hint-placeholder-count="2">
+            <button type="button" aria-pressed="{{ch.pressed}}" onClick="{{ch.pick}}" style="flex: 1; height: 38px; border-radius: 8px; border: 0; background: {{ch.bg}}; color: {{ch.fg}}; font-size: 14px; font-weight: 500; cursor: pointer">{{ch.l}}</button>
+          </sc-for>
+        </div>
+        <label for="relance-msg" style="font-size: 13px; color: #8B95A5">Message (modifiable)</label>
+        <textarea id="relance-msg" rows="5" value="{{draft}}" onInput="{{onDraft}}" style="width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font: 14px/1.55 Inter, system-ui, sans-serif; resize: vertical; margin-top: -8px"></textarea>
+        <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #C9CFDA; cursor: pointer">
+          <input type="checkbox" checked="{{withLink}}" onChange="{{toggleLink}}" style="width: 16px; height: 16px; accent-color: #6DD4B8">
+          Joindre mon lien de prise de rendez-vous
+        </label>
+        <div style="display: flex; justify-content: flex-end; gap: 8px">
+          <button type="button" onClick="{{closeModal}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+          <button type="button" onClick="{{sendRelance}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">Envoyer la relance</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{toast}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; background: #23383B; border: 1px solid #2F5A50; color: #E8EDF4; font: 14px Inter, system-ui, sans-serif">
+      <span style="color: #6DD4B8">✓</span> {{toast}}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { q: '', offre: 'tous', last: 'tous', next: 'tous', rel: false, sort: 'name', dir: 1, modal: null, channel: 'app', draft: '', withLink: true, sent: {}, toast: '', page: 1, invOpen: true };
+  }
+  renderVals() {
+    const st = this.state;
+    const C = ['#6DD4B8', '#7B93DB', '#E8A87C', '#E8A5C6', '#D4A574'];
+    const M = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+    const today = new Date(2026, 9, 23);
+    const fmt = (d) => d.getDate() + ' ' + M[d.getMonth()] + (d.getFullYear() !== 2026 ? ' ' + d.getFullYear() : '');
+    // nom, ville, offre, jours depuis la dernière séance (null = jamais), jours avant prochain RDV (null = à planifier), objet connecté
+    const raw = [
+      ['Amina Benali', 'Montpellier', 'Standard', 30, null, false],
+      ['Céline Roux', 'Strasbourg', 'Premium', 3, 11, true],
+      ['Émilie Laurent', 'Nantes', 'Standard', 64, null, false],
+      ['Isabelle Fontaine', 'Nice', 'Standard', 12, 1, false],
+      ['Jean-Pierre Moreau', 'Tours', 'Standard', 142, null, false],
+      ['Lucas Bernard', 'Bordeaux', 'Standard', 21, 4, false],
+      ['Marc Lefebvre', 'Toulouse', 'Standard', 47, null, false],
+      ['Mimouche', '—', 'Standard', null, null, false],
+      ['Nathalie Petit', 'Lyon', 'Premium', 9, 5, true],
+      ['Philippe Garnier', 'Rennes', 'Premium', 95, null, true],
+      ['Robert Durand', 'Dijon', 'Premium', 38, 14, true],
+      ['Sophie Martin', 'Paris', 'Premium', 1, 27, true],
+      ['Thomas Dubois', 'Chamonix', 'Premium', 16, 0, true]
+    ].map((r, i) => {
+      const lastD = r[3] === null ? null : new Date(today.getTime() - r[3] * 864e5);
+      const nextD = r[4] === null ? null : new Date(today.getTime() + r[4] * 864e5);
+      const relance = r[3] === null || (r[3] > 30 && r[4] === null);
+      const ago = r[3] === null ? 'jamais vu en séance' : r[3] === 0 ? 'aujourd’hui' : r[3] < 31 ? 'il y a ' + r[3] + ' j' : 'il y a ' + Math.round(r[3] / 30) + ' mois';
+      return {
+        n: r[0], city: r[1], off: r[2], lastDays: r[3], nextDays: r[4], obj: r[5], relance,
+        email: r[0].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]+/g, '.').replace(/^\.|\.$/g, '') + '@exemple.fr',
+        tel: '06 ' + String(12 + i * 7).padStart(2, '0') + ' ' + String(34 + i * 3).padStart(2, '0') + ' ' + String(56 + i).padStart(2, '0') + ' ' + String(10 + i * 5).padStart(2, '0'),
+        last: lastD ? fmt(lastD) : 'Aucune', ago,
+        agoC: relance ? '#E8A87C' : '#8B95A5',
+        lastC: lastD ? '#E8EDF4' : '#8B95A5',
+        next: nextD ? (r[4] === 0 ? 'Aujourd’hui' : r[4] === 1 ? 'Demain' : fmt(nextD)) : 'À planifier',
+        nextC: nextD ? '#E8EDF4' : '#8B95A5',
+        ini: r[0].split(/[\s-]/).map((w) => w[0]).join('').slice(0, 2).toUpperCase(),
+        c: C[i % C.length],
+        href: r[0] === 'Amina Benali' ? 'Anamnese.dc.html' : '#',
+        offBg: r[2] === 'Premium' ? '#373131' : '#23383B',
+        offFg: r[2] === 'Premium' ? '#E8A87C' : '#6DD4B8'
+      };
+    });
+    const nq = st.q.trim().toLowerCase();
+    const okLast = (r) => st.last === 'tous' ? true : st.last === 'none' ? r.lastDays === null : r.lastDays === null ? false : st.last === 'm1' ? r.lastDays <= 30 : st.last === 'm3' ? r.lastDays > 30 && r.lastDays <= 90 : r.lastDays > 90;
+    const okNext = (r) => st.next === 'tous' ? true : st.next === 'planned' ? r.nextDays !== null : r.nextDays === null;
+    const nqDigits = nq.replace(/\D/g, '').replace(/^33/, '0');
+    let rows = raw.filter((r) => (st.offre === 'tous' || r.off === st.offre) && okLast(r) && okNext(r) && (!st.rel || r.relance) && (!nq || r.n.toLowerCase().includes(nq) || r.email.includes(nq) || (nqDigits.length >= 2 && r.tel.replace(/\D/g, '').includes(nqDigits))));
+    const big = 1e9;
+    const key = { name: (r) => r.n, last: (r) => r.lastDays === null ? big : r.lastDays, next: (r) => r.nextDays === null ? big : r.nextDays }[st.sort];
+    rows = rows.slice().sort((a, b) => { const x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * st.dir; });
+    const PER = 8;
+    const pages = Math.max(1, Math.ceil(rows.length / PER));
+    const page = Math.min(st.page, pages);
+    const totalFiltered = rows.length;
+    rows = rows.slice((page - 1) * PER, page * PER);
+    const openFor = (r) => () => {
+      const first = r.n.split(' ')[0];
+      this.setState({ modal: r.n, channel: 'app', withLink: true,
+        draft: 'Bonjour ' + first + ', j’espère que vous allez bien depuis notre dernière séance. Où en êtes-vous avec vos conseils ? Si vous le souhaitez, nous pouvons faire un point ensemble.' });
+    };
+    rows = rows.map((r) => ({ ...r, canRelance: r.relance && !st.sent[r.n], relanced: !!st.sent[r.n], openRelance: openFor(r) }));
+    const mRow = raw.find((r) => r.n === st.modal) || raw[0];
+    const sorter = (k) => {
+      const on = st.sort === k;
+      return { fg: on ? '#E8EDF4' : '#8B95A5', icon: on ? (st.dir === 1 ? '↑' : '↓') : '↕', aria: on ? (st.dir === 1 ? 'ascending' : 'descending') : 'none',
+        go: () => this.setState({ sort: k, dir: on ? -this.state.dir : 1 }) };
+    };
+    const anyFilter = st.q || st.offre !== 'tous' || st.last !== 'tous' || st.next !== 'tous' || st.rel;
+    const b = (v) => v !== 'tous' ? '#6DD4B8' : '#2A3140';
+    return {
+      q: st.q, offre: st.offre, last: st.last, next: st.next, rel: st.rel,
+      onSearch: (e) => this.setState({ q: e.target.value, page: 1 }),
+      onOffre: (e) => this.setState({ offre: e.target.value, page: 1 }),
+      onLast: (e) => this.setState({ last: e.target.value, page: 1 }),
+      onNext: (e) => this.setState({ next: e.target.value, page: 1 }),
+      onRel: () => this.setState({ rel: !this.state.rel, page: 1 }),
+      offreBorder: b(st.offre), lastBorder: b(st.last), nextBorder: b(st.next),
+      relBorder: st.rel ? '#5A4636' : '#2A3140', relBg: st.rel ? '#373131' : 'transparent',
+      relCount: String(raw.filter((r) => r.relance && !st.sent[r.n]).length),
+      anyFilter: !!anyFilter,
+      countLabel: totalFiltered + ' sur ' + raw.length,
+      clear: () => this.setState({ page: 1, q: '', offre: 'tous', last: 'tous', next: 'tous', rel: false }),
+      sortN: sorter('name'), sortL: sorter('last'), sortX: sorter('next'),
+      rows, empty: rows.length === 0,
+      pageLabel: totalFiltered === 0 ? '' : ((page - 1) * PER + 1) + '–' + Math.min(page * PER, totalFiltered) + ' sur ' + totalFiltered + ' · page ' + page + ' / ' + pages,
+      isFirst: page <= 1, isLast: page >= pages,
+      prevFg: page <= 1 ? '#5C6573' : '#E8EDF4', nextFg: page >= pages ? '#5C6573' : '#E8EDF4',
+      prevPage: () => this.setState({ page: Math.max(1, page - 1) }),
+      nextPage: () => this.setState({ page: Math.min(pages, page + 1) }),
+      showInvites: page === 1,
+      invOpen: st.invOpen,
+      invExpanded: st.invOpen ? 'true' : 'false',
+      invRot: st.invOpen ? 'rotate(180deg)' : 'none',
+      toggleInvites: () => this.setState({ invOpen: !this.state.invOpen }),
+      invCount: '2',
+      invSummary: '1 expirée · 1 en attente',
+      modalOpen: !!st.modal,
+      m: mRow,
+      draft: st.draft,
+      withLink: st.withLink,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      toggleLink: () => this.setState({ withLink: !this.state.withLink }),
+      channels: [['app', 'Message Afeia'], ['email', 'E-mail']].map(([k, l]) => ({ l, pressed: st.channel === k ? 'true' : 'false', bg: st.channel === k ? '#23383B' : 'transparent', fg: st.channel === k ? '#6DD4B8' : '#E8EDF4', pick: () => this.setState({ channel: k }) })),
+      closeModal: () => this.setState({ modal: null }),
+      sendRelance: () => {
+        const n = this.state.modal;
+        this.setState({ modal: null, sent: { ...this.state.sent, [n]: true }, toast: 'Relance envoyée à ' + n + (this.state.channel === 'email' ? ' par e-mail' : ' sur Afeia') });
+        clearTimeout(this.tt);
+        this.tt = setTimeout(() => this.setState({ toast: '' }), 3500);
+      },
+      toast: st.toast,
+      invites: [
+        { n: 'Laura Poli', ini: 'LP', sub: 'Code envoyé le 2 oct.', st: 'Expirée', bg: '#3A2224', fg: '#F2A3A3', border: '0' },
+        { n: 'Camille Afeia', ini: 'CA', sub: 'Code envoyé hier', st: 'En attente', bg: '#2A3140', fg: '#C9CFDA', border: '1px solid #2A3140' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

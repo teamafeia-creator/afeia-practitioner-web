@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Facturation</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button,input,textarea,select{font-family:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #6DD4B8;outline-offset:2px}
+input::placeholder,textarea::placeholder{color:#5C6573}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1200px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="facturation" hint-size="100%,1200px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 20px">
+
+      <!-- ============ LISTE ============ -->
+      <sc-if value="{{isList}}" hint-placeholder-val="{{true}}">
+        <section style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px">
+          <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 6px">
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 36px">Facturation</h1>
+            <p style="margin: 0; font-size: 15px; color: #8B95A5">Vos factures de séances et votre chiffre d'affaires.</p>
+          </div>
+          <div style="position: relative">
+            <button type="button" onClick="{{toggleExport}}" aria-expanded="{{exportExp}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Exporter ▾</button>
+            <sc-if value="{{exportOpen}}" hint-placeholder-val="{{false}}">
+              <div role="menu" style="position: absolute; right: 0; top: 50px; z-index: 5; width: 260px; display: flex; flex-direction: column; padding: 6px; border-radius: 12px; background: #1C2230; border: 1px solid #2A3140; box-shadow: 0 12px 32px rgba(0,0,0,0.4)">
+                <button type="button" role="menuitem" onClick="{{exportCsv}}" style="display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 0; border-radius: 8px; background: transparent; color: #E8EDF4; text-align: left; cursor: pointer"><span style="font-size: 14px">Tableau (CSV)</span><span style="font-size: 12px; color: #8B95A5">Pour votre comptable ou un tableur</span></button>
+                <button type="button" role="menuitem" onClick="{{exportPdf}}" style="display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 0; border-radius: 8px; background: transparent; color: #E8EDF4; text-align: left; cursor: pointer"><span style="font-size: 14px">Récapitulatif (PDF)</span><span style="font-size: 12px; color: #8B95A5">Total de la période, prêt à archiver</span></button>
+              </div>
+            </sc-if>
+          </div>
+          <a href="#" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; border-radius: 10px; color: #8B95A5; font-size: 14px; text-decoration: none">Réglages</a>
+          <button type="button" onClick="{{openNew}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">＋ Nouvelle facture</button>
+        </section>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+          <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+              <span style="font-size: 13px; color: #8B95A5">{{k.l}}</span>
+              <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 30px; font-variant-numeric: tabular-nums; color: {{k.c}}">{{k.v}}</span>
+              <span style="font-size: 12px; color: #8B95A5">{{k.s}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 12px">
+          <div style="flex: 2 1 380px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 18px; border-radius: 14px; background: #373131; border: 1px solid #5A4636">
+            <span style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 15px; font-weight: 600; color: #F2D2BB">{{toBillCount}} séances terminées sans facture</span>
+              <span style="font-size: 13px; color: #D9B9A2">{{toBillNames}}</span>
+            </span>
+            <button type="button" onClick="{{billNext}}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: #E8A87C; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">Facturer</button>
+          </div>
+          <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 3px; padding: 16px 18px; border-radius: 14px; background: #1F2640; border: 1px solid #2E3A60">
+            <span style="font-size: 13px; color: #A9B8EC">À déclarer à l'URSSAF · 4e trimestre</span>
+            <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; color: #D4DCF6">{{urssaf}}</span>
+            <span style="font-size: 12px; color: #9AA8D6">Encaissé depuis le 1er octobre · déclaration avant le 31 janvier</span>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+          <div role="tablist" aria-label="Statut" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 12px; background: #151A23; border: 1px solid #2A3140">
+            <sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+              <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 34px; padding: 0 12px; border-radius: 8px; border: 0; background: {{t.bg}}; color: {{t.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">{{t.l}} <span style="color: #8B95A5">{{t.n}}</span></button>
+            </sc-for>
+          </div>
+          <label style="flex: 1 1 220px; display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px; border-radius: 10px; background: #151A23; border: 1px solid #2A3140; color: #8B95A5">
+            <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rechercher</span>
+            <input type="search" value="{{q}}" onInput="{{onQ}}" placeholder="Consultant ou n° de facture" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #E8EDF4; font-size: 14px">
+          </label>
+        </div>
+
+        <div style="overflow-x: auto; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+          <table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px">
+            <thead>
+              <tr style="text-align: left; color: #8B95A5; font-size: 12px">
+                <th scope="col" style="padding: 14px 18px; font-weight: 500">N°</th>
+                <th scope="col" style="padding: 14px 8px; font-weight: 500">Consultant</th>
+                <th scope="col" style="padding: 14px 8px; font-weight: 500">Séance</th>
+                <th scope="col" style="padding: 14px 8px; font-weight: 500">Émise le</th>
+                <th scope="col" style="padding: 14px 8px; font-weight: 500; text-align: right">Montant</th>
+                <th scope="col" style="padding: 14px 8px; font-weight: 500">Paiement</th>
+                <th scope="col" style="padding: 14px 18px 14px 8px; font-weight: 500">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+                <tr onClick="{{r.open}}" style="border-top: 1px solid #2A3140; cursor: pointer">
+                  <td style="padding: 12px 18px; font-variant-numeric: tabular-nums; color: #B8C1CF">{{r.num}}</td>
+                  <td style="padding: 12px 8px"><span style="display: flex; align-items: center; gap: 10px"><span style="width: 30px; height: 30px; border-radius: 15px; background: {{r.col}}; color: #0A0E14; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{r.ini}}</span>{{r.who}}</span></td>
+                  <td style="padding: 12px 8px; color: #B8C1CF">{{r.what}}</td>
+                  <td style="padding: 12px 8px; color: #B8C1CF">{{r.date}}</td>
+                  <td style="padding: 12px 8px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500">{{r.amount}}</td>
+                  <td style="padding: 12px 8px; color: #B8C1CF">{{r.method}}</td>
+                  <td style="padding: 12px 18px 12px 8px"><span style="height: 24px; padding: 0 10px; border-radius: 12px; background: {{r.sbg}}; color: {{r.sfg}}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">{{r.status}}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <sc-if value="{{rowsEmpty}}" hint-placeholder-val="{{false}}"><p style="margin: 0; padding: 28px; text-align: center; font-size: 14px; color: #8B95A5">Aucune facture dans cette catégorie.</p></sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ============ DÉTAIL ============ -->
+      <sc-if value="{{isDetail}}" hint-placeholder-val="{{false}}">
+        <nav style="display: flex; align-items: center; gap: 8px; font-size: 14px">
+          <button type="button" onClick="{{backToList}}" style="padding: 0; border: 0; background: transparent; color: #6DD4B8; font-size: 14px; cursor: pointer">← Facturation</button>
+          <span style="color: #5C6573">/</span><span style="color: #8B95A5">Facture {{inv.num}}</span>
+        </nav>
+        <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+          <article aria-label="Aperçu de la facture" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 22px; padding: 40px; border-radius: 6px; background: #F7F5F0; color: #1E2430; box-shadow: 0 16px 40px rgba(0,0,0,0.35)">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px">
+              <div style="display: flex; flex-direction: column; gap: 3px; font-size: 13px; line-height: 1.5">
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 600">Claire Martin</span>
+                <span>Praticienne en naturopathie</span>
+                <span>12 rue de l'Aiguillerie, 34000 Montpellier</span>
+                <span>SIRET 123 456 789 00012</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 13px">
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-weight: 600">{{inv.docTitle}}</span>
+                <span>N° {{inv.num}}</span>
+                <span>Émise le {{inv.date}}</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 3px; font-size: 13px; line-height: 1.5">
+              <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6B7280">Facturé à</span>
+              <span style="font-weight: 600">{{inv.who}}</span>
+              <span>{{inv.email}}</span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px">
+              <thead><tr style="border-bottom: 2px solid #1E2430; text-align: left"><th style="padding: 8px 0">Désignation</th><th style="padding: 8px 0; text-align: right">Montant</th></tr></thead>
+              <tbody><tr style="border-bottom: 1px solid #D8D4CB"><td style="padding: 12px 0">{{inv.what}} · {{inv.sessionDate}}</td><td style="padding: 12px 0; text-align: right; font-variant-numeric: tabular-nums">{{inv.amount}}</td></tr></tbody>
+            </table>
+            <div style="display: flex; justify-content: flex-end; gap: 24px; font-size: 16px; font-weight: 700"><span>Total</span><span style="font-variant-numeric: tabular-nums">{{inv.amount}}</span></div>
+            <span style="font-size: 12px; color: #4B5563">TVA non applicable, article 293 B du CGI.</span>
+            <sc-if value="{{inv.isPaid}}" hint-placeholder-val="{{false}}"><span style="align-self: flex-start; padding: 6px 12px; border: 2px solid #2E7D5B; border-radius: 6px; color: #2E7D5B; font-size: 13px; font-weight: 700; transform: rotate(-3deg)">PAYÉE · {{inv.paidInfo}}</span></sc-if>
+          </article>
+
+          <aside style="flex: 1 1 280px; max-width: 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+              <div style="display: flex; align-items: center; justify-content: space-between">
+                <span style="font-size: 13px; color: #8B95A5">Statut</span>
+                <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: {{inv.sbg}}; color: {{inv.sfg}}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">{{inv.status}}</span>
+              </div>
+              <sc-if value="{{inv.canPay}}" hint-placeholder-val="{{true}}">
+                <button type="button" onClick="{{openPay}}" style="height: 46px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 15px; font-weight: 600; cursor: pointer">Marquer comme payée</button>
+                <button type="button" onClick="{{payLink}}" style="height: 42px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">{{payLinkLabel}}</button>
+              </sc-if>
+              <button type="button" onClick="{{dlPdf}}" style="height: 42px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Télécharger le PDF</button>
+              <button type="button" onClick="{{sendMail}}" style="height: 42px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">{{sendLabel}}</button>
+              <sc-if value="{{inv.canRefund}}" hint-placeholder-val="{{false}}">
+                <button type="button" onClick="{{openRefund}}" style="height: 42px; border-radius: 10px; border: 1px solid #4A2F2F; background: transparent; color: #E57B7B; font-size: 14px; cursor: pointer">Rembourser</button>
+              </sc-if>
+              <sc-if value="{{inv.canPay}}" hint-placeholder-val="{{true}}">
+                <button type="button" onClick="{{openCancel}}" style="height: 38px; border-radius: 10px; border: 0; background: transparent; color: #E57B7B; font-size: 13px; cursor: pointer">Annuler la facture</button>
+              </sc-if>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600">Historique</h2>
+              <sc-for list="{{inv.history}}" as="h" hint-placeholder-count="3">
+                <div style="display: flex; gap: 10px">
+                  <span style="flex: none; width: 10px; height: 10px; margin-top: 5px; border-radius: 5px; background: {{h.c}}"></span>
+                  <span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px">{{h.l}}</span><span style="font-size: 12px; color: #8B95A5">{{h.d}}</span></span>
+                </div>
+              </sc-for>
+            </div>
+          </aside>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <!-- ============ MODALE : NOUVELLE FACTURE ============ -->
+  <sc-if value="{{newOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 50; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="dialog" aria-modal="true" aria-labelledby="nf-title" style="width: 100%; max-width: 560px; max-height: calc(100vh - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 24px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <h2 id="nf-title" style="flex: 1; margin: 0; font-size: 18px; font-weight: 600">Nouvelle facture</h2>
+          <button type="button" onClick="{{closeNew}}" aria-label="Fermer" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">×</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; color: #8B95A5">Séance à facturer</span>
+          <sc-for list="{{toBill}}" as="tb" hint-placeholder-count="3">
+            <button type="button" role="radio" aria-checked="{{tb.on}}" onClick="{{tb.pick}}" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 12px; border-radius: 10px; border: 1px solid {{tb.border}}; background: {{tb.bg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+              <span style="width: 18px; height: 18px; border-radius: 9px; border: 2px solid {{tb.ring}}; box-sizing: border-box; background: {{tb.dot}}; flex: none"></span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px; font-weight: 500">{{tb.who}}</span><span style="font-size: 12px; color: #8B95A5">{{tb.what}} · {{tb.date}}</span></span>
+              <span style="font-variant-numeric: tabular-nums">{{tb.amount}}</span>
+            </button>
+          </sc-for>
+          <button type="button" onClick="{{pickFree}}" style="align-self: flex-start; padding: 0; height: 30px; border: 0; background: transparent; color: #6DD4B8; font-size: 13px; cursor: pointer">Facture libre, sans séance liée</button>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px">
+          <label style="flex: 2 1 240px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Désignation
+            <input value="{{nf.what}}" onInput="{{onNfWhat}}" style="height: 42px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+          </label>
+          <label style="flex: 1 1 120px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Montant (€)
+            <input inputmode="decimal" value="{{nf.amount}}" onInput="{{onNfAmount}}" style="height: 42px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px; font-variant-numeric: tabular-nums">
+          </label>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; color: #8B95A5">Déjà réglée ?</span>
+          <div role="radiogroup" aria-label="Moyen de paiement" style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{nfMethods}}" as="m" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{m.on}}" onClick="{{m.pick}}" style="height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid {{m.border}}; background: {{m.bg}}; color: {{m.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">{{m.l}}</button></sc-for>
+          </div>
+        </div>
+        <span style="font-size: 12px; color: #8B95A5">Numéro attribué automatiquement à l'émission. Mention « TVA non applicable, article 293 B du CGI » ajoutée.</span>
+        <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px">
+          <button type="button" onClick="{{saveDraft}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Enregistrer en brouillon</button>
+          <button type="button" onClick="{{issue}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">{{issueLabel}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ MODALE : PAIEMENT / REMBOURSEMENT / ANNULATION ============ -->
+  <sc-if value="{{actOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 50; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="dialog" aria-modal="true" aria-labelledby="act-title" style="width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 14px; padding: 24px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <h2 id="act-title" style="margin: 0; font-size: 18px; font-weight: 600">{{actTitle}}</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #B8C1CF">{{actText}}</p>
+        <sc-if value="{{actChoices}}" hint-placeholder-val="{{true}}">
+          <div role="radiogroup" style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{actOptions}}" as="o" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{o.on}}" onClick="{{o.pick}}" style="height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid {{o.border}}; background: {{o.bg}}; color: {{o.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">{{o.l}}</button></sc-for>
+          </div>
+        </sc-if>
+        <div style="display: flex; justify-content: flex-end; gap: 8px">
+          <button type="button" onClick="{{closeAct}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Retour</button>
+          <button type="button" onClick="{{confirmAct}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: {{actBg}}; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">{{actCta}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: fixed; right: 24px; bottom: 24px; z-index: 60; max-width: 420px; padding: 14px 16px; border-radius: 12px; background: #1C2230; border: 1px solid #2F5A50; color: #E8EDF4; font-size: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.4)">{{toast}}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startView":{"editor":"enum","options":["liste","facture","nouvelle","paiement"],"default":"liste"},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const v = props.startView ?? 'liste';
+    const I = (n, who, col, email, what, date, sdate, amount, status, method, extra) => ({ id: n, num: '2026-' + String(n).padStart(4, '0'), who, col, email, what, date, sessionDate: sdate, amount, status, method, ...(extra || {}) });
+    this.state = {
+      view: v === 'liste' || v === 'nouvelle' ? 'list' : 'detail', sel: 148,
+      tab: 'all', q: '', exportOpen: false,
+      invoices: [
+        I(148, 'Thomas Dubois', '#D4A574', 'thomas.dubois@exemple.fr', 'Suivi', '27 oct. 2026', '27 oct.', 60, 'issued', null),
+        I(147, 'Amina Benali', '#6DD4B8', 'amina.benali@exemple.fr', 'Suivi', '24 oct. 2026', '24 oct.', 60, 'paid', 'Carte bancaire', { paidAt: '24 oct.' }),
+        I(146, 'Camille Roche', '#E8A5C6', 'camille.roche@exemple.fr', 'Consultation visio', '22 oct. 2026', '22 oct.', 55, 'paid', 'Virement', { paidAt: '23 oct.' }),
+        I(145, 'Sophie Martin', '#A8E6CF', 'sophie.martin@exemple.fr', 'Première consultation', '20 oct. 2026', '20 oct.', 80, 'paid', 'Chèque', { paidAt: '20 oct.' }),
+        I(144, 'Lucas Bernard', '#7B93DB', 'lucas.bernard@exemple.fr', 'Suivi', '17 oct. 2026', '17 oct.', 60, 'issued', null),
+        I(143, 'Robert Durand', '#E8A87C', 'robert.durand@exemple.fr', 'Première consultation', '15 oct. 2026', '15 oct.', 80, 'refunded', 'Carte bancaire', { paidAt: '15 oct.' }),
+        I(142, 'Philippe Garnier', '#E57B7B', 'philippe.garnier@exemple.fr', 'Suivi', '13 oct. 2026', '13 oct.', 60, 'paid', 'Espèces', { paidAt: '13 oct.' }),
+        I(141, 'Marc Lefebvre', '#A8E6CF', 'marc.lefebvre@exemple.fr', 'Atelier respiration', '10 oct. 2026', '10 oct.', 25, 'cancelled', null),
+        I(0, 'Nadia Lefort', '#E8A5C6', 'nadia.lefort@exemple.fr', 'Première consultation', '—', '28 oct.', 80, 'draft', null)
+      ],
+      toBill: [
+        { id: 'a1', who: 'Hugo Martins', what: 'Suivi', date: 'hier', amount: 60 },
+        { id: 'a2', who: 'Élise Bonnet', what: 'Première consultation', date: '26 oct.', amount: 80 },
+        { id: 'a3', who: 'Camille Roche', what: 'Suivi', date: '25 oct.', amount: 60 }
+      ],
+      newOpen: v === 'nouvelle', pick: 'a1', nf: { what: 'Suivi · séance du 27 oct.', amount: '60', method: 'none' },
+      act: v === 'paiement' ? 'pay' : null, payMethod: 'Carte bancaire', refundReason: 'Consultation annulée',
+      linkMade: false, toast: '', seq: 149
+    };
+  }
+  toastMsg(t) { this.setState({ toast: t }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 3500); }
+  renderVals() {
+    const st = this.state;
+    const ST = { draft: ['Brouillon', '#2A3140', '#C9CFDA'], issued: ['En attente', '#373131', '#E8A87C'], paid: ['Payée', '#23383B', '#6DD4B8'], refunded: ['Remboursée', '#1F2640', '#A9B8EC'], cancelled: ['Annulée', '#1C2230', '#8B95A5'] };
+    const eur = (n) => n.toLocaleString('fr-FR', { minimumFractionDigits: 0 }) + ' €';
+    const ini = (n) => n.split(' ').map((w) => w[0]).join('');
+    const term = st.q.trim().toLowerCase();
+    const inv = st.invoices;
+    const shown = inv.filter((x) => (st.tab === 'all' || x.status === st.tab) && (!term || (x.who + ' ' + x.num).toLowerCase().includes(term)));
+    const paidSum = inv.filter((x) => x.status === 'paid').reduce((s, x) => s + x.amount, 0);
+    const pending = inv.filter((x) => x.status === 'issued');
+    const cur = inv.find((x) => x.id === st.sel) || inv[0];
+    const upd = (patch) => this.setState({ invoices: this.state.invoices.map((x) => x.id === cur.id ? { ...x, ...patch } : x) });
+    const METHODS = ['Carte bancaire', 'Espèces', 'Chèque', 'Virement', 'Autre'];
+    const REASONS = ['Consultation annulée', 'Erreur de facturation', 'Geste commercial', 'Autre'];
+    const pill = (l, on, pick) => ({ l, on: on ? 'true' : 'false', bg: on ? '#6DD4B8' : 'transparent', fg: on ? '#0A0E14' : '#E8EDF4', border: on ? '#6DD4B8' : '#3A4252', pick });
+    const tb = st.toBill.find((x) => x.id === st.pick);
+    const history = (x) => {
+      const h = [{ l: 'Facture créée', d: x.date, c: '#8B95A5' }];
+      if (x.status !== 'draft') h.push({ l: 'Facture émise et envoyée à ' + x.who.split(' ')[0], d: x.date, c: '#7B93DB' });
+      if (x.paidAt) h.push({ l: 'Paiement enregistré · ' + (x.method || ''), d: x.paidAt, c: '#6DD4B8' });
+      if (x.status === 'refunded') h.push({ l: 'Remboursée · avoir émis', d: '16 oct.', c: '#A9B8EC' });
+      if (x.status === 'cancelled') h.push({ l: 'Facture annulée', d: x.date, c: '#E57B7B' });
+      return h.reverse();
+    };
+    const act = st.act;
+    const actConf = {
+      pay: ['Marquer comme payée', 'Comment ' + cur.who.split(' ')[0] + ' a-t-il réglé ' + eur(cur.amount) + ' ?', 'Enregistrer le paiement', '#6DD4B8', METHODS.map((m) => pill(m, st.payMethod === m, () => this.setState({ payMethod: m })))],
+      refund: ['Rembourser cette facture', 'Un avoir de ' + eur(cur.amount) + ' sera émis et envoyé à ' + cur.who.split(' ')[0] + '. Motif :', 'Émettre l’avoir', '#E57B7B', REASONS.map((r) => pill(r, st.refundReason === r, () => this.setState({ refundReason: r })))],
+      cancel: ['Annuler cette facture ?', 'Elle reste dans votre historique avec le statut Annulée : une facture émise ne se supprime pas.', 'Annuler la facture', '#E57B7B', []]
+    }[act || 'pay'];
+
+    return {
+      isList: st.view === 'list', isDetail: st.view === 'detail',
+      toggleExport: () => this.setState({ exportOpen: !st.exportOpen }), exportOpen: st.exportOpen, exportExp: st.exportOpen ? 'true' : 'false',
+      exportCsv: () => { this.setState({ exportOpen: false }); this.toastMsg('Export CSV téléchargé (octobre 2026).'); },
+      exportPdf: () => { this.setState({ exportOpen: false }); this.toastMsg('Récapitulatif PDF téléchargé (octobre 2026).'); },
+      openNew: () => this.setState({ newOpen: true, pick: st.toBill[0] ? st.toBill[0].id : null, nf: st.toBill[0] ? { what: st.toBill[0].what + ' · séance du ' + st.toBill[0].date, amount: String(st.toBill[0].amount), method: 'none' } : { what: '', amount: '', method: 'none' } }),
+      kpis: [
+        { l: 'Encaissé en octobre', v: eur(paidSum), s: '+12 % par rapport à septembre', c: '#E8EDF4' },
+        { l: 'Encaissé en 2026', v: '14 380 €', s: '214 factures payées', c: '#E8EDF4' },
+        { l: 'En attente de paiement', v: eur(pending.reduce((s, x) => s + x.amount, 0)), s: pending.length + ' factures émises', c: '#E8A87C' },
+        { l: 'Panier moyen', v: '63 €', s: 'par séance facturée', c: '#E8EDF4' }
+      ],
+      toBillCount: String(st.toBill.length),
+      toBillNames: st.toBill.map((x) => x.who.split(' ')[0] + ' (' + x.date + ')').join(', '),
+      billNext: () => this.setState({ newOpen: true, pick: st.toBill[0] && st.toBill[0].id, nf: st.toBill[0] ? { what: st.toBill[0].what + ' · séance du ' + st.toBill[0].date, amount: String(st.toBill[0].amount), method: 'none' } : st.nf }),
+      urssaf: '2 140 €',
+      tabs: [['all', 'Toutes'], ['draft', 'Brouillons'], ['issued', 'En attente'], ['paid', 'Payées'], ['refunded', 'Remboursées'], ['cancelled', 'Annulées']].map(([k, l]) => { const on = st.tab === k; return { l, n: String(inv.filter((x) => k === 'all' || x.status === k).length), sel: on ? 'true' : 'false', bg: on ? '#23383B' : 'transparent', fg: on ? '#6DD4B8' : '#B8C1CF', pick: () => this.setState({ tab: k }) }; }),
+      q: st.q, onQ: (e) => this.setState({ q: e.target.value }),
+      rows: shown.map((x) => ({ num: x.status === 'draft' ? 'Brouillon' : x.num, who: x.who, ini: ini(x.who), col: x.col, what: x.what, date: x.date, amount: eur(x.amount), method: x.method || '—', status: ST[x.status][0], sbg: ST[x.status][1], sfg: ST[x.status][2], open: () => this.setState({ view: 'detail', sel: x.id, linkMade: false }) })),
+      rowsEmpty: shown.length === 0,
+
+      backToList: () => this.setState({ view: 'list' }),
+      inv: { ...cur, num: cur.status === 'draft' ? '(attribué à l’émission)' : cur.num, docTitle: cur.status === 'refunded' ? 'FACTURE (remboursée)' : 'FACTURE', amount: eur(cur.amount),
+        status: ST[cur.status][0], sbg: ST[cur.status][1], sfg: ST[cur.status][2],
+        isPaid: cur.status === 'paid', paidInfo: (cur.paidAt || '') + ' · ' + (cur.method || ''),
+        canPay: cur.status === 'issued' || cur.status === 'draft', canRefund: cur.status === 'paid', history: history(cur) },
+      openPay: () => this.setState({ act: 'pay' }), openRefund: () => this.setState({ act: 'refund' }), openCancel: () => this.setState({ act: 'cancel' }),
+      payLinkLabel: st.linkMade ? '✓ Lien de paiement copié' : 'Créer un lien de paiement en ligne',
+      payLink: () => { this.setState({ linkMade: true }); this.toastMsg('Lien de paiement créé et copié. Collez-le dans un message à ' + cur.who.split(' ')[0] + '.'); },
+      dlPdf: () => this.toastMsg('PDF de la facture ' + cur.num + ' téléchargé.'),
+      sendLabel: cur.status === 'draft' ? 'Émettre et envoyer par e-mail' : 'Renvoyer par e-mail',
+      sendMail: () => { if (cur.status === 'draft') { upd({ status: 'issued', num: '2026-0' + st.seq, date: '28 oct. 2026' }); this.setState({ seq: st.seq + 1 }); this.toastMsg('Facture émise et envoyée à ' + cur.email + '.'); } else this.toastMsg('Facture renvoyée à ' + cur.email + '.'); },
+
+      actOpen: !!act, actTitle: actConf[0], actText: actConf[1], actCta: actConf[2], actBg: actConf[3], actOptions: actConf[4], actChoices: actConf[4].length > 0,
+      closeAct: () => this.setState({ act: null }),
+      confirmAct: () => {
+        if (act === 'pay') { upd({ status: 'paid', method: st.payMethod, paidAt: 'aujourd’hui' }); this.toastMsg('Paiement enregistré.'); }
+        if (act === 'refund') { upd({ status: 'refunded' }); this.toastMsg('Avoir émis et envoyé à ' + cur.who.split(' ')[0] + '.'); }
+        if (act === 'cancel') { upd({ status: 'cancelled' }); this.toastMsg('Facture annulée.'); }
+        this.setState({ act: null, view: 'detail' });
+      },
+
+      newOpen: st.newOpen, closeNew: () => this.setState({ newOpen: false }),
+      toBill: st.toBill.map((x) => { const on = st.pick === x.id; return { ...x, amount: eur(x.amount), on: on ? 'true' : 'false', border: on ? '#2F5A50' : '#2A3140', bg: on ? '#23383B' : 'transparent', ring: on ? '#6DD4B8' : '#3A4252', dot: on ? '#6DD4B8' : 'transparent',
+        pick: () => this.setState({ pick: x.id, nf: { ...st.nf, what: x.what + ' · séance du ' + x.date, amount: String(x.amount) } }) }; }),
+      pickFree: () => this.setState({ pick: null, nf: { what: '', amount: '', method: st.nf.method } }),
+      nf: st.nf,
+      onNfWhat: (e) => this.setState({ nf: { ...st.nf, what: e.target.value } }),
+      onNfAmount: (e) => this.setState({ nf: { ...st.nf, amount: e.target.value } }),
+      nfMethods: [['none', 'Pas encore']].concat(METHODS.slice(0, 4).map((m) => [m, m])).map(([k, l]) => pill(l, st.nf.method === k, () => this.setState({ nf: { ...st.nf, method: k } }))),
+      issueLabel: st.nf.method === 'none' ? 'Émettre et envoyer' : 'Émettre comme payée',
+      saveDraft: () => { this.toastMsg('Brouillon enregistré.'); this.setState({ newOpen: false }); },
+      issue: () => {
+        const amount = parseFloat((st.nf.amount || '0').replace(',', '.')) || 0;
+        const who = tb ? tb.who : 'Consultant';
+        const paid = st.nf.method !== 'none';
+        const n = { id: st.seq, num: '2026-0' + st.seq, who, col: '#7B93DB', email: who.toLowerCase().replace(/[^a-z ]/g, '').replace(' ', '.') + '@exemple.fr', what: st.nf.what.split(' · ')[0] || 'Séance', date: '28 oct. 2026', sessionDate: tb ? tb.date : '—', amount, status: paid ? 'paid' : 'issued', method: paid ? st.nf.method : null, paidAt: paid ? 'aujourd’hui' : undefined };
+        this.setState({ invoices: [n].concat(st.invoices), toBill: st.toBill.filter((x) => x.id !== st.pick), newOpen: false, seq: st.seq + 1, view: 'detail', sel: n.id });
+        this.toastMsg('Facture ' + n.num + ' émise' + (paid ? ' et marquée payée.' : ' et envoyée à ' + who.split(' ')[0] + '.'));
+      },
+      hasToast: !!st.toast, toast: st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

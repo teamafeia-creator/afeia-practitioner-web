@@ -41,6 +41,8 @@ export default function BookingSettingsPage() {
   const [slugChecking, setSlugChecking] = useState(false);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [copied, setCopied] = useState(false);
+  const [depositPercent, setDepositPercent] = useState(30);
+  const [onlinePayment, setOnlinePayment] = useState<boolean | null>(null);
   const [validation, setValidation] = useState<ValidationState>({
     hasConsultationTypes: false,
     consultationTypesError: null,
@@ -98,6 +100,16 @@ export default function BookingSettingsPage() {
           video_provider: (practitioner.video_provider as 'external' | 'daily') || 'external',
         });
       }
+
+      // Acompte (lu à part : colonne ajoutée par la migration 20261028_booking_deposit)
+      const [{ data: dep }, { data: billing }] = await Promise.all([
+        supabase.from('practitioners').select('booking_deposit_percent').eq('id', userData.user.id).maybeSingle(),
+        supabase.from('practitioner_billing_settings').select('stripe_charges_enabled').eq('practitioner_id', userData.user.id).maybeSingle(),
+      ]);
+      if (dep && typeof (dep as { booking_deposit_percent?: number }).booking_deposit_percent === 'number') {
+        setDepositPercent((dep as { booking_deposit_percent: number }).booking_deposit_percent);
+      }
+      setOnlinePayment(!!(billing as { stripe_charges_enabled?: boolean } | null)?.stripe_charges_enabled);
 
       // Check validation requirements (filtrer par praticien).
       // Mêmes colonnes que la page publique /rdv/[slug] : un schéma incomplet
@@ -254,6 +266,12 @@ export default function BookingSettingsPage() {
         .eq('id', userData.user.id);
 
       if (error) throw error;
+
+      const { error: depError } = await supabase
+        .from('practitioners')
+        .update({ booking_deposit_percent: Math.max(0, Math.min(100, depositPercent)) })
+        .eq('id', userData.user.id);
+      if (depError) throw new Error('Le pourcentage d’acompte n’a pas pu être enregistré.');
 
       setConfig({
         booking_slug: form.booking_slug || null,
@@ -458,6 +476,33 @@ export default function BookingSettingsPage() {
               placeholder="06 12 34 56 78"
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Acompte */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-sm font-semibold">Acompte à la réservation</h2>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Select
+            label="Acompte demandé en ligne"
+            value={String(depositPercent)}
+            onChange={(e) => setDepositPercent(parseInt(e.target.value, 10) || 0)}
+          >
+            {[20, 25, 30, 40, 50, 100].map((p) => (
+              <option key={p} value={p}>{p === 100 ? 'Totalité du prix' : `${p} % du prix`}</option>
+            ))}
+          </Select>
+          <p className="text-[13px] text-stone">
+            Le consultant règle l’acompte par carte pour confirmer son créneau ; le solde se paie après la séance. Acompte remboursé en cas d’annulation dans le délai ci-dessous, conservé sinon.
+            Un pourcentage différent peut être fixé pour un type de séance.
+          </p>
+          {onlinePayment === false && (
+            <p className="rounded-lg border border-[#5C4F1E] bg-[#332D17] px-3 py-2 text-[13px] text-[#F5E3A8]">
+              Pour encaisser les acomptes, connectez votre compte Stripe dans Paramètres › Facturation. En attendant, les réservations sont confirmées sans paiement en ligne.
+            </p>
+          )}
         </CardContent>
       </Card>
 

@@ -1,212 +1,212 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import {
-  ArrowLeft,
-  Clock,
-  Edit3,
-  Send,
-  Link2,
-  Trash2,
-} from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { Modal } from '@/components/ui/Modal';
+import { Spinner } from '@/components/ui/Spinner';
+import { Toaster, showToast } from '@/components/ui/Toaster';
 import { ResourceDetail } from '@/components/resources/ResourceDetail';
-import { CATEGORY_LABELS } from '@/components/resources/ResourceCard';
-import { getResourceBySlug, deleteResource, assignResourceToConsultant } from '@/lib/queries/resources';
-import type { EducationalResource, Consultant } from '@/lib/types';
+import { SendFicheModal } from '@/components/library/SendFicheModal';
+import { useRequireAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
+import { createResource, deleteResource, getResourceById, getResourceBySlug } from '@/lib/queries/resources';
+import { getSentForResource, type SentRow } from '@/lib/queries/library';
+import { FORMAT_LABELS, colorOfTheme, ficheTheme, relativeSent } from '@/lib/library';
+import { FACE_COLORS, initialsOf } from '@/lib/morning-review/queue';
+import type { EducationalResource } from '@/lib/types';
 
-export default function ResourceDetailPage() {
+type Fiche = EducationalResource & { theme_label?: string | null };
+
+export default function FichePage() {
+  const { user, loading: authLoading } = useRequireAuth('/login');
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
 
-  const [resource, setResource] = useState<EducationalResource | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [fiche, setFiche] = useState<Fiche | null | undefined>(undefined);
+  const [sent, setSent] = useState<SentRow[]>([]);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [delOpen, setDelOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  // Send-to-consultant modal
-  const [sendModalOpen, setSendModalOpen] = useState(false);
-  const [consultants, setConsultants] = useState<{ id: string; name: string }[]>([]);
-  const [sending, setSending] = useState(false);
-  const [sentMessage, setSentMessage] = useState('');
+  const load = useCallback(async () => {
+    if (!user) return;
+    const f = ((await getResourceBySlug(slug)) ?? (await getResourceById(slug))) as Fiche | null;
+    setFiche(f);
+    if (f) setSent(await getSentForResource(user.id, f.id));
+  }, [user, slug]);
 
   useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
-      setUserId(session.user.id);
-      const data = await getResourceBySlug(slug);
-      setResource(data);
-      setLoading(false);
+    void load();
+  }, [load]);
+
+  if (authLoading || fiche === undefined) {
+    return (
+      <div className="flex justify-center py-20">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+  if (!user) return null;
+  if (!fiche) {
+    return (
+      <div className="rounded-2xl border border-divider bg-surface p-8 text-center text-stone">
+        Cette fiche n’existe pas ou a été supprimée. <Link href="/bibliotheque" className="text-sage">Retour à la bibliothèque</Link>
+      </div>
+    );
+  }
+
+  const theme = ficheTheme(fiche);
+  const color = colorOfTheme(theme);
+  const afeia = fiche.source === 'afeia';
+  const own = fiche.practitioner_id === user.id;
+
+  async function duplicate() {
+    if (!user || !fiche) return;
+    setBusy(true);
+    try {
+      const copy = await createResource(user.id, {
+        title: `${fiche.title} (ma version)`,
+        summary: fiche.summary ?? undefined,
+        content_type: fiche.content_type,
+        content_markdown: fiche.content_markdown ?? undefined,
+        file_path: fiche.file_path ?? undefined,
+        file_name: fiche.file_name ?? undefined,
+        video_url: fiche.video_url ?? undefined,
+        category: fiche.category,
+        tags: fiche.tags ?? [],
+        read_time_minutes: fiche.read_time_minutes ?? undefined,
+      });
+      if (!copy) throw new Error();
+      if (fiche.theme_label) await supabase.from('educational_resources').update({ theme_label: fiche.theme_label }).eq('id', copy.id);
+      showToast.success('Copie créée dans Mes fiches. Vous pouvez la modifier.');
+      router.push(`/bibliotheque/${copy.slug ?? copy.id}/modifier`);
+    } catch {
+      showToast.error('La copie n’a pas pu être créée.');
+      setBusy(false);
     }
-    load();
-  }, [slug]);
-
-  async function loadConsultants() {
-    const { data } = await supabase
-      .from('consultants')
-      .select('id, name')
-      .is('deleted_at', null)
-      .order('name');
-    setConsultants(data ?? []);
   }
 
-  async function handleSendToConsultant(consultantId: string) {
-    if (!resource || !userId) return;
-    setSending(true);
-    await assignResourceToConsultant(resource.id, consultantId, userId);
-    setSending(false);
-    setSendModalOpen(false);
-    setSentMessage('Fiche envoyée avec succès');
-    setTimeout(() => setSentMessage(''), 3000);
-  }
-
-  async function handleDelete() {
-    if (!resource || !userId) return;
-    if (!confirm('Voulez-vous vraiment supprimer cette fiche ? Cette action est irréversible.')) return;
-    setDeleting(true);
-    const ok = await deleteResource(resource.id, userId);
+  async function remove() {
+    if (!user || !fiche) return;
+    setBusy(true);
+    const ok = await deleteResource(fiche.id, user.id);
     if (ok) {
+      showToast.success('Fiche supprimée.');
       router.push('/bibliotheque');
+    } else {
+      showToast.error('La fiche n’a pas pu être supprimée.');
+      setBusy(false);
     }
-    setDeleting(false);
   }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sage border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (!resource) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-stone">Fiche introuvable</p>
-        <Button variant="secondary" onClick={() => router.push('/bibliotheque')} className="mt-4">
-          Retour à la bibliothèque
-        </Button>
-      </div>
-    );
-  }
-
-  const isOwner = resource.source === 'practitioner' && resource.practitioner_id === userId;
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm">
-        <button
-          onClick={() => router.push('/bibliotheque')}
-          className="flex items-center gap-1 text-sage hover:text-sage/80 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Bibliothèque
-        </button>
-        <span className="text-stone">/</span>
-        <span className="text-charcoal font-medium truncate">{resource.title}</span>
+    <div className="flex max-w-[1180px] flex-col gap-[18px]">
+      <Toaster />
+      <nav aria-label="Fil d'Ariane" className="flex min-w-0 items-center gap-2 text-sm">
+        <Link href="/bibliotheque" className="flex-none text-sage hover:text-sage-dark">← Bibliothèque</Link>
+        <span className="text-mist">/</span>
+        <span className="truncate text-stone">{fiche.title}</span>
+      </nav>
+
+      <div className="flex flex-wrap items-start gap-6">
+        <article className="flex min-w-0 flex-[999_1_520px] flex-col gap-5 rounded-[18px] border border-divider bg-surface p-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-[26px] items-center rounded-full bg-surface-raised px-2.5 text-xs font-semibold" style={{ color }}>{theme}</span>
+            <span className="inline-flex h-[26px] items-center rounded-full bg-surface-raised px-2.5 text-xs text-[#B8C1CF]">{FORMAT_LABELS[fiche.content_type]}</span>
+            {fiche.read_time_minutes ? <span className="text-[13px] text-stone">◷ {fiche.read_time_minutes} min de lecture</span> : null}
+            {afeia && <span className="inline-flex h-[26px] items-center rounded-full bg-sage-light px-2.5 text-xs font-bold text-sage">AFEIA</span>}
+          </div>
+          <h1 className="font-serif text-[34px] font-medium leading-[1.2] text-charcoal">{fiche.title}</h1>
+          {fiche.summary && <p className="max-w-[62ch] text-[17px] leading-relaxed text-[#B8C1CF]">{fiche.summary}</p>}
+          <div className="h-px bg-divider" />
+          <div className="fiche-body max-w-[66ch] text-base leading-[1.7] text-[#D5DBE4]">
+            <ResourceDetail resource={fiche} />
+          </div>
+          <div role="note" className="flex gap-2 rounded-[10px] border border-[#5C4F1E] bg-[#332D17] px-3.5 py-2.5 text-[13px] leading-normal text-[#F5E3A8]">
+            ⚠ Ces conseils d’hygiène de vie ne remplacent pas un avis médical. En cas de traitement en cours, vérifiez avec votre médecin qu’ils sont compatibles.
+          </div>
+          {(fiche.tags ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {fiche.tags.map((t) => (
+                <span key={t} className="inline-flex h-[26px] items-center rounded-full border border-divider px-2.5 text-xs text-stone">#{t}</span>
+              ))}
+            </div>
+          )}
+        </article>
+
+        <aside className="flex min-w-0 max-w-[340px] flex-[1_1_280px] flex-col gap-3.5">
+          <div className="flex flex-col gap-2 rounded-2xl border border-divider bg-surface p-[18px]">
+            <button type="button" onClick={() => setSendOpen(true)} className="h-[46px] rounded-[10px] bg-sage text-[15px] font-semibold text-ink hover:bg-sage-deep">
+              Envoyer à un consultant
+            </button>
+            {own && (
+              <div className="flex gap-2">
+                <Link href={`/bibliotheque/${fiche.slug ?? fiche.id}/modifier`} className="flex h-[42px] flex-1 items-center justify-center rounded-[10px] border border-divider text-sm text-charcoal">
+                  Modifier
+                </Link>
+                <button type="button" onClick={() => setDelOpen(true)} className="h-[42px] rounded-[10px] border border-[#4A2F2F] px-3.5 text-sm text-[#E57B7B]">
+                  Supprimer
+                </button>
+              </div>
+            )}
+            {afeia && (
+              <>
+                <button type="button" disabled={busy} onClick={() => void duplicate()} className="h-[42px] rounded-[10px] border border-divider text-sm text-charcoal disabled:opacity-60">
+                  Dupliquer pour l’adapter
+                </button>
+                <span className="text-xs leading-normal text-stone">Fiche rédigée par l’équipe Afeia. Dupliquez-la pour en faire votre version.</span>
+              </>
+            )}
+          </div>
+          <div className="flex flex-col gap-2.5 rounded-2xl border border-divider bg-surface p-[18px]">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-[15px] font-semibold text-charcoal">Déjà envoyée à</h2>
+              {sent.length > 0 && <span className="text-xs text-stone">{sent.length} consultant{sent.length > 1 ? 's' : ''}</span>}
+            </div>
+            {sent.length === 0 && <span className="text-[13px] text-stone">Pas encore envoyée.</span>}
+            {sent.map((s, i) => (
+              <Link key={s.consultant_id} href={`/consultants/${s.consultant_id}`} className="flex items-center gap-2.5 text-charcoal">
+                <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[11px] font-semibold text-ink" style={{ background: FACE_COLORS[i % FACE_COLORS.length] }}>
+                  {initialsOf(s.name)}
+                </span>
+                <span className="flex flex-1 flex-col gap-px">
+                  <span className="text-sm">{s.name}</span>
+                  <span className="text-xs text-stone">envoyée {relativeSent(s.sent_at)}</span>
+                </span>
+                <span className={`text-xs ${s.read_at ? 'text-sage' : 'text-stone'}`}>{s.read_at ? '✓ Lue' : 'Pas encore lue'}</span>
+              </Link>
+            ))}
+          </div>
+        </aside>
       </div>
 
-      {sentMessage && (
-        <div className="rounded-lg bg-sage/10 px-4 py-2 text-sm text-sage font-medium">
-          {sentMessage}
-        </div>
-      )}
+      <SendFicheModal
+        open={sendOpen}
+        onClose={() => setSendOpen(false)}
+        practitionerId={user.id}
+        resourceId={fiche.id}
+        title={fiche.title}
+        sent={sent}
+        onSent={() => void load()}
+      />
 
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-charcoal">{resource.title}</h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-terracotta/10 px-2.5 py-0.5 text-xs font-medium text-terracotta">
-                  {CATEGORY_LABELS[resource.category]}
-                </span>
-                <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-warmgray capitalize">
-                  {resource.content_type === 'video_link' ? 'Vidéo' : resource.content_type}
-                </span>
-                {resource.read_time_minutes && (
-                  <span className="inline-flex items-center gap-1 text-xs text-warmgray">
-                    <Clock className="h-3 w-3" />
-                    {resource.read_time_minutes} min de lecture
-                  </span>
-                )}
-                {resource.source === 'afeia' && (
-                  <Badge variant="info">AFEIA</Badge>
-                )}
-              </div>
-              {resource.summary && (
-                <p className="mt-2 text-sm text-stone">{resource.summary}</p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2 shrink-0">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setSendModalOpen(true);
-                  loadConsultants();
-                }}
-              >
-                <Send className="mr-1 h-4 w-4" />
-                Envoyer
-              </Button>
-              {isOwner && (
-                <>
-                  <Button variant="secondary" onClick={() => router.push(`/bibliotheque/nouvelle?edit=${resource.id}`)}>
-                    <Edit3 className="mr-1 h-4 w-4" />
-                    Modifier
-                  </Button>
-                  <Button variant="destructive" onClick={handleDelete} loading={deleting}>
-                    <Trash2 className="mr-1 h-4 w-4" />
-                    Supprimer
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ResourceDetail resource={resource} />
-        </CardContent>
-      </Card>
-
-      {/* Send modal */}
-      {sendModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[4px] px-4">
-          <div className="w-full max-w-md rounded-xl glass-card p-6">
-            <h2 className="text-lg font-semibold text-charcoal">Envoyer la fiche</h2>
-            <p className="mt-1 text-sm text-stone">Sélectionnez un consultant</p>
-            <div className="mt-4 max-h-60 overflow-y-auto space-y-2">
-              {consultants.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => handleSendToConsultant(c.id)}
-                  disabled={sending}
-                  className="w-full text-left rounded-lg border border-divider px-4 py-2.5 text-sm text-charcoal hover:bg-cream transition-colors"
-                >
-                  {c.name}
-                </button>
-              ))}
-              {consultants.length === 0 && (
-                <p className="text-sm text-stone py-4 text-center">Aucun consultant</p>
-              )}
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Button variant="secondary" onClick={() => setSendModalOpen(false)}>
-                Annuler
-              </Button>
-            </div>
+      <Modal isOpen={delOpen} onClose={() => setDelOpen(false)} title="Supprimer cette fiche ?">
+        <div className="flex flex-col gap-3">
+          <p className="text-sm leading-[1.55] text-[#B8C1CF]">
+            {sent.length
+              ? `Elle disparaîtra de votre bibliothèque. Les ${sent.length} consultant${sent.length > 1 ? 's' : ''} qui l’ont reçue la garderont dans leur app.`
+              : 'Elle disparaîtra de votre bibliothèque. Cette action est définitive.'}
+          </p>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setDelOpen(false)} className="h-11 rounded-[10px] border border-divider px-4 text-sm text-charcoal">Annuler</button>
+            <button type="button" disabled={busy} onClick={() => void remove()} className="h-11 rounded-[10px] bg-[#E57B7B] px-[18px] text-sm font-semibold text-ink disabled:opacity-60">
+              Supprimer
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

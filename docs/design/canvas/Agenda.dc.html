@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Agenda</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button,select,input{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1000px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="agenda" hint-size="100%,1000px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 18px">
+      <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 32px; margin-right: 8px">{{monthLabel}}</h1>
+        <div style="display: flex; gap: 4px">
+          <button type="button" onClick="{{prev}}" aria-label="{{prevLabel}}" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">‹</button>
+          <button type="button" onClick="{{goToday}}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3140; background: {{todayBg}}; color: #E8EDF4; font-size: 14px; cursor: pointer">Aujourd'hui</button>
+          <button type="button" onClick="{{next}}" aria-label="{{nextLabel}}" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">›</button>
+        </div>
+        <span aria-live="polite" style="font-size: 14px; color: #8B95A5">{{rangeLabel}}</span>
+        <span style="flex: 1"></span>
+        <div role="group" aria-label="Vue" style="display: flex; padding: 4px; gap: 4px; background: #151A23; border: 1px solid #2A3140; border-radius: 12px">
+          <sc-for list="{{views}}" as="v" hint-placeholder-count="3">
+            <button type="button" aria-pressed="{{v.pressed}}" onClick="{{v.pick}}" style="height: 34px; padding: 0 12px; border-radius: 8px; border: 0; background: {{v.bg}}; color: {{v.fg}}; font-size: 14px; font-weight: 500; cursor: pointer">{{v.l}}</button>
+          </sc-for>
+        </div>
+        <button type="button" onClick="{{openNew}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">Nouvelle séance</button>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start">
+        <div style="flex: 999 1 640px; min-width: 0; overflow-x: auto; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+
+          <sc-if value="{{isGrid}}" hint-placeholder-val="{{true}}">
+            <div style="min-width: {{gridMin}}; display: grid; grid-template-columns: {{gridCols}}">
+              <div style="border-bottom: 1px solid #2A3140"></div>
+              <sc-for list="{{cols}}" as="d" hint-placeholder-count="7">
+                <button type="button" onClick="{{d.openDay}}" aria-label="Voir la journée du {{d.full}}" style="display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 0; border: 0; border-bottom: 1px solid #2A3140; border-left: 1px solid #2A3140; background: transparent; color: #E8EDF4; cursor: pointer">
+                  <span style="font-size: 12px; color: #8B95A5; text-transform: uppercase; letter-spacing: 0.06em">{{d.dow}}</span>
+                  <span style="width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; background: {{d.numBg}}; color: {{d.numFg}}">{{d.num}}</span>
+                </button>
+              </sc-for>
+
+              <div style="position: relative; height: 616px">
+                <sc-for list="{{hours}}" as="h" hint-placeholder-count="11">
+                  <span style="position: absolute; right: 8px; top: {{h.top}}; font-size: 11px; color: #8B95A5; transform: translateY(-50%)">{{h.l}}</span>
+                </sc-for>
+              </div>
+              <sc-for list="{{cols}}" as="d" hint-placeholder-count="7">
+                <div style="position: relative; height: 616px; border-left: 1px solid #2A3140; background: {{d.colBg}}; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 55px, #1F2533 55px, #1F2533 56px)">
+                  <sc-for list="{{d.ev}}" as="e" hint-placeholder-count="1">
+                    <button type="button" onClick="{{e.pick}}" aria-label="{{e.aria}}" style="position: absolute; left: 4px; right: 4px; top: {{e.top}}; height: {{e.h}}; box-sizing: border-box; padding: 6px 8px; border-radius: 8px; border: 0; border-left: 3px solid {{e.c}}; outline: {{e.ring}}; outline-offset: 1px; background: {{e.bg}}; color: #E8EDF4; text-align: left; overflow: hidden; display: flex; flex-direction: column; gap: 2px; cursor: pointer">
+                      <span style="font-size: 12px; font-weight: 600">{{e.n}}</span>
+                      <span style="font-size: 11px; color: #C9CFDA">{{e.t}}</span>
+                      <sc-if value="{{e.wide}}" hint-placeholder-val="{{false}}">
+                        <span style="font-size: 11px; color: #8B95A5">{{e.range}}</span>
+                      </sc-if>
+                    </button>
+                  </sc-for>
+                  <sc-if value="{{d.isToday}}" hint-placeholder-val="{{false}}">
+                    <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 476px; height: 2px; background: #E57B7B"></div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{isList}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column">
+              <sc-for list="{{listDays}}" as="g" hint-placeholder-count="5">
+                <div style="display: flex; flex-direction: column; border-top: {{g.border}}">
+                  <div style="display: flex; align-items: baseline; gap: 10px; padding: 14px 20px 6px">
+                    <span style="font-size: 15px; font-weight: 600">{{g.label}}</span>
+                    <span style="font-size: 13px; color: #8B95A5">{{g.count}}</span>
+                  </div>
+                  <sc-for list="{{g.ev}}" as="e" hint-placeholder-count="2">
+                    <button type="button" onClick="{{e.pick}}" style="display: flex; align-items: center; gap: 14px; padding: 10px 20px; border: 0; background: {{e.rowBg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+                      <span style="width: 92px; flex: none; font-size: 14px; font-variant-numeric: tabular-nums">{{e.range}}</span>
+                      <span style="width: 3px; align-self: stretch; border-radius: 2px; background: {{e.c}}"></span>
+                      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                        <span style="font-size: 14px; font-weight: 500">{{e.n}}</span>
+                        <span style="font-size: 13px; color: #8B95A5">{{e.t}}</span>
+                      </span>
+                      <span style="font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: {{e.chipBg}}; color: {{e.chipFg}}">{{e.mode}}</span>
+                    </button>
+                  </sc-for>
+                  <sc-if value="{{g.empty}}" hint-placeholder-val="{{false}}">
+                    <span style="padding: 4px 20px 14px; font-size: 13px; color: #8B95A5">Aucune séance</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+
+        <aside style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+          <sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+            <section aria-label="Séance sélectionnée" style="display: flex; flex-direction: column; gap: 12px; padding: 18px; background: #151A23; border: 1px solid {{sel.c}}; border-radius: 16px">
+              <div style="display: flex; align-items: flex-start; gap: 10px">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+                  <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{sel.c}}">{{sel.typeLabel}}</span>
+                  <span style="font-size: 17px; font-weight: 600">{{sel.n}}</span>
+                  <span style="font-size: 14px; color: #C9CFDA">{{sel.when}}</span>
+                </div>
+                <button type="button" onClick="{{closeSel}}" aria-label="Fermer le détail" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 16px; cursor: pointer">×</button>
+              </div>
+              <span style="align-self: flex-start; font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: {{sel.chipBg}}; color: {{sel.chipFg}}">{{sel.mode}}</span>
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <a href="{{sel.href}}" style="display: flex; align-items: center; justify-content: center; height: 40px; border-radius: 10px; background: #23383B; color: #6DD4B8; text-decoration: none; font-size: 14px; font-weight: 600">Ouvrir le dossier</a>
+                <sc-if value="{{sel.isVisio}}" hint-placeholder-val="{{false}}">
+                  <button type="button" style="height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Lancer la visio</button>
+                </sc-if>
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+                  <button type="button" onClick="{{shiftSel}}" style="height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 13px; cursor: pointer">Décaler d'1 h</button>
+                  <button type="button" onClick="{{cancelSel}}" style="height: 40px; border-radius: 10px; border: 0; background: transparent; color: #F2A3A3; font-size: 13px; cursor: pointer">Annuler la séance</button>
+                </div>
+              </div>
+            </section>
+          </sc-if>
+
+          <section aria-label="Liste d'attente" style="background: #151A23; border: 1px solid #2A3140; border-radius: 16px; overflow: hidden">
+            <button type="button" onClick="{{toggleWait}}" aria-expanded="{{waitExpanded}}" aria-controls="wait-list" style="width: 100%; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 18px; border: 0; background: transparent; color: #E8EDF4; text-align: left; cursor: pointer">
+              <span style="font-size: 16px; font-weight: 600">Liste d'attente</span>
+              <sc-if value="{{waitHasCount}}" hint-placeholder-val="{{true}}">
+                <span style="min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 11px; background: #373131; color: #E8A87C; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{waitCount}}</span>
+              </sc-if>
+              <span style="flex: 1"></span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B95A5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: {{waitRot}}; transition: transform 200ms ease"><path d="M6 9l6 6 6-6"></path></svg>
+            </button>
+            <sc-if value="{{waitOpen}}" hint-placeholder-val="{{true}}">
+              <div id="wait-list" style="display: flex; flex-direction: column; gap: 0; padding: 0 18px 14px">
+                <sc-if value="{{waitEmpty}}" hint-placeholder-val="{{false}}">
+                  <span style="font-size: 13px; color: #8B95A5; padding-top: 4px">Personne en attente. Les inscriptions arrivent depuis votre page de réservation en ligne.</span>
+                </sc-if>
+                <sc-for list="{{wait}}" as="w" hint-placeholder-count="2">
+                  <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px 0 8px; border-top: 1px solid #2A3140">
+                    <div style="display: flex; align-items: center; gap: 8px; min-width: 0">
+                      <span style="font-size: 14px; font-weight: 500">{{w.n}}</span>
+                      <span style="flex: 1; min-width: 0; font-size: 12px; color: #5C6573; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{w.email}}</span>
+                      <sc-if value="{{w.notified}}" hint-placeholder-val="{{false}}">
+                        <span title="Un créneau libéré lui a été envoyé par e-mail" style="flex: none; height: 20px; padding: 0 8px; border-radius: 10px; background: #1F2640; color: #7B93DB; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center">Prévenu·e</span>
+                      </sc-if>
+                    </div>
+                    <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #E8EDF4"><span style="width: 8px; height: 8px; border-radius: 2px; background: {{w.typeColor}}; flex: none"></span>{{w.typeLabel}}</span>
+                    <span style="font-size: 13px; color: #8B95A5">{{w.pref}}</span>
+                    <span style="font-size: 12px; color: #5C6573">{{w.age}}</span>
+                    <div style="display: flex; gap: 14px">
+                      <button type="button" onClick="{{w.propose}}" style="height: 32px; padding: 0; border: 0; background: transparent; color: #6DD4B8; font-size: 13px; font-weight: 500; cursor: pointer">Proposer un créneau</button>
+                      <button type="button" onClick="{{w.remove}}" style="height: 32px; padding: 0; border: 0; background: transparent; color: #8B95A5; font-size: 13px; cursor: pointer">Retirer</button>
+                    </div>
+                  </div>
+                </sc-for>
+                <span style="font-size: 12px; color: #5C6573; padding-top: 8px; border-top: 1px solid #2A3140">Inscriptions faites par les visiteurs sur votre page de réservation. Quand un créneau se libère, les 3 premières personnes compatibles sont prévenues par e-mail.</span>
+              </div>
+            </sc-if>
+          </section>
+          <section aria-label="Types de séance" style="background: #151A23; border: 1px solid #2A3140; border-radius: 16px; overflow: hidden">
+            <div style="display: flex; align-items: center; gap: 8px; padding-right: 18px">
+              <button type="button" onClick="{{toggleTypes}}" aria-expanded="{{typesExpanded}}" aria-controls="types-list" style="flex: 1; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 0 0 18px; border: 0; background: transparent; color: #E8EDF4; text-align: left; cursor: pointer">
+                <span style="font-size: 16px; font-weight: 600">Types de séance</span>
+                <span style="min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; border-radius: 11px; background: #1F2640; color: #7B93DB; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{typesCount}}</span>
+                <span style="flex: 1"></span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B95A5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: {{typesRot}}; transition: transform 200ms ease"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+              <a href="#" style="font-size: 13px; text-decoration: none">Gérer</a>
+            </div>
+            <sc-if value="{{typesOpen}}" hint-placeholder-val="{{true}}">
+            <div id="types-list" style="display: flex; flex-direction: column; gap: 8px; padding: 0 18px 18px">
+            <sc-for list="{{types}}" as="t" hint-placeholder-count="3">
+              <span style="display: flex; align-items: center; gap: 8px; font-size: 14px"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{t.c}}; flex: none"></span><span style="flex: 1">{{t.l}}</span><span style="font-size: 12px; color: #8B95A5">{{t.meta}}</span></span>
+            </sc-for>
+            <button type="button" onClick="{{openTypeModal}}" style="display: flex; align-items: center; justify-content: center; gap: 6px; height: 40px; margin-top: 4px; border-radius: 10px; border: 1px dashed #2A3140; background: transparent; color: #6DD4B8; font-size: 13px; font-weight: 500; cursor: pointer">＋ Ajouter un type de séance</button>
+            <span style="font-size: 12px; color: #8B95A5">Cabinet ou visio se choisit à chaque séance.</span>
+            </div>
+            </sc-if>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{newOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 50; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="dialog" aria-modal="true" aria-labelledby="new-title" style="width: 100%; max-width: 520px; max-height: calc(100vh - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 24px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <h2 id="new-title" style="flex: 1; margin: 0; font-size: 18px; font-weight: 600">{{newTitle}}</h2>
+          <button type="button" onClick="{{closeNew}}" aria-label="Fermer" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">×</button>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Consultant
+          <select value="{{f.who}}" onChange="{{onWho}}" style="height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+            <sc-for list="{{people}}" as="p" hint-placeholder-count="6"><option value="{{p}}">{{p}}</option></sc-for>
+          </select>
+        </label>
+        <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+          <legend style="font-size: 13px; color: #8B95A5; margin-bottom: 6px">Type de séance <span style="color: #5C6573">· défini dans Paramètres › Types de séance</span></legend>
+          <div style="display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto">
+            <sc-for list="{{typeOpts}}" as="t" hint-placeholder-count="3">
+              <button type="button" role="radio" aria-checked="{{t.checked}}" onClick="{{t.pick}}" style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px; border-radius: 10px; border: 1px solid {{t.border}}; background: {{t.bg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+                <span style="width: 12px; height: 12px; border-radius: 4px; background: {{t.color}}; flex: none"></span>
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 14px; font-weight: 500">{{t.name}}</span>
+                  <span style="font-size: 12px; color: #8B95A5">{{t.meta}}</span>
+                </span>
+                <sc-if value="{{t.isNew}}" hint-placeholder-val="{{false}}">
+                  <span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #23383B; color: #6DD4B8">Nouveau</span>
+                </sc-if>
+                <span aria-hidden="true" style="width: 18px; height: 18px; border-radius: 9px; border: 2px solid {{t.dot}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex: none"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{t.dotFill}}"></span></span>
+              </button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{addClosed}}" hint-placeholder-val="{{true}}">
+            <button type="button" onClick="{{openAdd}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border-radius: 10px; border: 1px dashed #2A3140; background: transparent; color: #6DD4B8; font-size: 14px; font-weight: 500; cursor: pointer">＋ Ajouter un type de séance</button>
+          </sc-if>
+
+          <sc-if value="{{addOpen}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 12px; background: #0A0E14; border: 1px solid #2F5A50">
+              <span style="font-size: 14px; font-weight: 600">Nouveau type de séance</span>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #8B95A5">Nom
+                <input value="{{nt.name}}" onInput="{{onNtName}}" placeholder="Ex. Séance réflexologie" style="height: 40px; padding: 0 12px; border-radius: 8px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+              </label>
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #8B95A5">Durée
+                  <select value="{{nt.dur}}" onChange="{{onNtDur}}" style="height: 40px; padding: 0 8px; border-radius: 8px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+                    <option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option><option value="75">1 h 15</option><option value="90">1 h 30</option><option value="120">2 h</option>
+                  </select>
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #8B95A5">Tarif (€)
+                  <input inputMode="decimal" value="{{nt.price}}" onInput="{{onNtPrice}}" placeholder="60" style="height: 40px; padding: 0 10px; border-radius: 8px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #8B95A5">Battement
+                  <select value="{{nt.buf}}" onChange="{{onNtBuf}}" style="height: 40px; padding: 0 8px; border-radius: 8px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+                    <option value="0">Aucun</option><option value="10">10 min</option><option value="15">15 min</option><option value="30">30 min</option>
+                  </select>
+                </label>
+              </div>
+              <div role="radiogroup" aria-label="Couleur" style="display: flex; flex-wrap: wrap; gap: 8px">
+                <sc-for list="{{swatches}}" as="w" hint-placeholder-count="8">
+                  <button type="button" role="radio" aria-checked="{{w.checked}}" aria-label="Couleur {{w.c}}" onClick="{{w.pick}}" style="width: 28px; height: 28px; border-radius: 14px; border: 2px solid {{w.ring}}; background: {{w.c}}; cursor: pointer"></button>
+                </sc-for>
+              </div>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #C9CFDA; cursor: pointer">
+                <input type="checkbox" checked="{{nt.online}}" onChange="{{onNtOnline}}" style="width: 16px; height: 16px; accent-color: #6DD4B8">
+                Réservable en ligne par les consultants
+              </label>
+              <span style="font-size: 12px; color: #8B95A5">Il sera aussi enregistré dans Paramètres › Types de séance.</span>
+              <div style="display: flex; justify-content: flex-end; gap: 8px">
+                <button type="button" onClick="{{closeAdd}}" style="height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 13px; cursor: pointer">Annuler</button>
+                <button type="button" onClick="{{saveType}}" disabled="{{ntInvalid}}" style="height: 38px; padding: 0 14px; border-radius: 8px; border: 0; background: {{ntBg}}; color: {{ntFg}}; font-size: 13px; font-weight: 600; cursor: pointer">Ajouter ce type</button>
+              </div>
+            </div>
+          </sc-if>
+        </fieldset>
+
+        <div role="group" aria-label="Lieu" style="display: flex; gap: 6px; padding: 4px; border-radius: 12px; background: #0A0E14; border: 1px solid #2A3140">
+          <sc-for list="{{locOpts}}" as="o" hint-placeholder-count="2">
+            <button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="flex: 1; height: 38px; border-radius: 8px; border: 0; background: {{o.bg}}; color: {{o.fg}}; font-size: 14px; font-weight: 500; cursor: pointer">{{o.l}}</button>
+          </sc-for>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Jour
+            <select value="{{f.day}}" onChange="{{onDay}}" style="height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+              <sc-for list="{{dayOpts}}" as="o" hint-placeholder-count="7"><option value="{{o.v}}">{{o.l}}</option></sc-for>
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Heure
+            <select value="{{f.hour}}" onChange="{{onHour}}" style="height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+              <sc-for list="{{hourOpts}}" as="o" hint-placeholder-count="10"><option value="{{o.v}}">{{o.l}}</option></sc-for>
+            </select>
+          </label>
+        </div>
+        <span style="font-size: 13px; color: #8B95A5">{{summary}}</span>
+        <sc-if value="{{conflict}}" hint-placeholder-val="{{false}}">
+          <span role="alert" style="font-size: 13px; color: #F2A3A3">Ce créneau chevauche une séance existante (battement compris).</span>
+        </sc-if>
+        <div style="display: flex; justify-content: flex-end; gap: 8px">
+          <button type="button" onClick="{{closeNew}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+          <button type="button" onClick="{{createEv}}" disabled="{{conflict}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: {{createBg}}; color: {{createFg}}; font-size: 14px; font-weight: 600; cursor: pointer">Créer la séance</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+
+  <sc-if value="{{typeModal}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 55; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="dialog" aria-modal="true" aria-labelledby="type-title" style="width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 12px; padding: 22px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <h2 id="type-title" style="flex: 1; margin: 0; font-size: 18px; font-weight: 600">Nouveau type de séance</h2>
+          <button type="button" onClick="{{closeAdd}}" aria-label="Fermer" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">×</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 12px; background: #0A0E14; border: 1px solid #2F5A50">
+                            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #8B95A5">Nom
+                <input value="{{nt.name}}" onInput="{{onNtName}}" placeholder="Ex. Séance réflexologie" style="height: 40px; padding: 0 12px; border-radius: 8px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+              </label>
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #8B95A5">Durée
+                  <select value="{{nt.dur}}" onChange="{{onNtDur}}" style="height: 40px; padding: 0 8px; border-radius: 8px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+                    <option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option><option value="75">1 h 15</option><option value="90">1 h 30</option><option value="120">2 h</option>
+                  </select>
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #8B95A5">Tarif (€)
+                  <input inputMode="decimal" value="{{nt.price}}" onInput="{{onNtPrice}}" placeholder="60" style="height: 40px; padding: 0 10px; border-radius: 8px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+                </label>
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #8B95A5">Battement
+                  <select value="{{nt.buf}}" onChange="{{onNtBuf}}" style="height: 40px; padding: 0 8px; border-radius: 8px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+                    <option value="0">Aucun</option><option value="10">10 min</option><option value="15">15 min</option><option value="30">30 min</option>
+                  </select>
+                </label>
+              </div>
+              <div role="radiogroup" aria-label="Couleur" style="display: flex; flex-wrap: wrap; gap: 8px">
+                <sc-for list="{{swatches}}" as="w" hint-placeholder-count="8">
+                  <button type="button" role="radio" aria-checked="{{w.checked}}" aria-label="Couleur {{w.c}}" onClick="{{w.pick}}" style="width: 28px; height: 28px; border-radius: 14px; border: 2px solid {{w.ring}}; background: {{w.c}}; cursor: pointer"></button>
+                </sc-for>
+              </div>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #C9CFDA; cursor: pointer">
+                <input type="checkbox" checked="{{nt.online}}" onChange="{{onNtOnline}}" style="width: 16px; height: 16px; accent-color: #6DD4B8">
+                Réservable en ligne par les consultants
+              </label>
+              <span style="font-size: 12px; color: #8B95A5">Il sera aussi enregistré dans Paramètres › Types de séance.</span>
+              <div style="display: flex; justify-content: flex-end; gap: 8px">
+                <button type="button" onClick="{{closeAdd}}" style="height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 13px; cursor: pointer">Annuler</button>
+                <button type="button" onClick="{{saveType}}" disabled="{{ntInvalid}}" style="height: 38px; padding: 0 14px; border-radius: 8px; border: 0; background: {{ntBg}}; color: {{ntFg}}; font-size: 13px; font-weight: 600; cursor: pointer">Ajouter ce type</button>
+              </div>
+            </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{toast}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; background: #23383B; border: 1px solid #2F5A50; color: #E8EDF4; font: 14px Inter, system-ui, sans-serif">
+      <span style="color: #6DD4B8">✓</span> {{toast}}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    // Miroir de la table consultation_types (Paramètres › Types de séance) :
+    // name, duration_minutes, price_cents, color, buffer_minutes, is_bookable_online, is_active, sort_order
+    // Lieu de la séance = appointments.location_type ('in_person' | 'video'), choisi à chaque séance.
+    this.state = {
+      view: 'semaine', week: 0, day: 4, sel: null, waitOpen: true, typesOpen: true, typeModal: false, newOpen: false, toast: '', nextId: 100,
+      types: [
+        { id: 't1', name: 'Première consultation', duration_minutes: 90, price_cents: 8000, color: '#4CAF50', buffer_minutes: 15, is_bookable_online: true },
+        { id: 't2', name: 'Suivi', duration_minutes: 60, price_cents: 6000, color: '#2196F3', buffer_minutes: 15, is_bookable_online: true },
+        { id: 't3', name: 'Consultation visio', duration_minutes: 60, price_cents: 5500, color: '#9C27B0', buffer_minutes: 15, is_bookable_online: true }
+      ],
+      f: { who: 'Amina Benali', typeId: 't2', loc: 'in_person', day: '4', hour: '9' },
+      addOpen: false,
+      nt: { name: '', dur: '60', price: '', buf: '15', color: '#00BCD4', online: true },
+      wait: [
+        // Miroir de waitlist_entries (formulaire public /rdv/[slug]) : first_name, email, phone,
+        // consultation_type_id, preferred_time_of_day, preferred_days, created_at, expires_at (+30 j), notified_at
+        { n: 'Laura', email: 'laura.p@exemple.fr', typeId: 't1', days: [2, 4], tod: 'afternoon', ago: 5, notified: false },
+        { n: 'Jean-Pierre', email: 'jp.moreau@exemple.fr', typeId: 't2', days: [], tod: 'morning', ago: 12, notified: true },
+        { n: 'Sarah', email: 'sarah.l@exemple.fr', typeId: null, days: [6], tod: 'any', ago: 1, notified: false }
+      ],
+      events: [
+        { id: 1, d: 1, s: 10, typeId: 't1', loc: 'in_person', n: 'Céline Roux' },
+        { id: 2, d: 2, s: 14, typeId: 't2', loc: 'in_person', n: 'Lucas Bernard' },
+        { id: 3, d: 2, s: 17, typeId: 't3', loc: 'video', n: 'Nathalie Petit' },
+        { id: 4, d: 3, s: 9, typeId: 't2', loc: 'in_person', n: 'Sophie Martin' },
+        { id: 5, d: 4, s: 11, typeId: 't2', loc: 'video', n: 'Amina Benali', href: 'Anamnese.dc.html' },
+        { id: 6, d: 4, s: 14.5, typeId: 't2', loc: 'in_person', n: 'Thomas Dubois' },
+        { id: 7, d: 5, s: 10, typeId: 't1', loc: 'in_person', n: 'Isabelle Fontaine' },
+        { id: 8, d: -6, s: 9, typeId: 't2', loc: 'in_person', n: 'Robert Durand' },
+        { id: 9, d: -4, s: 15, typeId: 't3', loc: 'video', n: 'Marc Lefebvre' },
+        { id: 10, d: -3, s: 10, typeId: 't1', loc: 'in_person', n: 'Philippe Garnier' },
+        { id: 11, d: 8, s: 11, typeId: 't2', loc: 'in_person', n: 'Émilie Laurent' },
+        { id: 12, d: 9, s: 16, typeId: 't3', loc: 'video', n: 'Céline Roux' },
+        { id: 13, d: 10, s: 9.5, typeId: 't2', loc: 'in_person', n: 'Amina Benali', href: 'Anamnese.dc.html' },
+        { id: 14, d: 11, s: 14, typeId: 't1', loc: 'in_person', n: 'Laura Poli' }
+      ]
+    };
+  }
+  toastMsg(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this.tt);
+    this.tt = setTimeout(() => this.setState({ toast: '' }), 3200);
+  }
+  componentWillUnmount() { clearTimeout(this.tt); }
+  renderVals() {
+    const st = this.state;
+    const H0 = 8, PX = 56;
+    const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const MS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+    const DOW = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+    const DOWL = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+    const PALETTE = ['#4CAF50', '#2196F3', '#9C27B0', '#FF9800', '#E91E63', '#00BCD4', '#795548', '#607D8B'];
+    const base = new Date(2026, 9, 19);
+    const dateOf = (off) => new Date(base.getFullYear(), base.getMonth(), base.getDate() + off);
+    const TODAY = 4;
+    const wd = (off) => ((off % 7) + 7) % 7;
+    const hm = (h) => { const H = Math.floor(h), m = Math.round((h - H) * 60); return H + ' h' + (m ? ' ' + String(m).padStart(2, '0') : ''); };
+    const durL = (min) => min < 60 ? min + ' min' : Math.floor(min / 60) + ' h' + (min % 60 ? ' ' + String(min % 60).padStart(2, '0') : '');
+    const priceL = (c) => c === null || c === undefined ? 'sans tarif' : (c / 100).toLocaleString('fr-FR', { minimumFractionDigits: c % 100 ? 2 : 0 }) + ' €';
+    const typeById = {};
+    st.types.forEach((t) => { typeById[t.id] = t; });
+    const locChip = (loc) => loc === 'video' ? { mode: 'Visio', chipBg: '#1F2640', chipFg: '#A9B8EC' } : { mode: 'Cabinet', chipBg: '#23383B', chipFg: '#6DD4B8' };
+    const decorate = (e) => {
+      const t = typeById[e.typeId] || st.types[0];
+      const dur = t.duration_minutes / 60;
+      const dt = dateOf(e.d);
+      return { ...e, ...locChip(e.loc), c: t.color, bg: t.color + '29', t: t.name, typeLabel: t.name,
+        href: e.href || '#',
+        range: hm(e.s) + ' – ' + hm(e.s + dur),
+        when: DOWL[wd(e.d)] + ' ' + dt.getDate() + ' ' + MS[dt.getMonth()] + ' · ' + hm(e.s) + ' – ' + hm(e.s + dur) + ' · ' + priceL(t.price_cents),
+        top: Math.round((e.s - H0) * PX) + 'px', h: Math.round(dur * PX - 4) + 'px',
+        ring: st.sel === e.id ? '2px solid ' + t.color : 'none',
+        rowBg: st.sel === e.id ? '#1C2230' : 'transparent',
+        aria: e.n + ', ' + t.name + ', ' + hm(e.s),
+        pick: () => this.setState({ sel: this.state.sel === e.id ? null : e.id }) };
+    };
+    const evs = st.events.map(decorate);
+    const weekStart = st.week * 7;
+    const isDay = st.view === 'jour';
+    const dayOff = weekStart + st.day;
+    const colOffs = isDay ? [dayOff] : [0, 1, 2, 3, 4, 5, 6].map((i) => weekStart + i);
+    const cols = colOffs.map((off) => {
+      const dt = dateOf(off);
+      const today = off === TODAY;
+      return { dow: DOW[wd(off)], num: dt.getDate(), full: DOWL[wd(off)] + ' ' + dt.getDate() + ' ' + MS[dt.getMonth()],
+        isToday: today, numBg: today ? '#6DD4B8' : 'transparent', numFg: today ? '#0A0E14' : '#E8EDF4', colBg: today ? '#171D27' : 'transparent',
+        ev: evs.filter((e) => e.d === off).map((e) => ({ ...e, wide: isDay })),
+        openDay: () => this.setState({ view: 'jour', day: wd(off - weekStart) }) };
+    });
+    const weekEvs = evs.filter((e) => e.d >= weekStart && e.d < weekStart + 7);
+    const s0 = dateOf(weekStart), s1 = dateOf(weekStart + 6);
+    const n = (k) => k + ' séance' + (k > 1 ? 's' : '');
+    const rangeLabel = isDay
+      ? cols[0].full + ' · ' + n(cols[0].ev.length)
+      : s0.getDate() + (s0.getMonth() !== s1.getMonth() ? ' ' + MS[s0.getMonth()] : '') + ' – ' + s1.getDate() + ' ' + MS[s1.getMonth()] + ' · ' + n(weekEvs.length);
+    const refDate = isDay ? dateOf(dayOff) : dateOf(weekStart + 3);
+    const monthLabel = MONTHS[refDate.getMonth()].charAt(0).toUpperCase() + MONTHS[refDate.getMonth()].slice(1) + ' ' + refDate.getFullYear();
+    const listDays = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+      const off = weekStart + i, dt = dateOf(off);
+      const ev = evs.filter((e) => e.d === off).sort((a, b) => a.s - b.s);
+      return { label: (off === TODAY ? "Aujourd'hui · " : '') + DOWL[i] + ' ' + dt.getDate() + ' ' + MS[dt.getMonth()], count: ev.length ? n(ev.length) : '',
+        ev, empty: ev.length === 0, border: i === 0 ? '0' : '1px solid #2A3140' };
+    });
+    const move = (dir) => () => {
+      if (this.state.view === 'jour') {
+        let d = this.state.day + dir, w = this.state.week;
+        if (d > 6) { d = 0; w += 1; } if (d < 0) { d = 6; w -= 1; }
+        this.setState({ day: d, week: w, sel: null });
+      } else this.setState({ week: this.state.week + dir, sel: null });
+    };
+    const selEv = evs.find((e) => e.id === st.sel) || null;
+
+    // ----- formulaire Nouvelle séance -----
+    const f = st.f;
+    const fType = typeById[f.typeId] || st.types[0];
+    const fStart = parseFloat(f.hour), fDay = weekStart + parseInt(f.day, 10);
+    const fEnd = fStart + fType.duration_minutes / 60;
+    const conflict = st.events.some((e) => {
+      if (e.d !== fDay) return false;
+      const t = typeById[e.typeId] || st.types[0];
+      const eEnd = e.s + t.duration_minutes / 60;
+      return fStart < eEnd + t.buffer_minutes / 60 && e.s < fEnd + fType.buffer_minutes / 60;
+    });
+    const setF = (k) => (e) => this.setState({ f: { ...this.state.f, [k]: e.target.value } });
+    const pickType = (t) => () => this.setState({ f: { ...this.state.f, typeId: t.id, loc: /visio/i.test(t.name) ? 'video' : this.state.f.loc } });
+    const nt = st.nt;
+    const ntInvalid = nt.name.trim().length < 2 || st.types.some((t) => t.name.toLowerCase() === nt.name.trim().toLowerCase());
+    const setNt = (k) => (e) => this.setState({ nt: { ...this.state.nt, [k]: e.target.value } });
+    const people = ['Amina Benali', 'Céline Roux', 'Émilie Laurent', 'Isabelle Fontaine', 'Jean-Pierre Moreau', 'Laura Poli', 'Lucas Bernard', 'Marc Lefebvre', 'Nathalie Petit', 'Philippe Garnier', 'Robert Durand', 'Sophie Martin', 'Thomas Dubois'];
+    const openForm = (patch) => this.setState({ newOpen: true, addOpen: false, f: { ...this.state.f, ...patch } });
+    return {
+      monthLabel, rangeLabel,
+      prevLabel: isDay ? 'Jour précédent' : 'Semaine précédente',
+      nextLabel: isDay ? 'Jour suivant' : 'Semaine suivante',
+      prev: move(-1), next: move(1),
+      goToday: () => this.setState({ week: 0, day: TODAY, sel: null }),
+      todayBg: (st.week === 0 && (!isDay || st.day === TODAY)) ? '#1C2230' : 'transparent',
+      views: [['jour', 'Jour'], ['semaine', 'Semaine'], ['liste', 'Liste']].map(([k, l]) => ({ l, pressed: st.view === k ? 'true' : 'false', bg: st.view === k ? '#23383B' : 'transparent', fg: st.view === k ? '#6DD4B8' : '#E8EDF4', pick: () => this.setState({ view: k }) })),
+      isGrid: st.view !== 'liste', isList: st.view === 'liste',
+      gridCols: isDay ? '56px minmax(0, 1fr)' : '56px repeat(7, minmax(0, 1fr))',
+      gridMin: isDay ? '320px' : '720px',
+      cols, listDays,
+      hours: Array.from({ length: 11 }, (_, i) => ({ l: (H0 + i) + ' h', top: Math.round(i * PX) + 'px' })),
+      hasSel: !!selEv, sel: selEv ? { ...selEv, isVisio: selEv.loc === 'video' } : {},
+      closeSel: () => this.setState({ sel: null }),
+      shiftSel: () => {
+        const id = this.state.sel;
+        this.setState({ events: this.state.events.map((e) => e.id === id ? { ...e, s: Math.min(17.5, e.s + 1) } : e) });
+        this.toastMsg('Séance décalée d’une heure · ' + (selEv ? selEv.n.split(' ')[0] : '') + ' sera prévenue');
+      },
+      cancelSel: () => {
+        const id = this.state.sel;
+        this.setState({ events: this.state.events.filter((e) => e.id !== id), sel: null });
+        this.toastMsg('Séance annulée · ' + (selEv ? selEv.n : '') + ' a été prévenue');
+      },
+      wait: st.wait.map((w) => {
+        const DN = ['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        const TOD = { morning: 'matin', afternoon: 'après-midi', evening: 'soir', any: 'à tout moment' };
+        const days = w.days.length ? w.days.map((d) => DN[d]).join(', ') : 'Tous les jours';
+        const wt = w.typeId ? typeById[w.typeId] : null;
+        return { ...w,
+          typeLabel: wt ? wt.name : 'Type indifférent',
+          typeColor: wt ? wt.color : '#5C6573',
+          pref: days + ' · ' + TOD[w.tod],
+          age: (w.ago <= 1 ? 'Inscription hier' : 'Inscription il y a ' + w.ago + ' j') + ' · expire dans ' + (30 - w.ago) + ' j',
+          propose: () => openForm({ who: w.n, typeId: w.typeId || st.types[0].id }),
+          remove: () => { this.setState({ wait: this.state.wait.filter((x) => x.n !== w.n) }); this.toastMsg(w.n + ' ne figure plus sur la liste d\'attente'); }
+        };
+      }),
+      waitEmpty: st.wait.length === 0,
+      waitOpen: st.waitOpen, waitExpanded: st.waitOpen ? 'true' : 'false', waitRot: st.waitOpen ? 'rotate(180deg)' : 'none',
+      waitCount: String(st.wait.length), waitHasCount: st.wait.length > 0,
+      toggleWait: () => this.setState({ waitOpen: !this.state.waitOpen }),
+      typesOpen: st.typesOpen, typesExpanded: st.typesOpen ? 'true' : 'false', typesRot: st.typesOpen ? 'rotate(180deg)' : 'none',
+      typesCount: String(st.types.length),
+      toggleTypes: () => this.setState({ typesOpen: !this.state.typesOpen }),
+      types: st.types.map((t) => ({ l: t.name, c: t.color, meta: durL(t.duration_minutes) + ' · ' + priceL(t.price_cents) })),
+      newOpen: st.newOpen,
+      newTitle: st.wait.some((w) => w.n === f.who) ? 'Proposer un créneau à ' + f.who : 'Nouvelle séance',
+      openNew: () => openForm({ who: 'Amina Benali', typeId: st.types[1] ? st.types[1].id : st.types[0].id, loc: 'in_person', day: String(isDay ? st.day : (st.week === 0 ? TODAY : 0)), hour: '9' }),
+      closeNew: () => this.setState({ newOpen: false, addOpen: false }),
+      f, people,
+      onWho: setF('who'), onDay: setF('day'), onHour: setF('hour'),
+      typeOpts: st.types.map((t) => {
+        const on = t.id === f.typeId;
+        return { name: t.name, color: t.color, isNew: !!t.isNew,
+          meta: durL(t.duration_minutes) + ' · ' + priceL(t.price_cents) + (t.buffer_minutes ? ' · ' + t.buffer_minutes + ' min de battement' : '') + (t.is_bookable_online ? '' : ' · non réservable en ligne'),
+          checked: on ? 'true' : 'false', bg: on ? '#1C2230' : 'transparent', border: on ? t.color : '#2A3140',
+          dot: on ? '#6DD4B8' : '#5C6573', dotFill: on ? '#6DD4B8' : 'transparent', pick: pickType(t) };
+      }),
+      addOpen: st.addOpen, addClosed: !st.addOpen,
+      typeModal: st.typeModal,
+      openTypeModal: () => this.setState({ typeModal: true, nt: { name: '', dur: '60', price: '', buf: '15', color: PALETTE.find((c) => !st.types.some((t) => t.color === c)) || PALETTE[5], online: true } }),
+      openAdd: () => this.setState({ addOpen: true, nt: { name: '', dur: '60', price: '', buf: '15', color: PALETTE.find((c) => !st.types.some((t) => t.color === c)) || PALETTE[5], online: true } }),
+      closeAdd: () => this.setState({ addOpen: false, typeModal: false }),
+      nt,
+      onNtName: setNt('name'), onNtDur: setNt('dur'), onNtPrice: setNt('price'), onNtBuf: setNt('buf'),
+      onNtOnline: () => this.setState({ nt: { ...this.state.nt, online: !this.state.nt.online } }),
+      swatches: PALETTE.map((c) => ({ c, checked: nt.color === c ? 'true' : 'false', ring: nt.color === c ? '#E8EDF4' : 'transparent', pick: () => this.setState({ nt: { ...this.state.nt, color: c } }) })),
+      ntInvalid, ntBg: ntInvalid ? '#2A3140' : '#6DD4B8', ntFg: ntInvalid ? '#8B95A5' : '#0A0E14',
+      saveType: () => {
+        const x = this.state.nt;
+        if (ntInvalid) return;
+        const price = x.price.trim() === '' ? null : Math.round(parseFloat(x.price.replace(',', '.')) * 100);
+        const id = 'n' + this.state.nextId;
+        const t = { id, name: x.name.trim(), duration_minutes: parseInt(x.dur, 10), price_cents: isNaN(price) ? null : price, color: x.color, buffer_minutes: parseInt(x.buf, 10), is_bookable_online: x.online, isNew: true };
+        this.setState({ types: this.state.types.concat([t]), nextId: this.state.nextId + 1, addOpen: false, typeModal: false, f: { ...this.state.f, typeId: id } });
+        this.toastMsg('Type « ' + t.name + ' » ajouté à vos paramètres');
+      },
+      locOpts: [['in_person', 'Au cabinet'], ['video', 'En visio']].map(([k, l]) => ({ l, pressed: f.loc === k ? 'true' : 'false', bg: f.loc === k ? '#23383B' : 'transparent', fg: f.loc === k ? '#6DD4B8' : '#E8EDF4', pick: () => this.setState({ f: { ...this.state.f, loc: k } }) })),
+      summary: fType.name + ' · ' + hm(fStart) + ' – ' + hm(fEnd) + ' · ' + priceL(fType.price_cents) + ' · ' + (f.loc === 'video' ? 'en visio' : 'au cabinet'),
+      dayOpts: [0, 1, 2, 3, 4, 5].map((i) => { const dt = dateOf(weekStart + i); return { v: String(i), l: DOWL[i] + ' ' + dt.getDate() + ' ' + MS[dt.getMonth()] }; }),
+      hourOpts: [8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17].map((h) => ({ v: String(h), l: hm(h) })),
+      conflict,
+      createBg: conflict ? '#2A3140' : '#6DD4B8', createFg: conflict ? '#8B95A5' : '#0A0E14',
+      createEv: () => {
+        if (conflict) return;
+        const id = this.state.nextId;
+        const ne = { id, d: fDay, s: fStart, typeId: fType.id, loc: f.loc, n: f.who, href: f.who === 'Amina Benali' ? 'Anamnese.dc.html' : undefined };
+        this.setState({ events: this.state.events.concat([ne]), nextId: id + 1, newOpen: false, addOpen: false, sel: id,
+          wait: this.state.wait.filter((w) => w.n !== f.who) });
+        this.toastMsg('Séance créée · ' + f.who + ' reçoit une confirmation');
+      },
+      toast: st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

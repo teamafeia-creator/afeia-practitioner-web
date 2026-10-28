@@ -52,7 +52,7 @@ function buildActivationEmail(params: {
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <h1 style="color: #2B5651; margin-bottom: 24px;">Bienvenue ${consultantName}</h1>
         <p style="color: #333; font-size: 16px; line-height: 1.6;">
-          Votre naturopathe vous invite à rejoindre AFEIA. Voici votre code d'activation :
+          Votre praticien vous invite à rejoindre AFEIA. Voici votre code d'activation :
         </p>
         <div style="text-align: center; margin: 32px 0;">
           <span style="font-size: 40px; font-weight: bold; letter-spacing: 8px; color: #2B5651; background: #E8F5F3; padding: 16px 32px; border-radius: 8px; display: inline-block;">
@@ -77,7 +77,7 @@ function buildActivationEmail(params: {
   const textContent = `
 Bienvenue ${consultantName}
 
-Votre naturopathe vous invite à rejoindre AFEIA. Voici votre code d'activation : ${code}
+Votre praticien vous invite à rejoindre AFEIA. Voici votre code d'activation : ${code}
 
 Ce code expire dans ${expiresInDays} jours.
 
@@ -154,7 +154,6 @@ export async function POST(request: Request) {
     const expiresInDays = 7;
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-    console.log('[activation] Code OTP généré:', code);
     console.log('[activation] Email:', normalizedEmail);
     console.log('[activation] Expiré:', expiresAt.toISOString());
 

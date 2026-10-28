@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Navigation du dossier</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+</style>
+</helmet>
+<nav aria-label="Sections du dossier" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4; background: #0A0E14">
+  <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8B95A5; padding: 0 10px 6px">{{g.l}}</span>
+      <sc-for list="{{g.items}}" as="i" hint-placeholder-count="3">
+        <a href="{{i.href}}" aria-current="{{i.cur}}" style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; background: {{i.bg}}; color: {{i.fg}}">
+          <span style="flex: 1">{{i.l}}</span>
+          <sc-if value="{{i.badge}}" hint-placeholder-val="{{false}}">
+            <span style="font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: {{i.bBg}}; color: {{i.bFg}}">{{i.badge}}</span>
+          </sc-if>
+        </a>
+      </sc-for>
+    </div>
+  </sc-for>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["synthese","dossier","anamnese","terrain","conseillancier","rdv","journal","cycle","bague","schemas","documents","notes","messages"],"default":"anamnese"},"$preview":{"width":220,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const a = this.props.active ?? 'anamnese';
+    const it = (k, l, href, badge, tone) => ({
+      l, href, cur: k === a ? 'page' : 'false',
+      bg: k === a ? '#23383B' : 'transparent', fg: k === a ? '#6DD4B8' : '#E8EDF4',
+      badge: badge || false,
+      bBg: tone === 'warn' ? '#373131' : tone === 'lock' ? '#2A3140' : '#23383B',
+      bFg: tone === 'warn' ? '#E8A87C' : tone === 'lock' ? '#C9CFDA' : '#6DD4B8'
+    });
+    return {
+      groups: [
+        { l: 'Identité', items: [it('synthese', 'Synthèse', '#'), it('dossier', 'Dossier de santé', '#', 'à compléter', 'warn'), it('anamnese', 'Anamnèse', 'Anamnese.dc.html', '✓'), it('terrain', 'Bilan de terrain', 'Terrain.dc.html', 'à compléter', 'warn')] },
+        { l: 'Suivi', items: [it('conseillancier', 'Conseillancier', 'Conseillancier.dc.html', 'v3'), it('rdv', 'Rendez-vous', '#'), it('journal', 'Journal', '#'), it('cycle', 'Cycle', '#')] },
+        { l: 'Données', items: [it('bague', 'Objet connecté', 'BagueVerrou.dc.html', 'Premium', 'lock'), it('schemas', 'Schémas corporels', '#'), it('documents', 'Documents', '#')] },
+        { l: 'Échanges', items: [it('notes', 'Notes privées', '#'), it('messages', 'Messages', 'Messages.dc.html', '1')] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

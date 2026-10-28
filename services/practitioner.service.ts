@@ -124,8 +124,7 @@ export async function createConsultantActivationCode(
       .single();
 
     if (existingCode && tempConsultantId) {
-      console.log('[practitioner] Code existant trouve:', existingCode.code);
-      return {
+        return {
         success: true,
         code: existingCode.code,
         consultantId: tempConsultantId || undefined,
@@ -135,7 +134,6 @@ export async function createConsultantActivationCode(
 
     // 4. Générer un code à 6 chiffres
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('[practitioner] Code genere:', code);
 
     // Préparer les données du consultant
     const firstName = consultantData.firstName || consultantData.name?.split(' ')[0] || '';
@@ -246,7 +244,6 @@ export async function createConsultantActivationCode(
 
     console.log('[practitioner] CONSULTANT CREE + CODE GENERE');
     console.log('Email:', normalizedEmail);
-    console.log('Code:', emailCode);
     console.log('Consultant ID:', tempConsultantId);
     console.log('Praticien ID:', practitionerId);
     console.log('Statut: En attente d\'activation');

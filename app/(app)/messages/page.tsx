@@ -1,21 +1,18 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { ArrowLeft, Info, Search } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/cn';
-import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { NoMessages } from '@/components/ui/EmptyState';
-import { SkeletonMessage, SkeletonList } from '@/components/ui/Skeleton';
-import { Send, ArrowLeft, ExternalLink } from 'lucide-react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { SkeletonList, SkeletonMessage } from '@/components/ui/Skeleton';
+import { Spinner } from '@/components/ui/Spinner';
+import { showToast, Toaster } from '@/components/ui/Toaster';
+import { mentionsMedication } from '@/lib/messages/medication';
+import { FACE_COLORS, initialsOf } from '@/lib/morning-review/queue';
 import type { Message } from '@/lib/types';
-
-// ---- Types ----
 
 interface Conversation {
   consultant_id: string;
@@ -31,51 +28,47 @@ interface Conversation {
   unread_count: number;
 }
 
-// ---- Helpers ----
+const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const shortFmt = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' });
+const longFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
 
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return "à l'instant";
-  if (diffMins < 60) return `${diffMins} min`;
-  if (diffHours < 24) return `${diffHours}h`;
-  if (diffDays < 7) return `${diffDays}j`;
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+function listDate(iso: string) {
+  const d = new Date(iso);
+  return d.toDateString() === new Date().toDateString() ? timeFmt.format(d) : shortFmt.format(d);
 }
 
-function formatMessageTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function bubbleDate(iso: string) {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return `Aujourd’hui, ${timeFmt.format(d)}`;
+  if (d.toDateString() === yesterday.toDateString()) return `Hier, ${timeFmt.format(d)}`;
+  return `${longFmt.format(d)}, ${timeFmt.format(d)}`;
 }
 
-// ---- Component ----
+/** Couleur stable par consultant. */
+function colorOf(id: string) {
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return FACE_COLORS[h % FACE_COLORS.length];
+}
 
-export default function MessagesPage() {
-  const { user, loading: authLoading, isAuthenticated } = useRequireAuth('/login');
+function MessagesInner() {
+  const { loading: authLoading, isAuthenticated } = useRequireAuth('/login');
+  const searchParams = useSearchParams();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [messageText, setMessageText] = useState('');
+  const [draft, setDraft] = useState('');
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [query, setQuery] = useState('');
   const [mobileShowChat, setMobileShowChat] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const searchParams = useSearchParams();
-
-  // Pre-select conversation from URL ?consultant=xxx
   useEffect(() => {
     const param = searchParams.get('consultant');
     if (param) {
@@ -84,24 +77,21 @@ export default function MessagesPage() {
     }
   }, [searchParams]);
 
-  // ---- Data fetching ----
-
-  const getToken = useCallback(async (): Promise<string> => {
+  const getToken = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token || '';
   }, []);
 
   const loadConversations = useCallback(async () => {
     try {
-      const token = await getToken();
-      const res = await fetch('/api/messages', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Erreur chargement');
+      const res = await fetch('/api/messages', { headers: { Authorization: `Bearer ${await getToken()}` } });
+      if (!res.ok) throw new Error();
       const data = await res.json();
-      setConversations(data.conversations || []);
-    } catch (err) {
-      console.error('Erreur chargement conversations:', err);
+      const list: Conversation[] = data.conversations || [];
+      setConversations(list);
+      setSelectedId((cur) => cur ?? (window.innerWidth >= 768 ? list[0]?.consultant_id ?? null : null));
+    } catch {
+      showToast.error('Les conversations n’ont pas pu être chargées.');
     } finally {
       setLoadingConversations(false);
     }
@@ -111,22 +101,13 @@ export default function MessagesPage() {
     async (consultantId: string) => {
       setLoadingMessages(true);
       try {
-        const token = await getToken();
-        const res = await fetch(`/api/consultants/${consultantId}/messages`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Erreur chargement messages');
+        const res = await fetch(`/api/consultants/${consultantId}/messages`, { headers: { Authorization: `Bearer ${await getToken()}` } });
+        if (!res.ok) throw new Error();
         const data = await res.json();
         setMessages(data.messages || []);
-
-        // Reset unread count in conversation list
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.consultant_id === consultantId ? { ...c, unread_count: 0 } : c
-          )
-        );
-      } catch (err) {
-        console.error('Erreur chargement messages:', err);
+        setConversations((prev) => prev.map((c) => (c.consultant_id === consultantId ? { ...c, unread_count: 0 } : c)));
+      } catch {
+        showToast.error('Les messages n’ont pas pu être chargés.');
       } finally {
         setLoadingMessages(false);
       }
@@ -135,325 +116,246 @@ export default function MessagesPage() {
   );
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadConversations();
-    }
+    if (!authLoading && isAuthenticated) void loadConversations();
   }, [authLoading, isAuthenticated, loadConversations]);
 
   useEffect(() => {
-    if (selectedId) {
-      loadMessages(selectedId);
-    }
+    if (selectedId) void loadMessages(selectedId);
   }, [selectedId, loadMessages]);
 
-  // Auto-scroll on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ---- Actions ----
-
-  const handleSelectConversation = (consultantId: string) => {
-    setSelectedId(consultantId);
-    setMobileShowChat(true);
-  };
-
-  const handleBack = () => {
-    setMobileShowChat(false);
-  };
-
-  const handleSend = async () => {
-    if (!messageText.trim() || !selectedId || sending) return;
-
+  const send = async () => {
+    const text = draft.trim();
+    if (!text || !selectedId || sending) return;
     setSending(true);
     try {
-      const token = await getToken();
       const res = await fetch(`/api/consultants/${selectedId}/messages`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ text: messageText.trim() }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await getToken()}` },
+        body: JSON.stringify({ text }),
       });
-
-      if (res.ok) {
-        const newMessage = await res.json();
-        setMessages((prev) => [...prev, newMessage]);
-        setMessageText('');
-
-        // Update last message in conversation list
-        setConversations((prev) =>
-          prev
-            .map((c) =>
-              c.consultant_id === selectedId
-                ? {
-                    ...c,
-                    last_message: {
-                      id: newMessage.id,
-                      text: newMessage.text,
-                      sender: newMessage.sender,
-                      sent_at: newMessage.sent_at,
-                      read_at: newMessage.read_at ?? null,
-                    },
-                  }
-                : c
-            )
-            .sort(
-              (a, b) =>
-                new Date(b.last_message.sent_at).getTime() -
-                new Date(a.last_message.sent_at).getTime()
-            )
-        );
-      }
-    } catch (err) {
-      console.error('Erreur envoi message:', err);
+      if (!res.ok) throw new Error();
+      const m = await res.json();
+      setMessages((prev) => [...prev, m]);
+      setDraft('');
+      setConversations((prev) =>
+        prev
+          .map((c) =>
+            c.consultant_id === selectedId
+              ? { ...c, last_message: { id: m.id, text: m.text, sender: m.sender, sent_at: m.sent_at, read_at: m.read_at ?? null } }
+              : c
+          )
+          .sort((a, b) => new Date(b.last_message.sent_at).getTime() - new Date(a.last_message.sent_at).getTime())
+      );
+    } catch {
+      showToast.error('Le message n’a pas pu être envoyé.');
     } finally {
       setSending(false);
     }
   };
 
-  // ---- Derived state ----
+  const filtered = conversations.filter((c) => c.consultant_name.toLowerCase().includes(query.toLowerCase()));
+  const current = conversations.find((c) => c.consultant_id === selectedId);
+  const currentName = current?.consultant_name ?? '';
+  const first = currentName.split(' ')[0] || 'votre consultant';
 
-  const filteredConversations = conversations.filter((c) =>
-    c.consultant_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const selectedConversation = conversations.find(
-    (c) => c.consultant_id === selectedId
-  );
-
-  // ---- Loading state ----
+  // Bandeau médicament : derniers messages du consultant restés sans réponse
+  const showNudge = useMemo(() => {
+    const unanswered: Message[] = [];
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].sender === 'praticien') break;
+      unanswered.push(messages[i]);
+    }
+    return unanswered.some((m) => mentionsMedication(m.text));
+  }, [messages]);
 
   if (authLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="text-stone">Chargement...</div>
+        <Spinner size="lg" />
       </div>
     );
   }
-
-  // ---- Render ----
+  if (!isAuthenticated) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className="glass-card overflow-hidden"
-      style={{ height: 'calc(100vh - 64px - 3rem)' }}
-    >
-      <div className="flex h-full">
-        {/* ---- Left column: conversation list ---- */}
-        <div
-          className={cn(
-            'w-full md:w-[340px] lg:w-[360px] border-r border-divider flex flex-col flex-shrink-0',
-            mobileShowChat && 'hidden md:flex'
-          )}
-        >
-          {/* Header + search */}
-          <div className="p-4 border-b border-divider">
-            <h2 className="text-lg font-semibold text-charcoal mb-3">
-              Conversations
-            </h2>
-            <Input
-              placeholder="Rechercher un consultant..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+    <div className="flex max-w-[1180px] overflow-hidden rounded-2xl border border-divider bg-surface" style={{ height: 'calc(100vh - 64px - 3.5rem)', minHeight: 560 }}>
+      <Toaster />
+      <aside
+        aria-label="Conversations"
+        className={cn('flex w-full min-w-0 flex-col border-r border-divider md:w-[320px] md:flex-none lg:w-[340px]', mobileShowChat && 'hidden md:flex')}
+      >
+        <div className="flex flex-col gap-3 px-4 pb-3 pt-[18px]">
+          <h1 className="font-serif text-2xl font-medium text-charcoal">Messages</h1>
+          <label className="flex h-10 items-center gap-2 rounded-[10px] border border-divider bg-cream px-3 text-stone focus-within:border-sage">
+            <Search className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="sr-only">Rechercher une conversation</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Rechercher"
+              className="min-w-0 flex-1 bg-transparent text-sm text-charcoal outline-none"
             />
-          </div>
-
-          {/* Conversation list */}
-          <div className="flex-1 overflow-y-auto">
-            {loadingConversations ? (
-              <div className="p-4">
-                <SkeletonList items={4} />
-              </div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="p-6">
-                <NoMessages />
-              </div>
-            ) : (
-              filteredConversations.map((conv) => (
-                <button
-                  key={conv.consultant_id}
-                  onClick={() => handleSelectConversation(conv.consultant_id)}
-                  className={cn(
-                    'w-full text-left px-4 py-3 border-b border-divider/50 transition-colors hover:bg-cream/50',
-                    selectedId === conv.consultant_id && 'bg-sage-light'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar name={conv.consultant_name} size="md" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm text-charcoal truncate">
-                          {conv.consultant_name}
-                        </span>
-                        <span className="text-[11px] text-stone flex-shrink-0 ml-2">
-                          {formatRelativeTime(conv.last_message.sent_at)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs text-stone truncate">
-                          {conv.last_message.sender === 'praticien'
-                            ? 'Vous : '
-                            : ''}
-                          {conv.last_message.text}
-                        </p>
-                        {conv.unread_count > 0 && (
-                          <span className="ml-2 flex-shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-sage text-[10px] font-bold text-ink">
-                            {conv.unread_count > 9
-                              ? '9+'
-                              : conv.unread_count}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
+          </label>
         </div>
-
-        {/* ---- Right column: chat ---- */}
-        <div
-          className={cn(
-            'flex-1 flex flex-col min-w-0',
-            !mobileShowChat && 'hidden md:flex'
-          )}
-        >
-          {!selectedId ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center text-stone">
-                <p className="text-base font-medium">
-                  Sélectionnez une conversation
-                </p>
-                <p className="text-sm mt-1">
-                  Choisissez un consultant dans la liste pour voir ses messages
-                </p>
-              </div>
-            </div>
+        <div className="flex-1 overflow-y-auto">
+          {loadingConversations ? (
+            <div className="p-4"><SkeletonList items={5} /></div>
+          ) : filtered.length === 0 ? (
+            <p className="px-4 py-6 text-sm text-stone">{query ? 'Aucune conversation ne correspond.' : 'Aucune conversation pour l’instant.'}</p>
           ) : (
-            <>
-              {/* Chat header */}
-              <div className="px-4 py-3 border-b border-divider flex items-center gap-3">
+            filtered.map((c) => {
+              const on = c.consultant_id === selectedId;
+              const unread = c.unread_count > 0;
+              const preview = `${c.last_message.sender === 'praticien' ? 'Vous : ' : ''}${c.last_message.text}`;
+              return (
                 <button
-                  onClick={handleBack}
-                  className="md:hidden p-1.5 rounded-lg text-charcoal hover:bg-cream transition-colors"
+                  key={c.consultant_id}
+                  type="button"
+                  aria-current={on ? 'true' : undefined}
+                  onClick={() => {
+                    setSelectedId(c.consultant_id);
+                    setDraft('');
+                    setMobileShowChat(true);
+                  }}
+                  className="flex w-full items-center gap-3 border-l-[3px] px-4 py-3 text-left text-charcoal"
+                  style={{ borderLeftColor: on ? '#6DD4B8' : 'transparent', background: on ? '#1C2230' : 'transparent' }}
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-[13px] font-semibold text-ink" style={{ background: colorOf(c.consultant_id) }}>
+                    {initialsOf(c.consultant_name)}
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                    <span className="flex justify-between gap-2">
+                      <span className={cn('truncate text-sm', unread ? 'font-semibold' : 'font-medium')}>{c.consultant_name}</span>
+                      <span className="flex-none text-xs text-stone">{listDate(c.last_message.sent_at)}</span>
+                    </span>
+                    <span className={cn('truncate text-[13px]', unread ? 'text-charcoal' : 'text-stone')}>{preview}</span>
+                  </span>
+                  {unread && <span aria-label="Non lu" className="h-2.5 w-2.5 flex-none rounded-full bg-terracotta" />}
                 </button>
-                <Avatar
-                  name={selectedConversation?.consultant_name || ''}
-                  size="sm"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-charcoal truncate">
-                    {selectedConversation?.consultant_name}
-                  </p>
-                  {selectedConversation?.consultant_email && (
-                    <p className="text-xs text-stone truncate">
-                      {selectedConversation.consultant_email}
-                    </p>
-                  )}
-                </div>
-                <Link
-                  href={`/consultants/${selectedId}`}
-                  className="flex items-center gap-1 text-xs text-sage hover:text-sage-dark transition-colors"
-                >
-                  Voir la fiche
-                  <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-
-              {/* Messages area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {loadingMessages ? (
-                  <SkeletonMessage />
-                ) : messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center text-stone">
-                      <p className="text-sm">
-                        Aucun message pour l&apos;instant.
-                      </p>
-                      <p className="text-xs mt-1">
-                        Envoyez le premier message à votre consultant.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={cn(
-                        'flex',
-                        msg.sender === 'praticien'
-                          ? 'justify-end'
-                          : 'justify-start'
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'max-w-[78%] rounded-lg px-4 py-2 text-sm',
-                          msg.sender === 'praticien'
-                            ? 'bg-sage text-ink'
-                            : 'bg-cream text-charcoal'
-                        )}
-                      >
-                        <p className="break-words whitespace-pre-wrap">
-                          {msg.text || '\u2014'}
-                        </p>
-                        <p
-                          className={cn(
-                            'mt-1 text-[11px]',
-                            msg.sender === 'praticien'
-                              ? 'text-white/60'
-                              : 'text-stone'
-                          )}
-                        >
-                          {formatMessageTime(msg.sent_at)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Send area */}
-              <div className="border-t border-divider p-3">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    placeholder="Écrire un message..."
-                    className="flex-1 rounded-lg border border-divider bg-surface px-3.5 py-2.5 text-sm text-charcoal placeholder:text-mist transition duration-200 focus:border-sage focus:outline-none focus:ring-2 focus:ring-sage/20"
-                  />
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={handleSend}
-                    disabled={!messageText.trim() || sending}
-                    loading={sending}
-                    icon={<Send className="h-4 w-4" />}
-                  >
-                    <span className="hidden sm:inline">Envoyer</span>
-                  </Button>
-                </div>
-              </div>
-            </>
+              );
+            })
           )}
         </div>
-      </div>
-    </motion.div>
+      </aside>
+
+      <section aria-label="Conversation" className={cn('flex min-w-0 flex-1 flex-col', !mobileShowChat && 'hidden md:flex')}>
+        {!selectedId ? (
+          <div className="flex flex-1 items-center justify-center p-6 text-center text-stone">
+            <div>
+              <p className="text-base font-medium text-charcoal">Choisissez une conversation</p>
+              <p className="mt-1 text-sm">Les messages de vos consultants apparaissent ici.</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <header className="flex items-center gap-3 border-b border-divider px-[22px] py-4">
+              <button type="button" onClick={() => setMobileShowChat(false)} aria-label="Retour aux conversations" className="-ml-2 flex h-10 w-10 items-center justify-center rounded-lg text-charcoal md:hidden">
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-[13px] font-semibold text-ink" style={{ background: colorOf(selectedId) }}>
+                {initialsOf(currentName || '?')}
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate text-base font-semibold text-charcoal">{currentName}</span>
+                {current?.consultant_email && <span className="truncate text-[13px] text-stone">{current.consultant_email}</span>}
+              </div>
+              <Link href={`/consultants/${selectedId}`} className="inline-flex h-10 items-center rounded-[10px] border border-divider px-3.5 text-sm text-charcoal hover:border-sage">
+                Ouvrir le dossier
+              </Link>
+            </header>
+
+            <div className="flex flex-1 flex-col gap-3.5 overflow-y-auto p-[22px]">
+              {loadingMessages ? (
+                <SkeletonMessage />
+              ) : messages.length === 0 ? (
+                <p className="m-auto text-center text-sm text-stone">Aucun message pour l’instant. Écrivez le premier message à {first}.</p>
+              ) : (
+                messages.map((m) => {
+                  const me = m.sender === 'praticien';
+                  return (
+                    <div key={m.id} className={cn('flex flex-col gap-1', me ? 'items-end' : 'items-start')}>
+                      <div
+                        className="max-w-[min(62ch,85%)] whitespace-pre-wrap break-words border px-4 py-3 text-[15px] leading-[1.55] text-charcoal"
+                        style={{
+                          background: me ? '#23383B' : '#1C2230',
+                          borderColor: me ? '#2F5A50' : '#2A3140',
+                          borderRadius: me ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                        }}
+                      >
+                        {m.text || '—'}
+                      </div>
+                      <span className="text-xs text-stone">{bubbleDate(m.sent_at)}</span>
+                    </div>
+                  );
+                })
+              )}
+
+              {showNudge && (
+                <div role="note" className="flex flex-wrap gap-3 rounded-xl border border-[#2E3A60] bg-[#1F2640] px-4 py-3.5">
+                  <Info className="mt-0.5 h-[18px] w-[18px] flex-none text-[#A9B8EC]" aria-hidden="true" />
+                  <div className="flex flex-[1_1_280px] flex-col gap-1">
+                    <span className="text-sm font-semibold text-[#D4DCF6]">Question sur un médicament</span>
+                    <span className="text-sm leading-normal text-[#B9C4EA]">
+                      Ce point relève du médecin ou du pharmacien. C’est au médecin de juger de la compatibilité entre un traitement et vos recommandations : ne donnez pas d’avis sur ce médicament.
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div ref={endRef} />
+            </div>
+
+            <footer className="flex flex-col gap-2.5 border-t border-divider px-[22px] pb-[18px] pt-3.5">
+              <label htmlFor="composer" className="sr-only">Votre message</label>
+              <textarea
+                id="composer"
+                rows={3}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    void send();
+                  }
+                }}
+                placeholder={`Écrire à ${first}…`}
+                className="w-full resize-y rounded-xl border border-divider bg-cream px-3.5 py-3 text-[15px] leading-normal text-charcoal outline-none focus:border-sage"
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/bibliotheque?envoyer=${selectedId}`}
+                  className="inline-flex h-10 items-center rounded-[10px] border border-divider px-3 text-sm text-charcoal hover:border-sage"
+                >
+                  Joindre une fiche
+                </Link>
+                <span className="hidden text-xs text-mist sm:inline">Ctrl + Entrée pour envoyer</span>
+                <span className="flex-1" />
+                <button
+                  type="button"
+                  onClick={() => void send()}
+                  disabled={!draft.trim() || sending}
+                  className="flex h-11 items-center gap-2 rounded-[10px] bg-sage px-5 text-sm font-semibold text-ink hover:bg-sage-deep disabled:bg-divider disabled:text-stone"
+                >
+                  {sending && <Spinner size="sm" />}
+                  Envoyer
+                </button>
+              </div>
+            </footer>
+          </>
+        )}
+      </section>
+    </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={null}>
+      <MessagesInner />
+    </Suspense>
   );
 }

@@ -4,14 +4,13 @@ export const dynamic = 'force-dynamic';
 
 import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Leaf } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
+
+const inputClass =
+  'h-12 w-full rounded-[10px] border border-divider bg-surface px-3.5 text-[15px] text-charcoal placeholder:text-mist outline-none transition focus:border-sage focus:ring-[3px] focus:ring-sage/20';
 
 function LoginForm() {
   const router = useRouter();
@@ -20,6 +19,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,29 +27,26 @@ function LoginForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!email.trim() || !password.trim()) {
+      setError('Renseignez votre adresse e-mail et votre mot de passe.');
+      return;
+    }
     setLoading(true);
-
     try {
-      if (!email.trim() || !password.trim()) {
-        setError('Merci de renseigner un email et un mot de passe.');
-        return;
-      }
-
-      const normalizedEmail = email.trim().toLowerCase();
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
+        email: email.trim().toLowerCase(),
         password
       });
-
       if (signInError) {
-        if (signInError.message.includes('Invalid login credentials')) {
-          setError('Email ou mot de passe incorrect.');
-        } else {
-          setError(signInError.message);
-        }
+        setError(
+          signInError.message.includes('Invalid login credentials')
+            ? 'Adresse e-mail ou mot de passe incorrect.'
+            : /not confirmed/i.test(signInError.message)
+              ? 'Confirmez d’abord votre adresse e-mail avec le lien reçu à l’inscription.'
+              : signInError.message
+        );
         return;
       }
-
       router.replace(from);
     } finally {
       setLoading(false);
@@ -57,238 +54,141 @@ function LoginForm() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2, duration: 0.5 }}
-    >
-      <Card className="overflow-hidden">
-        <CardContent className="p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-charcoal">Connexion</h1>
-            <p className="text-stone mt-2">
-              Accédez à vos dossiers et consultations
-            </p>
-          </div>
+    <form onSubmit={onSubmit} noValidate className="flex w-full max-w-[400px] flex-col gap-5 self-center py-10">
+      <div className="flex flex-col gap-2">
+        <h1 className="font-serif text-4xl font-medium leading-tight text-charcoal">Bon retour parmi nous</h1>
+        <p className="text-[15px] text-stone">Connectez-vous à votre espace praticien.</p>
+      </div>
 
-          <form onSubmit={onSubmit} className="space-y-5">
-            <div className="space-y-4">
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="votre@email.com"
-                  aria-label="Adresse e-mail"
-                  autoComplete="email"
-                  required
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-neutral-200 bg-surface text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
-                />
-              </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="email" className="text-sm font-medium text-charcoal">Adresse e-mail</label>
+        <input
+          id="email"
+          type="email"
+          autoComplete="email"
+          placeholder="vous@exemple.fr"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={inputClass}
+        />
+      </div>
 
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mot de passe"
-                  aria-label="Mot de passe"
-                  autoComplete="current-password"
-                  required
-                  className="w-full pl-11 pr-11 py-3 rounded-xl border border-neutral-200 bg-surface text-charcoal placeholder:text-stone/60 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 flex min-h-[44px] min-w-[44px] items-center justify-center text-stone hover:text-charcoal transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-baseline justify-between">
+          <label htmlFor="pwd" className="text-sm font-medium text-charcoal">Mot de passe</label>
+          <Link href="/reset-password" className="text-sm text-sage hover:text-sage-dark">Mot de passe oublié ?</Link>
+        </div>
+        <div className="flex h-12 items-center rounded-[10px] border border-divider bg-surface transition focus-within:border-sage focus-within:ring-[3px] focus-within:ring-sage/20">
+          <input
+            id="pwd"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-full min-w-0 flex-1 bg-transparent px-3.5 text-[15px] text-charcoal outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            aria-pressed={showPassword}
+            className="flex h-11 w-11 items-center justify-center text-stone hover:text-charcoal"
+          >
+            {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+          </button>
+        </div>
+      </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-neutral-300 text-sage focus:ring-sage/20"
-                />
-                <span className="text-sm text-stone">Se souvenir de moi</span>
-              </label>
-              <Link
-                href="/reset-password"
-                className="text-sm text-sage hover:text-sage-deep transition-colors"
-              >
-                Mot de passe oublié ?
-              </Link>
-            </div>
+      <label className="flex min-h-[44px] cursor-pointer items-center gap-2.5 text-sm text-[#C9CFDA]">
+        <input
+          type="checkbox"
+          checked={remember}
+          onChange={(e) => setRemember(e.target.checked)}
+          className="h-[18px] w-[18px] accent-sage"
+        />
+        Rester connectée sur cet appareil
+      </label>
 
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-xl bg-accent-danger/10 border border-accent-danger/20 p-4"
-              >
-                <p className="text-sm text-accent-danger">{error}</p>
-              </motion.div>
-            )}
+      {error && (
+        <div role="alert" className="rounded-[10px] border border-[#5A4636] bg-terracotta-light px-4 py-3 text-sm text-[#F2D2BB]">
+          {error}
+        </div>
+      )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              loading={loading}
-              icon={<ArrowRight className="w-5 h-5" />}
-              iconPosition="right"
-            >
-              Se connecter
-            </Button>
-          </form>
+      <button
+        type="submit"
+        disabled={loading}
+        className="flex h-[50px] items-center justify-center gap-2 rounded-[10px] bg-sage text-[15px] font-semibold text-ink transition hover:bg-sage-deep disabled:opacity-70"
+      >
+        {loading && <Spinner size="sm" />}
+        Se connecter
+      </button>
 
-          <div className="mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              size="lg"
-              onClick={() => router.push('/admin/login')}
-            >
-              Accès Admin
-            </Button>
-          </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-stone">
-              Pas encore de compte ?{' '}
-              <Link
-                href="/signup"
-                className="text-sage hover:text-sage-deep font-medium transition-colors"
-              >
-                Créer un compte
-              </Link>
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-surface px-4 text-stone">ou</span>
-            </div>
-          </div>
-
-          {/* Demo info */}
-          <div className="rounded-xl bg-sage-light/50 border border-divider p-4">
-            <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-sage flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-charcoal">Mode démo disponible</p>
-                <p className="text-xs text-stone mt-1">
-                  Explorez l&apos;application avec des données de démonstration.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+      <p className="text-center text-sm text-stone">
+        Pas encore de compte ?{' '}
+        <Link href="/signup" className="text-sage hover:text-sage-dark">Créer un compte</Link>
+        {' · '}
+        <Link href="/decouvrir" className="text-sage hover:text-sage-dark">Découvrir Afeia</Link>
+      </p>
+    </form>
   );
 }
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen">
-      {/* Left: form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-cream p-6 lg:p-12 relative overflow-hidden">
-        {/* Background decorations */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-sage-light blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl" />
+    <main className="flex min-h-screen flex-wrap bg-cream text-charcoal">
+      <div className="flex min-w-0 flex-[1_1_480px] flex-col justify-between px-8 py-10">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-light">
+            <Leaf className="h-[22px] w-[22px] text-sage" strokeWidth={1.8} />
+          </span>
+          <span className="font-serif text-[22px] font-medium">Afeia</span>
         </div>
 
-        <div className="relative z-10 w-full max-w-md">
-          {/* Logo and branding */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center mb-8"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sage to-sage-dark flex items-center justify-center shadow-glow"
-              >
-                <Image
-                  src="/afeia_symbol.svg"
-                  alt="AFEIA"
-                  width={32}
-                  height={32}
-                  className="brightness-0 invert"
-                />
-              </motion.div>
-              <div>
-                <h2 className="text-2xl font-bold text-charcoal">AFEIA</h2>
-                <p className="text-sm text-stone">Espace Naturopathe</p>
-              </div>
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center py-20">
+              <Spinner size="lg" />
             </div>
-          </motion.div>
+          }
+        >
+          <LoginForm />
+        </Suspense>
 
-          {/* Login form */}
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-20">
-                <Spinner size="lg" />
-              </div>
-            }
-          >
-            <LoginForm />
-          </Suspense>
-
-          {/* Footer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-8 text-center"
-          >
-            <p className="text-xs text-stone">
-              RGPD : hébergement UE, RBAC strict, audit trail.
-            </p>
-            <p className="text-xs text-stone mt-1">
-              AFEIA ne remplace jamais un médecin.
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-4">
-              <Link href="/welcome" className="text-xs text-sage hover:underline">
-                Découvrir AFEIA
-              </Link>
-              <span className="text-neutral-300">|</span>
-              <Link href="#" className="text-xs text-sage hover:underline">
-                Politique de confidentialité
-              </Link>
-            </div>
-          </motion.div>
+        <div className="flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-stone">
+          <span>© Afeia</span>
+          <a href="#" className="text-stone hover:text-charcoal">Confidentialité</a>
         </div>
       </div>
 
-      {/* Right: photo (hidden on mobile) */}
-      <div className="hidden lg:block lg:w-1/2 relative">
-        <Image
-          src="/images/eucalyptus-minimal.jpg"
-          alt=""
-          fill
-          className="object-cover"
-          quality={80}
-        />
-      </div>
+      <aside className="relative hidden min-h-[420px] min-w-0 flex-[1_1_480px] flex-col justify-end overflow-hidden border-l border-divider bg-surface p-14 lg:flex">
+        <svg viewBox="0 0 600 600" aria-hidden="true" className="absolute -right-20 -top-10 h-[640px] w-[640px] opacity-90">
+          <g fill="none" stroke="#2F5A50" strokeWidth="1.4">
+            <path d="M300 560 C 300 400, 300 240, 300 60" />
+            <path d="M300 470 C 230 440, 170 380, 150 300 C 230 310, 285 370, 300 470" />
+            <path d="M300 400 C 370 370, 430 310, 450 230 C 370 240, 315 300, 300 400" />
+            <path d="M300 300 C 240 270, 200 220, 190 150 C 255 165, 292 220, 300 300" />
+            <path d="M300 230 C 350 205, 390 160, 400 100 C 345 110, 308 160, 300 230" />
+            <path d="M300 150 C 280 120, 275 90, 285 60 C 305 85, 310 115, 300 150" />
+          </g>
+          <g fill="none" stroke="#6DD4B8" strokeWidth="1.2" opacity="0.5">
+            <path d="M150 300 L 300 470" />
+            <path d="M450 230 L 300 400" />
+            <path d="M190 150 L 300 300" />
+            <path d="M400 100 L 300 230" />
+          </g>
+        </svg>
+        <div className="relative flex max-w-[460px] flex-col gap-[18px]">
+          <p className="font-serif text-[30px] italic leading-snug">
+            Moins de temps sur l&apos;administratif, plus d&apos;attention pour chaque consultant.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {['Dossiers & anamnèse', 'Conseillanciers', 'Suivi entre séances'].map((t) => (
+              <span key={t} className="rounded-full border border-divider px-3 py-1.5 text-[13px] text-[#C9CFDA]">{t}</span>
+            ))}
+          </div>
+        </div>
+      </aside>
     </main>
   );
 }

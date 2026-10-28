@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Statistiques</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid #6DD4B8;outline-offset:2px}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1500px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="stats" hint-size="100%,1500px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px 40px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 24px">
+      <section style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px">
+        <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 6px">
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 36px">Statistiques</h1>
+          <p style="margin: 0; font-size: 15px; color: #8B95A5">{{periodSentence}}</p>
+        </div>
+        <div role="group" aria-label="Période" style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #151A23; border: 1px solid #2A3140">
+          <sc-for list="{{periods}}" as="p" hint-placeholder-count="4">
+            <button type="button" aria-pressed="{{p.on}}" onClick="{{p.pick}}" style="height: 36px; padding: 0 14px; border-radius: 9px; border: 0; background: {{p.bg}}; color: {{p.fg}}; font-size: 14px; font-weight: 500; cursor: pointer">{{p.l}}</button>
+          </sc-for>
+        </div>
+      </section>
+
+      <!-- Activité -->
+      <section style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8B95A5">Activité</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+          <sc-for list="{{activity}}" as="k" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+                <span style="font-size: 13px; color: #8B95A5">{{k.l}}</span>
+                <span style="height: 22px; padding: 0 8px; border-radius: 11px; background: {{k.dbg}}; color: {{k.dfg}}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">{{k.d}}</span>
+              </div>
+              <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 34px; font-variant-numeric: tabular-nums">{{k.v}}</span>
+              <span style="font-size: 12px; color: #8B95A5">{{k.s}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+          <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600">Séances par semaine</h3>
+            <span style="font-size: 13px; color: #8B95A5">12 dernières semaines · moyenne {{weekAvg}}</span>
+          </div>
+          <svg viewBox="0 0 900 200" width="100%" role="img" aria-label="Séances par semaine sur 12 semaines, moyenne {{weekAvg}}" style="display: block; overflow: visible">
+            <line x1="30" y1="{{avgY}}" x2="900" y2="{{avgY}}" stroke="#8B95A5" stroke-dasharray="4 4"></line>
+            <sc-for list="{{weeks}}" as="w" hint-placeholder-count="12">
+              <rect x="{{w.x}}" y="{{w.y}}" width="48" height="{{w.h}}" rx="6" fill="{{w.c}}"></rect>
+              <text x="{{w.tx}}" y="{{w.ty}}" text-anchor="middle" fill="#E8EDF4" font-size="12" font-family="Inter, sans-serif">{{w.v}}</text>
+              <text x="{{w.tx}}" y="196" text-anchor="middle" fill="#8B95A5" font-size="11" font-family="Inter, sans-serif">{{w.l}}</text>
+            </sc-for>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Financier -->
+      <section style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8B95A5">Financier</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px">
+          <div style="flex: 3 1 520px; display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+            <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+              <h3 style="margin: 0; font-size: 16px; font-weight: 600">Chiffre d'affaires encaissé</h3>
+              <span style="font-size: 13px; color: #8B95A5">12 derniers mois</span>
+            </div>
+            <svg viewBox="0 0 900 220" width="100%" role="img" aria-label="Chiffre d'affaires mensuel sur 12 mois" style="display: block; overflow: visible">
+              <path d="{{caArea}}" fill="#6DD4B8" opacity="0.12"></path>
+              <path d="{{caLine}}" fill="none" stroke="#6DD4B8" stroke-width="2.5" stroke-linejoin="round"></path>
+              <sc-for list="{{caPts}}" as="pt" hint-placeholder-count="12">
+                <circle cx="{{pt.x}}" cy="{{pt.y}}" r="{{pt.r}}" fill="{{pt.c}}"></circle>
+                <text x="{{pt.x}}" y="214" text-anchor="middle" fill="#8B95A5" font-size="11" font-family="Inter, sans-serif">{{pt.l}}</text>
+              </sc-for>
+              <text x="{{lastX}}" y="{{lastLabelY}}" text-anchor="end" fill="#E8EDF4" font-size="13" font-weight="600" font-family="Inter, sans-serif">{{lastLabel}}</text>
+            </svg>
+          </div>
+          <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+              <span style="font-size: 13px; color: #8B95A5">CA sur la période</span>
+              <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 34px">{{caPeriod}}</span>
+              <span style="font-size: 12px; color: #8B95A5">{{caPeriodSub}}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 16px; background: #1F2640; border: 1px solid #2E3A60">
+              <span style="font-size: 13px; color: #A9B8EC">À déclarer à l'URSSAF · trimestre en cours</span>
+              <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 28px; color: #D4DCF6">2 140 €</span>
+              <span style="font-size: 12px; color: #9AA8D6">Montant encaissé depuis le 1er octobre. Rappel, pas une déclaration.</span>
+            </div>
+            <a href="Facturation.dc.html" style="display: inline-flex; align-items: center; justify-content: center; height: 42px; border-radius: 10px; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px; text-decoration: none">Voir la facturation →</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Accompagnement -->
+      <section style="display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8B95A5">Accompagnement</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px">
+          <div style="flex: 1 1 340px; display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600">Motifs de consultation</h3>
+            <sc-for list="{{motifs}}" as="m" hint-placeholder-count="6">
+              <div style="display: flex; flex-direction: column; gap: 5px">
+                <div style="display: flex; justify-content: space-between; font-size: 14px"><span>{{m.l}}</span><span style="color: #8B95A5; font-variant-numeric: tabular-nums">{{m.v}}</span></div>
+                <span style="height: 8px; border-radius: 4px; background: #1C2230; overflow: hidden"><span style="display: block; height: 100%; width: {{m.w}}; border-radius: 4px; background: {{m.c}}"></span></span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="flex: 1 1 340px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+            <sc-for list="{{engage}}" as="e" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+                <span style="font-size: 13px; color: #8B95A5">{{e.l}}</span>
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 30px">{{e.v}}</span>
+                <sc-if value="{{e.hasBar}}" hint-placeholder-val="{{false}}"><span style="height: 6px; border-radius: 3px; background: #1C2230; overflow: hidden"><span style="display: block; height: 100%; width: {{e.w}}; background: {{e.c}}"></span></span></sc-if>
+                <span style="font-size: 12px; line-height: 1.45; color: #8B95A5">{{e.s}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+
+      <p style="margin: 0; font-size: 12px; color: #5C6573">Indicateurs d'activité et de suivi, non médicaux. Les consultants actifs sont ceux qui ont eu une séance, un message ou une saisie de journal sur la période.</p>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { period: 'mois' }; }
+  renderVals() {
+    const P = this.state.period;
+    const D = {
+      mois: { label: 'Octobre 2026', s: 'Octobre 2026, comparé à septembre.', seances: 34, ds: '+6', nouveaux: 7, dn: '+2', actifs: 28, da: '+3', fid: '72 %', df: '+4 pts', ca: '2 140 €', caSub: '34 séances facturées · panier moyen 63 €', motifs: [['Fatigue', 11], ['Sommeil', 8], ['Digestion', 6], ['Stress', 5], ['Cycle féminin', 3], ['Peau', 1]], cc: 6, cp: 5, journal: 61 },
+      trimestre: { label: 'T4 2026', s: 'Depuis le 1er octobre, comparé au trimestre précédent.', seances: 34, ds: '+4', nouveaux: 7, dn: '−1', actifs: 31, da: '+2', fid: '72 %', df: '+1 pt', ca: '2 140 €', caSub: 'Trimestre en cours', motifs: [['Fatigue', 11], ['Sommeil', 8], ['Digestion', 6], ['Stress', 5], ['Cycle féminin', 3], ['Peau', 1]], cc: 6, cp: 5, journal: 61 },
+      annee: { label: '2026', s: 'Depuis le 1er janvier, comparé à 2025.', seances: 231, ds: '+38', nouveaux: 46, dn: '+9', actifs: 38, da: '+7', fid: '68 %', df: '+5 pts', ca: '14 380 €', caSub: '231 séances facturées', motifs: [['Fatigue', 64], ['Sommeil', 51], ['Digestion', 40], ['Stress', 38], ['Cycle féminin', 22], ['Peau', 16]], cc: 41, cp: 37, journal: 58 },
+      douze: { label: '12 mois', s: 'Les 12 derniers mois glissants.', seances: 268, ds: '+41', nouveaux: 52, dn: '+11', actifs: 38, da: '+7', fid: '68 %', df: '+5 pts', ca: '16 620 €', caSub: '268 séances facturées', motifs: [['Fatigue', 72], ['Sommeil', 58], ['Digestion', 47], ['Stress', 44], ['Cycle féminin', 25], ['Peau', 18]], cc: 47, cp: 42, journal: 58 }
+    }[P];
+    const delta = (d) => { const neg = d.startsWith('−'); return { d, dbg: neg ? '#373131' : '#23383B', dfg: neg ? '#E8A87C' : '#6DD4B8' }; };
+    const WK = [5, 7, 6, 8, 6, 9, 7, 8, 10, 8, 9, 11];
+    const maxW = 12, avg = WK.reduce((a, b) => a + b, 0) / WK.length;
+    const yW = (v) => 176 - (v / maxW) * 150;
+    const MON = ['nov.', 'déc.', 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.'];
+    const CA = [920, 780, 1180, 1240, 1360, 1290, 1420, 1180, 860, 640, 1910, 2140];
+    const maxC = 2400, x0 = 40, step = (880 - x0) / 11;
+    const xC = (i) => Math.round(x0 + i * step), yC = (v) => Math.round(190 - (v / maxC) * 170);
+    const line = CA.map((v, i) => (i ? 'L' : 'M') + xC(i) + ' ' + yC(v)).join(' ');
+    const mmax = D.motifs[0][1];
+    const MC = ['#E8A87C', '#7B93DB', '#E8C46B', '#A9B8EC', '#E8A5C6', '#F0B8A0'];
+    return {
+      periodSentence: D.s,
+      periods: [['mois', 'Ce mois'], ['trimestre', 'Trimestre'], ['annee', 'Année'], ['douze', '12 mois']].map(([k, l]) => { const on = P === k; return { l, on: on ? 'true' : 'false', bg: on ? '#23383B' : 'transparent', fg: on ? '#6DD4B8' : '#B8C1CF', pick: () => this.setState({ period: k }) }; }),
+      activity: [
+        { l: 'Séances réalisées', v: String(D.seances), s: 'Hors séances annulées', ...delta(D.ds) },
+        { l: 'Nouveaux consultants', v: String(D.nouveaux), s: 'Première séance sur la période', ...delta(D.dn) },
+        { l: 'Consultants actifs', v: String(D.actifs), s: 'Même calcul que la page Consultants', ...delta(D.da) },
+        { l: 'Fidélisation à 3 mois', v: D.fid, s: 'Revenus pour un suivi dans les 3 mois', ...delta(D.df) }
+      ],
+      weekAvg: avg.toFixed(1).replace('.', ',') + ' / semaine', avgY: Math.round(yW(avg)),
+      weeks: WK.map((v, i) => ({ v: String(v), x: 50 + i * 72, y: Math.round(yW(v)), h: Math.round(176 - yW(v)), tx: 74 + i * 72, ty: Math.round(yW(v)) - 6, c: i === WK.length - 1 ? '#6DD4B8' : '#2F5A50', l: i === WK.length - 1 ? 'cette sem.' : 'S' + (32 + i) })),
+      caLine: line, caArea: line + ' L' + xC(11) + ' 190 L' + xC(0) + ' 190 Z',
+      caPts: CA.map((v, i) => ({ x: xC(i), y: yC(v), l: MON[i], r: i === 11 ? 5 : 3, c: i === 11 ? '#6DD4B8' : '#3E7D6D' })),
+      lastX: xC(11) - 10, lastLabelY: yC(CA[11]) - 12, lastLabel: CA[11].toLocaleString('fr-FR') + ' €',
+      caPeriod: D.ca, caPeriodSub: D.caSub,
+      motifs: D.motifs.map(([l, v], i) => ({ l, v: String(v), w: Math.round(v / mmax * 100) + '%', c: MC[i] })),
+      engage: [
+        { l: 'Conseillanciers créés', v: String(D.cc), s: 'Dont ' + D.cp + ' partagés avec le consultant', hasBar: false },
+        { l: 'Partagés', v: Math.round(D.cp / D.cc * 100) + ' %', s: 'Des conseillanciers créés', hasBar: true, w: Math.round(D.cp / D.cc * 100) + '%', c: '#6DD4B8' },
+        { l: 'Journaux remplis', v: D.journal + ' %', s: 'Jours avec une saisie, consultants actifs', hasBar: true, w: D.journal + '%', c: '#7B93DB' },
+        { l: 'Recommandations suivies', v: '68 %', s: 'D’après les cases cochées dans l’app', hasBar: true, w: '68%', c: '#E8A87C' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

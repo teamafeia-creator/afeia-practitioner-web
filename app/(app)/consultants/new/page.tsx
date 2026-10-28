@@ -113,7 +113,6 @@ export default function NewConsultantPage() {
           setCreatedConsultantId(result.consultantId || null);
           setShowCodeModal(true);
           setLoading(false);
-          console.log('Code d\'activation:', result.code);
         } else {
           // Pas de code, rediriger directement
           setToast({

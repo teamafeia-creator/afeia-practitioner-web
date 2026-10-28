@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Prendre rendez-vous</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button,input,textarea{font-family:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid #6DD4B8;outline-offset:2px}
+input::placeholder,textarea::placeholder{color:#5C6573}
+</style>
+</helmet>
+<div style="position: relative; overflow: hidden; min-height: 1100px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4; display: flex; flex-direction: column">
+  <img src="afeia_symbol_white.svg" alt="" aria-hidden="true" style="position: absolute; right: -120px; top: 90px; height: 900px; width: auto; opacity: 0.035; pointer-events: none; z-index: 0">
+
+  <header style="position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px; padding: 24px 32px; border-bottom: 1px solid #1F2533">
+    <span style="width: 56px; height: 56px; border-radius: 28px; background: #E8A87C; color: #0A0E14; font-size: 20px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">CM</span>
+    <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 4px">
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-weight: 500">Claire Martin</span>
+      <span style="font-size: 14px; color: #B8C1CF">Praticienne en naturopathie · 12 rue de l'Aiguillerie, Montpellier · 06 12 34 56 78</span>
+    </div>
+    <p style="flex: 1 1 320px; max-width: 460px; margin: 0; font-size: 14px; line-height: 1.55; color: #8B95A5; font-style: italic">« J'accompagne la fatigue, le sommeil et l'équilibre digestif, en complément de votre suivi médical. »</p>
+  </header>
+
+  <div style="position: relative; z-index: 1; flex: 1; display: flex; flex-wrap: wrap; justify-content: center; gap: 28px; padding: 28px 32px 40px; box-sizing: border-box">
+    <main style="flex: 1 1 560px; max-width: 760px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+
+      <sc-if value="{{showProgress}}" hint-placeholder-val="{{true}}">
+        <ol aria-label="Étapes" style="display: flex; gap: 8px; margin: 0; padding: 0; list-style: none">
+          <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+            <li aria-current="{{s.cur}}" style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+              <span style="height: 6px; border-radius: 3px; background: {{s.bar}}"></span>
+              <span style="font-size: 13px; color: {{s.fg}}; font-weight: {{s.w}}">{{s.n}}. {{s.l}}</span>
+            </li>
+          </sc-for>
+        </ol>
+      </sc-if>
+
+      <!-- Étape 1 : type -->
+      <sc-if value="{{isType}}" hint-placeholder-val="{{true}}">
+        <section style="display: flex; flex-direction: column; gap: 14px">
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 30px">Choisissez votre séance</h1>
+          <sc-for list="{{types}}" as="t" hint-placeholder-count="4">
+            <button type="button" onClick="{{t.pick}}" style="display: flex; align-items: flex-start; gap: 16px; width: 100%; padding: 18px 20px; border-radius: 16px; border: 1px solid {{t.border}}; background: {{t.bg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+              <span style="flex: none; width: 6px; align-self: stretch; border-radius: 3px; background: {{t.c}}"></span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+                <span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+                  <span style="font-size: 17px; font-weight: 600">{{t.name}}</span>
+                  <sc-if value="{{t.group}}" hint-placeholder-val="{{false}}"><span style="height: 22px; padding: 0 8px; border-radius: 11px; background: #1F2640; color: #A9B8EC; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center">En groupe</span></sc-if>
+                </span>
+                <span style="font-size: 14px; color: #B8C1CF">{{t.meta}}</span>
+                <span style="font-size: 14px; line-height: 1.5; color: #8B95A5">{{t.desc}}</span>
+              </span>
+              <span style="flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px">{{t.price}}</span>
+                <span style="font-size: 12px; color: #8B95A5">{{t.priceNote}}</span>
+              </span>
+            </button>
+          </sc-for>
+        </section>
+      </sc-if>
+
+      <!-- Étape 2 : date -->
+      <sc-if value="{{isDate}}" hint-placeholder-val="{{false}}">
+        <section style="display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <button type="button" onClick="{{back}}" aria-label="Retour" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; cursor: pointer">←</button>
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 30px">Choisissez une date</h1>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+            <span id="loc-label" style="font-size: 14px; color: #B8C1CF">Où souhaitez-vous faire la séance ?</span>
+            <div role="radiogroup" aria-labelledby="loc-label" style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #151A23; border: 1px solid #2A3140">
+              <sc-for list="{{locs}}" as="lo" hint-placeholder-count="2">
+                <button type="button" role="radio" aria-checked="{{lo.on}}" onClick="{{lo.pick}}" style="height: 40px; padding: 0 16px; border-radius: 9px; border: 0; background: {{lo.bg}}; color: {{lo.fg}}; font-size: 14px; font-weight: 500; cursor: pointer">{{lo.l}}</button>
+              </sc-for>
+            </div>
+            <span style="font-size: 13px; color: #8B95A5">{{locHint}}</span>
+          </div>
+
+          <sc-if value="{{hasSlots}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+              <div style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+                <div style="display: flex; align-items: center; justify-content: space-between">
+                  <button type="button" aria-label="Mois précédent" style="width: 34px; height: 34px; border-radius: 9px; border: 1px solid #2A3140; background: transparent; color: #5C6573; cursor: not-allowed">‹</button>
+                  <span style="font-size: 16px; font-weight: 600">Novembre 2026</span>
+                  <button type="button" aria-label="Mois suivant" style="width: 34px; height: 34px; border-radius: 9px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; cursor: pointer">›</button>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center">
+                  <sc-for list="{{dow}}" as="dw" hint-placeholder-count="7"><span style="font-size: 11px; color: #8B95A5; padding: 4px 0">{{dw}}</span></sc-for>
+                  <sc-for list="{{cal}}" as="d" hint-placeholder-count="35">
+                    <button type="button" onClick="{{d.pick}}" aria-pressed="{{d.on}}" aria-label="{{d.aria}}" style="height: 40px; border-radius: 10px; border: 1px solid {{d.border}}; background: {{d.bg}}; color: {{d.fg}}; font-size: 14px; font-weight: {{d.w}}; cursor: {{d.cursor}}; visibility: {{d.vis}}">{{d.n}}</button>
+                  </sc-for>
+                </div>
+                <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8B95A5"><span style="width: 10px; height: 10px; border-radius: 3px; background: #23383B; border: 1px solid #2F5A50"></span>Jours avec des créneaux libres</span>
+              </div>
+
+              <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 14px">
+                <span style="font-size: 16px; font-weight: 600; text-transform: capitalize">{{dayLabel}}</span>
+                <sc-for list="{{slotGroups}}" as="g" hint-placeholder-count="2">
+                  <div style="display: flex; flex-direction: column; gap: 8px">
+                    <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8B95A5">{{g.l}}</span>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                      <sc-for list="{{g.slots}}" as="sl" hint-placeholder-count="3">
+                        <button type="button" onClick="{{sl.pick}}" aria-pressed="{{sl.on}}" style="min-width: 76px; height: 42px; padding: 0 12px; border-radius: 10px; border: 1px solid {{sl.border}}; background: {{sl.bg}}; color: {{sl.fg}}; font-size: 15px; font-weight: 500; cursor: pointer">{{sl.t}}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{noSlotThatDay}}" hint-placeholder-val="{{false}}"><span style="font-size: 14px; color: #8B95A5">Choisissez un jour en vert dans le calendrier.</span></sc-if>
+                <button type="button" onClick="{{goContact}}" style="height: 48px; border-radius: 12px; border: 0; background: {{nextBg}}; color: {{nextFg}}; font-size: 15px; font-weight: 600; cursor: pointer">Continuer</button>
+              </div>
+            </div>
+            <button type="button" onClick="{{toggleWait}}" style="align-self: center; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #B8C1CF; font-size: 14px; cursor: pointer">🔔 Aucun créneau ne vous convient ? Être prévenu si un créneau se libère</button>
+          </sc-if>
+
+          <sc-if value="{{noSlots}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px; border-radius: 16px; background: #332D17; border: 1px solid #5C4F1E; text-align: center">
+              <span style="font-size: 26px">🔔</span>
+              <span style="font-size: 17px; font-weight: 600; color: #F5E3A8">Plus de créneau libre pour le moment</span>
+              <span style="font-size: 14px; line-height: 1.5; color: #E6D49A; max-width: 48ch">Inscrivez-vous : vous serez prévenu par e-mail dès qu'un créneau correspondant à vos préférences se libère.</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{waitOpen}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+              <sc-if value="{{waitDone}}" hint-placeholder-val="{{false}}">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; text-align: center">
+                  <span style="width: 48px; height: 48px; border-radius: 24px; background: #23383B; color: #6DD4B8; font-size: 22px; display: flex; align-items: center; justify-content: center">✓</span>
+                  <span style="font-size: 17px; font-weight: 600">C'est noté, {{w.first}}</span>
+                  <span style="font-size: 14px; color: #B8C1CF; max-width: 46ch">Vous recevrez un e-mail « Réserver ce créneau » dès qu'une place se libère {{waitPrefText}}. Le premier qui réserve obtient la séance. Votre inscription dure 30 jours.</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{waitForm}}" hint-placeholder-val="{{true}}">
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                  <h2 style="margin: 0; font-size: 18px; font-weight: 600">Liste d'attente</h2>
+                  <sc-if value="{{hasSlots}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{toggleWait}}" style="padding: 0; border: 0; background: transparent; color: #8B95A5; font-size: 13px; cursor: pointer">Fermer</button></sc-if>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px">
+                  <label style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Prénom
+                    <input value="{{w.first}}" onInput="{{onWFirst}}" style="height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+                  </label>
+                  <label style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">E-mail
+                    <input type="email" value="{{w.email}}" onInput="{{onWEmail}}" style="height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+                  </label>
+                  <label style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Téléphone
+                    <input type="tel" value="{{w.phone}}" onInput="{{onWPhone}}" style="height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+                  </label>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <span style="font-size: 13px; color: #8B95A5">Moment préféré</span>
+                  <div role="radiogroup" aria-label="Moment préféré" style="display: flex; flex-wrap: wrap; gap: 6px">
+                    <sc-for list="{{tods}}" as="td" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{td.on}}" onClick="{{td.pick}}" style="height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid {{td.border}}; background: {{td.bg}}; color: {{td.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">{{td.l}}</button></sc-for>
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <span style="font-size: 13px; color: #8B95A5">Jours possibles <span style="color: #5C6573">· aucun choix = tous les jours</span></span>
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                    <sc-for list="{{wdays}}" as="wd" hint-placeholder-count="6"><button type="button" aria-pressed="{{wd.on}}" onClick="{{wd.pick}}" style="height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid {{wd.border}}; background: {{wd.bg}}; color: {{wd.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">{{wd.l}}</button></sc-for>
+                  </div>
+                </div>
+                <button type="button" onClick="{{joinWait}}" style="align-self: flex-end; height: 46px; padding: 0 20px; border-radius: 12px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 15px; font-weight: 600; cursor: pointer">M'inscrire sur la liste d'attente</button>
+              </sc-if>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <!-- Étape 2 bis : atelier en groupe -->
+      <sc-if value="{{isGroup}}" hint-placeholder-val="{{false}}">
+        <section style="display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <button type="button" onClick="{{back}}" aria-label="Retour" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; cursor: pointer">←</button>
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 30px">Choisissez une séance de groupe</h1>
+          </div>
+          <sc-for list="{{sessions}}" as="se" hint-placeholder-count="3">
+            <button type="button" onClick="{{se.pick}}" aria-disabled="{{se.full}}" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; width: 100%; padding: 16px 20px; border-radius: 16px; border: 1px solid {{se.border}}; background: {{se.bg}}; color: {{se.fg}}; text-align: left; cursor: {{se.cursor}}">
+              <span style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 16px; font-weight: 600">{{se.title}}</span>
+                <span style="font-size: 14px; color: #B8C1CF">{{se.when}} · {{se.where}}</span>
+              </span>
+              <span style="height: 28px; padding: 0 12px; border-radius: 14px; background: {{se.pillBg}}; color: {{se.pillFg}}; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center">{{se.spots}}</span>
+            </button>
+          </sc-for>
+        </section>
+      </sc-if>
+
+      <!-- Étape 3 : coordonnées -->
+      <sc-if value="{{isContact}}" hint-placeholder-val="{{false}}">
+        <section style="display: flex; flex-direction: column; gap: 16px; padding: 26px; border-radius: 18px; background: #151A23; border: 1px solid #2A3140">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <button type="button" onClick="{{back}}" aria-label="Retour" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; cursor: pointer">←</button>
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 28px">Vos coordonnées</h1>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 14px">
+            <label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Prénom
+              <input value="{{c.first}}" onInput="{{onCFirst}}" autocomplete="given-name" style="height: 46px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{bFirst}}; color: #E8EDF4; font-size: 15px">
+              <sc-if value="{{err.first}}" hint-placeholder-val="{{false}}"><span role="alert" style="font-size: 13px; font-weight: 400; color: #E8A87C">{{msg.first}}</span></sc-if>
+            </label>
+            <label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Nom
+              <input value="{{c.last}}" onInput="{{onCLast}}" autocomplete="family-name" style="height: 46px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{bLast}}; color: #E8EDF4; font-size: 15px">
+              <sc-if value="{{err.last}}" hint-placeholder-val="{{false}}"><span role="alert" style="font-size: 13px; font-weight: 400; color: #E8A87C">{{msg.last}}</span></sc-if>
+            </label>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 14px">
+            <label style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">E-mail
+              <input type="email" value="{{c.email}}" onInput="{{onCEmail}}" autocomplete="email" style="height: 46px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{bEmail}}; color: #E8EDF4; font-size: 15px">
+              <sc-if value="{{err.email}}" hint-placeholder-val="{{false}}"><span role="alert" style="font-size: 13px; font-weight: 400; color: #E8A87C">{{msg.email}}</span></sc-if>
+            </label>
+            <label style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Téléphone
+              <input type="tel" value="{{c.phone}}" onInput="{{onCPhone}}" autocomplete="tel" style="height: 46px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{bPhone}}; color: #E8EDF4; font-size: 15px">
+              <sc-if value="{{err.phone}}" hint-placeholder-val="{{false}}"><span role="alert" style="font-size: 13px; font-weight: 400; color: #E8A87C">{{msg.phone}}</span></sc-if>
+            </label>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Ce qui vous amène <span style="font-weight: 400; color: #8B95A5">facultatif, en une phrase</span>
+            <textarea rows="2" value="{{c.reason}}" onInput="{{onCReason}}" placeholder="Ex. fatigue depuis l'hiver, sommeil léger" style="padding: 10px 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px; line-height: 1.5; resize: vertical"></textarea>
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: 14px; background: #10141B; border: 1px solid #2A3140">
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+              <h2 style="margin: 0; font-size: 17px; font-weight: 600">Paiement</h2>
+              <span style="font-size: 12px; color: #8B95A5">🔒 Paiement sécurisé par Stripe</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px">
+              <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 12px; background: #23383B; border: 1px solid #2F5A50">
+                <span style="font-size: 13px; color: #A8E6CF">Acompte à régler maintenant</span>
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 28px; color: #E8EDF4">{{deposit}}</span>
+                <span style="font-size: 12px; color: #A8E6CF">Obligatoire pour réserver le créneau</span>
+              </div>
+              <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 12px; background: #1C2230; border: 1px solid #2A3140">
+                <span style="font-size: 13px; color: #8B95A5">Reste à régler après la séance</span>
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 28px; color: #E8EDF4">{{balance}}</span>
+                <span style="font-size: 12px; color: #8B95A5">{{balanceHow}}</span>
+              </div>
+            </div>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Numéro de carte
+              <input inputmode="numeric" autocomplete="cc-number" value="{{card.n}}" onInput="{{onCardN}}" placeholder="1234 1234 1234 1234" style="height: 46px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{bCard}}; color: #E8EDF4; font-size: 15px; letter-spacing: 0.04em; font-variant-numeric: tabular-nums">
+              <sc-if value="{{err.card}}" hint-placeholder-val="{{false}}"><span role="alert" style="font-size: 13px; font-weight: 400; color: #E8A87C">{{msg.card}}</span></sc-if>
+            </label>
+            <div style="display: flex; gap: 12px">
+              <label style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Expiration
+                <input inputmode="numeric" autocomplete="cc-exp" value="{{card.e}}" onInput="{{onCardE}}" placeholder="MM / AA" style="height: 46px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{bExp}}; color: #E8EDF4; font-size: 15px">
+              <sc-if value="{{err.exp}}" hint-placeholder-val="{{false}}"><span role="alert" style="font-size: 13px; font-weight: 400; color: #E8A87C">{{msg.exp}}</span></sc-if>
+              </label>
+              <label style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Code de sécurité
+                <input inputmode="numeric" autocomplete="cc-csc" value="{{card.c}}" onInput="{{onCardC}}" placeholder="CVC" style="height: 46px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{bCvc}}; color: #E8EDF4; font-size: 15px">
+              <sc-if value="{{err.cvc}}" hint-placeholder-val="{{false}}"><span role="alert" style="font-size: 13px; font-weight: 400; color: #E8A87C">{{msg.cvc}}</span></sc-if>
+              </label>
+            </div>
+          </div>
+          <div style="padding: 12px 14px; border-radius: 12px; background: #1C2230; font-size: 13px; line-height: 1.55; color: #B8C1CF"><strong style="color: #E8EDF4">Annulation :</strong> gratuite jusqu'à 24 h avant la séance, depuis le lien reçu par e-mail : l'acompte est alors remboursé. Moins de 24 h avant, l'acompte est conservé.</div>
+          <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5; cursor: pointer">
+            <input type="checkbox" checked="{{c.cancel}}" onChange="{{toggleCancel}}" style="width: 18px; height: 18px; margin: 2px 0 0; accent-color: #6DD4B8; flex: none">
+            <span style="color: {{cancelFg}}">J'ai lu les conditions d'annulation.</span>
+          </label>
+          <sc-if value="{{err.cancel}}" hint-placeholder-val="{{false}}"><span role="alert" style="margin-top: -8px; padding-left: 28px; font-size: 13px; color: #E8A87C">{{msg.cancel}}</span></sc-if>
+          <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5; cursor: pointer">
+            <input type="checkbox" checked="{{c.rgpd}}" onChange="{{toggleRgpd}}" style="width: 18px; height: 18px; margin: 2px 0 0; accent-color: #6DD4B8; flex: none">
+            <span style="color: {{rgpdFg}}">J'accepte que mes données soient traitées par Claire Martin via Afeia pour la gestion de mon rendez-vous.</span>
+          </label>
+          <sc-if value="{{err.rgpd}}" hint-placeholder-val="{{false}}"><span role="alert" style="margin-top: -8px; padding-left: 28px; font-size: 13px; color: #E8A87C">{{msg.rgpd}}</span></sc-if>
+          <sc-if value="{{showMissing}}" hint-placeholder-val="{{false}}">
+            <div role="alert" style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 12px; background: #373131; border: 1px solid #5A4636">
+              <span style="font-size: 14px; font-weight: 600; color: #F2D2BB">Pour confirmer, il reste à :</span>
+              <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; line-height: 1.5; color: #E8C4A8">
+                <sc-for list="{{missing}}" as="mi" hint-placeholder-count="3"><li>{{mi}}</li></sc-for>
+              </ul>
+            </div>
+          </sc-if>
+          <button type="button" onClick="{{confirm}}" style="height: 52px; border-radius: 12px; border: 0; background: {{confirmBg}}; color: {{confirmFg}}; font-size: 16px; font-weight: 600; cursor: pointer">Payer l'acompte de {{deposit}} et confirmer</button>
+          <span style="font-size: 12px; color: #5C6573; text-align: center">Vous serez débité de {{deposit}} aujourd'hui seulement. Le solde n'est jamais prélevé automatiquement.</span>
+        </section>
+      </sc-if>
+
+      <!-- Étape 4 : confirmé -->
+      <sc-if value="{{isDone}}" hint-placeholder-val="{{false}}">
+        <section style="display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 36px 28px; border-radius: 20px; background: #151A23; border: 1px solid #2A3140; text-align: center">
+          <span style="width: 68px; height: 68px; border-radius: 34px; background: #23383B; display: flex; align-items: center; justify-content: center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg>
+          </span>
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 32px">{{doneTitle}}</h1>
+          <span style="font-size: 15px; color: #B8C1CF">Une confirmation a été envoyée à {{c.email}}.</span>
+          <div style="width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 10px; padding: 18px; box-sizing: border-box; border-radius: 14px; background: #1C2230; text-align: left">
+            <span style="font-size: 16px; font-weight: 600; text-transform: capitalize">{{sumWhen}}</span>
+            <span style="font-size: 14px; color: #B8C1CF">{{sumType}}</span>
+            <span style="font-size: 14px; color: #B8C1CF">{{sumWhere}}</span>
+            <div style="height: 1px; background: #2A3140"></div>
+            <span style="display: flex; justify-content: space-between; font-size: 14px"><span style="color: #6DD4B8">✓ Acompte payé</span><span style="font-variant-numeric: tabular-nums">{{deposit}}</span></span>
+            <span style="display: flex; justify-content: space-between; font-size: 14px; color: #B8C1CF"><span>Reste à régler après la séance</span><span style="font-variant-numeric: tabular-nums">{{balance}}</span></span>
+            <span style="font-size: 12px; color: #8B95A5">{{balanceHow}}. Le reçu de l'acompte est dans l'e-mail.</span>
+          </div>
+          <sc-if value="{{isVisio}}" hint-placeholder-val="{{false}}">
+            <div style="width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; box-sizing: border-box; border-radius: 14px; background: #1F2640; border: 1px solid #2E3A60; text-align: left">
+              <span style="font-size: 15px; font-weight: 600; color: #D4DCF6">Séance en visio</span>
+              <span style="font-size: 13px; line-height: 1.5; color: #B9C4EA">Le bouton « Rejoindre la visio » s'activera 15 minutes avant le début. Le lien est aussi dans l'e-mail.</span>
+              <span style="align-self: flex-start; height: 40px; padding: 0 16px; border-radius: 10px; background: #2A3140; color: #8B95A5; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center">Rejoindre la visio · actif 15 min avant</span>
+            </div>
+          </sc-if>
+          <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px">
+            <button type="button" onClick="{{ics}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Ajouter à mon agenda</button>
+          </div>
+          <div style="width: 100%; max-width: 520px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 18px; box-sizing: border-box; border-radius: 14px; background: #23383B; text-align: left">
+            <span style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 15px; font-weight: 600; color: #CFEFE5">Préparez votre séance</span>
+              <span style="font-size: 13px; line-height: 1.5; color: #A8E6CF">Remplissez le questionnaire préliminaire (environ 15 min) : Claire le lira avant de vous recevoir.</span>
+            </span>
+            <a href="QuestionnairePublic.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 10px; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; text-decoration: none">Remplir le questionnaire</a>
+          </div>
+          <span style="font-size: 13px; color: #8B95A5">Besoin d'annuler ou de déplacer ? Utilisez le lien dans l'e-mail de confirmation.</span>
+        </section>
+      </sc-if>
+
+      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #5C6573; text-align: center">Vos données sont hébergées dans l'Union européenne et ne sont transmises qu'à votre praticien. Afeia ne remplace jamais un médecin.</p>
+    </main>
+
+    <!-- Récapitulatif -->
+    <sc-if value="{{showSummary}}" hint-placeholder-val="{{true}}">
+      <aside aria-label="Votre rendez-vous" style="flex: 0 1 300px; min-width: 260px; align-self: flex-start; display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 18px; background: #151A23; border: 1px solid #2A3140">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8B95A5">Votre rendez-vous</span>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{summary}}" as="sm" hint-placeholder-count="4">
+            <div style="display: flex; gap: 10px; font-size: 14px">
+              <span style="flex: none; width: 20px; color: {{sm.ic}}">{{sm.i}}</span>
+              <span style="color: {{sm.fg}}">{{sm.t}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="height: 1px; background: #2A3140"></div>
+        <span style="font-size: 12px; line-height: 1.5; color: #8B95A5">Rendez-vous confirmé dès le paiement de l’acompte, sans attendre de validation.</span>
+      </aside>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: fixed; right: 24px; bottom: 24px; z-index: 60; max-width: 420px; padding: 14px 16px; border-radius: 12px; background: #1C2230; border: 1px solid #2F5A50; color: #E8EDF4; font-size: 14px; box-shadow: 0 12px 32px rgba(0,0,0,0.4)">{{toast}}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startStep":{"editor":"enum","options":["type","date","attente","complet","groupe","contact","confirme","confirmeVisio"],"default":"type"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const s = props.startStep ?? 'type';
+    const typeId = s === 'groupe' ? 't4' : (s === 'confirmeVisio' ? 't2' : 't1');
+    const filled = ['contact', 'confirme', 'confirmeVisio'].includes(s);
+    this.state = {
+      step: s === 'confirme' || s === 'confirmeVisio' ? 'done' : (s === 'attente' || s === 'complet' ? 'date' : s),
+      full: s === 'complet', waitOpen: s === 'attente' || s === 'complet', waitDone: false,
+      typeId, day: s === 'type' ? null : 17, slot: s === 'type' || s === 'date' || s === 'attente' || s === 'complet' ? (s === 'date' ? '14:00' : null) : (s === 'confirmeVisio' ? '18:00' : '14:00'),
+      session: null, loc: s === 'confirmeVisio' ? 'visio' : 'cabinet',
+      c: filled ? { first: 'Nadia', last: 'Lefort', email: 'nadia.lefort@exemple.fr', phone: '06 12 45 78 90', reason: 'Fatigue depuis l’hiver, réveils vers 4 h.', cancel: true, rgpd: true } : { first: '', last: '', email: '', phone: '', reason: '', cancel: false, rgpd: false },
+      tried: false,
+      card: filled ? { n: '4242 4242 4242 4242', e: '08 / 28', c: '123' } : { n: '', e: '', c: '' },
+      w: { first: 'Nadia', email: 'nadia.lefort@exemple.fr', phone: '06 12 45 78 90', tod: 'afternoon', days: [2, 4] },
+      toast: ''
+    };
+  }
+  toastMsg(t) { this.setState({ toast: t }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 3500); }
+  renderVals() {
+    const st = this.state;
+    const TYPES = [
+      { id: 't1', name: 'Première consultation', dur: 90, price: 80, c: '#4CAF50', desc: 'Bilan complet de vos habitudes de vie et premières recommandations.' },
+      { id: 't2', name: 'Suivi', dur: 60, price: 60, c: '#2196F3', desc: 'Faire le point sur vos ressentis et ajuster votre programme.' },
+      { id: 't4', name: 'Atelier respiration', dur: 90, price: 25, c: '#00BCD4', group: true, desc: 'En petit groupe : apprendre la cohérence cardiaque et la respirer ensemble.' }
+    ];
+    const t = TYPES.find((x) => x.id === st.typeId) || TYPES[0];
+    const isGroupT = !!t.group;
+    const go = (step) => this.setState({ step, tried: false });
+    const DOWS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const dowOf = (d) => (d - 1) % 7; // 1er novembre 2026 = dimanche (0 = dimanche)
+    const avail = (d) => !st.full && d >= 3 && [2, 3, 4, 5, 6].includes(dowOf(d)) && ![11, 19, 26].includes(d);
+    const slotsFor = (d) => {
+      if (!avail(d)) return [];
+      const base = st.loc === 'visio' ? ['09:00', '12:30', '14:00', '18:00', '19:00'] : ['09:00', '10:30', '14:00', '15:30', '17:00'];
+      return base.filter((_, i) => (d + i) % 3 !== 0);
+    };
+    const cal = [];
+    for (let i = 0; i < 6; i++) cal.push({ n: '', vis: 'hidden', pick: () => {}, on: 'false', aria: '', border: 'transparent', bg: 'transparent', fg: '#5C6573', w: '400', cursor: 'default' });
+    for (let d = 1; d <= 30; d++) {
+      const a = avail(d), on = st.day === d;
+      cal.push({ n: String(d), vis: 'visible', on: on ? 'true' : 'false', aria: d + ' novembre' + (a ? ', créneaux libres' : ', complet'),
+        border: on ? '#6DD4B8' : (a ? '#2F5A50' : 'transparent'), bg: on ? '#6DD4B8' : (a ? '#23383B' : 'transparent'), fg: on ? '#0A0E14' : (a ? '#E8EDF4' : '#3A4252'),
+        w: a ? '600' : '400', cursor: a ? 'pointer' : 'not-allowed', pick: () => { if (a) this.setState({ day: d, slot: null }); } });
+    }
+    const daySlots = st.day ? slotsFor(st.day) : [];
+    const grp = (l, f) => ({ l, slots: daySlots.filter(f).map((x) => { const on = st.slot === x; return { t: x.replace(':', ' h '), on: on ? 'true' : 'false', bg: on ? '#6DD4B8' : 'transparent', fg: on ? '#0A0E14' : '#E8EDF4', border: on ? '#6DD4B8' : '#3A4252', pick: () => this.setState({ slot: x }) }; }) });
+    const slotGroups = [grp('Matin', (x) => x < '12:00'), grp('Après-midi', (x) => x >= '12:00' && x < '17:30'), grp('Soir', (x) => x >= '17:30')].filter((g) => g.slots.length);
+    const dateLong = st.day ? DOWS[dowOf(st.day)].toLowerCase() + ' ' + st.day + ' novembre' : '';
+
+    const SESS = [
+      { id: 's1', title: 'Atelier respiration · débutants', when: 'Samedi 7 novembre, 10 h – 11 h 30', where: 'Au cabinet', left: 3, cap: 8 },
+      { id: 's2', title: 'Atelier respiration · débutants', when: 'Samedi 21 novembre, 10 h – 11 h 30', where: 'Au cabinet', left: 0, cap: 8 },
+      { id: 's3', title: 'Atelier respiration · en visio', when: 'Jeudi 26 novembre, 18 h 30 – 20 h', where: 'En visio', left: 6, cap: 10 }
+    ];
+    const sess = SESS.find((x) => x.id === st.session);
+
+    const c = st.c;
+    const emailOk = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(c.email.trim());
+    const phoneOk = c.phone.replace(/\D/g, '').length >= 10;
+    const card = st.card;
+    const cardOk = card.n.replace(/\D/g, '').length >= 15, expOk = card.e.replace(/\D/g, '').length === 4, cvcOk = card.c.replace(/\D/g, '').length >= 3;
+    const contactOk = c.first.trim() && c.last.trim() && emailOk && phoneOk && c.cancel && c.rgpd && cardOk && expOk && cvcOk;
+    const depositN = Math.round(t.price * 0.3);
+    const bad = (ok) => st.tried && !ok ? '#E8A87C' : '#2A3140';
+    const setC = (k) => (ev) => this.setState({ c: { ...this.state.c, [k]: ev.target.value } });
+
+    const stepIdx = { type: 0, date: 1, groupe: 1, contact: 2, done: 3 }[st.step];
+    const whenText = sess ? sess.when : (st.day && st.slot ? dateLong + ' à ' + st.slot.replace(':', ' h ') : null);
+    const visio = sess ? sess.where === 'En visio' : st.loc === 'visio';
+
+    const W = st.w;
+    const TOD = [['morning', 'Matin'], ['afternoon', 'Après-midi'], ['evening', 'Soir'], ['any', 'Peu importe']];
+    const WD = [[1, 'Lun'], [2, 'Mar'], [3, 'Mer'], [4, 'Jeu'], [5, 'Ven'], [6, 'Sam']];
+
+    return {
+      showProgress: st.step !== 'done',
+      steps: ['Séance', isGroupT ? 'Séance de groupe' : 'Date et heure', 'Coordonnées'].map((l, i) => ({ n: String(i + 1), l, cur: i === stepIdx ? 'step' : 'false', bar: i < stepIdx ? '#3E7D6D' : (i === stepIdx ? '#6DD4B8' : '#2A3140'), fg: i === stepIdx ? '#E8EDF4' : '#8B95A5', w: i === stepIdx ? '600' : '400' })),
+
+      isType: st.step === 'type',
+      types: TYPES.map((x) => { const on = st.typeId === x.id && st.step !== 'type' ? false : false; return { ...x, meta: x.dur + ' min · Au cabinet ou en visio' + (x.group ? ' · 8 places' : ''), price: x.price + ' €', priceNote: x.group ? 'par personne' : '', border: '#2A3140', bg: '#151A23',
+        pick: () => this.setState({ typeId: x.id, step: x.group ? 'groupe' : 'date', loc: 'cabinet', day: null, slot: null, session: null, waitOpen: false, waitDone: false }) }; }),
+
+      isDate: st.step === 'date',
+      locs: [['cabinet', 'Au cabinet'], ['visio', 'En visio']].map(([k, l]) => { const on = st.loc === k; return { l, on: on ? 'true' : 'false', bg: on ? '#6DD4B8' : 'transparent', fg: on ? '#0A0E14' : '#E8EDF4', pick: () => this.setState({ loc: k, slot: null }) }; }),
+      locHint: st.loc === 'visio' ? 'Même tarif, depuis chez vous : le lien arrive par e-mail.' : '12 rue de l’Aiguillerie, Montpellier',
+      back: () => go(st.step === 'contact' ? (isGroupT ? 'groupe' : 'date') : 'type'),
+      hasSlots: !st.full, noSlots: st.full,
+      dow: ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
+      cal,
+      dayLabel: st.day ? dateLong : 'Aucun jour choisi',
+      slotGroups, noSlotThatDay: !st.day,
+      nextBg: st.slot ? '#6DD4B8' : '#2A3140', nextFg: st.slot ? '#0A0E14' : '#8B95A5',
+      goContact: () => { if (st.slot) go('contact'); },
+      waitOpen: st.waitOpen, waitDone: st.waitDone, waitForm: !st.waitDone,
+      toggleWait: () => this.setState({ waitOpen: !st.waitOpen, waitDone: false }),
+      w: W,
+      onWFirst: (ev) => this.setState({ w: { ...st.w, first: ev.target.value } }),
+      onWEmail: (ev) => this.setState({ w: { ...st.w, email: ev.target.value } }),
+      onWPhone: (ev) => this.setState({ w: { ...st.w, phone: ev.target.value } }),
+      tods: TOD.map(([k, l]) => { const on = W.tod === k; return { l, on: on ? 'true' : 'false', bg: on ? '#6DD4B8' : 'transparent', fg: on ? '#0A0E14' : '#E8EDF4', border: on ? '#6DD4B8' : '#3A4252', pick: () => this.setState({ w: { ...st.w, tod: k } }) }; }),
+      wdays: WD.map(([k, l]) => { const on = W.days.includes(k); return { l, on: on ? 'true' : 'false', bg: on ? '#6DD4B8' : 'transparent', fg: on ? '#0A0E14' : '#E8EDF4', border: on ? '#6DD4B8' : '#3A4252', pick: () => this.setState({ w: { ...st.w, days: on ? W.days.filter((x) => x !== k) : W.days.concat([k]) } }) }; }),
+      waitPrefText: '(' + (W.days.length ? WD.filter(([k]) => W.days.includes(k)).map(([, l]) => l.toLowerCase()).join(', ') : 'tous les jours') + ', ' + TOD.find(([k]) => k === W.tod)[1].toLowerCase() + ')',
+      joinWait: () => this.setState({ waitDone: true }),
+
+      isGroup: st.step === 'groupe',
+      sessions: SESS.map((x) => { const full = x.left === 0, few = x.left > 0 && x.left <= 3; return { ...x, full: full ? 'true' : 'false',
+        spots: full ? 'Complet' : (x.left + (x.left > 1 ? ' places restantes' : ' place restante')),
+        pillBg: full ? '#2A3140' : (few ? '#373131' : '#23383B'), pillFg: full ? '#8B95A5' : (few ? '#E8A87C' : '#6DD4B8'),
+        border: '#2A3140', bg: full ? '#10141B' : '#151A23', fg: full ? '#5C6573' : '#E8EDF4', cursor: full ? 'not-allowed' : 'pointer',
+        pick: () => { if (!full) this.setState({ session: x.id, step: 'contact' }); } }; }),
+
+      isContact: st.step === 'contact',
+      c,
+      onCFirst: setC('first'), onCLast: setC('last'), onCEmail: setC('email'), onCPhone: setC('phone'), onCReason: setC('reason'),
+      err: (() => { const show = st.tried; const v = { first: !!c.first.trim(), last: !!c.last.trim(), email: emailOk, phone: phoneOk, card: cardOk, exp: expOk, cvc: cvcOk, cancel: c.cancel, rgpd: c.rgpd }; const o = {}; Object.keys(v).forEach((k) => { o[k] = show && !v[k]; }); return o; })(),
+      msg: {
+        first: 'Indiquez votre prénom.',
+        last: 'Indiquez votre nom.',
+        email: c.email.trim() ? 'Cette adresse e-mail semble incomplète, par exemple nom@exemple.fr.' : 'Indiquez votre adresse e-mail : la confirmation y sera envoyée.',
+        phone: c.phone.trim() ? 'Le numéro doit compter 10 chiffres.' : 'Indiquez votre téléphone, pour être joint en cas d’imprévu.',
+        card: card.n.trim() ? 'Le numéro de carte est incomplet (16 chiffres en général).' : 'Indiquez le numéro de votre carte pour régler l’acompte.',
+        exp: card.e.trim() ? 'Format attendu : MM / AA, par exemple 08 / 28.' : 'Indiquez la date d’expiration.',
+        cvc: card.c.trim() ? 'Le code doit compter 3 chiffres (au dos de la carte).' : 'Indiquez les 3 chiffres au dos de la carte.',
+        cancel: 'Cochez cette case pour confirmer que vous avez lu les conditions d’annulation.',
+        rgpd: 'Votre accord est nécessaire pour que Claire Martin reçoive votre rendez-vous.'
+      },
+      showMissing: st.tried && !contactOk,
+      missing: [
+        !(c.first.trim() && c.last.trim()) && 'indiquer votre prénom et votre nom',
+        !emailOk && 'renseigner une adresse e-mail valide',
+        !phoneOk && 'renseigner un numéro de téléphone à 10 chiffres',
+        !(cardOk && expOk && cvcOk) && 'compléter les informations de carte pour l’acompte',
+        !c.cancel && 'cocher la case sur les conditions d’annulation',
+        !c.rgpd && 'accepter le traitement de vos données'
+      ].filter(Boolean),
+      bFirst: bad(!!c.first.trim()), bLast: bad(!!c.last.trim()), bEmail: bad(emailOk), bPhone: bad(phoneOk),
+      toggleCancel: () => this.setState({ c: { ...c, cancel: !c.cancel } }),
+      toggleRgpd: () => this.setState({ c: { ...c, rgpd: !c.rgpd } }),
+      cancelFg: st.tried && !c.cancel ? '#E8A87C' : '#E8EDF4', rgpdFg: st.tried && !c.rgpd ? '#E8A87C' : '#E8EDF4',
+      confirmBg: '#6DD4B8', confirmFg: '#0A0E14',
+      confirm: () => { if (contactOk) go('done'); else this.setState({ tried: true }); },
+
+      card,
+      onCardN: (ev) => this.setState({ card: { ...st.card, n: ev.target.value } }),
+      onCardE: (ev) => this.setState({ card: { ...st.card, e: ev.target.value } }),
+      onCardC: (ev) => this.setState({ card: { ...st.card, c: ev.target.value } }),
+      bCard: bad(cardOk), bExp: bad(expOk), bCvc: bad(cvcOk),
+      deposit: depositN + ' €', balance: (t.price - depositN) + ' €',
+      balanceHow: 'Au cabinet, par virement ou via le lien de paiement envoyé après la séance',
+      isDone: st.step === 'done',
+      doneTitle: isGroupT ? 'Inscription confirmée' : 'Rendez-vous confirmé',
+      sumWhen: whenText || '',
+      sumType: t.name + ' · ' + t.dur + ' min · ' + t.price + ' €',
+      sumWhere: visio ? 'En visio, depuis chez vous' : '12 rue de l’Aiguillerie, 34000 Montpellier',
+      isVisio: visio,
+      ics: () => this.toastMsg('Fichier .ics téléchargé : ouvrez-le pour ajouter la séance à votre agenda.'),
+
+      showSummary: st.step !== 'done',
+      summary: [
+        { i: '◉', ic: t.c, t: st.step === 'type' ? 'Choisissez une séance' : t.name + ' · ' + t.dur + ' min', fg: st.step === 'type' ? '#5C6573' : '#E8EDF4' },
+        { i: '◷', ic: '#8B95A5', t: whenText || 'Date à choisir', fg: whenText ? '#E8EDF4' : '#5C6573' },
+        { i: '⌖', ic: '#8B95A5', t: st.step === 'type' ? 'Lieu selon la séance' : (visio ? 'En visio' : 'Au cabinet, Montpellier'), fg: st.step === 'type' ? '#5C6573' : '#E8EDF4' },
+        { i: '€', ic: '#8B95A5', t: st.step === 'type' ? '—' : t.price + ' €' + (isGroupT ? ' par personne' : '') + ' · acompte de ' + depositN + ' € à la réservation', fg: st.step === 'type' ? '#5C6573' : '#E8EDF4' }
+      ],
+      hasToast: !!st.toast, toast: st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

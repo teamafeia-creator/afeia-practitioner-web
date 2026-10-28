@@ -202,7 +202,7 @@ export default function ActivatePage() {
       }
 
       if (!invitation) {
-        setError('Invitation non trouvée. Contactez votre naturopathe.')
+        setError('Invitation non trouvée. Contactez votre praticien.')
         return
       }
 

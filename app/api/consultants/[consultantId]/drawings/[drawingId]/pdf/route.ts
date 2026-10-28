@@ -95,7 +95,7 @@ export async function GET(
 
     const pdfData = {
       consultantName,
-      practitionerName: practitioner?.full_name || 'Naturopathe',
+      practitionerName: practitioner?.full_name || 'Praticien',
       title: drawing.title,
       date: drawing.updated_at || drawing.created_at,
       snapshotBase64,

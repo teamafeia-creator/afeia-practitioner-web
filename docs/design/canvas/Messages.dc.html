@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Messages</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1000px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="messages" hint-size="100%,1000px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-wrap: wrap; min-height: 900px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px; overflow: hidden">
+      <aside aria-label="Conversations" style="flex: 1 1 280px; max-width: 340px; min-width: 0; border-right: 1px solid #2A3140; display: flex; flex-direction: column">
+        <div style="padding: 18px 16px 12px; display: flex; flex-direction: column; gap: 12px">
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 24px">Messages</h1>
+          <label style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #8B95A5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+            <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rechercher une conversation</span>
+            <input type="search" placeholder="Rechercher" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #E8EDF4; font: 14px Inter, system-ui, sans-serif">
+          </label>
+        </div>
+        <div style="flex: 1; overflow-y: auto">
+          <sc-for list="{{convs}}" as="c" hint-placeholder-count="8">
+            <button type="button" onClick="{{c.pick}}" aria-current="{{c.cur}}" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 0; border-left: 3px solid {{c.edge}}; background: {{c.bg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+              <span style="width: 40px; height: 40px; border-radius: 20px; background: {{c.col}}; color: #0A0E14; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{c.ini}}</span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                <span style="display: flex; justify-content: space-between; gap: 8px">
+                  <span style="font-size: 14px; font-weight: {{c.w}}">{{c.n}}</span>
+                  <span style="font-size: 12px; color: #8B95A5; flex: none">{{c.d}}</span>
+                </span>
+                <span style="font-size: 13px; color: {{c.pc}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.p}}</span>
+              </span>
+              <sc-if value="{{c.unread}}" hint-placeholder-val="{{false}}">
+                <span style="width: 10px; height: 10px; border-radius: 5px; background: #E8A87C; flex: none" aria-label="Non lu"></span>
+              </sc-if>
+            </button>
+          </sc-for>
+        </div>
+      </aside>
+
+      <section aria-label="Conversation" style="flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column">
+        <header style="display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid #2A3140">
+          <span style="width: 40px; height: 40px; border-radius: 20px; background: {{cur.col}}; color: #0A0E14; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{cur.ini}}</span>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 16px; font-weight: 600">{{cur.n}}</span>
+            <span style="font-size: 13px; color: #8B95A5">{{cur.meta}}</span>
+          </div>
+          <a href="Anamnese.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 14px">Ouvrir le dossier</a>
+        </header>
+
+        <div style="flex: 1; padding: 22px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto">
+          <sc-for list="{{msgs}}" as="m" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: {{m.align}}">
+              <div style="max-width: min(62ch, 85%); padding: 12px 16px; border-radius: {{m.radius}}; background: {{m.bg}}; border: 1px solid {{m.border}}; font-size: 15px; line-height: 1.55">{{m.t}}</div>
+              <span style="font-size: 12px; color: #8B95A5">{{m.d}}</span>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{showNudge}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 14px 16px; border-radius: 12px; background: #1F2640; border: 1px solid #2E3A60">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9B8EC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>
+              <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 4px">
+                <span style="font-size: 14px; font-weight: 600; color: #D4DCF6">Question sur un médicament</span>
+                <span style="font-size: 14px; line-height: 1.5; color: #B9C4EA">Ce point relève du médecin ou du pharmacien. C'est au médecin de juger de la compatibilité entre un traitement et vos recommandations : ne donnez pas d'avis sur ce médicament.</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <footer style="padding: 14px 22px 18px; border-top: 1px solid #2A3140; display: flex; flex-direction: column; gap: 10px">
+          <label for="composer" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Votre message</label>
+          <textarea id="composer" rows="3" value="{{draft}}" onInput="{{onDraft}}" placeholder="Écrire à {{cur.first}}…" style="width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font: 15px/1.5 Inter, system-ui, sans-serif; resize: vertical"></textarea>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+            <button type="button" style="height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Joindre une fiche</button>
+            <span style="flex: 1"></span>
+            <button type="button" onClick="{{send}}" style="height: 44px; padding: 0 20px; border-radius: 10px; border: 0; background: {{sendBg}}; color: {{sendFg}}; font-size: 14px; font-weight: 600; cursor: pointer">Envoyer</button>
+          </div>
+        </footer>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'ab', draft: '', sent: {}, read: { ab: true } };
+  }
+  renderVals() {
+    const { sel, draft, sent, read } = this.state;
+    const base = [
+      { id: 'ab', n: 'Amina Benali', first: 'Amina', ini: 'AB', col: '#6DD4B8', d: '10:42', unread0: true, meta: 'Standard · 22 ans · Montpellier', p: 'J’ai une question : est-ce que je peux prendre un ibuprofène…', thread: [
+        { me: false, t: 'Bonjour ! J’ai réduit le café à 2 par jour et j’ai eu une seule migraine ce mois-ci ! C’est la première fois en 2 ans. Par contre les partiels approchent et je stresse…', d: '28 janv., 21:05' },
+        { me: true, t: 'Super résultat Amina ! Une migraine au lieu de 3 ou 4, on est sur la bonne voie. Pour les partiels : cohérence cardiaque 5 min avant chaque session de révision. Et surtout, ne saute pas de repas même si tu es stressée.', d: '29 janv., 09:30' },
+        { me: false, t: 'J’ai une question : est-ce que je peux prendre un ibuprofène en prévention avant un partiel important ? Ou est-ce que ça contre-indique quelque chose ?', d: 'Aujourd’hui, 10:42' }
+      ] },
+      { id: 'mi', n: 'Mimouche', first: 'Mimouche', ini: 'M', col: '#6DD4B8', d: '15/02', p: 'Vous : Bonjour, comment allez-vous ?', thread: [{ me: true, t: 'Bonjour, comment allez-vous ?', d: '15 févr.' }] },
+      { id: 'pg', n: 'Philippe Garnier', first: 'Philippe', ini: 'PG', col: '#E57B7B', d: '15/02', p: 'Les horaires c’est toujours dur mais je…', thread: [{ me: false, t: 'Les horaires c’est toujours dur mais je tiens le rythme du soir.', d: '15 févr.' }] },
+      { id: 'rd', n: 'Robert Durand', first: 'Robert', ini: 'RD', col: '#E8A87C', d: '12/02', unread0: true, p: 'Et aussi, ma femme voudrait savoir si…', thread: [{ me: false, t: 'Et aussi, ma femme voudrait savoir si elle peut prendre rendez-vous.', d: '12 févr.' }] },
+      { id: 'ml', n: 'Marc Lefebvre', first: 'Marc', ini: 'ML', col: '#A8E6CF', d: '09/02', unread0: true, p: 'Vous : C’est formidable et c’est bien…', thread: [{ me: true, t: 'C’est formidable, continuez ainsi.', d: '9 févr.' }] },
+      { id: 'sm', n: 'Sophie Martin', first: 'Sophie', ini: 'SM', col: '#D4A574', d: '07/02', p: 'Bonjour, tout va bien, je voulais…', thread: [{ me: false, t: 'Bonjour, tout va bien, je voulais vous donner des nouvelles.', d: '7 févr.' }] },
+      { id: 'lb', n: 'Lucas Bernard', first: 'Lucas', ini: 'LB', col: '#7B93DB', d: '03/02', unread0: true, p: 'Vous : Bravo, c’est un bon signe !', thread: [{ me: true, t: 'Bravo, c’est un bon signe !', d: '3 févr.' }] },
+      { id: 'td', n: 'Thomas Dubois', first: 'Thomas', ini: 'TD', col: '#D4A574', d: '22/12', p: 'Vous : Bravo Thomas ! C’est un excellent…', thread: [{ me: true, t: 'Bravo Thomas ! C’est un excellent début.', d: '22 déc.' }] }
+    ];
+    const curRaw = base.find((c) => c.id === sel);
+    const myThread = curRaw.thread.concat((sent[sel] || []).map((t) => ({ me: true, t, d: 'À l’instant' })));
+    const answered = (sent.ab || []).length > 0;
+    const send = () => {
+      const t = this.state.draft.trim();
+      if (!t) return;
+      const s = this.state.sent;
+      this.setState({ sent: { ...s, [sel]: (s[sel] || []).concat([t]) }, draft: '' });
+    };
+    return {
+      convs: base.map((c) => {
+        const on = c.id === sel;
+        const unread = !!c.unread0 && !read[c.id];
+        return { ...c, cur: on ? 'true' : 'false', bg: on ? '#1C2230' : 'transparent', edge: on ? '#6DD4B8' : 'transparent', unread, w: unread ? '600' : '500', pc: unread ? '#E8EDF4' : '#8B95A5',
+          pick: () => this.setState({ sel: c.id, draft: '', read: { ...this.state.read, [c.id]: true } }) };
+      }),
+      cur: curRaw,
+      msgs: myThread.map((m) => ({ t: m.t, d: m.d, align: m.me ? 'flex-end' : 'flex-start', bg: m.me ? '#23383B' : '#1C2230', border: m.me ? '#2F5A50' : '#2A3140', radius: m.me ? '14px 14px 4px 14px' : '14px 14px 14px 4px' })),
+      showNudge: sel === 'ab' && !answered,
+      draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      send,
+      sendBg: draft.trim() ? '#6DD4B8' : '#2A3140',
+      sendFg: draft.trim() ? '#0A0E14' : '#8B95A5'
+    };
+  }
+}
+</script>
+</body>
+</html>

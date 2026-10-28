@@ -16,6 +16,12 @@ interface BookingEmailData {
   cancellationPolicyText: string | null;
   reason: string | null;
   videoLink?: string | null;
+  /** Acompte payé (en euros) et solde restant, si un acompte a été demandé. */
+  depositEuros?: number | null;
+  balanceEuros?: number | null;
+  /** Lien d'annulation pour le consultant. */
+  cancelUrl?: string | null;
+  isVisio?: boolean;
 }
 
 export function buildConfirmationEmail(data: BookingEmailData) {
@@ -43,6 +49,18 @@ export function buildConfirmationEmail(data: BookingEmailData) {
          </div>`
       : '';
 
+  const fmtEur = (n: number) => `${n.toLocaleString('fr-FR', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2 })} €`;
+  const depositLine =
+    data.depositEuros != null && data.depositEuros > 0
+      ? `<div style="margin-top:16px;padding:12px;background:#f0f7f6;border-radius:6px;font-size:13px;">
+           <p style="margin:0;"><strong>Acompte payé : ${fmtEur(data.depositEuros)}</strong></p>
+           ${data.balanceEuros != null && data.balanceEuros > 0 ? `<p style="margin:4px 0 0;">Reste à régler après la séance : ${fmtEur(data.balanceEuros)} (au cabinet, par virement ou via le lien de paiement envoyé après la séance).</p>` : ''}
+         </div>`
+      : '';
+  const cancelLine = data.cancelUrl
+    ? `<p style="margin-top:16px;font-size:13px;color:#666;">Besoin d'annuler ? <a href="${escapeHtml(data.cancelUrl)}" style="color:#2B5651;">Annuler ce rendez-vous</a>${data.depositEuros ? ` (acompte remboursé jusqu'à ${data.cancellationPolicyHours ?? 24} h avant la séance, conservé ensuite)` : ''}.</p>`
+    : '';
+
   const subject = `Confirmation de votre rendez-vous avec ${data.practitionerName}`;
 
   const html = `
@@ -62,12 +80,16 @@ export function buildConfirmationEmail(data: BookingEmailData) {
         <p style="margin:4px 0;">&#128197; <strong>${escapeHtml(data.dateFormatted)} a ${escapeHtml(data.timeFormatted)}</strong></p>
         <p style="margin:4px 0;">&#128336; ${escapeHtml(data.consultationTypeName)} (${data.durationMinutes} min)</p>
         <p style="margin:4px 0;">&#128100; ${escapeHtml(data.practitionerName)}</p>
-        ${locationLine}
+        ${data.isVisio ? '<p style="margin:4px 0;">&#128249; En visio, depuis chez vous</p>' : locationLine}
       </div>
 
       ${videoLine}
 
+      ${depositLine}
+
       ${cancellationLine}
+
+      ${cancelLine}
 
       <p style="text-align:center;color:#666;font-size:13px;margin-top:24px;">A bientot !</p>
     </div>
@@ -86,7 +108,9 @@ Votre rendez-vous est confirme :
 - Avec ${data.practitionerName}
 ${data.practitionerAddress ? `- ${data.practitionerAddress}` : ''}
 ${data.videoLink ? `\nConsultation en visioconference :\n${data.videoLink}\nLe lien sera actif 15 minutes avant le debut de votre consultation.` : ''}
+${data.depositEuros ? `\nAcompte payé : ${fmtEur(data.depositEuros)}${data.balanceEuros ? `. Reste à régler après la séance : ${fmtEur(data.balanceEuros)}.` : ''}` : ''}
 ${data.cancellationPolicyText ? `\nPolitique d'annulation : ${data.cancellationPolicyText}` : ''}
+${data.cancelUrl ? `\nAnnuler ce rendez-vous : ${data.cancelUrl}` : ''}
 
 A bientot !
 

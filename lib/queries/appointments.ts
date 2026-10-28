@@ -78,7 +78,7 @@ export async function ensureDefaultConsultationTypes(): Promise<void> {
 
   const defaults = [
     {
-      name: 'Premiere consultation',
+      name: 'Première consultation',
       duration_minutes: 90,
       price_cents: 8000,
       color: '#4CAF50',
@@ -95,17 +95,6 @@ export async function ensureDefaultConsultationTypes(): Promise<void> {
       color: '#2196F3',
       buffer_minutes: 15,
       sort_order: 1,
-      is_active: true,
-      is_bookable_online: true,
-      description: null,
-    },
-    {
-      name: 'Consultation visio',
-      duration_minutes: 60,
-      price_cents: 5500,
-      color: '#9C27B0',
-      buffer_minutes: 15,
-      sort_order: 2,
       is_active: true,
       is_bookable_online: true,
       description: null,

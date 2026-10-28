@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Tableau de bord praticien</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1120px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="dashboard" hint-size="100%,1120px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 32px; border-bottom: 1px solid #2A3140">
+      <label style="flex: 1 1 280px; max-width: 420px; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 10px; color: #8B95A5; font-size: 14px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rechercher</span>
+        <input type="search" placeholder="Rechercher un consultant, une fiche…" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #E8EDF4; font: inherit">
+        <span style="font-size: 12px; padding: 2px 6px; border: 1px solid #2A3140; border-radius: 6px">⌘K</span>
+      </label>
+      <div style="flex: 1"></div>
+      <button type="button" aria-label="Notifications (2 nouvelles)" style="position: relative; width: 44px; height: 44px; border-radius: 10px; background: transparent; border: 1px solid #2A3140; color: #E8EDF4; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span style="position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border-radius: 4px; background: #E8A87C"></span>
+      </button>
+    </header>
+
+    <div style="padding: 32px; display: flex; flex-direction: column; gap: 28px; max-width: 1180px; width: 100%; box-sizing: border-box">
+      <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 14px; color: #8B95A5">Vendredi 23 octobre</span>
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 40px; line-height: 1.1; letter-spacing: -0.01em">Bonjour Claire</h1>
+          <p style="margin: 0; font-size: 15px; color: #8B95A5">4 séances aujourd'hui · 4 consultants à regarder ce matin</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px">
+          <a href="#" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 14px; font-weight: 500">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 4h18v18H3zM16 2v4M8 2v4M3 10h18"></path></svg>
+            Nouvelle séance
+          </a>
+          <a href="#" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; background: #6DD4B8; color: #0A0E14; text-decoration: none; font-size: 14px; font-weight: 600">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            Nouveau consultant
+          </a>
+        </div>
+      </section>
+
+      <section aria-label="Revue du matin" style="display: flex; flex-direction: column; gap: 0; padding: 22px 24px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px">
+        <div style="width: 48px; height: 48px; border-radius: 14px; background: #373131; display: flex; align-items: center; justify-content: center; flex: none">
+          <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+            <g stroke="#E8A87C" stroke-width="2" stroke-linecap="round">
+              <path d="M16 3v3.5M16 25.5V29M3 16h3.5M25.5 16H29M6.8 6.8l2.5 2.5M22.7 22.7l2.5 2.5M6.8 25.2l2.5-2.5M22.7 9.3l2.5-2.5"></path>
+            </g>
+            <circle cx="16" cy="16" r="6.5" fill="#E8A87C"></circle>
+            <circle cx="16" cy="16" r="6.5" fill="none" stroke="#F6C9A6" stroke-width="1.2"></circle>
+          </svg>
+        </div>
+        <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 17px; font-weight: 600">Revue du matin</span>
+          <span style="font-size: 14px; line-height: 1.5; color: #C9CFDA">Ce matin, 4 consultants ont besoin d'un coup d'œil : 2 nuits plus courtes, 1 journal en pause, 1 fin de cycle difficile.</span>
+        </div>
+        <div aria-hidden="true" style="display: flex; padding-left: 10px">
+          <sc-for list="{{faces}}" as="f" hint-placeholder-count="4">
+            <span style="width: 32px; height: 32px; border-radius: 16px; background: {{f.bg}}; color: #0A0E14; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid #151A23; margin-left: -10px">{{f.i}}</span>
+          </sc-for>
+        </div>
+        <a href="RevueMatin.dc.html" style="display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px; border-radius: 10px; background: #23383B; color: #6DD4B8; font-size: 14px; font-weight: 600; text-decoration: none">
+          Commencer · ~6 min
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+      </div>
+      </section>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 28px; align-items: start">
+        <section style="display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 600">Aujourd'hui</h2>
+            <a href="#" style="font-size: 14px; text-decoration: none">Voir l'agenda</a>
+          </div>
+          <div style="display: flex; flex-direction: column; background: #151A23; border: 1px solid #2A3140; border-radius: 16px; overflow: hidden">
+            <sc-for list="{{seances}}" as="s" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-top: {{s.border}}">
+                <div style="width: 56px; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums">{{s.h}}</span>
+                  <span style="font-size: 12px; color: #8B95A5">{{s.dur}}</span>
+                </div>
+                <div style="width: 3px; align-self: stretch; border-radius: 2px; background: {{s.c}}"></div>
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                  <span style="font-size: 15px; font-weight: 500">{{s.n}}</span>
+                  <span style="font-size: 13px; color: #8B95A5">{{s.t}}</span>
+                </div>
+                <span style="font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: {{s.chipBg}}; color: {{s.chipFg}}">{{s.mode}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <div style="display: flex; flex-direction: column; gap: 28px">
+          <section style="display: flex; flex-direction: column; gap: 14px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 600">À faire</h2>
+            <sc-for list="{{todos}}" as="t" hint-placeholder-count="3">
+              <a href="#" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #151A23; border: 1px solid #2A3140; border-radius: 14px; text-decoration: none; color: #E8EDF4">
+                <span style="width: 40px; height: 40px; border-radius: 10px; background: {{t.tint}}; color: {{t.c}}; display: flex; align-items: center; justify-content: center; flex: none">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.d}}"></path></svg>
+                </span>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 15px; font-weight: 500">{{t.l}}</span>
+                  <span style="font-size: 13px; color: #8B95A5">{{t.s}}</span>
+                </span>
+                <span style="min-width: 28px; height: 28px; border-radius: 14px; background: {{t.c}}; color: #0A0E14; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{t.n}}</span>
+              </a>
+            </sc-for>
+          </section>
+
+        </div>
+      </div>
+
+      <section aria-label="Statistiques" style="display: flex; flex-direction: column; gap: 14px; padding-top: 8px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 600">{{periodLabel}} · {{catLabel}}</h2>
+          <span style="font-size: 13px; color: #8B95A5">{{pageLabel}}</span>
+          <span style="flex: 1"></span>
+          <div role="group" aria-label="Période" style="display: flex; padding: 3px; gap: 2px; background: #151A23; border: 1px solid #2A3140; border-radius: 10px">
+            <sc-for list="{{periods}}" as="p" hint-placeholder-count="4">
+              <button type="button" aria-pressed="{{p.pressed}}" onClick="{{p.pick}}" style="height: 34px; padding: 0 12px; border-radius: 8px; border: 0; font-size: 13px; font-weight: 500; cursor: pointer; background: {{p.bg}}; color: {{p.fg}}">{{p.l}}</button>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 6px">
+            <button type="button" onClick="{{prev}}" aria-label="Catégorie précédente : {{prevLabel}}" style="width: 36px; height: 36px; border-radius: 18px; border: 1px solid #2A3140; background: #151A23; color: #E8EDF4; display: flex; align-items: center; justify-content: center; cursor: pointer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+            </button>
+            <button type="button" onClick="{{next}}" aria-label="Catégorie suivante : {{nextLabel}}" style="width: 36px; height: 36px; border-radius: 18px; border: 1px solid #2A3140; background: #151A23; color: #E8EDF4; display: flex; align-items: center; justify-content: center; cursor: pointer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div aria-live="polite" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(max(240px, calc((100% - 32px) / 3)), 1fr)); gap: 16px">
+          <sc-for list="{{tiles}}" as="k" hint-placeholder-count="6">
+            <div style="position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 14px; min-height: 168px; padding: 20px 22px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px">
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span style="width: 34px; height: 34px; border-radius: 10px; background: {{k.tint}}; color: {{k.c}}; display: flex; align-items: center; justify-content: center; flex: none">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{k.icon}}"></path></svg>
+                </span>
+                <span style="flex: 1; font-size: 14px; color: #C9CFDA">{{k.l}}</span>
+                <sc-if value="{{k.hasD}}" hint-placeholder-val="{{true}}">
+                  <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: {{k.dBg}}; color: {{k.dc}}; white-space: nowrap">{{k.d}}</span>
+                </sc-if>
+              </div>
+              <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 38px; font-weight: 500; line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums">{{k.v}}</span>
+              <svg viewBox="0 0 200 40" preserveAspectRatio="none" width="100%" height="40" aria-hidden="true" style="display: block; margin-top: auto">
+                <polygon points="{{k.area}}" fill="{{k.c}}" opacity="0.10"></polygon>
+                <polyline points="{{k.line}}" fill="none" stroke="{{k.c}}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+              </svg>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 6px">
+          <sc-for list="{{dots}}" as="dt" hint-placeholder-count="3">
+            <button type="button" onClick="{{dt.go}}" aria-label="{{dt.l}}" aria-current="{{dt.cur}}" style="width: {{dt.w}}; height: 8px; border-radius: 4px; border: 0; padding: 0; background: {{dt.bg}}; cursor: pointer; transition: width 200ms ease"></button>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1380}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { cat: 0, period: 1 };
+  }
+  statVals(cat, period) {
+    const I = {
+      cal: 'M3 4h18v18H3zM16 2v4M8 2v4M3 10h18',
+      users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+      pulse: 'M22 12h-4l-3 9L9 3l-3 9H2',
+      loop: 'M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3',
+      cash: 'M2 6h20v12H2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+      book: 'M2 4h7a3 3 0 0 1 3 3v14a2 2 0 0 0-2-2H2zM22 4h-7a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h8z',
+      doc: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6',
+      share: 'M4 12v8h16v-8M16 6l-4-4-4 4M12 2v13',
+      check: 'M20 6L9 17l-5-5',
+      msg: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+      moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z',
+      ring: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
+      list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+      sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M2 12h2M20 12h2'
+    };
+    const up = '#6DD4B8', down = '#E8A87C', flat = '#8B95A5';
+    const T = { mint: ['#23383B', '#6DD4B8'], warm: ['#373131', '#E8A87C'], blue: ['#1F2640', '#A9B8EC'], pink: ['#3A2733', '#F0C2D8'] };
+    let seed = 0;
+    const spark = (trend) => {
+      seed += 1;
+      const pts = [];
+      for (let i = 0; i < 12; i++) {
+        const base = 20 + trend * (i - 5.5) * 1.6;
+        const y = Math.max(4, Math.min(36, base + Math.sin(i * 1.3 + seed * 2.1) * 4 + Math.cos(i * 0.7 + seed) * 2));
+        pts.push([Math.round((i / 11) * 200), Math.round(40 - y)]);
+      }
+      const line = pts.map((q) => q.join(',')).join(' ');
+      return { line, area: '0,40 ' + line + ' 200,40' };
+    };
+    const t = (l, v, d, dc, icon, tone) => {
+      const tr = dc === up ? 1 : dc === down ? -1 : 0;
+      return { l, v, d, dc, hasD: !!d, dBg: dc === up ? '#23383B' : dc === down ? '#373131' : '#1C2230', icon: I[icon], tint: T[tone][0], c: T[tone][1], ...spark(tr) };
+    };
+    const k = [0.25, 1, 3, 12][period];
+    const n = (x) => String(Math.round(x * k));
+    const cats = [
+      { l: 'Activité', tiles: [
+        t('Séances', n(26), '+4', up, 'cal', 'mint'),
+        t('Nouveaux consultants', n(5), '+2', up, 'users', 'mint'),
+        t('Actifs cette semaine', '24 / 38', '63 %', flat, 'pulse', 'blue'),
+        t('Fidélisation à 3 mois', '72 %', '−2 pts', down, 'loop', 'warm'),
+        t('Chiffre d\u2019affaires', '[CA PÉRIODE]', '', flat, 'cash', 'mint'),
+        t('Remplissage du journal', '61 %', '+6 pts', up, 'book', 'blue')
+      ] },
+      { l: 'Accompagnement', tiles: [
+        t('Conseillanciers créés', n(9), '+3', up, 'doc', 'mint'),
+        t('Conseillanciers partagés', n(7), '+2', up, 'share', 'mint'),
+        t('Observance moyenne', '68 %', '+5 pts', up, 'check', 'mint'),
+        t('Messages échangés', n(84), '+12', up, 'msg', 'blue'),
+        t('Questionnaires reçus', n(4), '=', flat, 'list', 'blue'),
+        t('Motif n° 1', 'Sommeil', '11 consultants', flat, 'moon', 'pink')
+      ] },
+      { l: 'Bien-être des consultants', tiles: [
+        t('Avec objet connecté', '14 / 38', '+2', up, 'ring', 'blue'),
+        t('Sommeil moyen', '7 h 04', '+12 min', up, 'moon', 'blue'),
+        t('VFC nocturne moyenne', '44 ms', 'stable', flat, 'pulse', 'blue'),
+        t('Revues du matin faites', n(19) + ' / ' + n(22), '86 %', up, 'sun', 'warm'),
+        t('Alertes traitées', n(31), '94 %', up, 'check', 'mint'),
+        t('Suivis de cycle actifs', '9', '+1', up, 'loop', 'pink')
+      ] }
+    ];
+    const N = cats.length;
+    const go = (i) => () => this.setState({ cat: (i + N) % N });
+    return {
+      catLabel: cats[cat].l,
+      pageLabel: (cat + 1) + ' / ' + N,
+      prevLabel: cats[(cat - 1 + N) % N].l,
+      nextLabel: cats[(cat + 1) % N].l,
+      tiles: cats[cat].tiles,
+      prev: go(cat - 1), next: go(cat + 1),
+      dots: cats.map((c, i) => ({ l: c.l, go: go(i), cur: i === cat ? 'true' : 'false', w: i === cat ? '22px' : '8px', bg: i === cat ? '#6DD4B8' : '#2A3140' })),
+      periodLabel: ['Cette semaine', 'Ce mois-ci', 'Ce trimestre', 'Cette année'][period],
+      periods: ['Semaine', 'Mois', 'Trimestre', 'Année'].map((l, i) => ({ l, pressed: i === period ? 'true' : 'false', bg: i === period ? '#23383B' : 'transparent', fg: i === period ? '#6DD4B8' : '#E8EDF4', pick: () => this.setState({ period: i }) }))
+    };
+  }
+  renderVals() {
+    const { cat, period } = this.state;
+    const mode = (m) => m === 'Visio'
+      ? { mode: m, chipBg: '#1F2640', chipFg: '#A9B8EC' }
+      : { mode: m, chipBg: '#23383B', chipFg: '#6DD4B8' };
+    const seances = [
+      { h: '09:00', dur: '1 h 30', n: 'Inès Morel', t: 'Bilan initial · anamnèse complète', c: '#E8A87C', ...mode('Cabinet') },
+      { h: '11:00', dur: '45 min', n: 'Camille Dupont', t: 'Suivi J+30 · objet connecté', c: '#6DD4B8', ...mode('Visio') },
+      { h: '14:30', dur: '45 min', n: 'Thomas Leroy', t: 'Suivi · révision du conseillancier', c: '#6DD4B8', ...mode('Cabinet') },
+      { h: '17:00', dur: '1 h', n: 'Sarah Benali', t: 'Bilan de terrain · iridologie', c: '#7B93DB', ...mode('Visio') }
+    ].map((s, i) => ({ ...s, border: i === 0 ? '0' : '1px solid #2A3140' }));
+    return {
+      faces: [
+        { i: 'CD', bg: '#6DD4B8' }, { i: 'TL', bg: '#E8A87C' }, { i: 'SB', bg: '#7B93DB' }, { i: 'LG', bg: '#E8A5C6' }
+      ],
+      signals: [
+        { n: 'Camille Dupont', ini: 'CD', col: '#6DD4B8', tag: 'Sommeil', tagBg: '#23383B', tagFg: '#6DD4B8', v: '6 h 02', d: '−1 h 18 sur 5 nuits', dc: '#E8A87C', ctx: 'En séance aujourd’hui à 11 h' },
+        { n: 'Thomas Leroy', ini: 'TL', col: '#E8A87C', tag: 'Journal', tagBg: '#373131', tagFg: '#E8A87C', v: '9 jours', d: 'sans entrée', dc: '#E8A87C', ctx: 'Habituellement 5 entrées / semaine' },
+        { n: 'Sarah Benali', ini: 'SB', col: '#7B93DB', tag: 'VFC', tagBg: '#1F2640', tagFg: '#A9B8EC', v: '38 ms', d: '−18 % vs 30 j', dc: '#E8A87C', ctx: 'Séance ce soir à 17 h' },
+        { n: 'Léa Garnier', ini: 'LG', col: '#E8A5C6', tag: 'Cycle', tagBg: '#3A2733', tagFg: '#F0C2D8', v: 'J21-24', d: 'fatigue, ballonnements', dc: '#F0C2D8', ctx: 'Même motif que les 2 derniers cycles' }
+      ],
+      pano: [
+        { l: 'Objets connectés', v: '14 / 38' },
+        { l: 'Journaux remplis cette semaine', v: '61 %' },
+        { l: 'Sommeil moyen', v: '7 h 04' },
+        { l: 'Observance des conseillanciers', v: '68 %' }
+      ],
+      seances,
+      todos: [
+        { l: 'Consultants à relancer', s: 'Plus de 30 jours sans contact', n: '3', c: '#E8A87C', tint: '#373131', d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM19 8v6M22 11h-6' },
+        { l: 'Conseillanciers en brouillon', s: 'À finaliser et partager', n: '2', c: '#6DD4B8', tint: '#23383B', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5' },
+        { l: 'Messages non lus', s: 'Dont 1 question sur une plante', n: '5', c: '#7B93DB', tint: '#1F2640', d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' }
+      ],
+      ...this.statVals(cat, period)
+    };
+  }
+}
+</script>
+</body>
+</html>

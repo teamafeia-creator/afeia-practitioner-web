@@ -303,7 +303,7 @@ export async function unsnoozeConsultant(consultantId: string): Promise<void> {
 export async function sendMessageFromReview(
   consultantId: string,
   message: string
-): Promise<void> {
+): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Non authentifie');
 
@@ -324,30 +324,36 @@ export async function sendMessageFromReview(
     throw new Error('Erreur lors de l\'envoi du message');
   }
 
-  // Log action
-  await supabase.from('practitioner_actions').insert({
-    practitioner_id: user.id,
-    consultant_id: consultantId,
-    type: 'send_message',
-    metadata: {},
-  });
+  return logReviewAction(user.id, consultantId, 'send_message', { source: 'morning_review' });
 }
 
+/**
+ * Ajoute une ligne datée aux notes privées du praticien, sans écraser ce qui existe.
+ */
 export async function saveObservationNote(
   consultantId: string,
   content: string
-): Promise<void> {
+): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Non authentifie');
 
-  // Upsert practitioner note
+  const { data: existing } = await supabase
+    .from('practitioner_notes')
+    .select('content')
+    .eq('consultant_id', consultantId)
+    .eq('practitioner_id', user.id)
+    .maybeSingle();
+
+  const previous = (existing?.content as string | null | undefined)?.trim() ?? '';
+  const merged = previous ? `${previous}\n\n${content}` : content;
+
   const { error } = await supabase
     .from('practitioner_notes')
     .upsert(
       {
         consultant_id: consultantId,
         practitioner_id: user.id,
-        content,
+        content: merged,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'consultant_id,practitioner_id' }
@@ -357,11 +363,110 @@ export async function saveObservationNote(
     throw new Error('Erreur lors de l\'enregistrement de la note');
   }
 
-  // Log action
-  await supabase.from('practitioner_actions').insert({
-    practitioner_id: user.id,
-    consultant_id: consultantId,
-    type: 'note_observation',
-    metadata: {},
-  });
+  return logReviewAction(user.id, consultantId, 'note_observation', { source: 'morning_review' });
+}
+
+// === Revue du matin : actions consignées ===
+
+export type ReviewActionType = 'send_message' | 'note_observation' | 'remind_tomorrow' | 'review_seen';
+
+export interface ReviewAction {
+  id: string;
+  consultant_id: string;
+  type: ReviewActionType;
+  created_at: string;
+}
+
+async function logReviewAction(
+  practitionerId: string,
+  consultantId: string,
+  type: ReviewActionType | 'review_completed',
+  metadata: Record<string, unknown> = {}
+): Promise<string | null> {
+  const { data } = await supabase
+    .from('practitioner_actions')
+    .insert({ practitioner_id: practitionerId, consultant_id: consultantId, type, metadata })
+    .select('id')
+    .single();
+  return (data?.id as string | undefined) ?? null;
+}
+
+/** « Me le rappeler demain » : sort de la file jusqu'à demain matin. */
+export async function remindTomorrow(consultantId: string): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Non authentifie');
+  const until = new Date();
+  until.setDate(until.getDate() + 1);
+  until.setHours(5, 0, 0, 0);
+  const { error } = await supabase
+    .from('consultants')
+    .update({ is_snoozed: true, snooze_until: until.toISOString(), snooze_reason: 'remind_tomorrow', updated_at: new Date().toISOString() })
+    .eq('id', consultantId)
+    .eq('practitioner_id', user.id);
+  if (error) throw new Error('Erreur lors du report');
+  return logReviewAction(user.id, consultantId, 'remind_tomorrow');
+}
+
+/** « Vu, rien à faire ». */
+export async function markReviewSeen(consultantId: string): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Non authentifie');
+  return logReviewAction(user.id, consultantId, 'review_seen');
+}
+
+export async function markReviewCompleted(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from('practitioner_actions').insert({ practitioner_id: user.id, type: 'review_completed', metadata: {} });
+}
+
+/**
+ * « Annuler » dans « Traités ce matin » : retire l'action et remet le consultant dans la file.
+ * Un message envoyé reste envoyé.
+ */
+export async function undoReviewAction(action: ReviewAction): Promise<void> {
+  if (action.type === 'remind_tomorrow') {
+    await unsnoozeConsultant(action.consultant_id);
+  }
+  const { error } = await supabase.from('practitioner_actions').delete().eq('id', action.id);
+  if (error) throw new Error('Erreur lors de l\'annulation');
+}
+
+/** Actions de revue consignées aujourd'hui, et nombre de reports sur 30 jours par consultant. */
+export async function fetchReviewActivity(): Promise<{
+  today: ReviewAction[];
+  remindCounts: Record<string, number>;
+  firstRemind: Record<string, string>;
+}> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Non authentifie');
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+  const { data, error } = await supabase
+    .from('practitioner_actions')
+    .select('id, consultant_id, type, metadata, created_at')
+    .eq('practitioner_id', user.id)
+    .in('type', ['send_message', 'note_observation', 'remind_tomorrow', 'review_seen'])
+    .gte('created_at', since.toISOString())
+    .order('created_at', { ascending: true });
+  if (error) throw new Error('Erreur lors du chargement de la revue');
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const today: ReviewAction[] = [];
+  const remindCounts: Record<string, number> = {};
+  const firstRemind: Record<string, string> = {};
+  for (const row of data ?? []) {
+    const r = row as ReviewAction & { metadata?: { source?: string } | null };
+    if (!r.consultant_id) continue;
+    if (r.type === 'remind_tomorrow') {
+      remindCounts[r.consultant_id] = (remindCounts[r.consultant_id] ?? 0) + 1;
+      if (!firstRemind[r.consultant_id]) firstRemind[r.consultant_id] = r.created_at;
+    }
+    const fromReview = r.type !== 'send_message' && r.type !== 'note_observation' ? true : r.metadata?.source === 'morning_review';
+    if (fromReview && new Date(r.created_at) >= startOfDay) {
+      today.push({ id: r.id, consultant_id: r.consultant_id, type: r.type, created_at: r.created_at });
+    }
+  }
+  return { today, remindCounts, firstRemind };
 }

@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Bibliothèque</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button,input,textarea,select{font-family:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #6DD4B8;outline-offset:2px}
+input::placeholder,textarea::placeholder{color:#5C6573}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1200px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="bibliotheque" hint-size="100%,1200px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 18px">
+
+      <!-- ============ LISTE ============ -->
+      <sc-if value="{{isList}}" hint-placeholder-val="{{true}}">
+        <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 36px; line-height: 1.1">Bibliothèque</h1>
+            <p style="margin: 0; font-size: 15px; color: #8B95A5">{{subtitle}}</p>
+          </div>
+          <button type="button" onClick="{{create}}" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">＋ {{cta}}</button>
+        </section>
+
+        <div role="tablist" aria-label="Type de contenu" style="display: flex; gap: 4px; border-bottom: 1px solid #2A3140">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+            <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 44px; padding: 0 16px; border: 0; border-bottom: 2px solid {{t.edge}}; margin-bottom: -1px; background: transparent; color: {{t.fg}}; font-size: 15px; font-weight: 500; cursor: pointer">{{t.l}} <span style="color: #8B95A5">{{t.n}}</span></button>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+          <label style="flex: 1 1 240px; max-width: 340px; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 10px; color: #8B95A5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+            <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rechercher</span>
+            <input type="search" value="{{q}}" onInput="{{onQ}}" placeholder="{{searchPh}}" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #E8EDF4; font-size: 14px">
+          </label>
+          <sc-if value="{{showSources}}" hint-placeholder-val="{{true}}">
+          <div role="group" aria-label="Origine" style="display: flex; padding: 3px; gap: 3px; border-radius: 10px; background: #151A23; border: 1px solid #2A3140">
+            <sc-for list="{{sources}}" as="s" hint-placeholder-count="3">
+              <button type="button" aria-pressed="{{s.on}}" onClick="{{s.pick}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 0; background: {{s.bg}}; color: {{s.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">{{s.l}}</button>
+            </sc-for>
+          </div>
+          </sc-if>
+          <button type="button" aria-pressed="{{favOn}}" onClick="{{toggleFavOnly}}" style="height: 42px; padding: 0 12px; border-radius: 10px; border: 1px solid {{favBorder}}; background: {{favBg}}; color: {{favFg}}; font-size: 13px; font-weight: 500; cursor: pointer">★ Favoris</button>
+        </div>
+        <div role="group" aria-label="Thème" style="display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{cats}}" as="c" hint-placeholder-count="8">
+            <button type="button" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}" style="height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">{{c.l}}</button>
+          </sc-for>
+        </div>
+
+        <span style="font-size: 13px; color: #8B95A5">{{countLabel}}</span>
+
+        <sc-if value="{{listEmpty}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 20px; border-radius: 16px; border: 1px dashed #2A3140; text-align: center">
+            <span style="font-size: 15px; font-weight: 500">Rien ne correspond à ces filtres</span>
+            <button type="button" onClick="{{resetFilters}}" style="height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Réinitialiser les filtres</button>
+          </div>
+        </sc-if>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px">
+          <sc-for list="{{items}}" as="i" hint-placeholder-count="9">
+            <div style="position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px; background: #151A23; border: 1px solid #2A3140; border-radius: 14px">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="width: 8px; height: 8px; border-radius: 4px; background: {{i.c}}"></span>
+                <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: {{i.c}}">{{i.cat}}</span>
+                <sc-if value="{{i.afeia}}" hint-placeholder-val="{{false}}"><span style="height: 20px; padding: 0 7px; border-radius: 10px; background: #23383B; color: #6DD4B8; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center">AFEIA</span></sc-if>
+                <span style="flex: 1"></span>
+                <button type="button" onClick="{{i.fav}}" aria-pressed="{{i.favOn}}" aria-label="Favori" style="width: 32px; height: 32px; margin: -6px -6px -6px 0; border-radius: 8px; border: 0; background: transparent; color: {{i.favColor}}; font-size: 16px; cursor: pointer">★</button>
+              </div>
+              <button type="button" onClick="{{i.open}}" style="display: flex; flex-direction: column; gap: 8px; padding: 0; border: 0; background: transparent; color: #E8EDF4; text-align: left; cursor: pointer">
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 18px; line-height: 1.3">{{i.t}}</span>
+                <span style="font-size: 14px; line-height: 1.5; color: #8B95A5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden">{{i.d}}</span>
+              </button>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: auto">
+                <sc-for list="{{i.chips}}" as="ch" hint-placeholder-count="2"><span style="height: 22px; padding: 0 8px; border-radius: 11px; background: #1C2230; color: #B8C1CF; font-size: 11px; display: inline-flex; align-items: center">{{ch}}</span></sc-for>
+                <span style="flex: 1"></span>
+                <span style="font-size: 12px; color: #5C6573">{{i.meta}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- ============ FICHE : LECTURE ============ -->
+      <sc-if value="{{isDetail}}" hint-placeholder-val="{{false}}">
+        <nav aria-label="Fil d'Ariane" style="display: flex; align-items: center; gap: 8px; font-size: 14px">
+          <button type="button" onClick="{{backToList}}" style="padding: 0; border: 0; background: transparent; color: #6DD4B8; font-size: 14px; cursor: pointer">← Bibliothèque</button>
+          <span style="color: #5C6573">/</span>
+          <span style="color: #8B95A5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{f.t}}</span>
+        </nav>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+          <article style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px; padding: 32px; border-radius: 18px; background: #151A23; border: 1px solid #2A3140">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+              <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: {{f.cbg}}; color: {{f.c}}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">{{f.cat}}</span>
+              <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #1C2230; color: #B8C1CF; font-size: 12px; display: inline-flex; align-items: center">{{f.typeLabel}}</span>
+              <span style="font-size: 13px; color: #8B95A5">◷ {{f.read}} min de lecture</span>
+              <sc-if value="{{f.afeia}}" hint-placeholder-val="{{true}}"><span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #23383B; color: #6DD4B8; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center">AFEIA</span></sc-if>
+            </div>
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 34px; line-height: 1.2">{{f.t}}</h1>
+            <p style="margin: 0; font-size: 17px; line-height: 1.6; color: #B8C1CF; max-width: 62ch">{{f.d}}</p>
+            <div style="height: 1px; background: #2A3140"></div>
+            <sc-for list="{{f.body}}" as="b" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: 8px; max-width: 66ch">
+                <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 22px">{{b.h}}</h2>
+                <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #D5DBE4">{{b.p}}</p>
+                <sc-if value="{{b.hasList}}" hint-placeholder-val="{{false}}">
+                  <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 16px; line-height: 1.6; color: #D5DBE4">
+                    <sc-for list="{{b.list}}" as="li" hint-placeholder-count="3"><li>{{li}}</li></sc-for>
+                  </ul>
+                </sc-if>
+              </div>
+            </sc-for>
+            <div role="note" style="display: flex; gap: 8px; padding: 10px 14px; border-radius: 10px; background: #332D17; border: 1px solid #5C4F1E; font-size: 13px; line-height: 1.5; color: #F5E3A8">⚠ Ces conseils d'hygiène de vie ne remplacent pas un avis médical. En cas de traitement en cours, vérifiez avec votre médecin qu'ils sont compatibles.</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px">
+              <sc-for list="{{f.tags}}" as="tg" hint-placeholder-count="3"><span style="height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid #2A3140; color: #8B95A5; font-size: 12px; display: inline-flex; align-items: center">#{{tg}}</span></sc-for>
+            </div>
+          </article>
+
+          <aside style="flex: 1 1 280px; max-width: 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+              <button type="button" onClick="{{openSend}}" style="height: 46px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 15px; font-weight: 600; cursor: pointer">Envoyer à un consultant</button>
+              <sc-if value="{{f.own}}" hint-placeholder-val="{{false}}">
+                <div style="display: flex; gap: 8px">
+                  <button type="button" onClick="{{editFiche}}" style="flex: 1; height: 42px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Modifier</button>
+                  <button type="button" onClick="{{askDelete}}" style="height: 42px; padding: 0 14px; border-radius: 10px; border: 1px solid #4A2F2F; background: transparent; color: #E57B7B; font-size: 14px; cursor: pointer">Supprimer</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{f.afeia}}" hint-placeholder-val="{{true}}">
+                <button type="button" onClick="{{duplicate}}" style="height: 42px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Dupliquer pour l'adapter</button>
+                <span style="font-size: 12px; line-height: 1.5; color: #8B95A5">Fiche rédigée par l'équipe Afeia. Dupliquez-la pour en faire votre version.</span>
+              </sc-if>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 16px; background: #151A23; border: 1px solid #2A3140">
+              <div style="display: flex; align-items: baseline; justify-content: space-between">
+                <h2 style="margin: 0; font-size: 15px; font-weight: 600">Déjà envoyée à</h2>
+                <span style="font-size: 12px; color: #8B95A5">{{sentCount}}</span>
+              </div>
+              <sc-if value="{{noSent}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #8B95A5">Pas encore envoyée.</span></sc-if>
+              <sc-for list="{{sent}}" as="s" hint-placeholder-count="3">
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <span style="width: 30px; height: 30px; border-radius: 15px; background: {{s.col}}; color: #0A0E14; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{s.ini}}</span>
+                  <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px">{{s.n}}</span><span style="font-size: 12px; color: #8B95A5">{{s.when}}</span></span>
+                  <span style="font-size: 12px; color: {{s.rc}}">{{s.read}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </aside>
+        </div>
+      </sc-if>
+
+      <!-- ============ FICHE : CRÉER / MODIFIER ============ -->
+      <sc-if value="{{isEditor}}" hint-placeholder-val="{{false}}">
+        <nav aria-label="Fil d'Ariane" style="display: flex; align-items: center; gap: 8px; font-size: 14px">
+          <button type="button" onClick="{{backToList}}" style="padding: 0; border: 0; background: transparent; color: #6DD4B8; font-size: 14px; cursor: pointer">← Bibliothèque</button>
+          <span style="color: #5C6573">/</span>
+          <span style="color: #8B95A5">{{editorCrumb}}</span>
+        </nav>
+        <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px">
+          <h1 style="flex: 1 1 300px; margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 32px">{{editorTitle}}</h1>
+          <button type="button" onClick="{{cancelEditor}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+          <button type="button" onClick="{{saveFiche}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: {{saveBg}}; color: {{saveFg}}; font-size: 14px; font-weight: 600; cursor: pointer">{{saveLabel}}</button>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+          <section style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 18px; padding: 24px; border-radius: 18px; background: #151A23; border: 1px solid #2A3140">
+            <div style="display: flex; flex-wrap: wrap; gap: 14px">
+              <label style="flex: 2 1 280px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Titre
+                <input value="{{e.t}}" onInput="{{onET}}" placeholder="Ex. Les bases de l'alimentation anti-inflammatoire" style="height: 46px; padding: 0 14px; border-radius: 10px; background: #0A0E14; border: 1px solid {{titleBorder}}; color: #E8EDF4; font-family: 'Source Serif 4', Georgia, serif; font-size: 19px">
+              </label>
+              <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 6px">
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Thème
+                  <select value="{{e.cat}}" onChange="{{onECat}}" style="height: 46px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+                    <sc-for list="{{catOptions}}" as="co" hint-placeholder-count="8"><option value="{{co}}">{{co}}</option></sc-for>
+                  </select>
+                </label>
+                <sc-if value="{{addingCat}}" hint-placeholder-val="{{false}}">
+                  <div style="display: flex; gap: 6px">
+                    <input value="{{newCat}}" onInput="{{onNewCat}}" aria-label="Nom du nouveau thème" placeholder="Ex. Ménopause" style="flex: 1; min-width: 0; height: 38px; padding: 0 10px; border-radius: 9px; background: #0A0E14; border: 1px solid #2F5A50; color: #E8EDF4; font-size: 14px">
+                    <button type="button" onClick="{{saveCat}}" style="height: 38px; padding: 0 12px; border-radius: 9px; border: 0; background: {{catBtnBg}}; color: {{catBtnFg}}; font-size: 13px; font-weight: 600; cursor: pointer">Ajouter</button>
+                    <button type="button" onClick="{{cancelCat}}" aria-label="Annuler" style="width: 38px; height: 38px; border-radius: 9px; border: 1px solid #2A3140; background: transparent; color: #8B95A5; cursor: pointer">×</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{notAddingCat}}" hint-placeholder-val="{{true}}">
+                  <button type="button" onClick="{{startCat}}" style="align-self: flex-start; height: 28px; padding: 0; border: 0; background: transparent; color: #6DD4B8; font-size: 13px; cursor: pointer">＋ Ajouter un thème</button>
+                </sc-if>
+              </div>
+            </div>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Résumé, en une ou deux phrases
+              <textarea rows="2" value="{{e.d}}" onInput="{{onED}}" placeholder="Ce que le consultant va apprendre." style="padding: 10px 14px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px; line-height: 1.5; resize: vertical"></textarea>
+            </label>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 13px; color: #8B95A5">Format</span>
+              <div role="radiogroup" aria-label="Format" style="display: flex; flex-wrap: wrap; gap: 6px">
+                <sc-for list="{{types}}" as="ty" hint-placeholder-count="4">
+                  <button type="button" role="radio" aria-checked="{{ty.on}}" onClick="{{ty.pick}}" style="height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid {{ty.border}}; background: {{ty.bg}}; color: {{ty.fg}}; font-size: 14px; font-weight: 500; cursor: pointer">{{ty.l}}</button>
+                </sc-for>
+              </div>
+            </div>
+
+            <sc-if value="{{eIsArticle}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; flex-direction: column; gap: 0; border-radius: 12px; border: 1px solid #2A3140; overflow: hidden">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px 8px; background: #1C2230; border-bottom: 1px solid #2A3140">
+                  <sc-for list="{{toolbar}}" as="tb" hint-placeholder-count="6">
+                    <button type="button" aria-label="{{tb.a}}" onClick="{{tb.go}}" style="min-width: 34px; height: 32px; padding: 0 8px; border-radius: 7px; border: 0; background: transparent; color: #B8C1CF; font-size: 13px; font-weight: 600; cursor: pointer">{{tb.l}}</button>
+                  </sc-for>
+                  <span style="flex: 1"></span>
+                  <button type="button" onClick="{{togglePreview}}" style="height: 32px; padding: 0 10px; border-radius: 7px; border: 0; background: {{prevBg}}; color: {{prevFg}}; font-size: 13px; cursor: pointer">{{prevLabel}}</button>
+                </div>
+                <sc-if value="{{showEditorText}}" hint-placeholder-val="{{true}}">
+                  <textarea rows="14" value="{{e.body}}" onInput="{{onEBody}}" placeholder="## Introduction&#10;&#10;Écrivez le contenu de la fiche…" style="border: 0; padding: 16px; background: #0A0E14; color: #E8EDF4; font-size: 15px; line-height: 1.7; resize: vertical; outline: none"></textarea>
+                </sc-if>
+                <sc-if value="{{showEditorPreview}}" hint-placeholder-val="{{false}}">
+                  <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; min-height: 300px; background: #0A0E14">
+                    <sc-for list="{{rendered}}" as="rl" hint-placeholder-count="4">
+                      <span style="font-family: {{rl.ff}}; font-size: {{rl.fs}}; line-height: 1.6; color: {{rl.c}}">{{rl.t}}</span>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+              <span style="font-size: 12px; color: #5C6573">Temps de lecture estimé : {{readEst}} min · calculé à partir du texte</span>
+            </sc-if>
+            <sc-if value="{{eIsFile}}" hint-placeholder-val="{{false}}">
+              <button type="button" onClick="{{fakeUpload}}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 36px 20px; border-radius: 14px; border: 2px dashed {{dropBorder}}; background: transparent; color: #E8EDF4; cursor: pointer">
+                <span style="font-size: 28px; color: #6DD4B8">⇪</span>
+                <span style="font-size: 15px; font-weight: 500">{{dropLabel}}</span>
+                <span style="font-size: 13px; color: #8B95A5">{{dropHint}}</span>
+              </button>
+            </sc-if>
+            <sc-if value="{{eIsVideo}}" hint-placeholder-val="{{false}}">
+              <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Lien de la vidéo
+                <input value="{{e.video}}" onInput="{{onEVideo}}" placeholder="https://www.youtube.com/watch?v=…" style="height: 44px; padding: 0 14px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+              </label>
+            </sc-if>
+
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Mots-clés, séparés par des virgules
+              <input value="{{e.tags}}" onInput="{{onETags}}" placeholder="Ex. foie, drainage, printemps" style="height: 42px; padding: 0 14px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+            </label>
+          </section>
+
+          <aside style="flex: 1 1 280px; max-width: 320px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 13px; color: #8B95A5; padding: 0 4px">Ce que verra le consultant dans l'app</span>
+            <div style="align-self: center; width: 270px; padding: 12px; border-radius: 36px; background: #1C2230; border: 1px solid #2A3140">
+              <div style="display: flex; flex-direction: column; gap: 10px; min-height: 460px; padding: 22px 16px; border-radius: 26px; background: #0A0E14; overflow: hidden">
+                <span style="align-self: center; width: 70px; height: 5px; border-radius: 3px; background: #2A3140"></span>
+                <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: {{phoneColor}}">{{e.cat}} · {{readEst}} min</span>
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; line-height: 1.25">{{phoneTitle}}</span>
+                <span style="font-size: 12px; line-height: 1.5; color: #B8C1CF">{{e.d}}</span>
+                <sc-for list="{{phoneLines}}" as="pl" hint-placeholder-count="4">
+                  <span style="font-family: {{pl.ff}}; font-size: {{pl.fs}}; line-height: 1.5; color: {{pl.c}}">{{pl.t}}</span>
+                </sc-for>
+                <span style="margin-top: auto; padding: 6px 8px; border-radius: 8px; background: #332D17; font-size: 10px; line-height: 1.4; color: #F5E3A8">⚠ Ne remplace pas un avis médical.</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <!-- ============ MODALE : ENVOYER ============ -->
+  <sc-if value="{{sendOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 50; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="dialog" aria-modal="true" aria-labelledby="send-title" style="width: 100%; max-width: 500px; max-height: calc(100vh - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 24px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <h2 id="send-title" style="flex: 1; margin: 0; font-size: 18px; font-weight: 600">Envoyer « {{f.t}} »</h2>
+          <button type="button" onClick="{{closeSend}}" aria-label="Fermer" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">×</button>
+        </div>
+        <label style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #8B95A5">
+          <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rechercher un consultant</span>
+          <input type="search" value="{{sq}}" onInput="{{onSq}}" placeholder="Rechercher un consultant" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #E8EDF4; font-size: 14px">
+        </label>
+        <div style="display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto">
+          <sc-for list="{{cands}}" as="c" hint-placeholder-count="6">
+            <button type="button" role="checkbox" aria-checked="{{c.on}}" onClick="{{c.pick}}" style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px; border-radius: 10px; border: 1px solid {{c.border}}; background: {{c.bg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+              <span style="width: 20px; height: 20px; border-radius: 6px; border: 1px solid {{c.boxBorder}}; background: {{c.boxBg}}; color: #0A0E14; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">{{c.mark}}</span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px; font-weight: 500">{{c.n}}</span><span style="font-size: 12px; color: #8B95A5">{{c.hint}}</span></span>
+            </button>
+          </sc-for>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Petit mot, facultatif
+          <textarea rows="2" value="{{note}}" onInput="{{onNote}}" placeholder="Ex. Comme promis, la fiche dont on a parlé en séance." style="padding: 10px 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px; line-height: 1.5; resize: vertical"></textarea>
+        </label>
+        <span style="font-size: 12px; color: #8B95A5">Elle apparaît dans l'app du consultant, rubrique Mes fiches, avec une notification.</span>
+        <div style="display: flex; justify-content: flex-end; gap: 8px">
+          <button type="button" onClick="{{closeSend}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+          <button type="button" onClick="{{doSend}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: {{sendBg}}; color: {{sendFg}}; font-size: 14px; font-weight: 600; cursor: pointer">{{sendLabel}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ MODALE : BLOC ============ -->
+  <sc-if value="{{blocOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 50; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="dialog" aria-modal="true" aria-labelledby="bloc-title" style="width: 100%; max-width: 620px; max-height: calc(100vh - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 24px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <h2 id="bloc-title" style="flex: 1; margin: 0; font-size: 18px; font-weight: 600">{{blocTitle}}</h2>
+          <button type="button" onClick="{{closeBloc}}" aria-label="Fermer" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">×</button>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Titre
+          <input value="{{bl.t}}" onInput="{{onBT}}" maxlength="120" placeholder="Ex. Protocole digestif de base" style="height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{blTitleBorder}}; color: #E8EDF4; font-size: 15px">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Section du conseillancier
+          <select value="{{bl.section}}" onChange="{{onBSection}}" style="height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+            <sc-for list="{{sectionOptions}}" as="so" hint-placeholder-count="8"><option value="{{so}}">{{so}}</option></sc-for>
+          </select>
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Contenu
+          <textarea rows="7" value="{{bl.content}}" onInput="{{onBContent}}" placeholder="Le texte qui sera inséré dans le conseillancier. Vous pourrez l'adapter pour chaque consultant." style="padding: 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{blContentBorder}}; color: #E8EDF4; font-size: 14px; line-height: 1.6; resize: vertical"></textarea>
+        </label>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span id="motifs-label" style="font-size: 13px; color: #8B95A5">Motifs de consultation, pour le proposer au bon moment</span>
+          <button type="button" onClick="{{toggleMotifMenu}}" aria-haspopup="listbox" aria-expanded="{{motifMenuExp}}" aria-labelledby="motifs-label" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{motifMenuBorder}}; color: #E8EDF4; text-align: left; cursor: pointer">
+            <span style="flex: 1; display: flex; flex-wrap: wrap; gap: 4px; min-width: 0">
+              <sc-if value="{{noMotif}}" hint-placeholder-val="{{false}}"><span style="font-size: 14px; color: #5C6573">Choisir un ou plusieurs motifs</span></sc-if>
+              <sc-for list="{{pickedMotifs}}" as="pm" hint-placeholder-count="2"><span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #23383B; color: #6DD4B8; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center">{{pm}}</span></sc-for>
+            </span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B95A5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; transform: {{motifMenuRot}}"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+          <sc-if value="{{motifMenuOpen}}" hint-placeholder-val="{{false}}">
+            <div role="listbox" aria-multiselectable="true" aria-labelledby="motifs-label" style="display: flex; flex-direction: column; max-height: 260px; overflow-y: auto; padding: 6px; border-radius: 12px; background: #1C2230; border: 1px solid #2A3140">
+              <sc-for list="{{motifs}}" as="m" hint-placeholder-count="13">
+                <button type="button" role="option" aria-selected="{{m.on}}" onClick="{{m.pick}}" style="display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 10px; border-radius: 8px; border: 0; background: {{m.rowBg}}; color: #E8EDF4; font-size: 14px; text-align: left; cursor: pointer">
+                  <span style="width: 18px; height: 18px; border-radius: 5px; border: 1px solid {{m.border}}; background: {{m.bg}}; color: #0A0E14; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">{{m.mark}}</span>{{m.l}}
+                </button>
+              </sc-for>
+              <div style="display: flex; gap: 6px; padding: 8px 4px 2px; margin-top: 4px; border-top: 1px solid #2A3140">
+                <input value="{{newMotif}}" onInput="{{onNewMotif}}" aria-label="Nouveau motif" placeholder="Ajouter un motif, ex. Ménopause" style="flex: 1; min-width: 0; height: 36px; padding: 0 10px; border-radius: 8px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 13px">
+                <button type="button" onClick="{{addMotif}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 0; background: {{motifBtnBg}}; color: {{motifBtnFg}}; font-size: 13px; font-weight: 600; cursor: pointer">＋ Ajouter</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Mots-clés, séparés par des virgules
+          <input value="{{bl.tags}}" onInput="{{onBTags}}" placeholder="Ex. digestion, confort, transit" style="height: 40px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+        </label>
+        <sc-if value="{{blError}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: #E8A87C">{{blErrorText}}</span></sc-if>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+          <sc-if value="{{blCanDelete}}" hint-placeholder-val="{{false}}">
+            <button type="button" onClick="{{deleteBloc}}" style="height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid #4A2F2F; background: transparent; color: #E57B7B; font-size: 14px; cursor: pointer">Supprimer</button>
+          </sc-if>
+          <span style="flex: 1"></span>
+          <button type="button" onClick="{{closeBloc}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+          <button type="button" onClick="{{saveBloc}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">{{blocCta}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ MODALE : RESSOURCE ============ -->
+  <sc-if value="{{resOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 50; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="dialog" aria-modal="true" aria-labelledby="res-title" style="width: 100%; max-width: 580px; max-height: calc(100vh - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 24px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <h2 id="res-title" style="flex: 1; margin: 0; font-size: 18px; font-weight: 600">Proposer une ressource</h2>
+          <button type="button" onClick="{{closeRes}}" aria-label="Fermer" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">×</button>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Titre
+          <input value="{{rs.t}}" onInput="{{onRT}}" placeholder="Ex. Modèle de compte rendu de séance" style="height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid {{rTitleBorder}}; color: #E8EDF4; font-size: 15px">
+        </label>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; color: #8B95A5">Format</span>
+          <div role="radiogroup" aria-label="Format" style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{rTypes}}" as="rt" hint-placeholder-count="4">
+              <button type="button" role="radio" aria-checked="{{rt.on}}" onClick="{{rt.pick}}" style="height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid {{rt.border}}; background: {{rt.bg}}; color: {{rt.fg}}; font-size: 13px; font-weight: 500; cursor: pointer">{{rt.l}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <sc-if value="{{rIsLink}}" hint-placeholder-val="{{true}}">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Lien
+            <input value="{{rs.url}}" onInput="{{onRUrl}}" placeholder="https://…" style="height: 42px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+          </label>
+        </sc-if>
+        <sc-if value="{{rIsFile}}" hint-placeholder-val="{{false}}">
+          <button type="button" onClick="{{rFakeUpload}}" style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px 16px; border-radius: 12px; border: 2px dashed {{rDropBorder}}; background: transparent; color: #E8EDF4; cursor: pointer">
+            <span style="font-size: 22px; color: #6DD4B8">⇪</span>
+            <span style="font-size: 14px; font-weight: 500">{{rDropLabel}}</span>
+            <span style="font-size: 12px; color: #8B95A5">PDF, Word ou image, 10 Mo maximum</span>
+          </button>
+        </sc-if>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">Thème
+          <select value="{{rs.cat}}" onChange="{{onRCat}}" style="height: 42px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px">
+            <sc-for list="{{rCatOptions}}" as="rc" hint-placeholder-count="5"><option value="{{rc}}">{{rc}}</option></sc-for>
+          </select>
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8B95A5">En quoi elle est utile
+          <textarea rows="2" value="{{rs.d}}" onInput="{{onRD}}" placeholder="Une ou deux phrases pour vos confrères." style="padding: 10px 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px; line-height: 1.5; resize: vertical"></textarea>
+        </label>
+        <label style="display: flex; align-items: flex-start; gap: 10px; padding: 14px; border-radius: 12px; background: #1C2230; border: 1px solid #2A3140; cursor: pointer">
+          <input type="checkbox" checked="{{rShare}}" onChange="{{toggleRShare}}" style="width: 18px; height: 18px; margin: 1px 0 0; accent-color: #6DD4B8; flex: none">
+          <span style="display: flex; flex-direction: column; gap: 3px">
+            <span style="font-size: 14px; font-weight: 500">Partager avec tous les praticiens Afeia</span>
+            <span style="font-size: 13px; line-height: 1.5; color: #8B95A5">L’équipe Afeia la relit avant publication. Votre prénom, l’initiale de votre nom et votre ville sont affichés. Sinon, elle reste visible par vous seul.</span>
+          </span>
+        </label>
+        <div style="display: flex; justify-content: flex-end; gap: 8px">
+          <button type="button" onClick="{{closeRes}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+          <button type="button" onClick="{{saveRes}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">{{rCta}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ MODALE : SUPPRIMER FICHE ============ -->
+  <sc-if value="{{delOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 50; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="del-title" style="width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding: 24px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <h2 id="del-title" style="margin: 0; font-size: 18px; font-weight: 600">Supprimer cette fiche ?</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #B8C1CF">{{delText}}</p>
+        <div style="display: flex; justify-content: flex-end; gap: 8px">
+          <button type="button" onClick="{{closeDel}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+          <button type="button" onClick="{{confirmDel}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #E57B7B; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: fixed; right: 24px; bottom: 24px; z-index: 60; max-width: 420px; padding: 14px 16px; border-radius: 12px; background: #1C2230; border: 1px solid #2F5A50; color: #E8EDF4; font-size: 14px; line-height: 1.45; box-shadow: 0 12px 32px rgba(0,0,0,0.4)">{{toast}}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startView":{"editor":"enum","options":["fiches","blocs","ressources","ressource","fiche","envoyer","nouvelle","modifier","bloc","blocModifier"],"default":"fiches"},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const v = props.startView ?? 'fiches';
+    const CONS = [['Amina Benali', '#6DD4B8'], ['Camille Roche', '#E8A5C6'], ['Thomas Dubois', '#D4A574'], ['Sophie Martin', '#A8E6CF'], ['Lucas Bernard', '#7B93DB'], ['Robert Durand', '#E8A87C'], ['Nadia Lefort', '#E8A5C6']];
+    const fiches = [
+      { id: 'f1', cat: 'Alimentation', t: 'Les bases de l’alimentation anti-inflammatoire', d: 'Les principes simples qui aident à réduire l’inflammation de fond au quotidien.', read: 6, type: 'article', src: 'afeia', fav: true, tags: ['inflammation', 'oméga 3', 'assiette'], sent: [['Amina Benali', 'il y a 3 j', true], ['Thomas Dubois', 'il y a 2 sem.', true], ['Lucas Bernard', 'il y a 1 mois', false]],
+        body: [
+          { h: 'Pourquoi s’y intéresser ?', p: 'Une inflammation de fond, discrète mais persistante, peut accompagner la fatigue, les douleurs articulaires ou les troubles digestifs. L’assiette est un levier simple pour l’apaiser.' },
+          { h: 'Les aliments à privilégier', p: 'Misez sur la variété et les couleurs :', list: ['Légumes et fruits de saison, à chaque repas', 'Petits poissons gras deux fois par semaine (sardines, maquereaux)', 'Huiles de colza et de noix, en assaisonnement', 'Épices : curcuma avec poivre, gingembre'] },
+          { h: 'Ceux à limiter', p: 'Les produits ultra-transformés, les sucres rapides et les excès de viande rouge entretiennent l’inflammation. Pas besoin de tout supprimer : réduire suffit souvent.' },
+          { h: 'Pour démarrer', p: 'Choisissez une seule habitude cette semaine, par exemple un légume de plus au déjeuner. Notez dans votre journal comment vous vous sentez.' }
+        ] },
+      { id: 'f2', cat: 'Alimentation', t: 'Comprendre l’index et la charge glycémiques', d: 'Distinguer IG et CG pour mieux gérer son énergie sur la journée.', read: 5, type: 'article', src: 'afeia', tags: ['glycémie', 'énergie'], sent: [['Nadia Lefort', 'hier', false]] },
+      { id: 'f3', cat: 'Phytothérapie', t: 'Initiation : les 10 plantes essentielles', d: 'Un tour d’horizon des plantes incontournables et de leurs précautions d’emploi.', read: 7, type: 'pdf', src: 'afeia', tags: ['plantes'], sent: [] },
+      { id: 'f4', cat: 'Sommeil', t: 'Les clés d’un sommeil réparateur', d: 'Hygiène du sommeil, rituels du soir, gestion de la lumière.', read: 6, type: 'article', src: 'afeia', fav: true, tags: ['sommeil', 'rituel'], sent: [['Camille Roche', 'il y a 5 j', true], ['Nadia Lefort', 'aujourd’hui', false]] },
+      { id: 'f5', cat: 'Sommeil', t: 'Mon rituel du soir en 4 étapes', d: 'La version courte que je donne en fin de première séance.', read: 3, type: 'article', src: 'moi', tags: ['sommeil', 'rituel'], sent: [['Camille Roche', 'il y a 2 sem.', true]] },
+      { id: 'f6', cat: 'Gestion du stress', t: 'Comprendre le stress : les 3 phases', d: 'Alarme, résistance, épuisement : reconnaître où l’on en est.', read: 6, type: 'article', src: 'afeia', tags: ['stress'], sent: [] },
+      { id: 'f7', cat: 'Respiration', t: 'Cohérence cardiaque : la vidéo guidée', d: '5 minutes pour respirer à 6 cycles par minute, à suivre avec la vidéo.', read: 5, type: 'video_link', src: 'moi', fav: true, tags: ['respiration', 'stress'], sent: [['Amina Benali', 'il y a 1 sem.', true]] },
+      { id: 'f8', cat: 'Féminin', t: 'Accompagner son cycle', d: 'Les 4 phases du cycle et les conseils d’hygiène de vie adaptés à chacune.', read: 8, type: 'article', src: 'afeia', tags: ['cycle'], sent: [] },
+      { id: 'f9', cat: 'Aromathérapie', t: 'Les 8 huiles essentielles indispensables', d: 'Constituer une trousse aromatique de base, avec les précautions d’usage.', read: 6, type: 'image', src: 'afeia', tags: ['huiles essentielles'], sent: [] },
+      { id: 'f10', cat: 'Digestion', t: 'Mieux digérer au quotidien', d: 'Mastication, rythme des repas, associations : les gestes qui soulagent.', read: 4, type: 'article', src: 'moi', tags: ['digestion'], sent: [['Hugo Martins', 'il y a 3 sem.', true]] }
+    ];
+    const blocs = [
+      { id: 'b1', section: 'En-tête', t: 'Programme d’hygiène vitale personnalisé', content: 'Ce programme a été construit à partir de notre échange. Il propose des ajustements progressifs : avancez à votre rythme et notez vos ressentis.', motifs: ['Universel'], usage: 41, src: 'moi', fav: true },
+      { id: 'b2', section: 'Aromatologie', t: 'Huiles essentielles — Sommeil', content: 'Diffusion de lavande vraie 15 minutes avant le coucher, dans la chambre fenêtre fermée. Ne pas utiliser chez la femme enceinte ou allaitante.', motifs: ['Sommeil', 'Stress'], usage: 18, src: 'moi' },
+      { id: 'b3', section: 'Hydrologie', t: 'Bouillotte sur le foie', content: 'Après le dîner, bouillotte chaude sur le côté droit, sous les côtes, pendant 20 minutes, allongé.', motifs: ['Digestif', 'Détox'], usage: 26, src: 'moi' },
+      { id: 'b4', section: 'Techniques respiratoires', t: 'Cohérence cardiaque 365', content: '3 fois par jour, 6 respirations par minute, pendant 5 minutes. Utilisez la vidéo guidée envoyée dans l’app.', motifs: ['Stress', 'Sommeil'], usage: 33, src: 'moi', fav: true },
+      { id: 'b5', section: 'Techniques respiratoires', t: 'Respiration 4-7-8 anti-stress', content: 'Inspirez 4 secondes, retenez 7 secondes, expirez 8 secondes. 4 cycles, au coucher ou en cas de tension.', motifs: ['Stress'], usage: 12, src: 'moi' },
+      { id: 'b6', section: 'Sommeil', t: 'Environnement de la chambre', content: 'Chambre à 18-19 °C, obscurité complète, pas d’écran dans l’heure qui précède le coucher.', motifs: ['Sommeil'], usage: 21, src: 'moi' },
+      { id: 'b7', section: 'Alimentation', t: 'Petit-déjeuner protéiné', content: 'Remplacer les tartines par un œuf, du fromage frais ou une poignée d’oléagineux, avec un fruit entier.', motifs: ['Fatigue', 'Perte de poids'], usage: 15, src: 'moi' },
+      { id: 'b8', section: 'Message de clôture', t: 'Disponibilité entre les séances', content: 'Vous pouvez m’écrire depuis l’app. Je réponds sous 48 h ouvrées. Pour toute urgence médicale, contactez votre médecin ou le 15.', motifs: ['Universel'], usage: 44, src: 'moi' }
+    ];
+    const ressources = [
+      { id: 'r1', cat: 'Réglementation', t: 'Ce que le naturopathe peut dire et ne pas dire', d: 'Les mots à éviter (diagnostic, traitement, guérison) et les formulations sûres, avec des exemples.', type: 'pdf', src: 'afeia', by: 'Équipe Afeia', fav: true },
+      { id: 'r2', cat: 'Études', t: 'Cohérence cardiaque et stress : synthèse des études', d: 'Une synthèse des publications récentes, à lire avant d’en parler en séance.', type: 'link', src: 'afeia', by: 'Équipe Afeia' },
+      { id: 'r3', cat: 'Modèles', t: 'Modèle de compte rendu de première séance', d: 'Un document à adapter, avec les rubriques essentielles et un rappel du cadre non médical.', type: 'model', src: 'communaute', by: 'Partagé par Léa M., praticienne à Nantes', fav: true },
+      { id: 'r4', cat: 'Outils', t: 'Calendrier des légumes et fruits de saison', d: 'Une affiche claire à imprimer pour le cabinet.', type: 'pdf', src: 'communaute', by: 'Partagé par Karim B., praticien à Lyon' },
+      { id: 'r5', cat: 'Formations', t: 'Webinaire : accompagner le cycle féminin', d: 'Replay de 1 h 15 avec une sage-femme, sur les limites de l’accompagnement.', type: 'video', src: 'afeia', by: 'Équipe Afeia' },
+      { id: 'r6', cat: 'Outils', t: 'Mes questions d’ouverture en séance', d: 'La liste que j’utilise pour démarrer une première séance en confiance.', type: 'model', src: 'moi', by: 'Vous · partagée, en relecture par l’équipe Afeia', pending: true },
+      { id: 'r7', cat: 'Réglementation', t: 'RGPD : conserver les données de santé de ses consultants', d: 'Durées de conservation, consentement, droits des consultants.', type: 'link', src: 'afeia', by: 'Équipe Afeia' }
+    ];
+    const ensureBody = (f) => f.body ? f : { ...f, body: [{ h: 'En bref', p: f.d }, { h: 'Au quotidien', p: 'Des gestes simples, à adapter à votre rythme. Votre praticien vous aidera à choisir par où commencer.' }] };
+    const fichesFull = fiches.map(ensureBody);
+    const tab = (v === 'blocs' || v === 'bloc' || v === 'blocModifier') ? 'blocs' : (v === 'ressources' || v === 'ressource' ? 'ressources' : 'fiches');
+    const mode = v === 'fiche' || v === 'envoyer' ? 'detail' : (v === 'nouvelle' || v === 'modifier' ? 'editor' : 'list');
+    const sel = 'f1';
+    const editing = v === 'modifier' ? 'f5' : null;
+    const f5 = fichesFull.find((x) => x.id === 'f5');
+    this.state = {
+      CONS, fiches: fichesFull, blocs, ressources, tab, resOpen: v === 'ressource', rs: v === 'ressource' ? { t: 'Fiche mémo : les plantes à éviter pendant la grossesse', cat: 'Réglementation', type: 'pdf', url: '', file: 'plantes-grossesse.pdf', d: 'Un tableau simple, avec les sources.', share: true } : { t: '', cat: 'Outils', type: 'link', url: '', file: '', d: '', share: false }, rsTried: false, mode, sel, q: '', src: 'all', cat: 'Tous', favOnly: false,
+      sendOpen: v === 'envoyer', picked: v === 'envoyer' ? ['Nadia Lefort'] : [], sq: '', note: v === 'envoyer' ? 'Comme promis, la fiche dont on a parlé en séance.' : '',
+      editing,
+      e: editing ? { t: f5.t, cat: f5.cat, d: f5.d, type: 'article', body: '## Avant de dormir\nÉteignez les écrans une heure avant le coucher.\n\n## Le rituel\n- Une tisane tiède\n- 5 minutes de cohérence cardiaque\n- Quelques lignes dans votre journal\n- Lumière douce, chambre fraîche', tags: 'sommeil, rituel', video: '', file: '' }
+        : { t: '', cat: 'Sommeil', d: '', type: 'article', body: '', tags: '', video: '', file: '' },
+      preview: false, tried: false, customCats: [], addingCat: false, newCat: '',
+      blocOpen: v === 'bloc' || v === 'blocModifier',
+      blocEditing: v === 'blocModifier' ? 'b4' : null,
+      bl: v === 'blocModifier' ? { t: blocs[3].t, section: blocs[3].section, content: blocs[3].content, motifs: blocs[3].motifs.slice(), tags: 'respiration, stress' } : { t: '', section: 'Objectifs', content: '', motifs: [], tags: '' },
+      blTried: false, delOpen: false, customMotifs: [], motifMenu: v === 'bloc', newMotif: '', toast: '', seq: 1
+    };
+  }
+  toastMsg(t) { this.setState({ toast: t }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 4000); }
+  md(body) {
+    return body.split('\n').filter((l) => l.trim()).map((l) => {
+      if (l.startsWith('## ')) return { t: l.slice(3), ff: "'Source Serif 4', Georgia, serif", fs: '20px', c: '#E8EDF4' };
+      if (l.startsWith('- ')) return { t: '•  ' + l.slice(2), ff: 'Inter, system-ui, sans-serif', fs: '15px', c: '#D5DBE4' };
+      return { t: l, ff: 'Inter, system-ui, sans-serif', fs: '15px', c: '#D5DBE4' };
+    });
+  }
+  renderVals() {
+    const st = this.state;
+    const CC = { 'Alimentation': '#D4A574', 'Sommeil': '#7B93DB', 'Phytothérapie': '#6DD4B8', 'Gestion du stress': '#E8A87C', 'Respiration': '#A9B8EC', 'Féminin': '#E8A5C6', 'Aromathérapie': '#B89FD9', 'Digestion': '#E8C46B', 'Hydratation': '#6DCFE0', 'Activité physique': '#9FD98A', 'Détox': '#C9A86B', 'Immunité': '#7FD1C1', 'Peau': '#F0B8A0', 'Général': '#C9CFDA',
+      'En-tête': '#C9CFDA', 'Objectifs': '#C9CFDA', 'Aromatologie': '#B89FD9', 'Hydrologie': '#6DCFE0', 'Techniques respiratoires': '#A9B8EC', 'Message de clôture': '#C9CFDA', 'Micronutrition': '#E8C46B', 'Équilibre psycho-émotionnel': '#E8A87C', 'Techniques manuelles': '#F0B8A0', 'Environnement': '#9FD98A', 'Suivi': '#C9CFDA', 'Notes libres': '#C9CFDA' };
+    const FCATS = ['Alimentation', 'Hydratation', 'Phytothérapie', 'Aromathérapie', 'Respiration', 'Activité physique', 'Sommeil', 'Gestion du stress', 'Détox', 'Digestion', 'Immunité', 'Peau', 'Féminin', 'Général'];
+    const SECTIONS = ['En-tête', 'Objectifs', 'Alimentation', 'Phytothérapie', 'Micronutrition', 'Aromatologie', 'Hydrologie', 'Activité physique', 'Équilibre psycho-émotionnel', 'Techniques respiratoires', 'Techniques manuelles', 'Sommeil', 'Environnement', 'Suivi', 'Message de clôture', 'Notes libres'];
+    const MOTIFS = ['Universel', 'Digestif', 'Fatigue', 'Stress', 'Sommeil', 'Féminin', 'Perte de poids', 'Immunité', 'Peau', 'Douleurs', 'Détox', 'Cardiovasculaire', 'Enfant'];
+    const TYPES = [['article', 'Article'], ['pdf', 'PDF'], ['image', 'Image'], ['video_link', 'Vidéo']];
+    const isF = st.tab === 'fiches';
+    const isR = st.tab === 'ressources';
+    const RTYPES = [['link', 'Lien'], ['pdf', 'PDF'], ['video', 'Vidéo'], ['model', 'Modèle à adapter']];
+    const RCATS = ['Réglementation', 'Études', 'Outils', 'Modèles', 'Formations'];
+    const term = st.q.trim().toLowerCase();
+    const srcOk = (x) => (!isF && !isR) || st.src === 'all' || x.src === st.src;
+    const pool = isF ? st.fiches : (isR ? st.ressources : st.blocs);
+    const catOf = (x) => (isF || isR) ? x.cat : x.section;
+    const catsAvail = ['Tous'].concat(Array.from(new Set(pool.map(catOf))));
+    const curCat = catsAvail.includes(st.cat) ? st.cat : 'Tous';
+    const shown = pool.filter((x) => srcOk(x) && (curCat === 'Tous' || catOf(x) === curCat) && (!st.favOnly || x.fav) &&
+      (!term || (x.t + ' ' + (x.d || x.content) + ' ' + (x.tags || []).join(' ')).toLowerCase().includes(term)));
+    const toggleFav = (id) => {
+      const key = isF ? 'fiches' : (isR ? 'ressources' : 'blocs');
+      this.setState({ [key]: this.state[key].map((x) => x.id === id ? { ...x, fav: !x.fav } : x) });
+    };
+    const openBloc = (b) => this.setState({ blocOpen: true, blocEditing: b ? b.id : null, blTried: false,
+      bl: b ? { t: b.t, section: b.section, content: b.content, motifs: b.motifs.slice(), tags: '' } : { t: '', section: 'Objectifs', content: '', motifs: [], tags: '' } });
+    const typeLabel = (t) => (TYPES.find((x) => x[0] === t) || ['', 'Article'])[1];
+
+    const f = st.fiches.find((x) => x.id === st.sel) || st.fiches[0];
+    const ini = (n) => n.split(' ').map((w) => w[0]).join('');
+    const colOf = (n) => (st.CONS.find((c) => c[0] === n) || [n, '#7B93DB'])[1];
+
+    const e = st.e;
+    const words = (e.body || '').split(/\s+/).filter(Boolean).length;
+    const readEst = Math.max(1, Math.round(words / 180)) || 1;
+    const lines = this.md(e.body || '');
+    const titleOk = e.t.trim().length > 0;
+
+    const sqTerm = st.sq.trim().toLowerCase();
+    const alreadySent = f.sent.map((s) => s[0]);
+
+    const blTitleOk = st.bl.t.trim().length > 0, blContentOk = st.bl.content.trim().length > 0;
+
+    return {
+      isList: st.mode === 'list', isDetail: st.mode === 'detail', isEditor: st.mode === 'editor',
+      subtitle: isR ? 'Pour vous : documents, études et modèles, partagés par l’équipe Afeia et par d’autres praticiens' : isF ? 'Fiches à lire et à partager avec vos consultants' : 'Vos blocs, écrits par vous, à réutiliser dans vos conseillanciers',
+      cta: isR ? 'Proposer une ressource' : isF ? 'Créer une fiche' : 'Créer un bloc',
+      create: () => isR ? this.setState({ resOpen: true, rsTried: false, rs: { t: '', cat: 'Outils', type: 'link', url: '', file: '', d: '', share: false } }) : isF ? this.setState({ mode: 'editor', editing: null, tried: false, preview: false, e: { t: '', cat: 'Sommeil', d: '', type: 'article', body: '', tags: '', video: '', file: '' } }) : openBloc(null),
+      tabs: [['fiches', 'Fiches éducatives', st.fiches.length], ['blocs', 'Blocs conseillancier', st.blocs.length], ['ressources', 'Ressources', st.ressources.length]].map(([k, l, n]) => ({ l, n: String(n), sel: k === st.tab ? 'true' : 'false', edge: k === st.tab ? '#6DD4B8' : 'transparent', fg: k === st.tab ? '#E8EDF4' : '#8B95A5', pick: () => this.setState({ tab: k, cat: 'Tous', q: '' }) })),
+      q: st.q, onQ: (ev) => this.setState({ q: ev.target.value }),
+      searchPh: isR ? 'Titre, thème, auteur…' : isF ? 'Titre, thème, mot-clé…' : 'Titre ou contenu du bloc…',
+      showSources: isF || isR,
+      sources: (isR ? [['all', 'Tout'], ['afeia', 'AFEIA'], ['communaute', 'Praticiens'], ['moi', 'Mes ressources']] : [['all', 'Tout'], ['afeia', 'AFEIA'], ['moi', 'Mes fiches']]).map(([k, l]) => { const on = st.src === k; return { l, on: on ? 'true' : 'false', bg: on ? '#23383B' : 'transparent', fg: on ? '#6DD4B8' : '#B8C1CF', pick: () => this.setState({ src: k }) }; }),
+      favOn: st.favOnly ? 'true' : 'false', favBg: st.favOnly ? '#3A3320' : '#151A23', favFg: st.favOnly ? '#F2C94C' : '#B8C1CF', favBorder: st.favOnly ? '#5C4F1E' : '#2A3140',
+      toggleFavOnly: () => this.setState({ favOnly: !st.favOnly }),
+      cats: catsAvail.map((c) => ({ l: c, pressed: c === curCat ? 'true' : 'false', bg: c === curCat ? '#23383B' : 'transparent', fg: c === curCat ? '#6DD4B8' : '#E8EDF4', border: c === curCat ? '#2F5A50' : '#2A3140', pick: () => this.setState({ cat: c }) })),
+      countLabel: shown.length + (isR ? (shown.length > 1 ? ' ressources' : ' ressource') : isF ? (shown.length > 1 ? ' fiches' : ' fiche') : (shown.length > 1 ? ' blocs' : ' bloc')),
+      listEmpty: shown.length === 0,
+      resetFilters: () => this.setState({ q: '', src: 'all', cat: 'Tous', favOnly: false }),
+      items: shown.map((x) => ({
+        cat: catOf(x), c: CC[catOf(x)] || '#C9CFDA', t: x.t, d: (isF || isR) ? x.d : x.content, afeia: (isF || isR) && x.src === 'afeia',
+        favOn: x.fav ? 'true' : 'false', favColor: x.fav ? '#F2C94C' : '#3A4252', fav: () => toggleFav(x.id),
+        chips: isR ? [(RTYPES.find((r) => r[0] === x.type) || ['', 'Lien'])[1]].concat(x.pending ? ['En relecture'] : []) : isF ? [typeLabel(x.type)] : x.motifs.slice(0, 2),
+        meta: isR ? x.by : isF ? (x.read + ' min · envoyée ' + x.sent.length + ' fois') : (x.usage + ' utilisations'),
+        open: () => isR ? this.toastMsg(x.type === 'link' ? 'Le lien s’ouvre dans un nouvel onglet.' : x.type === 'video' ? 'La vidéo s’ouvre dans un lecteur.' : 'Le document s’ouvre dans un aperçu, avec un bouton Télécharger.') : isF ? this.setState({ mode: 'detail', sel: x.id }) : openBloc(x)
+      })),
+
+      backToList: () => this.setState({ mode: 'list', sendOpen: false }),
+      f: { ...f, c: CC[f.cat] || '#C9CFDA', cbg: '#1C2230', typeLabel: typeLabel(f.type), read: String(f.read), afeia: f.src === 'afeia', own: f.src === 'moi',
+        body: f.body.map((b) => ({ h: b.h, p: b.p, hasList: !!b.list, list: b.list || [] })) },
+      sentCount: f.sent.length ? f.sent.length + (f.sent.length > 1 ? ' consultants' : ' consultant') : '',
+      noSent: f.sent.length === 0,
+      sent: f.sent.map(([n, when, read]) => ({ n, when: 'envoyée ' + when, ini: ini(n), col: colOf(n), read: read ? '✓ Lue' : 'Pas encore lue', rc: read ? '#6DD4B8' : '#8B95A5' })),
+      openSend: () => this.setState({ sendOpen: true, picked: [], sq: '', note: '' }),
+      editFiche: () => this.setState({ mode: 'editor', editing: f.id, tried: false, preview: false, e: { t: f.t, cat: f.cat, d: f.d, type: f.type, body: f.body.map((b) => '## ' + b.h + '\n' + b.p + (b.list ? '\n' + b.list.map((l) => '- ' + l).join('\n') : '')).join('\n\n'), tags: f.tags.join(', '), video: '', file: '' } }),
+      askDelete: () => this.setState({ delOpen: true }),
+      duplicate: () => {
+        const id = 'n' + st.seq;
+        const copy = { ...f, id, t: f.t + ' (ma version)', src: 'moi', fav: false, sent: [] };
+        this.setState({ fiches: [copy].concat(st.fiches), sel: id, seq: st.seq + 1 });
+        this.toastMsg('Copie créée dans Mes fiches. Vous pouvez la modifier.');
+      },
+
+      sendOpen: st.sendOpen,
+      closeSend: () => this.setState({ sendOpen: false }),
+      sq: st.sq, onSq: (ev) => this.setState({ sq: ev.target.value }),
+      cands: st.CONS.filter(([n]) => !sqTerm || n.toLowerCase().includes(sqTerm)).map(([n]) => {
+        const on = st.picked.includes(n);
+        const was = alreadySent.includes(n);
+        return { n, hint: was ? 'Déjà reçue · ' + f.sent.find((s) => s[0] === n)[1] : 'Pas encore reçue', on: on ? 'true' : 'false',
+          bg: on ? '#23383B' : 'transparent', border: on ? '#2F5A50' : '#2A3140', boxBg: on ? '#6DD4B8' : 'transparent', boxBorder: on ? '#6DD4B8' : '#3A4252', mark: on ? '✓' : '',
+          pick: () => this.setState({ picked: on ? st.picked.filter((p) => p !== n) : st.picked.concat([n]) }) };
+      }),
+      note: st.note, onNote: (ev) => this.setState({ note: ev.target.value }),
+      sendBg: st.picked.length ? '#6DD4B8' : '#2A3140', sendFg: st.picked.length ? '#0A0E14' : '#8B95A5',
+      sendLabel: st.picked.length > 1 ? 'Envoyer à ' + st.picked.length + ' consultants' : 'Envoyer',
+      doSend: () => {
+        if (!st.picked.length) return;
+        const fiches = st.fiches.map((x) => x.id === f.id ? { ...x, sent: st.picked.map((n) => [n, 'à l’instant', false]).concat(x.sent.filter((s) => !st.picked.includes(s[0]))) } : x);
+        this.setState({ fiches, sendOpen: false });
+        this.toastMsg('Fiche envoyée à ' + st.picked.join(', ') + '.');
+      },
+
+      delOpen: st.delOpen,
+      delText: f.sent.length ? 'Elle disparaîtra de votre bibliothèque. Les ' + f.sent.length + ' consultants qui l’ont reçue la garderont dans leur app.' : 'Elle disparaîtra de votre bibliothèque. Cette action est définitive.',
+      closeDel: () => this.setState({ delOpen: false }),
+      confirmDel: () => { this.setState({ fiches: st.fiches.filter((x) => x.id !== f.id), delOpen: false, mode: 'list' }); this.toastMsg('Fiche supprimée.'); },
+
+      editorCrumb: st.editing ? 'Modifier la fiche' : 'Nouvelle fiche',
+      editorTitle: st.editing ? 'Modifier la fiche' : 'Créer une fiche éducative',
+      cancelEditor: () => this.setState({ mode: st.editing ? 'detail' : 'list' }),
+      saveLabel: st.editing ? 'Enregistrer' : 'Créer la fiche',
+      saveBg: titleOk ? '#6DD4B8' : '#2A3140', saveFg: titleOk ? '#0A0E14' : '#8B95A5',
+      titleBorder: st.tried && !titleOk ? '#E8A87C' : '#2A3140',
+      saveFiche: () => {
+        if (!titleOk) { this.setState({ tried: true }); return; }
+        const parsed = []; let curB = null;
+        (e.body || '').split('\n').forEach((l) => {
+          if (l.startsWith('## ')) { curB = { h: l.slice(3), p: '', list: [] }; parsed.push(curB); }
+          else if (l.trim()) { if (!curB) { curB = { h: 'En bref', p: '', list: [] }; parsed.push(curB); } if (l.startsWith('- ')) curB.list.push(l.slice(2)); else curB.p += (curB.p ? ' ' : '') + l; }
+        });
+        const body = (parsed.length ? parsed : [{ h: 'En bref', p: e.d || '' }]).map((b) => ({ h: b.h, p: b.p, list: b.list && b.list.length ? b.list : undefined }));
+        const data = { t: e.t, cat: e.cat, d: e.d, type: e.type, read: readEst, tags: e.tags.split(',').map((x) => x.trim()).filter(Boolean), body };
+        if (st.editing) {
+          this.setState({ fiches: st.fiches.map((x) => x.id === st.editing ? { ...x, ...data } : x), mode: 'detail', sel: st.editing });
+          this.toastMsg('Fiche enregistrée.');
+        } else {
+          const id = 'n' + st.seq;
+          this.setState({ fiches: [{ id, src: 'moi', fav: false, sent: [], ...data }].concat(st.fiches), mode: 'detail', sel: id, seq: st.seq + 1 });
+          this.toastMsg('Fiche créée. Vous pouvez maintenant l’envoyer.');
+        }
+      },
+      e,
+      onET: (ev) => this.setState({ e: { ...st.e, t: ev.target.value } }),
+      onECat: (ev) => this.setState({ e: { ...st.e, cat: ev.target.value } }),
+      onED: (ev) => this.setState({ e: { ...st.e, d: ev.target.value } }),
+      onEBody: (ev) => this.setState({ e: { ...st.e, body: ev.target.value } }),
+      onETags: (ev) => this.setState({ e: { ...st.e, tags: ev.target.value } }),
+      onEVideo: (ev) => this.setState({ e: { ...st.e, video: ev.target.value } }),
+      catOptions: FCATS.concat(st.customCats),
+      addingCat: st.addingCat, notAddingCat: !st.addingCat, newCat: st.newCat,
+      onNewCat: (ev) => this.setState({ newCat: ev.target.value }),
+      startCat: () => this.setState({ addingCat: true, newCat: '' }),
+      cancelCat: () => this.setState({ addingCat: false, newCat: '' }),
+      catBtnBg: st.newCat.trim() ? '#6DD4B8' : '#2A3140', catBtnFg: st.newCat.trim() ? '#0A0E14' : '#8B95A5',
+      saveCat: () => {
+        const v = st.newCat.trim();
+        if (!v) return;
+        const exists = FCATS.concat(st.customCats).find((c) => c.toLowerCase() === v.toLowerCase());
+        this.setState({ customCats: exists ? st.customCats : st.customCats.concat([v]), e: { ...st.e, cat: exists || v }, addingCat: false, newCat: '' });
+        this.toastMsg(exists ? 'Ce thème existe déjà : il est sélectionné.' : 'Thème « ' + v + ' » ajouté à votre bibliothèque.');
+      },
+      types: TYPES.map(([k, l]) => { const on = e.type === k; return { l, on: on ? 'true' : 'false', bg: on ? '#6DD4B8' : 'transparent', fg: on ? '#0A0E14' : '#E8EDF4', border: on ? '#6DD4B8' : '#3A4252', pick: () => this.setState({ e: { ...st.e, type: k, file: '' } }) }; }),
+      eIsArticle: e.type === 'article', eIsFile: e.type === 'pdf' || e.type === 'image', eIsVideo: e.type === 'video_link',
+      toolbar: [['T', 'Intertitre', '\n## Intertitre\n'], ['G', 'Gras', '**texte**'], ['•', 'Liste', '\n- élément'], ['🔗', 'Lien', '[texte](https://)']].map(([l, a, ins]) => ({ l, a, go: () => this.setState({ e: { ...st.e, body: (st.e.body || '') + ins } }) })),
+      togglePreview: () => this.setState({ preview: !st.preview }),
+      prevLabel: st.preview ? 'Revenir à l’édition' : 'Aperçu', prevBg: st.preview ? '#23383B' : 'transparent', prevFg: st.preview ? '#6DD4B8' : '#B8C1CF',
+      showEditorText: !st.preview, showEditorPreview: st.preview,
+      rendered: lines.length ? lines : [{ t: 'Rien à afficher pour l’instant.', ff: 'Inter, sans-serif', fs: '14px', c: '#5C6573' }],
+      readEst: String(readEst),
+      fakeUpload: () => this.setState({ e: { ...st.e, file: e.type === 'pdf' ? 'plantes-essentielles.pdf' : 'trousse-aromatique.png' } }),
+      dropBorder: e.file ? '#2F5A50' : '#2A3140',
+      dropLabel: e.file ? '✓ ' + e.file : 'Glissez votre fichier ici ou cliquez pour le choisir',
+      dropHint: e.type === 'pdf' ? 'PDF uniquement, 10 Mo maximum' : 'PNG, JPG ou WebP, 10 Mo maximum',
+      phoneTitle: e.t || 'Titre de la fiche',
+      phoneColor: CC[e.cat] || '#C9CFDA',
+      phoneLines: e.type === 'article' ? lines.slice(0, 7) : [{ t: e.type === 'video_link' ? '▶ Vidéo à regarder' : (e.file ? '📄 ' + e.file : 'Fichier à joindre'), ff: 'Inter, sans-serif', fs: '13px', c: '#B8C1CF' }],
+
+      blocOpen: st.blocOpen,
+      blocTitle: st.blocEditing ? 'Modifier le bloc' : 'Créer un bloc',
+      blocCta: st.blocEditing ? 'Enregistrer' : 'Créer le bloc',
+      bl: st.bl,
+      onBT: (ev) => this.setState({ bl: { ...st.bl, t: ev.target.value } }),
+      onBSection: (ev) => this.setState({ bl: { ...st.bl, section: ev.target.value } }),
+      onBContent: (ev) => this.setState({ bl: { ...st.bl, content: ev.target.value } }),
+      onBTags: (ev) => this.setState({ bl: { ...st.bl, tags: ev.target.value } }),
+      sectionOptions: SECTIONS,
+      motifs: MOTIFS.concat(st.customMotifs).map((m) => { const on = st.bl.motifs.includes(m); return { l: m, on: on ? 'true' : 'false', mark: on ? '✓' : '', rowBg: on ? '#23383B' : 'transparent', bg: on ? '#6DD4B8' : 'transparent', border: on ? '#6DD4B8' : '#3A4252', pick: () => this.setState({ bl: { ...st.bl, motifs: on ? st.bl.motifs.filter((x) => x !== m) : st.bl.motifs.concat([m]) } }) }; }),
+      pickedMotifs: st.bl.motifs, noMotif: st.bl.motifs.length === 0,
+      motifMenuOpen: st.motifMenu, motifMenuExp: st.motifMenu ? 'true' : 'false', motifMenuRot: st.motifMenu ? 'rotate(180deg)' : 'none', motifMenuBorder: st.motifMenu ? '#2F5A50' : '#2A3140',
+      toggleMotifMenu: () => this.setState({ motifMenu: !st.motifMenu }),
+      newMotif: st.newMotif, onNewMotif: (ev) => this.setState({ newMotif: ev.target.value }),
+      motifBtnBg: st.newMotif.trim() ? '#6DD4B8' : '#2A3140', motifBtnFg: st.newMotif.trim() ? '#0A0E14' : '#8B95A5',
+      addMotif: () => {
+        const v = st.newMotif.trim();
+        if (!v) return;
+        const exists = MOTIFS.concat(st.customMotifs).find((m) => m.toLowerCase() === v.toLowerCase());
+        const name = exists || v;
+        this.setState({ customMotifs: exists ? st.customMotifs : st.customMotifs.concat([v]), newMotif: '', bl: { ...st.bl, motifs: st.bl.motifs.includes(name) ? st.bl.motifs : st.bl.motifs.concat([name]) } });
+        this.toastMsg(exists ? 'Ce motif existe déjà : il est sélectionné.' : 'Motif « ' + v + ' » ajouté et sélectionné.');
+      },
+      blTitleBorder: st.blTried && !blTitleOk ? '#E8A87C' : '#2A3140',
+      blContentBorder: st.blTried && !blContentOk ? '#E8A87C' : '#2A3140',
+      blError: st.blTried && (!blTitleOk || !blContentOk),
+      blErrorText: !blTitleOk ? 'Le titre est obligatoire.' : 'Le contenu est obligatoire.',
+      blCanDelete: !!st.blocEditing,
+      closeBloc: () => this.setState({ blocOpen: false }),
+      deleteBloc: () => { this.setState({ blocs: st.blocs.filter((b) => b.id !== st.blocEditing), blocOpen: false }); this.toastMsg('Bloc supprimé. Les conseillanciers qui l’utilisent gardent leur texte.'); },
+      saveBloc: () => {
+        if (!blTitleOk || !blContentOk) { this.setState({ blTried: true }); return; }
+        if (st.blocEditing) {
+          this.setState({ blocs: st.blocs.map((b) => b.id === st.blocEditing ? { ...b, t: st.bl.t, section: st.bl.section, content: st.bl.content, motifs: st.bl.motifs } : b), blocOpen: false });
+          this.toastMsg('Bloc enregistré.');
+        } else {
+          const id = 'nb' + st.seq;
+          this.setState({ blocs: [{ id, t: st.bl.t, section: st.bl.section, content: st.bl.content, motifs: st.bl.motifs.length ? st.bl.motifs : ['Universel'], usage: 0, src: 'moi' }].concat(st.blocs), blocOpen: false, seq: st.seq + 1, tab: 'blocs', mode: 'list' });
+          this.toastMsg('Bloc créé. Il est proposé dans vos conseillanciers.');
+        }
+      },
+      resOpen: st.resOpen, rs: st.rs,
+      closeRes: () => this.setState({ resOpen: false }),
+      onRT: (ev) => this.setState({ rs: { ...st.rs, t: ev.target.value } }),
+      onRD: (ev) => this.setState({ rs: { ...st.rs, d: ev.target.value } }),
+      onRUrl: (ev) => this.setState({ rs: { ...st.rs, url: ev.target.value } }),
+      onRCat: (ev) => this.setState({ rs: { ...st.rs, cat: ev.target.value } }),
+      rCatOptions: RCATS,
+      rTypes: RTYPES.map(([k, l]) => { const on = st.rs.type === k; return { l, on: on ? 'true' : 'false', bg: on ? '#6DD4B8' : 'transparent', fg: on ? '#0A0E14' : '#E8EDF4', border: on ? '#6DD4B8' : '#3A4252', pick: () => this.setState({ rs: { ...st.rs, type: k, file: '' } }) }; }),
+      rIsLink: st.rs.type === 'link' || st.rs.type === 'video', rIsFile: st.rs.type === 'pdf' || st.rs.type === 'model',
+      rFakeUpload: () => this.setState({ rs: { ...st.rs, file: st.rs.type === 'pdf' ? 'document.pdf' : 'modele.docx' } }),
+      rDropLabel: st.rs.file ? '✓ ' + st.rs.file : 'Glissez le fichier ici ou cliquez pour le choisir',
+      rDropBorder: st.rs.file ? '#2F5A50' : '#2A3140',
+      rShare: st.rs.share,
+      toggleRShare: () => this.setState({ rs: { ...st.rs, share: !st.rs.share } }),
+      rTitleBorder: st.rsTried && !st.rs.t.trim() ? '#E8A87C' : '#2A3140',
+      rCta: st.rs.share ? 'Envoyer en relecture' : 'Ajouter à mes ressources',
+      saveRes: () => {
+        if (!st.rs.t.trim()) { this.setState({ rsTried: true }); return; }
+        const id = 'nr' + st.seq;
+        const item = { id, cat: st.rs.cat, t: st.rs.t, d: st.rs.d, type: st.rs.type, src: 'moi', by: st.rs.share ? 'Vous · partagée, en relecture par l’équipe Afeia' : 'Vous · visible par vous seul', pending: st.rs.share };
+        this.setState({ ressources: [item].concat(st.ressources), resOpen: false, seq: st.seq + 1, tab: 'ressources', mode: 'list' });
+        this.toastMsg(st.rs.share ? 'Merci ! L’équipe Afeia relit la ressource avant de la partager avec les autres praticiens.' : 'Ressource ajoutée à votre bibliothèque.');
+      },
+      hasToast: !!st.toast, toast: st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

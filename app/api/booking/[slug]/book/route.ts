@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPractitionerBySlug } from '@/lib/queries/booking';
-import { markAsFulfilled } from '@/lib/queries/waitlist';
-import { sendEmail } from '@/lib/server/email';
-import { buildConfirmationEmail, buildPractitionerNotificationEmail } from '@/lib/emails/booking-confirmation';
-import { generateICS } from '@/lib/utils/generate-ics';
 import { createDailyRoom, generateRoomName } from '@/lib/server/daily';
-
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'AFEIA <contact@afeia.fr>';
+import { createDepositCheckout, getDepositConfig, notifyBooking } from '@/lib/server/booking';
 
 export async function POST(
   request: NextRequest,
@@ -17,7 +12,7 @@ export async function POST(
     const body = await request.json();
 
     // Validate required fields
-    const { consultation_type_id, starts_at, name, first_name, email, phone, reason, consent_rgpd } = body;
+    const { consultation_type_id, starts_at, name, first_name, email, phone, reason, consent_rgpd, location_type } = body;
 
     if (!consultation_type_id || !starts_at || !name || !first_name || !email || !phone) {
       return NextResponse.json(
@@ -106,12 +101,15 @@ export async function POST(
       );
     }
 
-    // Create Daily.co room if practitioner uses integrated video and consultation type implies video
+    // Lieu choisi par le consultant pour cette séance (au cabinet ou en visio)
+    const isVideo = location_type === 'video';
     let videoLink: string | null = null;
-    let videoRoomName: string | null = null;
+    await supabase
+      .from('appointments')
+      .update({ location_type: isVideo ? 'video' : 'in_person', updated_at: new Date().toISOString() })
+      .eq('id', appointmentId);
 
-    const isVideoConsultation = /visio|video|teleconsultation/i.test(ct.name);
-    if (isVideoConsultation) {
+    if (isVideo) {
       const { data: practitionerSettings } = await supabase
         .from('practitioners')
         .select('video_provider')
@@ -122,25 +120,17 @@ export async function POST(
         const roomName = generateRoomName(appointmentId as string);
         const roomExpiresAt = new Date(endsAtDate.getTime() + 30 * 60 * 1000);
         const room = await createDailyRoom({ name: roomName, expiresAt: roomExpiresAt });
-
         if (room) {
           videoLink = room.url;
-          videoRoomName = room.name;
-
           await supabase
             .from('appointments')
-            .update({
-              video_link: videoLink,
-              video_room_name: videoRoomName,
-              location_type: 'video',
-              updated_at: new Date().toISOString(),
-            })
+            .update({ video_link: room.url, video_room_name: room.name, updated_at: new Date().toISOString() })
             .eq('id', appointmentId);
         }
       }
     }
 
-    // Check if this is a new or existing consultant
+    // Nouveau consultant ?
     const { data: consultant } = await supabase
       .from('consultants')
       .select('id, source')
@@ -148,89 +138,43 @@ export async function POST(
       .eq('practitioner_id', practitioner.id)
       .is('deleted_at', null)
       .single();
-
     const isNewConsultant = consultant?.source === 'online_booking';
 
-    // Format date for display
-    const dateFormatted = new Intl.DateTimeFormat('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(startsAtDate);
-
-    const timeFormatted = new Intl.DateTimeFormat('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(startsAtDate);
-
-    const emailData = {
-      consultantFirstName: sanitizedFirstName,
-      consultantName: fullName,
-      consultantEmail: email,
-      practitionerName: practitioner.full_name,
-      practitionerAddress: practitioner.booking_address,
-      dateFormatted,
-      timeFormatted,
-      consultationTypeName: ct.name,
-      durationMinutes: ct.duration_minutes,
-      cancellationPolicyHours: practitioner.cancellation_policy_hours,
-      cancellationPolicyText: practitioner.cancellation_policy_text,
-      reason: sanitizedReason,
-      videoLink,
-    };
-
-    // Send confirmation email to consultant
+    // Acompte : paiement sur la page sécurisée Stripe, confirmation au retour
+    let deposit = { percent: 0, cents: 0, stripeAccountId: null as string | null };
     try {
-      const confirmation = buildConfirmationEmail(emailData);
-      await sendEmail({
-        to: email,
-        from: FROM_EMAIL,
-        subject: confirmation.subject,
-        html: confirmation.html,
-        text: confirmation.text,
-      });
-    } catch (emailError) {
-      console.error('Failed to send confirmation email:', emailError);
-      // Don't fail the booking because of email
-    }
-
-    // Send notification email to practitioner
-    try {
-      const { data: practitionerData } = await supabase
-        .from('practitioners')
-        .select('email')
-        .eq('id', practitioner.id)
-        .single();
-
-      if (practitionerData?.email) {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.afeia.fr';
-        const agendaDate = starts_at.split('T')[0];
-        const notification = buildPractitionerNotificationEmail({
-          ...emailData,
-          consultantPhone: cleanPhone,
-          agendaUrl: `${baseUrl}/agenda?date=${agendaDate}`,
-          isNewConsultant,
-        });
-
-        await sendEmail({
-          to: practitionerData.email,
-          from: FROM_EMAIL,
-          subject: notification.subject,
-          html: notification.html,
-          text: notification.text,
-        });
-      }
-    } catch (emailError) {
-      console.error('Failed to send practitioner notification:', emailError);
-    }
-
-    // Mark any waitlist entries notified for this slot as fulfilled
-    try {
-      await markAsFulfilled(practitioner.id, startsAtDate);
+      deposit = await getDepositConfig(practitioner.id, ct.id, ct.price_cents);
     } catch (err) {
-      console.error('Failed to mark waitlist as fulfilled:', err);
+      console.error('[book] deposit config unavailable', err);
     }
+
+    if (deposit.cents > 0 && deposit.stripeAccountId) {
+      try {
+        const label = `${ct.name} · ${new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }).format(startsAtDate)}`;
+        const checkoutUrl = await createDepositCheckout({
+          appointmentId: appointmentId as string,
+          practitionerId: practitioner.id,
+          slug: params.slug,
+          stripeAccountId: deposit.stripeAccountId,
+          cents: deposit.cents,
+          label,
+          email,
+        });
+        return NextResponse.json({ appointment_id: appointmentId, checkout_url: checkoutUrl });
+      } catch (err) {
+        console.error('[book] checkout creation failed', err);
+        await supabase
+          .from('appointments')
+          .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), cancellation_reason: 'Paiement indisponible' })
+          .eq('id', appointmentId);
+        return NextResponse.json(
+          { error: 'PAYMENT_UNAVAILABLE', message: 'Le paiement de l’acompte est momentanément indisponible. Réessayez dans quelques minutes.' },
+          { status: 502 }
+        );
+      }
+    }
+
+    await notifyBooking(appointmentId as string, { reason: sanitizedReason, isNewConsultant });
 
     return NextResponse.json({
       appointment_id: appointmentId,
@@ -242,6 +186,9 @@ export async function POST(
       practitioner_address: practitioner.booking_address,
       ics_download_url: `/api/booking/${params.slug}/ics?appointment_id=${appointmentId}`,
       video_link: videoLink,
+      location_type: isVideo ? 'video' : 'in_person',
+      price_cents: ct.price_cents,
+      deposit_cents: 0,
     });
   } catch (error) {
     console.error('Error in book API:', error);

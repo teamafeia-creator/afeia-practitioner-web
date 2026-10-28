@@ -172,10 +172,10 @@ export default function ConsultantDemoPage() {
           </div>
         )}
 
-        {/* Mon naturopathe */}
+        {/* Mon praticien */}
         {consultant.practitioners && (
           <div className="bg-surface rounded-xl p-6 shadow">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><User className="w-5 h-5" /> Mon naturopathe</h2>
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><User className="w-5 h-5" /> Mon praticien</h2>
             <div className="flex items-start space-x-4">
               <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center">
                 <User className="w-8 h-8 text-blue-600" />

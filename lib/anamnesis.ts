@@ -151,7 +151,7 @@ export const ANAMNESIS_SECTIONS: AnamnesisSection[] = [
   },
   {
     id: 'femmes',
-    title: 'Femmes (si applicable)',
+    title: 'Cycle',
     questions: [
       { key: 'femme_cycle', label: 'Cycle menstruel', placeholder: 'Régularité, douleurs.' },
       { key: 'femme_contraception', label: 'Contraception / grossesse', placeholder: 'Méthode, projet.' }
@@ -159,7 +159,7 @@ export const ANAMNESIS_SECTIONS: AnamnesisSection[] = [
   },
   {
     id: 'hommes',
-    title: 'Hommes (si applicable)',
+    title: 'Pour les hommes',
     questions: [
       { key: 'homme_urinaire', label: 'Confort urinaire', placeholder: 'Fréquence, gêne.' },
       { key: 'homme_libido', label: 'Libido / vitalité', placeholder: 'Ressenti général.' }
