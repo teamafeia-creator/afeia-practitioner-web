@@ -117,6 +117,7 @@ Ce document liste **toutes** les décisions prises pendant les revues du canevas
 | 7 | Facturation (KPI, séances sans facture, rappel URSSAF, onglets, tableau, export, détail papier, paiement / lien / avoir / annulation, nouvelle facture) et statistiques (périodes, comparaison, séances par semaine, CA 12 mois, motifs, accompagnement) | fait |
 | 8 | Questionnaire public `/questionnaire/[slug]` et prise de rendez-vous `/rdv/[slug]` (lieu, acompte Stripe, erreurs explicites, annulation par lien) | fait |
 | 4 | Messages (bandeau médicament informatif), questionnaires préliminaires (liste + détail, doublon, conclusion), correction de la fusion d'anamnèse | fait |
+| 10 | Dossier consultant : Synthèse (motif, objectifs, observance 14 j, parcours, objet connecté, prochain RDV, notes privées), Anamnèse (points clés, rubriques repliables), Bilan de terrain (lecture), Conseillancier (blocs, avis, partage bloqué, aperçu téléphone), Objet connecté & cycle / offre Standard | fait |
 | 9 | Inscription en 3 étapes, espace fermé tant que le compte n'est pas validé, écran admin « Inscriptions » (Pappers, concordance, décisions motivées), éditeur admin du questionnaire versionné | fait |
 
 Choix faits en attendant une décision :
@@ -144,3 +145,7 @@ Choix faits en attendant une décision :
 - charte de pratique et conditions d'utilisation : page `/charte` (texte à faire relire) ;
 - questionnaire : tables `questionnaire_versions` / `_sections` / `_questions` ; un seul brouillon, enregistré automatiquement ; « Publier » crée la version N+1 ; tant qu'aucune version n'est publiée, le contenu d'origine (`lib/questionnaire/sections.ts`) reste en ligne ; un questionnaire déjà ouvert garde la version chargée ; les réponses aux nouvelles questions sont rangées dans l'anamnèse sous leur clé (affichage dans l'onglet Anamnèse : lot 10) ;
 - « Tester comme un consultant » ouvre `/admin/questionnaire/apercu` (brouillon, rien n'est envoyé).
+- Synthèse : les objectifs sont tirés de la réponse « Ce que vous aimeriez obtenir » (pas encore de suivi d'objectif avec statut) ; les fiches d'identité et coordonnées restent éditables sous la synthèse ;
+- Anamnèse : les « points clés » sont extraits par des règles simples (premier membre de phrase de quelques champs), à relire ; les réponses aux questions ajoutées par l'équipe Afeia s'affichent dans « Autres réponses du questionnaire » ; correction : la fusion d'un questionnaire dans une anamnèse déjà modifiée à la main (forme à plat) ne mélange plus les deux formes ;
+- Conseillancier : le contenu reste organisé par rubriques (pas de modèle « blocs » libres) ; en lecture, chaque champ rempli s'affiche comme un bloc ; l'« avis du consultant » sous un bloc reprend les commentaires saisis dans le journal d'observance pour la rubrique correspondante ; le partage est désactivé tant qu'une contre-indication critique n'est pas confirmée ;
+- Objet connecté : la fréquence cardiaque au repos n'est pas remontée par l'objet ; le graphique propose Sommeil, VFC et Activité ; le tableau jour par jour reste accessible en dessous.

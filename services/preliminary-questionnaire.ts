@@ -215,6 +215,26 @@ export function mergeQuestionnaireIntoAnamnesis(
   existing: Record<string, Record<string, unknown>>,
   responses: Record<string, Record<string, string>>
 ): { merged: Record<string, Record<string, unknown>>; filled: number; kept: number } {
+  // L'anamnèse modifiée par le praticien est enregistrée à plat ({ clé: valeur }) :
+  // dans ce cas on fusionne à plat pour ne pas mélanger les deux formes.
+  const values = Object.values(existing ?? {});
+  if (values.length && values.every((v) => v === null || typeof v !== 'object')) {
+    const flat: Record<string, unknown> = { ...(existing as unknown as Record<string, unknown>) };
+    let filledFlat = 0;
+    let keptFlat = 0;
+    for (const section of Object.values(responses ?? {})) {
+      for (const [key, value] of Object.entries(section ?? {})) {
+        if (isEmpty(value)) continue;
+        if (isEmpty(flat[key])) {
+          flat[key] = value;
+          filledFlat += 1;
+        } else if (String(flat[key]).trim() !== String(value).trim()) {
+          keptFlat += 1;
+        }
+      }
+    }
+    return { merged: flat as unknown as Record<string, Record<string, unknown>>, filled: filledFlat, kept: keptFlat };
+  }
   const merged: Record<string, Record<string, unknown>> = {};
   for (const [section, values] of Object.entries(existing ?? {})) merged[section] = { ...(values ?? {}) };
   let filled = 0;

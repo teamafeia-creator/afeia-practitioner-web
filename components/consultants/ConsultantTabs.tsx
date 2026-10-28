@@ -141,6 +141,12 @@ import { VitalityIndicator } from '../terrain/VitalityIndicator';
 import { IrisViewer } from '../terrain/IrisViewer';
 import { IrisComparison } from '../terrain/IrisComparison';
 import { IrisUploader } from '../terrain/IrisUploader';
+import { SynthesisPanel, type RecordTarget } from './record/SynthesisPanel';
+import { AnamnesisPanel } from './record/AnamnesisPanel';
+import { TerrainSummary } from './record/TerrainSummary';
+import { ConnectedObjectPanel } from './record/ConnectedObjectPanel';
+import { ConnectedObjectLocked } from './record/ConnectedObjectLocked';
+import { PlanBlocks, PhonePreview } from './record/PlanBlocks';
 import { MOOD_OPTIONS, normalizeMood, EXERCISE_INTENSITIES } from '../../lib/journal-constants';
 import { BristolScale } from '../journal/BristolScale';
 import { IndicatorDisplay } from '../journal/IndicatorDisplay';
@@ -770,6 +776,20 @@ export function ConsultantTabs({
   } = useContraindications(consultant.id, substanceNamesFromPlan);
 
   const isPremium = consultantState.is_premium;
+  function openRecordTarget(target: RecordTarget) {
+    const map: Record<RecordTarget, Tab> = {
+      anamnese: T.tabAnamnese as Tab,
+      conseillancier: T.tabConseillancier as Tab,
+      objet: T.tabBagueConnectee as Tab,
+      notes: T.tabNotesSeance as Tab,
+      rdv: T.tabRendezVous as Tab,
+      journal: T.tabJournal as Tab,
+    };
+    setTab(map[target]);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  const recordFirstName =
+    (consultantState as { first_name?: string | null }).first_name || consultantState.name?.split(' ')[0] || 'le consultant';
   const isDemo = consultantState.is_demo === true;
 
   const navGroups = useMemo<DossierNavGroup<Tab>[]>(() => {
@@ -1406,6 +1426,8 @@ export function ConsultantTabs({
     }
   }
 
+  const shareBlocked = contraindicationAlerts.some((a) => a.severity === 'critical' && !a.acknowledged);
+
   function handleSharePlanClick() {
     if (!activePlan || !canEditPlan) return;
     // If unacknowledged critical alerts exist, show validation modal
@@ -1737,6 +1759,18 @@ export function ConsultantTabs({
 
       {tab === 'Profil' && (
         <div className="space-y-4">
+          <SynthesisPanel
+            consultant={consultantState}
+            answers={anamnesisAnswers}
+            appointments={appointments}
+            plans={plans}
+            wearable={wearableSummaries}
+            isPremium={isPremium}
+            cycle={cycleContext ? { phase: cycleContext.phase, cycleDay: cycleContext.cycleDay } : null}
+            note={{ content: noteContent, updatedAt: consultantState.practitioner_note?.updated_at ?? null }}
+            onOpen={openRecordTarget}
+          />
+          <h2 className="pt-4 text-[17px] font-semibold">Coordonnées et informations</h2>
           <Card
             className={cn(
               'transition',
@@ -2410,102 +2444,20 @@ export function ConsultantTabs({
       )}
 
       {tab === 'Anamnèse' && (
-        <Card className={cn(anamnesisEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
-          <CardHeader>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              {!anamnesisEditing ? (
-                <Button variant="secondary" onClick={() => setAnamnesisEditing(true)}>
-                  Modifier
-                </Button>
-              ) : null}
-            </div>
-            {anamnesisEditing ? <EditBanner label="Pensez à sauvegarder vos réponses." /> : null}
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {ANAMNESIS_SECTIONS.map((section) => (
-                <div key={section.id} className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-charcoal">{section.title}</h3>
-                    {section.description ? (
-                      <p className="text-xs text-stone">{section.description}</p>
-                    ) : null}
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {section.questions.map((question) => (
-                      <div
-                        key={question.key}
-                        className="rounded-lg bg-surface/60 p-4 border border-divider"
-                      >
-                        <p className="text-xs uppercase tracking-wide text-stone">{question.label}</p>
-                        {anamnesisEditing ? (
-                          question.type === 'choice' ? (
-                            <Select
-                              className="mt-2"
-                              value={anamnesisAnswers[question.key] ?? ''}
-                              onChange={(event) =>
-                                setAnamnesisAnswers((prev) => ({
-                                  ...prev,
-                                  [question.key]: event.target.value
-                                }))
-                              }
-                            >
-                              <option value="">Sélectionner</option>
-                              {question.options?.map((option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </Select>
-                          ) : (
-                            <Textarea
-                              className="mt-2"
-                              value={anamnesisAnswers[question.key] ?? ''}
-                              onChange={(event) =>
-                                setAnamnesisAnswers((prev) => ({
-                                  ...prev,
-                                  [question.key]: event.target.value
-                                }))
-                              }
-                              placeholder={question.placeholder ?? 'Votre réponse'}
-                              rows={3}
-                            />
-                          )
-                        ) : (
-                          <p className="mt-2 text-sm text-charcoal whitespace-pre-line break-words">
-                            {renderAnswer(anamnesisAnswers[question.key])}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {anamnesisEditing ? (
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Button
-                  variant="primary"
-                  onClick={handleSaveAnamnesisQuestionnaire}
-                  loading={anamnesisSaving}
-                  disabled={!isAnamnesisDirty || anamnesisSaving}
-                >
-                  Enregistrer
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setAnamnesisAnswers(initialAnamnesis);
-                    setAnamnesisEditing(false);
-                  }}
-                  disabled={anamnesisSaving}
-                >
-                  Annuler
-                </Button>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
+        <AnamnesisPanel
+          answers={anamnesisAnswers}
+          setAnswers={setAnamnesisAnswers}
+          editing={anamnesisEditing}
+          onEdit={() => setAnamnesisEditing(true)}
+          onSave={handleSaveAnamnesisQuestionnaire}
+          onCancel={() => {
+            setAnamnesisAnswers(initialAnamnesis);
+            setAnamnesisEditing(false);
+          }}
+          saving={anamnesisSaving}
+          dirty={isAnamnesisDirty}
+          collectedAt={consultantState.consultant_anamnesis?.created_at ?? null}
+        />
       )}
 
       {/* ═══════════════════════════════════════════════
@@ -2513,7 +2465,15 @@ export function ConsultantTabs({
           ═══════════════════════════════════════════════ */}
       {tab === T.tabBilanTerrain && (
         <div className="space-y-4">
+          {!terrainEditing ? (
+            <TerrainSummary
+              terrain={terrainData}
+              onEdit={() => setTerrainEditing(true)}
+              onToConseillancier={() => setTab(T.tabConseillancier as Tab)}
+            />
+          ) : null}
           <Card className={cn(terrainEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
+            {terrainEditing ? (
             <CardHeader>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs text-stone">Constitution, surcharges, émonctoires et iridologie.</p>
@@ -2525,8 +2485,11 @@ export function ConsultantTabs({
               </div>
               {terrainEditing ? <EditBanner label="Pensez à sauvegarder le bilan." /> : null}
             </CardHeader>
-            <CardContent>
+            ) : null}
+            <CardContent className={terrainEditing ? undefined : 'pt-5'}>
               <div className="space-y-8">
+                {terrainEditing ? (
+                <>
 
                 {/* Section 0 — Force vitale */}
                 <div className="border border-divider rounded-xl p-4 space-y-3">
@@ -2809,6 +2772,9 @@ export function ConsultantTabs({
                     })}
                   </div>
                 </div>
+
+                </>
+                ) : null}
 
                 {/* Section 4 — Iridologie */}
                 <div className="border border-divider rounded-xl p-4 space-y-4">
@@ -3154,93 +3120,39 @@ export function ConsultantTabs({
       )}
 
       {tab === T.tabBagueConnectee && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-end">
-              {isPremium ? <Badge variant="active">Actif</Badge> : <Badge variant="attention">Non activé</Badge>}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Cycle phase bar overlay */}
-            {cycleIsTracking && cycleContext && wearableSummaries.length > 0 && (
-              <div className="mb-4 rounded-lg bg-surface/60 p-3 border border-divider">
-                <p className="text-[10px] uppercase tracking-wide text-stone mb-2">Phases du cycle (60 derniers jours)</p>
-                <div className="flex h-4 rounded-full overflow-hidden">
-                  {(() => {
-                    const end = new Date();
-                    const start = new Date();
-                    start.setDate(start.getDate() - 60);
-                    const pm = buildPhaseMap(
-                      cycleStarts,
-                      cycleProfile!.average_cycle_length,
-                      cycleProfile!.average_period_length,
-                      start,
-                      end
-                    );
-                    const days: { date: string; phase: string }[] = [];
-                    const d = new Date(start);
-                    while (d <= end) {
-                      const key = d.toISOString().slice(0, 10);
-                      const info = pm.get(key);
-                      if (info) days.push({ date: key, phase: info.phase });
-                      d.setDate(d.getDate() + 1);
-                    }
-                    // Group consecutive same-phase days
-                    const bands: { phase: string; count: number }[] = [];
-                    for (const day of days) {
-                      const last = bands[bands.length - 1];
-                      if (last && last.phase === day.phase) { last.count++; }
-                      else { bands.push({ phase: day.phase, count: 1 }); }
-                    }
-                    const total = days.length;
-                    return bands.map((band, i) => {
-                      const meta = CYCLE_PHASES[band.phase as keyof typeof CYCLE_PHASES];
-                      return (
-                        <div
-                          key={i}
-                          style={{ width: `${(band.count / total) * 100}%`, backgroundColor: meta?.color || '#ccc' }}
-                          className="h-full opacity-60"
-                          title={meta?.label}
-                        />
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
-            )}
-            {!isPremium ? (
-              <div className="relative overflow-hidden rounded-lg border border-dashed border-sage/20 bg-sage-light/50 p-6 text-sm text-charcoal">
-                <div className="absolute right-4 top-4 rounded-full bg-surface px-3 py-1 text-xs font-semibold text-sage shadow-soft">
-                  Premium
-                </div>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2 text-charcoal">
-                    <p className="text-sm font-semibold">Fonctionnalité Objet connecté verrouillée</p>
-                  </div>
-                  <p>
-                    Proposez l&apos;offre Premium à votre client afin d&apos;avoir accès à cette fonctionnalité.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="primary" onClick={handleUpgradePremium} loading={premiumLoading}>
-                      Passer en Premium
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => router.push('/bague-connectee/en-savoir-plus')}
-                    >
-                      En savoir plus
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : wearableSummaries.length === 0 ? (
-              <EmptyState
-                icon="inbox"
-                title="Aucune donnée d'objet connecté disponible"
-                description="Les données s'afficheront des la première synchronisation."
+        <div className="space-y-4">
+          {!isPremium ? (
+            <ConnectedObjectLocked
+              firstName={recordFirstName}
+              onUpgrade={handleUpgradePremium}
+              upgrading={premiumLoading}
+              onLearnMore={() => router.push('/bague-connectee/en-savoir-plus')}
+              onOpenCycle={cycleIsTracking ? () => setTab(T.tabCycle as Tab) : null}
+            />
+          ) : wearableSummaries.length === 0 ? (
+            <EmptyState
+              icon="inbox"
+              title="Aucune donnée d'objet connecté pour l'instant"
+              description="Les données s'afficheront dès la première synchronisation."
+            />
+          ) : (
+            <>
+              <ConnectedObjectPanel
+                firstName={recordFirstName}
+                summaries={wearableSummaries}
+                cycleProfile={cycleProfile}
+                cycleStarts={cycleStarts}
+                cycleEntries={cycleEntries}
+                cycle={cycleContext ? { phase: cycleContext.phase, cycleDay: cycleContext.cycleDay } : null}
               />
-            ) : (
-              <div className="space-y-4">
+              {wearableInsights.length > 0 ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {wearableInsights.map((insight) => renderInsight(insight))}
+                </div>
+              ) : null}
+              <details className="rounded-2xl border border-divider bg-surface p-4">
+                <summary className="cursor-pointer text-sm font-semibold">Données jour par jour</summary>
+                <div className="mt-3">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[640px] text-sm">
                     <thead>
@@ -3275,22 +3187,11 @@ export function ConsultantTabs({
                     </tbody>
                   </table>
                 </div>
-
-                {wearableInsights.length > 0 ? (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {wearableInsights.map((insight) => renderInsight(insight))}
-                  </div>
-                ) : (
-                  <EmptyState
-                    icon="notifications"
-                    title="Aucun insight d'objet connecté disponible"
-                    description="Les suggestions apparaîtront après analyse."
-                  />
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              </details>
+            </>
+          )}
+        </div>
       )}
 
       {tab === 'Journal' && (
@@ -3955,7 +3856,8 @@ export function ConsultantTabs({
           ) : null}
 
           {activePlan ? (
-            <Card className={cn(canEditPlan ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
+            <div className="flex flex-wrap items-start gap-5">
+            <Card className={cn('min-w-0 flex-[999_1_520px]', canEditPlan ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -3991,7 +3893,8 @@ export function ConsultantTabs({
                         variant="primary"
                         onClick={handleSharePlanClick}
                         loading={planSharing}
-                        disabled={planSharing || planSaving || isPlanDirty}
+                        disabled={planSharing || planSaving || isPlanDirty || shareBlocked}
+                        title={shareBlocked ? 'Le partage est bloqué tant que la contre-indication n’est pas traitée.' : undefined}
                       >
                         {T.partagerConsultant}
                       </Button>
@@ -4009,6 +3912,11 @@ export function ConsultantTabs({
                 {canEditPlan ? (
                   <EditBanner label="Complétez le conseillancier avant de le partager." />
                 ) : null}
+                {canEditPlan && shareBlocked ? (
+                  <p role="status" className="mt-3 rounded-xl border border-[#6B3438] bg-[#3A2224] px-3.5 py-2.5 text-sm text-[#F2A3A3]">
+                    Le partage est bloqué tant que la contre-indication n&apos;est pas traitée : retirez le conseil concerné ou confirmez que vous le maintenez en connaissance de cause.
+                  </p>
+                ) : null}
                 {canEditPlan && contraindicationAlerts.length > 0 && (
                   <div className="mt-3">
                     <ContraindicationBanner
@@ -4022,7 +3930,10 @@ export function ConsultantTabs({
                 )}
               </CardHeader>
               <CardContent className="space-y-6">
-                {CONSEILLANCIER_SECTIONS.map((section) => {
+                {!canEditPlan ? (
+                  <PlanBlocks content={planForm} firstName={recordFirstName} logs={observanceLogsRecent} />
+                ) : null}
+                {canEditPlan && CONSEILLANCIER_SECTIONS.map((section) => {
                   // In read-only mode, skip sections with no content
                   if (!canEditPlan && !sectionHasContent(section, planForm)) return null;
                   return (
@@ -4144,6 +4055,10 @@ export function ConsultantTabs({
                 ) : null}
               </CardContent>
             </Card>
+            <aside className="sticky top-5 min-w-0 flex-[1_1_280px] lg:max-w-[320px]">
+              <PhonePreview content={planForm} firstName={recordFirstName} />
+            </aside>
+            </div>
           ) : null}
 
           {/* Contraindication Validation Modal */}
