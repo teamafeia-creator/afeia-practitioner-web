@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Questionnaires préliminaires</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button,input{font-family:inherit}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #6DD4B8;outline-offset:2px}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1180px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="questionnaires" hint-size="100%,1180px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 20px">
+
+      <header style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px">
+        <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 6px">
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 34px">Questionnaires préliminaires</h1>
+          <span style="font-size: 15px; color: #8B95A5">{{summary}}</span>
+        </div>
+        <div style="flex: 0 1 460px; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 12px; background: #151A23; border: 1px solid #2A3140">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B95A5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          <span style="flex: 1; min-width: 0; font-size: 14px; color: #B8C1CF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">afeia.fr/questionnaire/claire-martin</span>
+          <button type="button" onClick="{{copyLink}}" style="flex: none; height: 38px; padding: 0 14px; border-radius: 9px; border: 0; background: {{copyBg}}; color: {{copyFg}}; font-size: 14px; font-weight: 600; cursor: pointer">{{copyLabel}}</button>
+        </div>
+      </header>
+
+      <sc-if value="{{howOpen}}" hint-placeholder-val="{{true}}">
+        <section aria-label="Comment ça marche" style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; background: #151A23; border: 1px solid #2A3140; border-radius: 16px; overflow: hidden">
+          <sc-for list="{{how}}" as="h" hint-placeholder-count="3">
+            <div style="flex: 1 1 220px; display: flex; gap: 12px; padding: 16px 18px; border-right: 1px solid #2A3140">
+              <span style="flex: none; width: 28px; height: 28px; border-radius: 14px; background: #23383B; color: #6DD4B8; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{h.n}}</span>
+              <span style="display: flex; flex-direction: column; gap: 3px">
+                <span style="font-size: 14px; font-weight: 600">{{h.t}}</span>
+                <span style="font-size: 13px; line-height: 1.45; color: #8B95A5">{{h.d}}</span>
+              </span>
+            </div>
+          </sc-for>
+          <button type="button" onClick="{{closeHow}}" aria-label="Masquer l'explication" style="flex: none; width: 44px; border: 0; background: transparent; color: #8B95A5; font-size: 18px; cursor: pointer">×</button>
+        </section>
+      </sc-if>
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <div role="tablist" aria-label="Statut" style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #151A23; border: 1px solid #2A3140">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+            <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 9px; border: 0; background: {{t.bg}}; color: {{t.fg}}; font-size: 14px; font-weight: 500; cursor: pointer">{{t.l}}<span style="min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: {{t.cbg}}; color: {{t.cfg}}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{t.c}}</span></button>
+          </sc-for>
+        </div>
+        <label style="flex: 1 1 260px; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 12px; background: #151A23; border: 1px solid #2A3140; color: #8B95A5">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+          <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rechercher un questionnaire</span>
+          <input type="search" value="{{q}}" onInput="{{onQ}}" placeholder="Nom ou e-mail" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #E8EDF4; font-size: 14px">
+        </label>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+        <section aria-label="Liste des questionnaires" style="flex: 1 1 320px; max-width: 400px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+          <sc-if value="{{listEmpty}}" hint-placeholder-val="{{false}}">
+            <div style="padding: 28px 20px; border-radius: 14px; border: 1px dashed #2A3140; color: #8B95A5; font-size: 14px; line-height: 1.5; text-align: center">{{emptyText}}</div>
+          </sc-if>
+          <sc-for list="{{list}}" as="it" hint-placeholder-count="4">
+            <button type="button" onClick="{{it.pick}}" aria-current="{{it.cur}}" style="display: flex; flex-direction: column; gap: 8px; width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid {{it.border}}; background: {{it.bg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+              <span style="display: flex; align-items: center; gap: 10px; width: 100%">
+                <span style="width: 36px; height: 36px; border-radius: 18px; background: {{it.col}}; color: #0A0E14; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{it.ini}}</span>
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                  <span style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600">{{it.name}}<sc-if value="{{it.isNew}}" hint-placeholder-val="{{false}}"><span style="width: 8px; height: 8px; border-radius: 4px; background: #E8A87C" aria-label="Nouveau"></span></sc-if></span>
+                  <span style="font-size: 12px; color: #8B95A5">{{it.when}}</span>
+                </span>
+                <span style="flex: none; height: 22px; padding: 0 8px; border-radius: 11px; background: {{it.sbg}}; color: {{it.sfg}}; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center">{{it.status}}</span>
+              </span>
+              <span style="font-size: 13px; line-height: 1.45; color: #B8C1CF; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">{{it.motif}}</span>
+              <span style="display: flex; align-items: center; gap: 8px; width: 100%">
+                <span style="flex: 1; height: 4px; border-radius: 2px; background: #2A3140; overflow: hidden"><span style="display: block; height: 100%; width: {{it.pct}}; background: #6DD4B8"></span></span>
+                <span style="font-size: 12px; color: #8B95A5">{{it.filled}} / 13 rubriques</span>
+              </span>
+            </button>
+          </sc-for>
+        </section>
+
+        <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
+          <article aria-label="Détail du questionnaire" style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 24px; background: #151A23; border: 1px solid #2A3140; border-radius: 18px">
+            <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px">
+              <span style="width: 52px; height: 52px; border-radius: 26px; background: {{d.col}}; color: #0A0E14; font-size: 17px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{d.ini}}</span>
+              <div style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 4px">
+                <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 26px">{{d.name}}</h2>
+                <span style="font-size: 14px; color: #8B95A5">{{d.email}} · {{d.phone}}</span>
+                <span style="font-size: 13px; color: #8B95A5">Soumis {{d.whenLong}}</span>
+              </div>
+              <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: {{d.sbg}}; color: {{d.sfg}}; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center">{{d.status}}</span>
+            </div>
+
+            <sc-if value="{{d.showMatch}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; background: #373131; border: 1px solid #5A4636">
+                <span style="flex: 1 1 260px; font-size: 14px; line-height: 1.5; color: #F2D2BB">Un dossier existe déjà avec cet e-mail : <strong>{{d.match}}</strong>, suivi depuis {{d.matchSince}}. Associez plutôt que de créer un doublon.</span>
+                <button type="button" onClick="{{linkMatch}}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: #E8A87C; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">Associer à {{d.matchFirst}}</button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{d.isPending}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                <button type="button" onClick="{{create}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: {{d.createBorder}}; background: {{d.createBg}}; color: {{d.createFg}}; font-size: 14px; font-weight: 600; cursor: pointer">Créer le dossier consultant</button>
+                <button type="button" onClick="{{openLink}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: #1C2230; color: #E8EDF4; font-size: 14px; font-weight: 500; cursor: pointer">Associer à un consultant existant</button>
+                <button type="button" onClick="{{archive}}" style="height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #8B95A5; font-size: 14px; cursor: pointer">Archiver</button>
+              </div>
+              <span style="font-size: 13px; line-height: 1.5; color: #8B95A5; margin-top: -6px">Créer le dossier préremplit l'anamnèse et envoie à {{d.first}} son code d'accès à l'application. Votre conclusion s'écrit ensuite dans les notes privées du dossier.</span>
+            </sc-if>
+            <sc-if value="{{d.isLinked}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; background: #23383B">
+                <span style="flex: 1 1 240px; font-size: 14px; color: #CFEFE5">{{d.linkedText}}</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                  <a href="Consultant.dc.html" title="Ouvre l'onglet Notes privées du dossier, invisible pour le consultant" style="display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border-radius: 10px; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; text-decoration: none">🔒 Écrire ma conclusion ↗</a>
+                  <a href="Anamnese.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #2F5A50; color: #CFEFE5; font-size: 14px; font-weight: 500; text-decoration: none">Voir l'anamnèse ↗</a>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{d.isArchived}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; background: #1C2230; border: 1px solid #2A3140">
+                <span style="flex: 1 1 240px; font-size: 14px; color: #B8C1CF">Archivé. Il ne sera associé à aucun dossier.</span>
+                <button type="button" onClick="{{restore}}" style="height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Remettre en attente</button>
+              </div>
+            </sc-if>
+
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px; background: #1C2230">
+                <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8B95A5">Motif</span>
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; line-height: 1.4">« {{d.motif}} »</span>
+                <span style="font-size: 14px; color: #B8C1CF">Objectif : {{d.goal}}</span>
+              </div>
+              <div role="note" style="display: flex; align-items: flex-start; gap: 8px; padding: 8px 12px; border-radius: 10px; background: #332D17; border: 1px solid #5C4F1E">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2C94C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>
+                <span style="font-size: 13px; line-height: 1.45; color: #F5E3A8"><strong style="color: #F2C94C; font-weight: 600">Traitements déclarés : {{d.meds}}.</strong> {{d.first}} doit toujours vérifier avec son médecin que vos recommandations sont compatibles avec sa situation.</span>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 12px">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600">Réponses</h3>
+                <span style="font-size: 13px; color: #8B95A5">{{d.filled}} rubriques sur 13</span>
+                <span aria-hidden="true" style="flex: 1 1 80px; max-width: 220px; display: flex; gap: 3px">
+                  <sc-for list="{{d.rubrics}}" as="r" hint-placeholder-count="13"><span style="flex: 1; height: 6px; border-radius: 3px; background: {{r.bg}}"></span></sc-for>
+                </span>
+                <span style="flex: 1"></span>
+                <button type="button" onClick="{{toggleAll}}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #B8C1CF; font-size: 13px; cursor: pointer">{{toggleAllLabel}}</button>
+              </div>
+              <sc-for list="{{d.sections}}" as="s" hint-placeholder-count="4">
+                <div style="border: 1px solid #2A3140; border-radius: 12px; overflow: hidden">
+                  <button type="button" onClick="{{s.toggle}}" aria-expanded="{{s.exp}}" style="width: 100%; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px; border: 0; background: #1C2230; color: #E8EDF4; text-align: left; font-size: 15px; font-weight: 500; cursor: pointer">
+                    <span style="flex: 1">{{s.t}}</span>
+                    <span style="font-size: 12px; color: #8B95A5">{{s.n}} réponses</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B95A5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: {{s.rot}}"><path d="M6 9l6 6 6-6"></path></svg>
+                  </button>
+                  <sc-if value="{{s.open}}" hint-placeholder-val="{{false}}">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 20px; padding: 16px">
+                      <sc-for list="{{s.qa}}" as="a" hint-placeholder-count="2">
+                        <div style="display: flex; flex-direction: column; gap: 4px">
+                          <span style="font-size: 12px; color: #8B95A5">{{a.q}}</span>
+                          <span style="font-size: 15px; line-height: 1.5; max-width: 62ch">{{a.a}}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <sc-if value="{{d.hasMissing}}" hint-placeholder-val="{{true}}">
+                <span style="font-size: 13px; line-height: 1.5; color: #8B95A5; padding: 4px 2px 0">Non remplies : {{d.missing}}. Vous pourrez les compléter en séance, dans l'anamnèse.</span>
+              </sc-if>
+            </div>
+          </article>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{linkOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: fixed; inset: 0; z-index: 50; background: rgba(5, 8, 12, 0.72); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box">
+      <div role="dialog" aria-modal="true" aria-labelledby="link-title" style="width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; padding: 24px; box-sizing: border-box; background: #151A23; border: 1px solid #2A3140; border-radius: 18px; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <h2 id="link-title" style="flex: 1; margin: 0; font-size: 18px; font-weight: 600">Associer le questionnaire de {{d.first}}</h2>
+          <button type="button" onClick="{{closeLink}}" aria-label="Fermer" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 18px; cursor: pointer">×</button>
+        </div>
+        <label style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #8B95A5">
+          <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Rechercher un consultant</span>
+          <input type="search" value="{{lq}}" onInput="{{onLq}}" placeholder="Rechercher un consultant" style="flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: #E8EDF4; font-size: 14px">
+        </label>
+        <div role="radiogroup" aria-label="Consultant" style="display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow-y: auto">
+          <sc-for list="{{cands}}" as="c" hint-placeholder-count="5">
+            <button type="button" role="radio" aria-checked="{{c.on}}" onClick="{{c.pick}}" style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px; border-radius: 10px; border: 1px solid {{c.border}}; background: {{c.bg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+              <span style="width: 30px; height: 30px; border-radius: 15px; background: {{c.col}}; color: #0A0E14; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{c.ini}}</span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 14px; font-weight: 500">{{c.n}}</span><span style="font-size: 12px; color: #8B95A5">{{c.e}}</span></span>
+              <sc-if value="{{c.same}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; color: #E8A87C">même e-mail</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+        <span style="font-size: 13px; line-height: 1.5; color: #8B95A5">Les réponses complètent l'anamnèse : les champs déjà remplis sont conservés, et la version précédente reste dans l'historique.</span>
+        <div style="display: flex; justify-content: flex-end; gap: 8px">
+          <button type="button" onClick="{{closeLink}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+          <button type="button" onClick="{{confirmLink}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: {{lBg}}; color: {{lFg}}; font-size: 14px; font-weight: 600; cursor: pointer">Associer</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: fixed; right: 24px; bottom: 24px; z-index: 60; display: flex; align-items: center; gap: 14px; max-width: 420px; padding: 14px 16px; border-radius: 12px; background: #1C2230; border: 1px solid #2F5A50; color: #E8EDF4; font-size: 14px; line-height: 1.45; box-shadow: 0 12px 32px rgba(0,0,0,0.4)">
+      <span style="flex: 1">{{toast}}</span>
+      <sc-if value="{{canUndo}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{undo}}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: transparent; color: #6DD4B8; font-size: 14px; font-weight: 600; cursor: pointer">Annuler</button>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    // Miroir de preliminary_questionnaires : first_name, last_name, email, phone, responses (par rubrique ANAMNESIS_SECTIONS),
+    // status ('pending' | 'linked_to_consultant' | 'archived'), linked_consultant_id, linked_at, created_at
+    this.state = {
+      tab: 'pending', q: '', sel: 'nl', howOpen: true, copied: false,
+      open: { motif: true }, linkOpen: false, lq: '', pickC: null, toast: '', undo: null,
+      items: [
+        { id: 'nl', first: 'Nadia', last: 'Lefort', col: '#E8A5C6', email: 'nadia.lefort@exemple.fr', phone: '06 12 45 78 90', when: 'Aujourd’hui, 08:14', whenLong: 'aujourd’hui à 08:14', isNew: true, status: 'pending',
+          filled: 11, motif: 'Fatigue persistante depuis l’hiver, je me réveille vers 4 h sans réussir à me rendormir.', goal: 'retrouver de l’énergie le matin', meds: 'Lévothyroxine (thyroïde)' },
+        { id: 'hm', first: 'Hugo', last: 'Martins', col: '#7B93DB', email: 'hugo.martins@exemple.fr', phone: '06 33 18 02 41', when: 'Hier, 19:42', whenLong: 'hier à 19:42', isNew: true, status: 'pending',
+          filled: 7, motif: 'Ballonnements après presque tous les repas, surtout le soir.', goal: 'digérer sans inconfort', meds: 'Aucun', match: 'Hugo Martins', matchSince: 'mars 2026' },
+        { id: 'eb', first: 'Élise', last: 'Bonnet', col: '#E8A87C', email: 'elise.bonnet@exemple.fr', phone: '07 81 55 20 13', when: '24 oct., 21:05', whenLong: 'le 24 octobre à 21:05', status: 'pending',
+          filled: 13, motif: 'Stress au travail et sommeil haché depuis la rentrée.', goal: 'mieux dormir et décrocher le soir', meds: 'Pilule contraceptive' },
+        { id: 'ab', first: 'Amina', last: 'Benali', col: '#6DD4B8', email: 'amina.benali@exemple.fr', phone: '06 74 90 11 26', when: '9 oct., 18:20', whenLong: 'le 9 octobre à 18:20', status: 'linked', linkedAt: '12 octobre',
+          filled: 12, motif: 'Migraines 3 à 4 fois par mois, souvent avant les règles.', goal: 'espacer les migraines', meds: 'Aucun traitement de fond' },
+        { id: 'td', first: 'Thomas', last: 'Dubois', col: '#D4A574', email: 'thomas.dubois@exemple.fr', phone: '06 20 47 63 88', when: '2 oct., 07:55', whenLong: 'le 2 octobre à 07:55', status: 'linked', linkedAt: '3 octobre',
+          filled: 10, motif: 'Douleurs articulaires le matin et prise de poids.', goal: 'bouger sans douleur', meds: 'Aucun' },
+        { id: 'sm', first: 'Sophie', last: 'Martin', col: '#A8E6CF', email: 'sophie.martin@exemple.fr', phone: '06 58 12 39 70', when: '28 sept., 20:12', whenLong: 'le 28 septembre à 20:12', status: 'linked', linkedAt: '30 septembre',
+          filled: 13, motif: 'Peau réactive et digestion lente.', goal: 'apaiser la peau', meds: 'Aucun' },
+        { id: 'tx', first: 'Test', last: 'Dupont', col: '#5C6573', email: 'test@test.fr', phone: 'Non renseigné', when: '20 sept., 10:03', whenLong: 'le 20 septembre à 10:03', status: 'archived',
+          filled: 1, motif: 'Test', goal: 'non renseigné', meds: 'Non renseigné' }
+      ]
+    };
+  }
+  toastMsg(msg, undo) {
+    this.setState({ toast: msg, undo: undo || null });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: '', undo: null }), 5000);
+  }
+  setStatus(id, status, extra) {
+    const prev = this.state.items.find((x) => x.id === id);
+    const prevCopy = { ...prev };
+    this.setState({ items: this.state.items.map((x) => x.id === id ? { ...x, status, ...(extra || {}) } : x) });
+    return () => this.setState({ items: this.state.items.map((x) => x.id === id ? prevCopy : x) });
+  }
+  renderVals() {
+    const st = this.state;
+    const RUB = ['Informations générales', 'Profil personnel', 'Motif', 'Alimentation', 'Digestion', 'Sommeil et énergie', 'Activité physique', 'Stress et émotions', 'Élimination et peau', 'Cycle', 'Pour les hommes', 'Mode de vie', 'Question ouverte'];
+    const STATUS = {
+      pending: { l: 'En attente', bg: '#373131', fg: '#E8A87C' },
+      linked: { l: 'Associé', bg: '#23383B', fg: '#6DD4B8' },
+      archived: { l: 'Archivé', bg: '#1C2230', fg: '#8B95A5' }
+    };
+    const term = st.q.trim().toLowerCase();
+    const inTab = (x) => st.tab === 'all' || x.status === st.tab;
+    const match = (x) => !term || (x.first + ' ' + x.last + ' ' + x.email).toLowerCase().includes(term);
+    const count = (s) => st.items.filter((x) => s === 'all' || x.status === s).length;
+    const shown = st.items.filter((x) => inTab(x) && match(x));
+    const selRaw = shown.find((x) => x.id === st.sel) || shown[0] || null;
+    const pend = count('pending');
+    const newCount = st.items.filter((x) => x.status === 'pending' && x.isNew).length;
+
+    const answers = (x) => [
+      { k: 'motif', t: 'Motif de consultation', qa: [{ q: 'Motif principal', a: x.motif }, { q: 'Objectifs recherchés', a: x.goal.charAt(0).toUpperCase() + x.goal.slice(1) + '.' }] },
+      { k: 'general', t: 'Informations générales', qa: [{ q: 'Profession et rythme de travail', a: x.id === 'eb' ? 'Cheffe de projet, beaucoup de réunions, écrans jusqu’à 20 h.' : 'Temps plein, horaires réguliers.' }, { q: 'Traitements, compléments ou suivis actuels', a: x.meds }] },
+      { k: 'sommeil', t: 'Sommeil et énergie', qa: [{ q: 'Qualité du sommeil', a: x.id === 'nl' ? 'Endormissement facile, réveil vers 4 h, rendormissement difficile.' : 'Sommeil léger, réveils fréquents.' }, { q: 'Niveau d’énergie', a: x.id === 'nl' ? 'Coup de fatigue fort vers 15 h.' : 'Correct le matin, en baisse le soir.' }] },
+      { k: 'alimentation', t: 'Alimentation et hydratation', qa: [{ q: 'Petit-déjeuner', a: 'Café et tartines, parfois rien.' }, { q: 'Hydratation', a: 'Environ 1 litre par jour, surtout du café et du thé.' }] }
+    ];
+
+    let d = null;
+    if (selRaw) {
+      const x = selRaw;
+      const s = STATUS[x.status];
+      const isPending = x.status === 'pending';
+      const hasMatch = isPending && !!x.match;
+      d = {
+        ...x, name: x.first + ' ' + x.last, ini: (x.first[0] + x.last[0]).toUpperCase(),
+        status: s.l, sbg: s.bg, sfg: s.fg,
+        isPending, isLinked: x.status === 'linked', isArchived: x.status === 'archived',
+        showMatch: hasMatch, matchFirst: x.match ? x.match.split(' ')[0] : '',
+        createBg: hasMatch ? 'transparent' : '#6DD4B8', createFg: hasMatch ? '#E8EDF4' : '#0A0E14', createBorder: hasMatch ? '1px solid #2A3140' : '0',
+        linkedText: 'Associé au dossier de ' + x.first + ' le ' + (x.linkedAt || 'aujourd’hui') + '. Les réponses ont complété son anamnèse.',
+        rubrics: RUB.map((t, i) => ({ t, bg: i < x.filled ? '#6DD4B8' : '#2A3140' })),
+        missing: RUB.slice(x.filled).join(', '),
+        hasMissing: x.filled < 13,
+        sections: answers(x).map((sec) => {
+          const open = !!st.open[sec.k];
+          return { ...sec, n: String(sec.qa.length), open, exp: open ? 'true' : 'false', rot: open ? 'rotate(180deg)' : 'none',
+            toggle: () => this.setState({ open: { ...this.state.open, [sec.k]: !this.state.open[sec.k] } }) };
+        })
+      };
+    }
+    const allOpen = d ? d.sections.every((s) => s.open) : false;
+
+    const CONS = [
+      { n: 'Amina Benali', e: 'amina.benali@exemple.fr', col: '#6DD4B8' },
+      { n: 'Hugo Martins', e: 'hugo.martins@exemple.fr', col: '#7B93DB' },
+      { n: 'Thomas Dubois', e: 'thomas.dubois@exemple.fr', col: '#D4A574' },
+      { n: 'Sophie Martin', e: 'sophie.martin@exemple.fr', col: '#A8E6CF' },
+      { n: 'Lucas Bernard', e: 'lucas.bernard@exemple.fr', col: '#7B93DB' },
+      { n: 'Camille Roche', e: 'camille.roche@exemple.fr', col: '#E8A5C6' },
+      { n: 'Robert Durand', e: 'robert.durand@exemple.fr', col: '#E8A87C' }
+    ];
+    const lterm = st.lq.trim().toLowerCase();
+    const doLink = (consName) => {
+      if (!selRaw) return;
+      const x = selRaw;
+      const undo = this.setStatus(x.id, 'linked', { linkedAt: 'aujourd’hui' });
+      this.setState({ linkOpen: false, pickC: null, lq: '' });
+      this.toastMsg('Questionnaire associé au dossier de ' + consName + ' · anamnèse complétée', undo);
+    };
+
+    return {
+      summary: pend > 0 ? pend + ' en attente' + (newCount ? ' · ' + newCount + ' nouveaux depuis hier' : '') + ' · remplis avant la première séance' : 'Aucun questionnaire en attente',
+      copyLabel: st.copied ? '✓ Lien copié' : 'Copier mon lien',
+      copyBg: st.copied ? '#23383B' : '#6DD4B8', copyFg: st.copied ? '#6DD4B8' : '#0A0E14',
+      copyLink: () => { this.setState({ copied: true }); clearTimeout(this._c); this._c = setTimeout(() => this.setState({ copied: false }), 2500); },
+      howOpen: st.howOpen,
+      closeHow: () => this.setState({ howOpen: false }),
+      how: [
+        { n: '1', t: 'Partagez votre lien', d: 'Sur votre site, en signature d’e-mail ou à la prise de rendez-vous. Il vous désigne déjà.' },
+        { n: '2', t: 'La personne le remplit', d: '13 rubriques, environ 15 minutes, sans créer de compte.' },
+        { n: '3', t: 'Vous créez le dossier', d: 'L’anamnèse est préremplie et l’accès à l’app est envoyé.' }
+      ],
+      tabs: [['pending', 'En attente'], ['linked', 'Associés'], ['archived', 'Archivés'], ['all', 'Tous']].map(([k, l]) => {
+        const on = st.tab === k;
+        return { l, c: String(count(k)), sel: on ? 'true' : 'false', bg: on ? '#23383B' : 'transparent', fg: on ? '#6DD4B8' : '#B8C1CF',
+          cbg: on ? '#6DD4B8' : '#2A3140', cfg: on ? '#0A0E14' : '#B8C1CF', pick: () => this.setState({ tab: k }) };
+      }),
+      q: st.q,
+      onQ: (e) => this.setState({ q: e.target.value }),
+      listEmpty: shown.length === 0,
+      emptyText: term ? 'Aucun questionnaire ne correspond à « ' + st.q + ' ».' : (st.tab === 'pending' ? 'Rien en attente. Les questionnaires remplis via votre lien arriveront ici.' : 'Aucun questionnaire dans cette catégorie.'),
+      list: shown.map((x) => {
+        const on = selRaw && x.id === selRaw.id;
+        const s = STATUS[x.status];
+        return { name: x.first + ' ' + x.last, ini: (x.first[0] + x.last[0]).toUpperCase(), col: x.col, when: x.when, motif: x.motif,
+          isNew: !!x.isNew && x.status === 'pending', status: s.l, sbg: s.bg, sfg: s.fg,
+          filled: String(x.filled), pct: Math.round(x.filled / 13 * 100) + '%',
+          cur: on ? 'true' : 'false', bg: on ? '#1C2230' : '#151A23', border: on ? '#6DD4B8' : '#2A3140',
+          pick: () => this.setState({ sel: x.id }) };
+      }),
+      hasSel: !!d,
+      d: d || {},
+      toggleAllLabel: allOpen ? 'Tout replier' : 'Tout déplier',
+      toggleAll: () => {
+        const o = {};
+        ['motif', 'general', 'sommeil', 'alimentation'].forEach((k) => { o[k] = !allOpen; });
+        this.setState({ open: o });
+      },
+      create: () => {
+        if (!selRaw) return;
+        const undo = this.setStatus(selRaw.id, 'linked', { linkedAt: 'aujourd’hui' });
+        this.toastMsg('Dossier de ' + selRaw.first + ' créé · code d’accès envoyé à ' + selRaw.email, undo);
+      },
+      linkMatch: () => selRaw && doLink(selRaw.match),
+      archive: () => {
+        if (!selRaw) return;
+        const undo = this.setStatus(selRaw.id, 'archived');
+        this.toastMsg('Questionnaire de ' + selRaw.first + ' archivé', undo);
+      },
+      restore: () => {
+        if (!selRaw) return;
+        const undo = this.setStatus(selRaw.id, 'pending');
+        this.toastMsg('Questionnaire remis en attente', undo);
+      },
+      openLink: () => this.setState({ linkOpen: true, pickC: selRaw && selRaw.match ? selRaw.match : null, lq: '' }),
+      closeLink: () => this.setState({ linkOpen: false, pickC: null, lq: '' }),
+      linkOpen: st.linkOpen,
+      lq: st.lq,
+      onLq: (e) => this.setState({ lq: e.target.value }),
+      cands: CONS.filter((c) => !lterm || (c.n + ' ' + c.e).toLowerCase().includes(lterm)).map((c) => {
+        const on = st.pickC === c.n;
+        return { ...c, ini: c.n.split(' ').map((w) => w[0]).join(''), same: !!selRaw && c.e === selRaw.email,
+          on: on ? 'true' : 'false', bg: on ? '#23383B' : 'transparent', border: on ? '#6DD4B8' : '#2A3140',
+          pick: () => this.setState({ pickC: c.n }) };
+      }),
+      lBg: st.pickC ? '#6DD4B8' : '#2A3140', lFg: st.pickC ? '#0A0E14' : '#8B95A5',
+      confirmLink: () => { if (st.pickC) doLink(st.pickC); },
+      hasToast: !!st.toast,
+      toast: st.toast,
+      canUndo: !!st.undo,
+      undo: () => { if (this.state.undo) this.state.undo(); this.setState({ toast: '', undo: null }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

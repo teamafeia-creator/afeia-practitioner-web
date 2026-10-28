@@ -8,7 +8,7 @@ const base = process.env.NEXT_PUBLIC_APP_URL || 'https://afeia.fr';
  * sont pas énumérées ici ; elles peuvent être ajoutées dynamiquement plus tard.)
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ['/welcome', '/login', '/signup', '/questionnaire'];
+  const routes = ['/decouvrir', '/welcome', '/login', '/signup', '/questionnaire'];
   return routes.map((route) => ({
     url: `${base}${route}`,
     changeFrequency: 'monthly',

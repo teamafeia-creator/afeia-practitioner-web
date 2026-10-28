@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Essayer Afeia</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,500;1,8..60,400&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height: 2700px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; max-width: 1200px; margin: 0 auto; padding: 20px 24px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div style="width: 40px; height: 40px; border-radius: 12px; background: #23383B; display: flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+      </div>
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 500">Afeia</span>
+    </div>
+    <span style="flex: 1"></span>
+    <a href="Connexion.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; color: #E8EDF4; text-decoration: none; font-size: 14px">Se connecter</a>
+    <a href="Inscription.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 10px; background: #6DD4B8; color: #0A0E14; text-decoration: none; font-size: 14px; font-weight: 600">Créer mon compte</a>
+  </header>
+
+  <section style="max-width: 1200px; margin: 0 auto; padding: 48px 24px 32px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center">
+    <span style="font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 999px; border: 1px solid #2A3140; color: #C9CFDA">Pour les praticiens</span>
+    <h1 style="margin: 0; max-width: 820px; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: clamp(36px, 5vw, 60px); line-height: 1.08; letter-spacing: -0.01em">Votre cabinet, de la première séance au suivi entre deux rendez-vous</h1>
+    <p style="margin: 0; max-width: 620px; font-size: 18px; line-height: 1.55; color: #8B95A5">Dossiers, anamnèse, conseillanciers, messages et données de bien-être, réunis dans un seul espace.</p>
+  </section>
+
+  <section aria-label="Vidéo de présentation" style="max-width: 1008px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+    <sc-if value="{{hasVideo}}" hint-placeholder-val="{{false}}">
+      <video src="{{videoSrc}}" controls="{{true}}" playsInline="{{true}}" style="width: 100%; aspect-ratio: 16 / 9; border-radius: 18px; background: #151A23; border: 1px solid #2A3140; display: block"></video>
+    </sc-if>
+
+    <sc-if value="{{noVideo}}" hint-placeholder-val="{{true}}">
+      <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; background: #0A0E14; border: 1px solid #2A3140">
+        <sc-for list="{{scenes}}" as="s" hint-placeholder-count="1">
+          <sc-if value="{{s.active}}" hint-placeholder-val="{{true}}">
+            <div inert="true" aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; pointer-events: none">
+              <div style="position: absolute; top: 0; left: 0; width: 1440px; height: 1120px; transform-origin: 0 0; transform: scale({{zoom}}) translate({{s.dx}}, {{s.dy}}); transition: transform 4s linear">
+                <sc-if value="{{s.isMain}}" hint-placeholder-val="{{true}}"><dc-import name="Main" hint-size="1440px,1120px"></dc-import></sc-if>
+                <sc-if value="{{s.isRevue}}" hint-placeholder-val="{{false}}"><dc-import name="RevueMatin" hint-size="1440px,1120px"></dc-import></sc-if>
+                <sc-if value="{{s.isAnam}}" hint-placeholder-val="{{false}}"><dc-import name="Anamnese" hint-size="1440px,1400px"></dc-import></sc-if>
+                <sc-if value="{{s.isConseil}}" hint-placeholder-val="{{false}}"><dc-import name="Conseillancier" hint-size="1440px,1180px"></dc-import></sc-if>
+              </div>
+            </div>
+            <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 60px 28px 24px; background: linear-gradient(to top, rgba(10, 14, 20, 0.96) 35%, rgba(10, 14, 20, 0))">
+              <span style="font-size: 13px; color: #6DD4B8; font-weight: 600">{{s.step}}</span>
+              <p style="margin: 6px 0 0; font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(20px, 2.6vw, 30px); line-height: 1.25">{{s.caption}}</p>
+            </div>
+          </sc-if>
+        </sc-for>
+
+        <sc-if value="{{showPoster}}" hint-placeholder-val="{{true}}">
+          <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(10, 14, 20, 0.72)">
+            <button type="button" onClick="{{toggle}}" aria-label="Lire la vidéo de présentation" style="width: 84px; height: 84px; border-radius: 42px; border: 0; background: #6DD4B8; color: #0A0E14; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 0 10px rgba(109, 212, 184, 0.15)">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+            </button>
+            <span style="font-size: 16px; font-weight: 500">Découvrir Afeia · {{durLabel}}</span>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px">
+        <button type="button" onClick="{{toggle}}" aria-label="{{toggleLabel}}" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2A3140; background: #151A23; color: #E8EDF4; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none">
+          <sc-if value="{{playing}}" hint-placeholder-val="{{false}}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"></path></svg>
+          </sc-if>
+          <sc-if value="{{paused}}" hint-placeholder-val="{{true}}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+          </sc-if>
+        </button>
+        <div role="progressbar" aria-label="Progression de la vidéo" aria-valuemin="0" aria-valuemax="{{dur}}" aria-valuenow="{{tRound}}" style="flex: 1; height: 6px; border-radius: 3px; background: #2A3140; overflow: hidden">
+          <div style="height: 100%; width: {{pct}}; background: #6DD4B8; transition: width 250ms linear"></div>
+        </div>
+        <span style="font-size: 13px; color: #8B95A5; font-variant-numeric: tabular-nums; flex: none">{{timeLabel}}</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px">
+        <sc-for list="{{chapters}}" as="c" hint-placeholder-count="4">
+          <button type="button" onClick="{{c.go}}" aria-current="{{c.cur}}" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1px solid {{c.border}}; background: {{c.bg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+            <span style="font-size: 12px; color: #8B95A5; font-variant-numeric: tabular-nums">{{c.at}}</span>
+            <span style="font-size: 14px; font-weight: 500">{{c.l}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 12px; color: #8B95A5">Maquette animée réalisée à partir des écrans : elle sera remplacée par la vidéo finale.</p>
+    </sc-if>
+  </section>
+
+  <section style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 32px">
+    <div style="display: flex; flex-direction: column; gap: 10px; max-width: 640px">
+      <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 36px; line-height: 1.15">Faites le tour de l'espace praticien</h2>
+      <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #8B95A5">Aperçus non cliquables, remplis avec un cabinet imaginaire. Aucune donnée ne concerne une personne réelle.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 28px">
+      <sc-for list="{{previews}}" as="p" hint-placeholder-count="4">
+        <figure style="margin: 0; display: flex; flex-direction: column; gap: 14px">
+          <div style="position: relative; width: 100%; height: {{p.boxH}}; border-radius: 16px; overflow: hidden; background: #0A0E14; border: 1px solid #2A3140">
+            <div inert="true" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 1440px; height: {{p.h}}; transform-origin: 0 0; transform: scale(0.38); pointer-events: none; user-select: none">
+              <sc-if value="{{p.isConsultants}}" hint-placeholder-val="{{true}}"><dc-import name="Consultants" hint-size="1440px,1120px"></dc-import></sc-if>
+              <sc-if value="{{p.isBague}}" hint-placeholder-val="{{false}}"><dc-import name="Bague" hint-size="1440px,1180px"></dc-import></sc-if>
+              <sc-if value="{{p.isMessages}}" hint-placeholder-val="{{false}}"><dc-import name="Messages" hint-size="1440px,1000px"></dc-import></sc-if>
+              <sc-if value="{{p.isAgenda}}" hint-placeholder-val="{{false}}"><dc-import name="Agenda" hint-size="1440px,1000px"></dc-import></sc-if>
+            </div>
+            <span style="position: absolute; top: 12px; right: 12px; font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: rgba(10, 14, 20, 0.85); border: 1px solid #2A3140; color: #C9CFDA">Aperçu · données fictives</span>
+          </div>
+          <figcaption style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 18px; font-weight: 600">{{p.t}}</span>
+            <span style="font-size: 15px; line-height: 1.5; color: #8B95A5">{{p.d}}</span>
+          </figcaption>
+        </figure>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="max-width: 1200px; margin: 0 auto; padding: 72px 24px 96px; box-sizing: border-box">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px; padding: 40px; border-radius: 20px; background: #151A23; border: 1px solid #2A3140">
+      <div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 8px">
+        <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 30px">Prête à l'essayer avec vos consultants ?</h2>
+        <p style="margin: 0; font-size: 16px; color: #8B95A5">Créez votre espace, importez vos premiers dossiers, invitez un consultant.</p>
+      </div>
+      <a href="Inscription.dc.html" style="display: inline-flex; align-items: center; height: 50px; padding: 0 22px; border-radius: 10px; background: #6DD4B8; color: #0A0E14; text-decoration: none; font-size: 15px; font-weight: 600">Créer mon compte</a>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"videoSrc":{"editor":"text","default":""},"$preview":{"width":1440,"height":2700}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { t: 0, playing: false, started: false };
+    this.timer = null;
+  }
+  componentWillUnmount() { this.stop(); }
+  stop() { if (this.timer) { clearInterval(this.timer); this.timer = null; } }
+  start() {
+    this.stop();
+    const DUR = 24;
+    this.timer = setInterval(() => {
+      const t = Math.round((this.state.t + 0.25) * 100) / 100;
+      if (t >= DUR) { this.stop(); this.setState({ t: DUR, playing: false }); }
+      else this.setState({ t });
+    }, 250);
+  }
+  renderVals() {
+    const DUR = 24, SEG = 6;
+    const { t, playing, started } = this.state;
+    const src = (this.props.videoSrc ?? '').trim();
+    const idx = Math.min(3, Math.floor(t / SEG));
+    const fmt = (s) => '0:' + String(Math.floor(s)).padStart(2, '0');
+    const defs = [
+      { k: 'Main', l: 'Votre journée', caption: 'Votre journée en un coup d’œil : séances, relances, messages.', from: ['0px', '0px'], to: ['-120px', '-40px'] },
+      { k: 'RevueMatin', l: 'La revue du matin', caption: 'Chaque matin, Afeia repère les consultants qui ont besoin de vous.', from: ['-200px', '-80px'], to: ['-260px', '-200px'] },
+      { k: 'Anamnese', l: 'Dossiers clairs', caption: 'Des dossiers lisibles, avec les points clés en tête.', from: ['-240px', '-160px'], to: ['-240px', '-420px'] },
+      { k: 'Conseillancier', l: 'Conseillanciers', caption: 'Un conseillancier vérifié et partagé en quelques minutes.', from: ['-220px', '-120px'], to: ['-300px', '-220px'] }
+    ];
+    const local = t - idx * SEG;
+    const moving = playing && local > 0.1;
+    const restart = () => { this.setState({ t: 0, playing: true, started: true }); this.start(); };
+    return {
+      videoSrc: src,
+      hasVideo: !!src,
+      noVideo: !src,
+      zoom: 0.67,
+      scenes: defs.map((d, i) => ({
+        active: i === idx,
+        isMain: d.k === 'Main', isRevue: d.k === 'RevueMatin', isAnam: d.k === 'Anamnese', isConseil: d.k === 'Conseillancier',
+        dx: (moving ? d.to : d.from)[0], dy: (moving ? d.to : d.from)[1],
+        step: (i + 1) + ' / 4 · ' + d.l,
+        caption: d.caption
+      })),
+      showPoster: !started || (!playing && t >= DUR),
+      playing, paused: !playing,
+      toggleLabel: playing ? 'Mettre en pause' : 'Lire',
+      toggle: () => {
+        if (this.state.playing) { this.stop(); this.setState({ playing: false }); return; }
+        if (this.state.t >= DUR) { restart(); return; }
+        this.setState({ playing: true, started: true });
+        this.start();
+      },
+      dur: DUR, tRound: Math.floor(t),
+      pct: Math.round((t / DUR) * 100) + '%',
+      timeLabel: fmt(t) + ' / ' + fmt(DUR),
+      durLabel: fmt(DUR),
+      chapters: defs.map((d, i) => ({
+        l: d.l, at: fmt(i * SEG),
+        cur: i === idx && started ? 'true' : 'false',
+        bg: i === idx && started ? '#1C2230' : 'transparent',
+        border: i === idx && started ? '#2F5A50' : '#2A3140',
+        go: () => { this.setState({ t: i * SEG, playing: true, started: true }); this.start(); }
+      })),
+      previews: [
+        { t: 'Tous vos consultants', d: 'Offre, dernière séance, prochain rendez-vous et relances, sur une seule liste.', isConsultants: true, h: '1120px', boxH: '340px' },
+        { t: 'Sommeil et cycle, sans effort', d: 'Avec un objet connecté, les nuits remontent chaque matin, croisées avec le cycle.', isBague: true, h: '1180px', boxH: '340px' },
+        { t: 'Les échanges au même endroit', d: 'Messages, fiches à partager et réponses types pour les questions hors de votre champ.', isMessages: true, h: '1000px', boxH: '340px' },
+        { t: 'Un agenda pensé pour le cabinet', d: 'Bilans, suivis au cabinet ou en visio, et liste d’attente.', isAgenda: true, h: '1000px', boxH: '340px' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

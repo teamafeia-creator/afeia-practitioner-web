@@ -28,7 +28,7 @@ const slides: Slide[] = [
     id: 1,
     title: 'Bienvenue sur AFEIA',
     description:
-      'La plateforme qui connecte les naturopathes à leurs consultants pour un accompagnement holistique et personnalisé.',
+      'La plateforme qui connecte les praticiens à leurs consultants pour un accompagnement holistique et personnalisé.',
     icon: <Sparkles className="w-8 h-8 text-white" />,
     gradient: 'from-sage to-teal-deep',
     illustration: (

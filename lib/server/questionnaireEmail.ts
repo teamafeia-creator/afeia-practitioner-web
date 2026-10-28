@@ -42,7 +42,7 @@ export function buildQuestionnaireCodeEmail({
         <div style="background-color: #F5EFE7; padding: 30px; border-radius: 0 0 8px 8px;">
           <p style="color: #3D3D3D; font-size: 16px; line-height: 1.6;">${greetingName}</p>
           <p style="color: #3D3D3D; font-size: 16px; line-height: 1.6;">
-            Votre naturopathe vous a créé un compte AFEIA pour suivre votre accompagnement naturopathique.
+            Votre praticien vous a créé un compte AFEIA pour suivre votre accompagnement naturopathique.
           </p>
           <p style="color: #3D3D3D; font-size: 16px; line-height: 1.6; margin-bottom: 8px;">
             <strong>Votre code d'accès à 6 chiffres :</strong>
@@ -83,7 +83,7 @@ export function buildQuestionnaireCodeEmail({
 
 ${greetingName}
 
-Votre naturopathe vous a créé un compte AFEIA pour suivre votre accompagnement naturopathique.
+Votre praticien vous a créé un compte AFEIA pour suivre votre accompagnement naturopathique.
 
 Votre code d'accès à 6 chiffres :
 

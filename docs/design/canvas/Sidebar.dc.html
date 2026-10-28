@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Navigation praticien</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+</style>
+</helmet>
+<nav aria-label="Navigation principale" style="width: 100%; min-height: 1120px; box-sizing: border-box; background: #151A23; border-right: 1px solid #2A3140; display: flex; flex-direction: column; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="display: flex; align-items: center; gap: 12px; padding: 20px 20px 18px; border-bottom: 1px solid #2A3140">
+    <div style="width: 40px; height: 40px; border-radius: 12px; background: #23383B; display: flex; align-items: center; justify-content: center">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 600; letter-spacing: 0.01em">Afeia</span>
+      <span style="font-size: 12px; color: #8B95A5">Espace praticien</span>
+    </div>
+  </div>
+
+  <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 18px 12px">
+    <sc-for list="{{sections}}" as="sec" hint-placeholder-count="3">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8B95A5; padding: 0 12px 6px">{{sec.label}}</span>
+        <sc-for list="{{sec.items}}" as="item" hint-placeholder-count="3">
+          <a href="{{item.href}}" aria-current="{{item.current}}" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 500; background: {{item.bg}}; color: {{item.fg}}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.d}}"></path></svg>
+            <span style="flex: 1">{{item.label}}</span>
+            <sc-if value="{{item.badge}}" hint-placeholder-val="{{false}}">
+              <span style="min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box; border-radius: 11px; background: #E8A87C; color: #0A0E14; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{item.badge}}</span>
+            </sc-if>
+          </a>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-top: 1px solid #2A3140">
+    <div style="width: 36px; height: 36px; border-radius: 18px; background: #E8A87C; color: #0A0E14; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center">CM</div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+      <span style="font-size: 14px; font-weight: 500">Claire Martin</span>
+      <span style="font-size: 12px; color: #8B95A5">Praticienne</span>
+    </div>
+    <a href="#" aria-label="Paramètres" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #8B95A5; border-radius: 10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </a>
+  </div>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["dashboard","revue","consultants","agenda","messages","questionnaires","bibliotheque","facturation","stats"],"default":"dashboard"},"$preview":{"width":248,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = this.props.active ?? 'dashboard';
+    const P = {
+      dashboard: 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z',
+      revue: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41',
+      consultants: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+      agenda: 'M3 4h18v18H3zM16 2v4M8 2v4M3 10h18',
+      messages: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+      questionnaires: 'M9 2h6v4H9zM16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M8 12h8M8 16h5',
+      bibliotheque: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h8',
+      facturation: 'M4 2v20l3-2 3 2 3-2 3 2 3-2 3 2V2l-3 2-3-2-3 2-3-2-3 2zM8 8h8M8 12h8M8 16h5',
+      stats: 'M3 3v18h18M8 17V11M13 17V7M18 17v-4'
+    };
+    const mk = (key, label, href, badge) => ({
+      label, href, badge: badge || false, d: P[key],
+      current: key === active ? 'page' : 'false',
+      bg: key === active ? '#23383B' : 'transparent',
+      fg: key === active ? '#6DD4B8' : '#E8EDF4'
+    });
+    return {
+      sections: [
+        { label: 'Suivi', items: [
+          mk('dashboard', 'Tableau de bord', 'Main.dc.html'),
+          mk('revue', 'Revue du matin', 'RevueMatin.dc.html', '4'),
+          mk('consultants', 'Consultants', 'Consultants.dc.html'),
+          mk('agenda', 'Agenda', 'Agenda.dc.html')
+        ]},
+        { label: 'Outils', items: [
+          mk('messages', 'Messages', 'Messages.dc.html', '5'),
+          mk('questionnaires', 'Questionnaires', 'Questionnaires.dc.html', '3'),
+          mk('bibliotheque', 'Bibliothèque', 'Bibliotheque.dc.html')
+        ]},
+        { label: 'Gestion', items: [
+          mk('facturation', 'Facturation', 'Facturation.dc.html'),
+          mk('stats', 'Statistiques', 'Statistiques.dc.html')
+        ]}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

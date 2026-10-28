@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Fiche consultant — Synthèse</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1180px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="consultants" hint-size="100%,1180px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px 40px; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px">
+    <div style="max-width: 1180px; width: 100%; display: flex; flex-direction: column; gap: 22px">
+      <a href="#" style="font-size: 14px; text-decoration: none">← Consultants</a>
+
+      <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 20px">
+        <span style="width: 72px; height: 72px; border-radius: 36px; background: #6DD4B8; color: #0A0E14; font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">CD</span>
+        <div style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 8px">
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 34px; line-height: 1.1">Camille Dupont</h1>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: #8B95A5">
+            <span>34 ans</span><span>Lyon</span><span>Suivie depuis mars 2026</span><span>7 séances</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <span style="font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: #23383B; color: #6DD4B8">Compte activé</span>
+            <span style="font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: #1F2640; color: #A9B8EC">Objet connecté</span>
+            <span style="font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: #3A2733; color: #F0C2D8">Suivi de cycle</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px">
+          <a href="#" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 14px">Exporter le dossier</a>
+          <a href="#" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 14px">Message</a>
+          <a href="#" style="display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 10px; background: #6DD4B8; color: #0A0E14; text-decoration: none; font-size: 14px; font-weight: 600">Démarrer la séance</a>
+        </div>
+      </section>
+
+      <nav aria-label="Sections du dossier" style="display: flex; flex-wrap: wrap; gap: 6px 22px; padding-bottom: 12px; border-bottom: 1px solid #2A3140">
+        <sc-for list="{{tabGroups}}" as="g" hint-placeholder-count="4">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px">
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8B95A5; margin-right: 6px">{{g.l}}</span>
+            <sc-for list="{{g.tabs}}" as="t" hint-placeholder-count="3">
+              <a href="{{t.href}}" aria-current="{{t.cur}}" style="display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 8px; font-size: 14px; font-weight: 500; text-decoration: none; background: {{t.bg}}; color: {{t.fg}}">{{t.l}}</a>
+            </sc-for>
+          </div>
+        </sc-for>
+      </nav>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <div style="flex: 2 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+          <section style="display: flex; flex-direction: column; gap: 14px; padding: 22px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <div style="display: flex; justify-content: space-between; align-items: baseline">
+              <h2 style="margin: 0; font-size: 17px; font-weight: 600">Motif & objectifs</h2>
+              <a href="#" style="font-size: 14px; text-decoration: none">Modifier</a>
+            </div>
+            <p style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 18px; line-height: 1.55">« Je dors mal depuis la reprise du travail et je n'ai plus d'énergie l'après-midi. »</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px">
+              <sc-for list="{{goals}}" as="g" hint-placeholder-count="3">
+                <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 12px; background: #1C2230">
+                  <span style="font-size: 14px; font-weight: 500">{{g.l}}</span>
+                  <span style="font-size: 13px; color: {{g.c}}">{{g.s}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+
+          <section style="display: flex; flex-direction: column; gap: 16px; padding: 22px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+              <h2 style="margin: 0; font-size: 17px; font-weight: 600">Observance du conseillancier</h2>
+              <span style="font-size: 13px; color: #8B95A5">Déclarée dans le journal · 14 derniers jours</span>
+            </div>
+            <sc-for list="{{adherence}}" as="a" hint-placeholder-count="4">
+              <div style="display: grid; grid-template-columns: 120px minmax(0, 1fr) 48px; align-items: center; gap: 14px">
+                <span style="font-size: 14px">{{a.l}}</span>
+                <div style="height: 10px; border-radius: 5px; background: #2A3140"><div style="height: 100%; width: {{a.w}}; border-radius: 5px; background: {{a.c}}"></div></div>
+                <span style="font-size: 14px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums">{{a.w}}</span>
+              </div>
+            </sc-for>
+            <p style="margin: 0; font-size: 13px; color: #8B95A5">Le mouvement décroche depuis la reprise du travail ; les plantes sont bien suivies.</p>
+          </section>
+
+          <section style="display: flex; flex-direction: column; gap: 4px; padding: 22px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <h2 style="margin: 0 0 12px; font-size: 17px; font-weight: 600">Parcours</h2>
+            <sc-for list="{{timeline}}" as="e" hint-placeholder-count="5">
+              <div style="display: flex; gap: 14px">
+                <div style="display: flex; flex-direction: column; align-items: center; width: 12px">
+                  <span style="width: 10px; height: 10px; border-radius: 5px; background: {{e.c}}; margin-top: 5px"></span>
+                  <span style="flex: 1; width: 2px; background: #2A3140; min-height: 22px"></span>
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 2px; padding-bottom: 14px">
+                  <span style="font-size: 13px; color: #8B95A5">{{e.d}}</span>
+                  <span style="font-size: 14px">{{e.t}}</span>
+                </div>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+
+        <aside style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+          <a href="Bague.dc.html" style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px; text-decoration: none; color: #E8EDF4">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <h2 style="margin: 0; font-size: 16px; font-weight: 600">Objet connecté · cette semaine</h2>
+              <span style="font-size: 13px; color: #6DD4B8">Détails →</span>
+            </div>
+            <sc-for list="{{ring}}" as="r" hint-placeholder-count="3">
+              <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid #2A3140">
+                <span style="font-size: 14px; color: #8B95A5">{{r.l}}</span>
+                <span style="display: flex; align-items: baseline; gap: 8px">
+                  <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-variant-numeric: tabular-nums">{{r.v}}</span>
+                  <span style="font-size: 12px; font-weight: 500; color: {{r.dc}}">{{r.d}}</span>
+                </span>
+              </div>
+            </sc-for>
+            <span style="font-size: 12px; color: #8B95A5">Phase actuelle : lutéale (J22)</span>
+          </a>
+
+          <div style="display: flex; flex-direction: column; gap: 10px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">Prochain rendez-vous</h2>
+            <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px">Aujourd'hui, 11 h 00</span>
+            <span style="font-size: 14px; color: #8B95A5">Suivi J+30 · 45 min · Visio</span>
+            <a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 44px; border-radius: 10px; background: #23383B; color: #6DD4B8; text-decoration: none; font-size: 14px; font-weight: 600; margin-top: 4px">Préparer la séance</a>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <h2 style="margin: 0; font-size: 16px; font-weight: 600">Notes privées</h2>
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #8B95A5">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+                Invisibles pour Camille
+              </span>
+            </div>
+            <p style="margin: 0; font-size: 14px; line-height: 1.55; padding: 12px; border-radius: 10px; background: #1C2230">Très réceptive aux routines du soir. Préfère des consignes courtes. Ne pas surcharger le conseillancier.</p>
+            <span style="font-size: 12px; color: #8B95A5">Séance du 23 septembre</span>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tab = (l, href, active) => ({ l, href, cur: active ? 'page' : 'false', bg: active ? '#23383B' : 'transparent', fg: active ? '#6DD4B8' : '#E8EDF4' });
+    return {
+      tabGroups: [
+        { l: 'Identité', tabs: [tab('Synthèse', 'Consultant.dc.html', true), tab('Dossier', '#'), tab('Anamnèse', '#'), tab('Bilan de terrain', '#')] },
+        { l: 'Suivi', tabs: [tab('Conseillancier', 'Conseillancier.dc.html'), tab('Rendez-vous', '#'), tab('Journal', '#'), tab('Cycle', 'Bague.dc.html')] },
+        { l: 'Données', tabs: [tab('Objet connecté', 'Bague.dc.html'), tab('Schémas', '#'), tab('Documents', '#')] },
+        { l: 'Échanges', tabs: [tab('Notes', '#'), tab('Messages', '#')] }
+      ],
+      goals: [
+        { l: 'Retrouver 7 h de sommeil', s: 'En cours · 6 h 02 cette semaine', c: '#E8A87C' },
+        { l: 'Énergie stable l’après-midi', s: 'En progrès · 3 jours sur 5', c: '#6DD4B8' },
+        { l: 'Digestion plus légère', s: 'Atteint en août', c: '#6DD4B8' }
+      ],
+      adherence: [
+        { l: 'Plantes', w: '90%', c: '#6DD4B8' },
+        { l: 'Hydratation', w: '80%', c: '#6DD4B8' },
+        { l: 'Respiration', w: '60%', c: '#7B93DB' },
+        { l: 'Mouvement', w: '45%', c: '#E8A87C' }
+      ],
+      timeline: [
+        { d: '20 oct.', t: 'Avis sur le conseillancier : réveils nocturnes signalés sur le rituel du soir', c: '#E8A87C' },
+        { d: '23 sept.', t: 'Séance de suivi · conseillancier v3 partagé', c: '#6DD4B8' },
+        { d: '2 sept.', t: 'Objet connecté appairé', c: '#7B93DB' },
+        { d: '14 août', t: 'Objectif « digestion » atteint', c: '#6DD4B8' },
+        { d: '12 mars', t: 'Bilan initial · anamnèse', c: '#8B95A5' }
+      ],
+      ring: [
+        { l: 'Sommeil moyen', v: '6 h 02', d: '−1 h 18', dc: '#E8A87C' },
+        { l: 'VFC nocturne', v: '41 ms', d: '−4 ms', dc: '#E8A87C' },
+        { l: 'FC au repos', v: '58 bpm', d: 'stable', dc: '#8B95A5' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

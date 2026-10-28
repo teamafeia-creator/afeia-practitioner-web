@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Fiche consultant — Objet connecté et cycle</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1180px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="consultants" hint-size="100%,1180px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px 40px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px">
+        <a href="Consultant.dc.html" style="font-size: 14px; text-decoration: none">← Camille Dupont</a>
+        <span style="flex: 1"></span>
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #8B95A5">
+          <span style="width: 8px; height: 8px; border-radius: 4px; background: #6DD4B8"></span>
+          Objet connecté synchronisé il y a 2 h
+        </span>
+      </div>
+
+      <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 34px; line-height: 1.1">Objet connecté & cycle</h1>
+          <p style="margin: 0; font-size: 15px; color: #8B95A5">Les nuits de Camille, lues au regard de son cycle.</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px">
+          <div role="group" aria-label="Indicateur" style="display: flex; padding: 4px; gap: 4px; background: #151A23; border: 1px solid #2A3140; border-radius: 12px">
+            <sc-for list="{{metricBtns}}" as="m" hint-placeholder-count="3">
+              <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 0; font-size: 14px; font-weight: 500; cursor: pointer; background: {{m.bg}}; color: {{m.fg}}">{{m.l}}</button>
+            </sc-for>
+          </div>
+          <div role="group" aria-label="Période" style="display: flex; padding: 4px; gap: 4px; background: #151A23; border: 1px solid #2A3140; border-radius: 12px">
+            <sc-for list="{{periodBtns}}" as="p" hint-placeholder-count="2">
+              <button type="button" aria-pressed="{{p.pressed}}" onClick="{{p.pick}}" style="height: 40px; padding: 0 14px; border-radius: 8px; border: 0; font-size: 14px; font-weight: 500; cursor: pointer; background: {{p.bg}}; color: {{p.fg}}">{{p.l}}</button>
+            </sc-for>
+          </div>
+        </div>
+      </section>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+        <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; background: #151A23; border: 1px solid #2A3140; border-radius: 14px">
+            <span style="font-size: 13px; color: #8B95A5">{{k.l}}</span>
+            <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 28px; font-variant-numeric: tabular-nums">{{k.v}}</span>
+            <span style="font-size: 12px; font-weight: 500; color: {{k.dc}}">{{k.d}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <section style="display: flex; flex-direction: column; gap: 14px; padding: 22px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px">
+          <h2 style="margin: 0; font-size: 17px; font-weight: 600">{{chartTitle}}</h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #8B95A5">
+            <sc-for list="{{legend}}" as="lg" hint-placeholder-count="4">
+              <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 12px; height: 8px; border-radius: 2px; background: {{lg.c}}"></span>{{lg.l}}</span>
+            </sc-for>
+          </div>
+        </div>
+        <svg viewBox="0 0 900 260" width="100%" role="img" aria-label="{{chartAria}}" style="display: block; overflow: visible">
+          <sc-for list="{{bands}}" as="b" hint-placeholder-count="5">
+            <rect x="{{b.x}}" y="0" width="{{b.w}}" height="12" rx="3" fill="{{b.c}}"></rect>
+          </sc-for>
+          <line x1="40" y1="{{refY}}" x2="900" y2="{{refY}}" stroke="#8B95A5" stroke-dasharray="4 4" stroke-width="1"></line>
+          <text x="896" y="{{refLabelY}}" text-anchor="end" fill="#8B95A5" font-size="11" font-family="Inter, sans-serif">{{refLabel}}</text>
+          <sc-for list="{{bars}}" as="d" hint-placeholder-count="30">
+            <rect x="{{d.x}}" y="{{d.y}}" width="{{d.w}}" height="{{d.h}}" rx="3" fill="{{d.c}}"></rect>
+          </sc-for>
+          <sc-for list="{{ticks}}" as="t" hint-placeholder-count="4">
+            <text x="{{t.x}}" y="256" text-anchor="middle" fill="#8B95A5" font-size="11" font-family="Inter, sans-serif">{{t.l}}</text>
+          </sc-for>
+          <sc-for list="{{yTicks}}" as="y" hint-placeholder-count="3">
+            <text x="0" y="{{y.y}}" fill="#8B95A5" font-size="11" font-family="Inter, sans-serif">{{y.l}}</text>
+          </sc-for>
+        </svg>
+        <p style="margin: 0; font-size: 14px; color: #E8EDF4; padding: 12px 14px; border-radius: 10px; background: #1C2230">{{insight}}</p>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+        <section style="flex: 2 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 22px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px">
+            <h2 style="margin: 0; font-size: 17px; font-weight: 600">Ressentis déclarés × phase</h2>
+            <span style="font-size: 13px; color: #8B95A5">3 derniers cycles</span>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; min-width: 480px; border-collapse: collapse; font-size: 14px">
+              <thead>
+                <tr>
+                  <th scope="col" style="text-align: left; font-weight: 500; color: #8B95A5; padding: 8px 0">Ressenti</th>
+                  <th scope="col" style="font-weight: 500; color: #8B95A5; padding: 8px">Menstruelle</th>
+                  <th scope="col" style="font-weight: 500; color: #8B95A5; padding: 8px">Folliculaire</th>
+                  <th scope="col" style="font-weight: 500; color: #8B95A5; padding: 8px">Ovulatoire</th>
+                  <th scope="col" style="font-weight: 500; color: #8B95A5; padding: 8px">Lutéale</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{corr}}" as="r" hint-placeholder-count="4">
+                  <tr style="border-top: 1px solid #2A3140">
+                    <th scope="row" style="text-align: left; font-weight: 500; padding: 10px 0">{{r.l}}</th>
+                    <sc-for list="{{r.cells}}" as="c" hint-placeholder-count="4">
+                      <td style="padding: 8px; text-align: center">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 30px; border-radius: 8px; background: {{c.bg}}; color: {{c.fg}}; font-size: 12px; font-weight: 600">{{c.l}}</span>
+                      </td>
+                    </sc-for>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7B93DB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">Cadre d'usage</h2>
+          </div>
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #8B95A5">Indicateurs de bien-être issus d'un objet grand public. Ils éclairent l'accompagnement ; ils ne posent aucun diagnostic et ne servent ni à la contraception ni à la prédiction de fertilité.</p>
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #8B95A5">La phase affichée est estimée à partir des dates de règles saisies par Camille.</p>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { metric: 'sleep', days: 30 };
+  }
+  series(metric, n) {
+    const out = [];
+    for (let i = 0; i < 30; i++) {
+      const wob = Math.sin(i * 1.7) * 0.5 + Math.cos(i * 0.9) * 0.3;
+      const late = i >= 25 ? (i - 24) : 0;
+      if (metric === 'sleep') out.push(Math.round((7.3 + wob * 0.6 - late * 0.26) * 10) / 10);
+      else if (metric === 'hrv') out.push(Math.round(46 + wob * 4 - (i >= 22 ? (i - 21) * 0.9 : 0)));
+      else out.push(Math.round(57 + wob * 1.5 + (i >= 24 ? 1 : 0)));
+    }
+    return out.slice(30 - n);
+  }
+  phaseOf(i) {
+    const cd = ((i - 29 + 21) % 28 + 28) % 28 + 1;
+    if (cd <= 5) return 'm';
+    if (cd <= 13) return 'f';
+    if (cd <= 16) return 'o';
+    return 'l';
+  }
+  renderVals() {
+    const { metric, days } = this.state;
+    const PC = { m: '#E57B7B', f: '#6DD4B8', o: '#D4A574', l: '#B89FD9' };
+    const M = {
+      sleep: { l: 'Sommeil', unit: 'h', lo: 4, hi: 9, ref: 7.3, refL: 'moyenne 30 j · 7 h 18', c: '#6DD4B8', title: 'Durée de sommeil par nuit', fmt: (v) => v + ' h' },
+      hrv: { l: 'VFC', unit: 'ms', lo: 30, hi: 55, ref: 45, refL: 'moyenne 30 j · 45 ms', c: '#7B93DB', title: 'Variabilité cardiaque nocturne', fmt: (v) => v + ' ms' },
+      hr: { l: 'FC repos', unit: 'bpm', lo: 50, hi: 64, ref: 57, refL: 'moyenne 30 j · 57 bpm', c: '#E8A87C', title: 'Fréquence cardiaque au repos', fmt: (v) => v + ' bpm' }
+    };
+    const m = M[metric];
+    const vals = this.series(metric, days);
+    const x0 = 40, W = 860, top = 26, H = 200;
+    const step = W / vals.length;
+    const bw = Math.max(4, step * 0.62);
+    const yOf = (v) => top + H - ((v - m.lo) / (m.hi - m.lo)) * H;
+    const offset = 30 - days;
+    const bars = vals.map((v, i) => {
+      const y = Math.round(yOf(v));
+      const isLate = metric === 'sleep' ? v < 6.5 : metric === 'hrv' ? v < 41 : false;
+      return { x: Math.round(x0 + i * step + (step - bw) / 2), y, w: Math.round(bw), h: Math.max(2, top + H - y), c: isLate ? '#E8A87C' : m.c };
+    });
+    const bands = [];
+    let cur = null;
+    for (let i = 0; i < vals.length; i++) {
+      const p = this.phaseOf(i + offset);
+      if (!cur || cur.p !== p) { cur = { p, start: i, end: i }; bands.push(cur); } else cur.end = i;
+    }
+    const bandsOut = bands.map((b) => ({ x: Math.round(x0 + b.start * step + 1), w: Math.round((b.end - b.start + 1) * step - 2), c: PC[b.p] }));
+    const tickIdx = days === 30 ? [0, 9, 19, 29] : [0, 6, 13];
+    const label = (i) => { const back = vals.length - 1 - i; return back === 0 ? 'cette nuit' : 'J−' + back; };
+    const refY = Math.round(yOf(m.ref));
+    const avg = (a) => Math.round((a.reduce((s, v) => s + v, 0) / a.length) * 10) / 10;
+    const last5 = avg(vals.slice(-5));
+    const btn = (on) => ({ bg: on ? '#23383B' : 'transparent', fg: on ? '#6DD4B8' : '#E8EDF4', pressed: on ? 'true' : 'false' });
+    const cell = (n) => n === 0 ? { l: '—', bg: '#1C2230', fg: '#8B95A5' } : n === 1 ? { l: 'léger', bg: '#2A2E3A', fg: '#C9CFDA' } : n === 2 ? { l: 'net', bg: '#3D3346', fg: '#D9C9F0' } : { l: 'fort', bg: '#B89FD9', fg: '#0A0E14' };
+    return {
+      metricBtns: Object.keys(M).map((k) => ({ l: M[k].l, pick: () => this.setState({ metric: k }), ...btn(k === metric) })),
+      periodBtns: [14, 30].map((d) => ({ l: d + ' jours', pick: () => this.setState({ days: d }), ...btn(d === days) })),
+      kpis: [
+        { l: 'Sommeil · 5 dernières nuits', v: '6 h 02', d: '−1 h 16 vs moyenne', dc: '#E8A87C' },
+        { l: 'VFC nocturne', v: '41 ms', d: '−9 % vs moyenne', dc: '#E8A87C' },
+        { l: 'FC au repos', v: '58 bpm', d: 'stable', dc: '#8B95A5' },
+        { l: 'Cycle', v: 'J22', d: 'Phase lutéale · cycle de 28 j', dc: '#D9C9F0' }
+      ],
+      chartTitle: m.title + ' · ' + days + ' jours',
+      chartAria: m.title + ' sur ' + days + ' jours, moyenne des 5 dernières nuits ' + m.fmt(last5),
+      legend: [
+        { l: 'Menstruelle', c: PC.m }, { l: 'Folliculaire', c: PC.f }, { l: 'Ovulatoire', c: PC.o }, { l: 'Lutéale', c: PC.l }
+      ],
+      bands: bandsOut,
+      bars,
+      refY, refLabelY: refY - 6, refLabel: m.refL,
+      ticks: tickIdx.map((i) => ({ x: Math.round(x0 + i * step + step / 2), l: label(i) })),
+      yTicks: [m.hi, (m.lo + m.hi) / 2, m.lo].map((v) => ({ y: Math.round(yOf(v)) + 4, l: String(Math.round(v)) })),
+      insight: metric === 'sleep'
+        ? 'Les nuits raccourcissent depuis l’entrée en phase lutéale, comme lors des deux cycles précédents (5 dernières nuits : ' + m.fmt(last5) + ').'
+        : metric === 'hrv'
+          ? 'La VFC baisse depuis J17 environ ; à mettre en regard de la reprise du travail notée dans le journal.'
+          : 'Fréquence au repos stable : pas de signal de fatigue marqué de ce côté.',
+      corr: [
+        { l: 'Fatigue', cells: [2, 0, 0, 3].map(cell) },
+        { l: 'Ballonnements', cells: [1, 0, 1, 3].map(cell) },
+        { l: 'Sommeil agité', cells: [1, 0, 0, 2].map(cell) },
+        { l: 'Irritabilité', cells: [0, 0, 0, 2].map(cell) }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

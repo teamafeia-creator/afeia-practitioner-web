@@ -3724,7 +3724,7 @@ export function ConsultantTabs({
               <div>
                 <p className="text-sm font-semibold text-charcoal">Notes privées</p>
                 <p className="mt-1 text-xs text-stone">
-                  Visibles uniquement par le naturopathe. Non partagées avec le consultant.
+                  Visibles uniquement par le praticien. Non partagées avec le consultant.
                 </p>
               </div>
             </div>

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Inscription praticien</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+input,select{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1120px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <main style="flex: 3 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 32px; padding: 40px 32px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div style="width: 40px; height: 40px; border-radius: 12px; background: #23383B; display: flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+      </div>
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 500">Afeia</span>
+      <span style="flex: 1"></span>
+      <span style="font-size: 14px; color: #8B95A5">Déjà inscrite ? <a href="Connexion.dc.html" style="text-decoration: none">Se connecter</a></span>
+    </div>
+
+    <div style="width: 100%; max-width: 520px; align-self: center; display: flex; flex-direction: column; gap: 24px">
+      <ol aria-label="Étapes" style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+          <li aria-current="{{s.cur}}" style="display: flex; flex-direction: column; gap: 8px">
+            <span style="height: 4px; border-radius: 2px; background: {{s.bar}}"></span>
+            <span style="font-size: 13px; color: {{s.fg}}">{{s.n}}. {{s.l}}</span>
+          </li>
+        </sc-for>
+      </ol>
+
+      <sc-if value="{{is1}}" hint-placeholder-val="{{true}}">
+        <form style="display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 32px; line-height: 1.15">Créer votre espace praticien</h1>
+            <p style="margin: 0; font-size: 15px; color: #8B95A5">Quelques informations pour commencer.</p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="prenom" style="font-size: 14px; font-weight: 500">Prénom</label>
+              <input id="prenom" autocomplete="given-name" value="Julie" readonly="{{true}}" style="height: 48px; padding: 0 14px; border-radius: 10px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="nom" style="font-size: 14px; font-weight: 500">Nom</label>
+              <input id="nom" autocomplete="family-name" value="Marchand" readonly="{{true}}" style="height: 48px; padding: 0 14px; border-radius: 10px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <label for="mail" style="font-size: 14px; font-weight: 500">E-mail</label>
+            <input id="mail" type="email" autocomplete="email" value="julie.marchand@exemple.fr" readonly="{{true}}" style="height: 48px; padding: 0 14px; border-radius: 10px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <label for="pass" style="font-size: 14px; font-weight: 500">Mot de passe</label>
+            <div style="display: flex; align-items: center; height: 48px; border-radius: 10px; background: #151A23; border: 1px solid {{p1Border}}">
+              <input id="pass" type="{{p1Type}}" autocomplete="new-password" value="{{pwd}}" onInput="{{onPwd}}" aria-describedby="pass-rules" style="flex: 1; min-width: 0; height: 100%; padding: 0 14px; background: transparent; border: 0; outline: none; color: #E8EDF4; font-size: 15px">
+              <button type="button" onClick="{{toggle1}}" aria-label="{{p1Label}}" aria-pressed="{{p1Pressed}}" style="width: 44px; height: 44px; border: 0; background: transparent; color: #8B95A5; display: flex; align-items: center; justify-content: center; cursor: pointer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle><sc-if value="{{show1}}" hint-placeholder-val="{{false}}"><path d="M3 3l18 18"></path></sc-if></svg>
+              </button>
+            </div>
+            <ul id="pass-rules" aria-live="polite" style="margin: 4px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 6px 14px">
+              <sc-for list="{{rules}}" as="r" hint-placeholder-count="5">
+                <li style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{r.fg}}">
+                  <span aria-hidden="true" style="width: 16px; height: 16px; border-radius: 8px; border: 1px solid {{r.ring}}; background: {{r.bg}}; color: #0A0E14; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">{{r.mark}}</span>
+                  <span>{{r.l}}<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{r.sr}}</span></span>
+                </li>
+              </sc-for>
+            </ul>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <label for="pass2" style="font-size: 14px; font-weight: 500">Confirmer le mot de passe</label>
+            <div style="display: flex; align-items: center; height: 48px; border-radius: 10px; background: #151A23; border: 1px solid {{p2Border}}">
+              <input id="pass2" type="{{p2Type}}" autocomplete="new-password" value="{{pwd2}}" onInput="{{onPwd2}}" aria-describedby="pass2-msg" style="flex: 1; min-width: 0; height: 100%; padding: 0 14px; background: transparent; border: 0; outline: none; color: #E8EDF4; font-size: 15px">
+              <button type="button" onClick="{{toggle2}}" aria-label="{{p2Label}}" aria-pressed="{{p2Pressed}}" style="width: 44px; height: 44px; border: 0; background: transparent; color: #8B95A5; display: flex; align-items: center; justify-content: center; cursor: pointer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle><sc-if value="{{show2}}" hint-placeholder-val="{{false}}"><path d="M3 3l18 18"></path></sc-if></svg>
+              </button>
+            </div>
+            <span id="pass2-msg" aria-live="polite" style="font-size: 13px; color: {{matchFg}}">{{matchMsg}}</span>
+          </div>
+          <button type="button" onClick="{{next}}" disabled="{{nextDisabled}}" style="height: 50px; border-radius: 10px; border: 0; background: {{nextBg}}; color: {{nextFg}}; font-size: 15px; font-weight: 600; cursor: {{nextCursor}}">Continuer : formation et SIRET</button>
+        </form>
+      </sc-if>
+
+      <sc-if value="{{is2}}" hint-placeholder-val="{{false}}">
+        <form style="display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 32px; line-height: 1.15">Formation et SIRET</h1>
+            <p style="margin: 0; font-size: 15px; color: #8B95A5">Ces éléments permettent à notre équipe de vérifier votre inscription.</p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="ecole" style="font-size: 14px; font-weight: 500">École ou certification</label>
+              <input id="ecole" value="École de naturopathie [NOM]" readonly="{{true}}" style="height: 48px; padding: 0 14px; border-radius: 10px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="annee" style="font-size: 14px; font-weight: 500">Année d'obtention</label>
+              <input id="annee" inputMode="numeric" value="2021" readonly="{{true}}" style="height: 48px; padding: 0 14px; border-radius: 10px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="siret" style="font-size: 14px; font-weight: 500">SIRET</label>
+              <input id="siret" inputMode="numeric" value="123 456 789 00012" readonly="{{true}}" style="height: 48px; padding: 0 14px; border-radius: 10px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label for="ville" style="font-size: 14px; font-weight: 500">Ville du cabinet</label>
+              <input id="ville" value="Bordeaux" readonly="{{true}}" style="height: 48px; padding: 0 14px; border-radius: 10px; background: #151A23; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px">
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 14px; font-weight: 500">Justificatif de formation</span>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 12px; background: #151A23; border: 1px solid #2A3140">
+              <span style="width: 40px; height: 40px; border-radius: 10px; background: #23383B; color: #6DD4B8; display: flex; align-items: center; justify-content: center; flex: none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"></path></svg>
+              </span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-size: 14px; font-weight: 500">certificat-naturopathie.pdf</span>
+                <span style="font-size: 13px; color: #8B95A5">1,2 Mo · PDF, JPG ou PNG</span>
+              </span>
+              <button type="button" style="height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 13px; cursor: pointer">Remplacer</button>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 14px; font-weight: 500">Pièce d'identité</span>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 12px; background: #151A23; border: 1px solid #2A3140">
+              <span style="width: 40px; height: 40px; border-radius: 10px; background: #23383B; color: #6DD4B8; display: flex; align-items: center; justify-content: center; flex: none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"></rect><circle cx="8" cy="12" r="2.5"></circle><path d="M14 10h5M14 14h3"></path></svg>
+              </span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-size: 14px; font-weight: 500">carte-identite-recto-verso.jpg</span>
+                <span style="font-size: 13px; color: #8B95A5">Carte d'identité ou passeport, recto et verso</span>
+              </span>
+              <button type="button" style="height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 13px; cursor: pointer">Remplacer</button>
+            </div>
+            <span style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.5; color: #8B95A5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; margin-top: 3px"><path d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+              Vue uniquement par l'équipe Afeia pour vérifier votre identité, puis supprimée une fois votre inscription traitée.
+            </span>
+          </div>
+          <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.5; color: #C9CFDA; cursor: pointer">
+            <input type="checkbox" checked="{{charter}}" onChange="{{toggleCharter}}" style="width: 18px; height: 18px; margin-top: 2px; accent-color: #6DD4B8; flex: none">
+            <span>J'accepte les <a href="#">conditions d'utilisation</a> et la <a href="#">charte de pratique</a> : je n'établis pas de diagnostic et ne modifie pas un traitement médical.</span>
+          </label>
+          <div style="display: flex; gap: 10px">
+            <button type="button" onClick="{{back}}" style="height: 50px; padding: 0 18px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 15px; cursor: pointer">Retour</button>
+            <button type="button" onClick="{{submit}}" disabled="{{submitDisabled}}" style="flex: 1; height: 50px; border-radius: 10px; border: 0; background: {{submitBg}}; color: {{submitFg}}; font-size: 15px; font-weight: 600; cursor: {{submitCursor}}">Envoyer ma demande</button>
+          </div>
+        </form>
+      </sc-if>
+
+      <sc-if value="{{is3}}" hint-placeholder-val="{{false}}">
+        <div role="status" style="display: flex; flex-direction: column; gap: 18px">
+          <div style="width: 56px; height: 56px; border-radius: 28px; background: #23383B; color: #6DD4B8; display: flex; align-items: center; justify-content: center">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>
+          </div>
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 32px; line-height: 1.15">Demande envoyée, merci Julie</h1>
+          <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #C9CFDA">Notre équipe vérifie votre inscription sous 48 h ouvrées. Vous recevrez un e-mail à <strong style="font-weight: 600; color: #E8EDF4">julie.marchand@exemple.fr</strong> dès que votre espace est ouvert.</p>
+          <div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 12px; background: #151A23; border: 1px solid #2A3140">
+            <span style="font-size: 14px; font-weight: 600">En attendant</span>
+            <a href="Essai.dc.html" style="font-size: 14px; text-decoration: none">Regarder la présentation d'Afeia →</a>
+            <a href="#" style="font-size: 14px; text-decoration: none">Préparer l'import de vos dossiers →</a>
+          </div>
+          <button type="button" onClick="{{restart}}" style="align-self: flex-start; height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #8B95A5; font-size: 13px; cursor: pointer">Rejouer la démo</button>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <aside style="flex: 2 1 360px; min-width: 0; background: #151A23; border-left: 1px solid #2A3140; padding: 56px 40px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 28px">
+    <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 26px; line-height: 1.25">Un espace réservé aux praticiens vérifiés</h2>
+    <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 20px">
+      <sc-for list="{{how}}" as="h" hint-placeholder-count="3">
+        <li style="display: flex; gap: 14px">
+          <span style="width: 32px; height: 32px; border-radius: 16px; border: 1px solid {{h.border}}; background: {{h.bg}}; color: {{h.fg}}; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{h.n}}</span>
+          <span style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 15px; font-weight: 600">{{h.t}}</span>
+            <span style="font-size: 14px; line-height: 1.5; color: #8B95A5">{{h.d}}</span>
+          </span>
+        </li>
+      </sc-for>
+    </ol>
+    <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #8B95A5">Vos consultants confient des informations personnelles : cette vérification les protège autant que vous.</p>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startStep":{"editor":"enum","options":["1","2","3"],"default":"1"},"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const s = parseInt(props.startStep ?? '1', 10) || 1;
+    this.state = { step: s, charter: s === 3, pwd: s > 1 ? 'Naturo-2026!ok' : '', pwd2: s > 1 ? 'Naturo-2026!ok' : '', show1: false, show2: false };
+  }
+  renderVals() {
+    const { step, charter, pwd, pwd2, show1, show2 } = this.state;
+    const checks = [
+      ['12 caractères minimum', pwd.length >= 12],
+      ['Une majuscule', /[A-ZÀ-ÖØ-Þ]/.test(pwd)],
+      ['Une minuscule', /[a-zß-öø-ÿ]/.test(pwd)],
+      ['Un chiffre', /[0-9]/.test(pwd)],
+      ['Un caractère spécial', /[^A-Za-zÀ-ÖØ-öø-ÿ0-9\s]/.test(pwd)]
+    ];
+    const strong = checks.every((c) => c[1]);
+    const match = pwd2.length > 0 && pwd === pwd2;
+    const canNext = strong && match;
+    const pwFields = {
+      pwd, pwd2, show1, show2,
+      onPwd: (e) => this.setState({ pwd: e.target.value }),
+      onPwd2: (e) => this.setState({ pwd2: e.target.value }),
+      toggle1: () => this.setState({ show1: !this.state.show1 }),
+      toggle2: () => this.setState({ show2: !this.state.show2 }),
+      p1Type: show1 ? 'text' : 'password', p2Type: show2 ? 'text' : 'password',
+      p1Label: show1 ? 'Masquer le mot de passe' : 'Afficher le mot de passe',
+      p2Label: show2 ? 'Masquer la confirmation' : 'Afficher la confirmation',
+      p1Pressed: show1 ? 'true' : 'false', p2Pressed: show2 ? 'true' : 'false',
+      p1Border: pwd && strong ? '#2F5A50' : '#2A3140',
+      p2Border: !pwd2 ? '#2A3140' : match ? '#2F5A50' : '#6B3438',
+      rules: checks.map(([l, ok]) => ({ l, mark: ok ? '✓' : '', fg: ok ? '#6DD4B8' : '#8B95A5', ring: ok ? '#6DD4B8' : '#5C6573', bg: ok ? '#6DD4B8' : 'transparent', sr: ok ? ' : respecté' : ' : manquant' })),
+      matchMsg: !pwd2 ? 'Saisissez à nouveau le mot de passe.' : match ? '✓ Les mots de passe correspondent' : 'Les mots de passe ne correspondent pas',
+      matchFg: !pwd2 ? '#8B95A5' : match ? '#6DD4B8' : '#F2A3A3',
+      nextDisabled: !canNext,
+      nextBg: canNext ? '#6DD4B8' : '#2A3140',
+      nextFg: canNext ? '#0A0E14' : '#8B95A5',
+      nextCursor: canNext ? 'pointer' : 'not-allowed'
+    };
+    const labels = ['Compte', 'Formation & SIRET', 'Validation Afeia'];
+    const how = [
+      { t: 'Vous créez votre compte', d: 'Identité, SIRET, justificatif de formation et pièce d’identité.' },
+      { t: 'L’équipe Afeia vérifie', d: 'Sous 48 h ouvrées, nous contrôlons votre SIRET et votre justificatif.' },
+      { t: 'Votre espace s’ouvre', d: 'Vous recevez un e-mail et pouvez inviter vos premiers consultants.' }
+    ];
+    const stage = step === 3 ? 2 : 1;
+    return {
+      ...pwFields,
+      is1: step === 1, is2: step === 2, is3: step === 3,
+      steps: labels.map((l, i) => ({ n: i + 1, l, cur: i + 1 === step ? 'step' : 'false', bar: i + 1 <= step ? '#6DD4B8' : '#2A3140', fg: i + 1 <= step ? '#E8EDF4' : '#8B95A5' })),
+      how: how.map((h, i) => {
+        const done = i + 1 < stage, cur = i + 1 === stage;
+        return { ...h, n: done ? '✓' : String(i + 1), bg: done ? '#6DD4B8' : cur ? '#23383B' : 'transparent', fg: done ? '#0A0E14' : cur ? '#6DD4B8' : '#8B95A5', border: done || cur ? '#6DD4B8' : '#2A3140' };
+      }),
+      charter,
+      toggleCharter: () => this.setState({ charter: !this.state.charter }),
+      next: () => { if (canNext) this.setState({ step: 2 }); },
+      back: () => this.setState({ step: 1 }),
+      submit: () => { if (this.state.charter) this.setState({ step: 3 }); },
+      restart: () => this.setState({ step: 1, charter: false, pwd: '', pwd2: '', show1: false, show2: false }),
+      submitDisabled: !charter,
+      submitBg: charter ? '#6DD4B8' : '#2A3140',
+      submitFg: charter ? '#0A0E14' : '#8B95A5',
+      submitCursor: charter ? 'pointer' : 'not-allowed'
+    };
+  }
+}
+</script>
+</body>
+</html>

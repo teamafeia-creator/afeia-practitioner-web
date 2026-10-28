@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>E-mail admin — nouvelle inscription</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9ECEF}
+a{color:#1F6F5E}a:hover{color:#15524A}
+</style>
+</helmet>
+<div style="width: 760px; height: 940px; box-sizing: border-box; background: #E9ECEF; font-family: Inter, system-ui, sans-serif; color: #1A1F27; padding: 28px">
+  <div style="background: #FFFFFF; border-radius: 12px; border: 1px solid #D6DBE1; overflow: hidden">
+    <div style="padding: 18px 24px; border-bottom: 1px solid #E3E7EC; display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 18px; font-weight: 600">Nouvelle inscription à valider : Julie Marchand</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: #5A6472">
+        <span><strong style="font-weight: 600; color: #1A1F27">Afeia</strong> &lt;notifications@afeia.fr&gt;</span>
+        <span>À : équipe Afeia</span>
+        <span>Aujourd'hui, 17:08</span>
+      </div>
+    </div>
+
+    <div style="padding: 32px 40px 36px; display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="width: 34px; height: 34px; border-radius: 10px; background: #0A0E14; display: flex; align-items: center; justify-content: center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+        </div>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 500">Afeia · Administration</span>
+      </div>
+
+      <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 26px; line-height: 1.25">Une praticienne attend la validation de son compte</h1>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #3A424E">Julie Marchand s'est inscrite il y a quelques minutes. Son espace reste fermé tant que la demande n'est pas validée.</p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; background: #F5F7F9; border-radius: 10px; overflow: hidden">
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+            <tr style="border-top: 1px solid #E3E7EC">
+              <th scope="row" style="text-align: left; font-weight: 500; color: #5A6472; padding: 11px 16px; width: 42%">{{r.l}}</th>
+              <td style="padding: 11px 16px">{{r.v}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+
+      <a href="AdminValidation.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; height: 48px; padding: 0 22px; border-radius: 10px; background: #0A0E14; color: #FFFFFF; text-decoration: none; font-size: 15px; font-weight: 600">Examiner la demande</a>
+
+      <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #5A6472">Les documents ne sont pas joints à cet e-mail : il se consulte uniquement dans l'interface d'administration, après connexion. Délai de traitement annoncé à la praticienne : 48 h ouvrées.</p>
+    </div>
+  </div>
+  <p style="margin: 14px 4px 0; font-size: 12px; color: #6B7480">Vous recevez cet e-mail parce que vous êtes administrateur Afeia. Gérer les notifications.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":940}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      rows: [
+        { l: 'Praticienne', v: 'Julie Marchand' },
+        { l: 'Activité', v: 'Praticienne · Bordeaux' },
+        { l: 'Formation', v: 'École de naturopathie [NOM], 2021' },
+        { l: 'SIRET', v: '123 456 789 00012 · ✓ vérifié via Pappers (actif, dirigeante identique)' },
+        { l: 'Documents', v: 'Justificatif de formation et pièce d’identité déposés' },
+        { l: 'Contrôles automatiques', v: '✓ Identité concordante · ✓ SIRET conforme · reste à vérifier : authenticité du certificat' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

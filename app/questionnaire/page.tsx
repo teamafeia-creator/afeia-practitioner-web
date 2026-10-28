@@ -51,7 +51,7 @@ export default function PublicQuestionnairePage() {
         setPractitioners(data);
       } catch (err) {
         console.error('Error loading practitioners:', err);
-        setError('Impossible de charger la liste des naturopathes. Veuillez rafraîchir la page.');
+        setError('Impossible de charger la liste des praticiens. Veuillez rafraîchir la page.');
       } finally {
         setLoadingPractitioners(false);
       }
@@ -92,7 +92,7 @@ export default function PublicQuestionnairePage() {
 
     if (step === 0) {
       if (!contactInfo.naturopathId) {
-        setError('Veuillez sélectionner votre naturopathe.');
+        setError('Veuillez sélectionner votre praticien.');
         return false;
       }
       if (!contactInfo.firstName.trim()) {
@@ -182,7 +182,7 @@ export default function PublicQuestionnairePage() {
             </div>
             <h1 className="text-2xl font-semibold text-charcoal mb-2">Questionnaire envoyé !</h1>
             <p className="text-stone mb-6">
-              Votre questionnaire a bien été transmis à votre naturopathe. Vous serez contacté(e)
+              Votre questionnaire a bien été transmis à votre praticien. Vous serez contacté(e)
               prochainement pour la suite de votre accompagnement.
             </p>
             <p className="text-sm text-charcoal/80">
@@ -238,20 +238,20 @@ export default function PublicQuestionnairePage() {
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-charcoal mb-1">Vos informations</h2>
             <p className="text-sm text-stone mb-6">
-              Ces informations permettront à votre naturopathe de vous contacter et de préparer
+              Ces informations permettront à votre praticien de vous contacter et de préparer
               votre accompagnement.
             </p>
 
             <div className="space-y-4">
               <Select
-                label="Votre naturopathe *"
+                label="Votre praticien *"
                 value={contactInfo.naturopathId}
                 onChange={handleContactChange('naturopathId')}
                 required
                 disabled={loadingPractitioners}
               >
                 <option value="">
-                  {loadingPractitioners ? 'Chargement...' : 'Sélectionnez votre naturopathe'}
+                  {loadingPractitioners ? 'Chargement...' : 'Sélectionnez votre praticien'}
                 </option>
                 {practitioners.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -386,7 +386,7 @@ export default function PublicQuestionnairePage() {
               <h3 className="font-medium text-charcoal mb-2">Vos coordonnées</h3>
               <div className="text-sm text-charcoal space-y-1">
                 <p>
-                  <span className="text-stone">Naturopathe :</span>{' '}
+                  <span className="text-stone">Praticien :</span>{' '}
                   {practitioners.find((p) => p.id === contactInfo.naturopathId)?.full_name || '-'}
                 </p>
                 <p>
@@ -431,7 +431,7 @@ export default function PublicQuestionnairePage() {
             <div className="bg-gold/10 rounded-xl p-4 mb-6">
               <p className="text-sm text-charcoal">
                 En soumettant ce questionnaire, vous acceptez que vos informations soient transmises
-                à votre naturopathe dans le cadre de votre accompagnement. Vos données sont
+                à votre praticien dans le cadre de votre accompagnement. Vos données sont
                 protégées conformément au RGPD.
               </p>
             </div>

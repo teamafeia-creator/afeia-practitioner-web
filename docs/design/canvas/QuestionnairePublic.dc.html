@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Questionnaire préliminaire</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button,input,textarea{font-family:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid #6DD4B8;outline-offset:2px}
+textarea::placeholder,input::placeholder{color:#5C6573}
+</style>
+</helmet>
+<div style="position: relative; overflow: hidden; min-height: 1000px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4; display: flex; flex-direction: column">
+
+  <img src="afeia_symbol_white.svg" alt="" aria-hidden="true" style="position: absolute; right: -120px; top: 90px; height: 900px; width: auto; opacity: 0.035; pointer-events: none; user-select: none; z-index: 0">
+
+  <header style="position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 18px 32px; border-bottom: 1px solid #1F2533">
+    <span style="font-size: 14px; font-weight: 500; color: #B8C1CF">Questionnaire préliminaire</span>
+    <span style="flex: 1"></span>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 22px; background: #151A23; border: 1px solid #2A3140">
+      <span style="width: 30px; height: 30px; border-radius: 15px; background: #E8A87C; color: #0A0E14; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">CM</span>
+      <span style="font-size: 13px; color: #B8C1CF">Pour <strong style="color: #E8EDF4; font-weight: 600">Claire Martin</strong>, praticienne à Montpellier</span>
+    </div>
+    <sc-if value="{{showSaved}}" hint-placeholder-val="{{true}}">
+      <span style="font-size: 12px; color: #6DD4B8">✓ Brouillon enregistré sur cet appareil</span>
+    </sc-if>
+  </header>
+
+  <div style="position: relative; z-index: 1; flex: 1; display: flex; flex-wrap: wrap; justify-content: center; gap: 32px; padding: 32px; box-sizing: border-box">
+
+    <sc-if value="{{showNav}}" hint-placeholder-val="{{true}}">
+      <nav aria-label="Sommaire du questionnaire" style="flex: 0 1 250px; min-width: 220px; display: flex; flex-direction: column; gap: 2px; align-self: flex-start">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8B95A5; padding: 0 12px 8px">Sommaire</span>
+        <sc-for list="{{nav}}" as="n" hint-placeholder-count="15">
+          <button type="button" onClick="{{n.go}}" aria-current="{{n.cur}}" style="display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 9px; background: {{n.bg}}; color: {{n.fg}}; font-size: 13px; font-weight: {{n.w}}; text-align: left; cursor: pointer">
+            <span style="flex: none; width: 20px; height: 20px; border-radius: 10px; border: 1px solid {{n.dotBorder}}; background: {{n.dotBg}}; color: #0A0E14; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{n.mark}}</span>
+            <span style="flex: 1">{{n.t}}</span>
+          </button>
+        </sc-for>
+      </nav>
+    </sc-if>
+
+    <main style="flex: 1 1 520px; max-width: 720px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+
+      <sc-if value="{{showProgress}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: #8B95A5">
+            <span>{{progressLabel}}</span>
+            <span>{{progressRight}}</span>
+          </div>
+          <div aria-hidden="true" style="display: flex; gap: 3px">
+            <sc-for list="{{segs}}" as="sg" hint-placeholder-count="15"><span style="flex: 1; height: 6px; border-radius: 3px; background: {{sg.bg}}"></span></sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Étape 0 : vos informations -->
+      <sc-if value="{{isIntro}}" hint-placeholder-val="{{false}}">
+        <section style="display: flex; flex-direction: column; gap: 22px; padding: 32px; border-radius: 20px; background: #151A23; border: 1px solid #2A3140">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 34px; line-height: 1.2">Préparons votre première séance</h1>
+            <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #B8C1CF; max-width: 58ch">Claire Martin lira vos réponses avant de vous rencontrer : la séance commencera directement par l'essentiel.</p>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{facts}}" as="f" hint-placeholder-count="4">
+              <span style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 16px; background: #1C2230; font-size: 13px; color: #B8C1CF"><span style="color: #6DD4B8">{{f.i}}</span>{{f.t}}</span>
+            </sc-for>
+          </div>
+          <div style="height: 1px; background: #2A3140"></div>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 600">Vos coordonnées</h2>
+            <span style="font-size: 14px; color: #8B95A5">Pour que Claire puisse vous recontacter.</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 16px">
+            <label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Prénom
+              <input value="{{c.first}}" onInput="{{onFirst}}" autocomplete="given-name" style="height: 48px; padding: 0 14px; border-radius: 12px; background: #0A0E14; border: 1px solid {{firstBorder}}; color: #E8EDF4; font-size: 15px">
+            </label>
+            <label style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Nom
+              <input value="{{c.last}}" onInput="{{onLast}}" autocomplete="family-name" style="height: 48px; padding: 0 14px; border-radius: 12px; background: #0A0E14; border: 1px solid {{lastBorder}}; color: #E8EDF4; font-size: 15px">
+            </label>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">E-mail
+            <input type="email" value="{{c.email}}" onInput="{{onEmail}}" autocomplete="email" placeholder="vous@exemple.fr" style="height: 48px; padding: 0 14px; border-radius: 12px; background: #0A0E14; border: 1px solid {{emailBorder}}; color: #E8EDF4; font-size: 15px">
+            <sc-if value="{{emailBad}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; font-weight: 400; color: #E8A87C">Vérifiez l'adresse e-mail, elle semble incomplète.</span></sc-if>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Téléphone
+            <input type="tel" value="{{c.phone}}" onInput="{{onPhone}}" autocomplete="tel" required placeholder="06 12 34 56 78" style="height: 48px; padding: 0 14px; border-radius: 12px; background: #0A0E14; border: 1px solid {{phoneBorder}}; color: #E8EDF4; font-size: 15px">
+            <sc-if value="{{phoneBad}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; font-weight: 400; color: #E8A87C">Indiquez un numéro à 10 chiffres pour que Claire puisse vous appeler.</span></sc-if>
+          </label>
+          <div style="display: flex; justify-content: flex-end">
+            <button type="button" onClick="{{start}}" style="height: 50px; padding: 0 24px; border-radius: 12px; border: 0; background: {{startBg}}; color: {{startFg}}; font-size: 15px; font-weight: 600; cursor: pointer">Commencer le questionnaire →</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- Étapes 1 à 13 : rubriques -->
+      <sc-if value="{{isSection}}" hint-placeholder-val="{{false}}">
+        <section style="display: flex; flex-direction: column; gap: 22px; padding: 32px; border-radius: 20px; background: #151A23; border: 1px solid #2A3140">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: {{sec.accent}}">Rubrique {{sec.n}} sur 13 · {{sec.time}}</span>
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 32px; line-height: 1.2">{{sec.title}}</h1>
+            <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #B8C1CF; max-width: 58ch">{{sec.desc}}</p>
+          </div>
+
+          <div role="note" style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 12px; background: #23383B">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>
+            <span style="font-size: 14px; line-height: 1.5; color: #CFEFE5">Les questions sont facultatives, mais plus vos réponses sont précises, mieux Claire Martin pourra préparer votre séance. Répondez avec vos mots, sans chercher la bonne réponse.</span>
+          </div>
+
+          <sc-for list="{{sec.qs}}" as="q" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span id="{{q.id}}" style="font-size: 15px; font-weight: 500">{{q.label}}</span>
+              <sc-if value="{{q.isChoice}}" hint-placeholder-val="{{false}}">
+                <div role="radiogroup" aria-labelledby="{{q.id}}" style="display: flex; flex-wrap: wrap; gap: 8px">
+                  <sc-for list="{{q.opts}}" as="o" hint-placeholder-count="3">
+                    <button type="button" role="radio" aria-checked="{{o.on}}" onClick="{{o.pick}}" style="min-width: 96px; height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid {{o.border}}; background: {{o.bg}}; color: {{o.fg}}; font-size: 14px; font-weight: 500; cursor: pointer">{{o.t}}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{q.isText}}" hint-placeholder-val="{{true}}">
+                <textarea aria-labelledby="{{q.id}}" rows="3" value="{{q.value}}" onInput="{{q.onInput}}" placeholder="{{q.ph}}" style="width: 100%; box-sizing: border-box; min-height: 96px; padding: 12px 14px; border-radius: 12px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 15px; line-height: 1.55; resize: vertical"></textarea>
+              </sc-if>
+              <sc-if value="{{q.warn}}" hint-placeholder-val="{{false}}">
+                <div role="note" style="display: flex; align-items: flex-start; gap: 8px; padding: 8px 12px; border-radius: 10px; background: #332D17; border: 1px solid #5C4F1E">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2C94C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>
+                  <span style="font-size: 13px; line-height: 1.45; color: #F5E3A8">Indiquez tous vos traitements en cours. Votre praticien n'intervient pas sur un traitement médical : vérifiez toujours avec votre médecin que ses recommandations sont compatibles, et ne modifiez jamais un traitement sans son avis.</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 6px; border-top: 1px solid #2A3140">
+            <button type="button" onClick="{{prev}}" style="height: 48px; padding: 0 18px; border-radius: 12px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 15px; cursor: pointer">← Précédent</button>
+            <span style="flex: 1"></span>
+            <button type="button" onClick="{{skip}}" style="height: 48px; padding: 0 12px; border: 0; background: transparent; color: #8B95A5; font-size: 14px; cursor: pointer">Passer</button>
+            <button type="button" onClick="{{next}}" style="height: 48px; padding: 0 22px; border-radius: 12px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 15px; font-weight: 600; cursor: pointer">{{nextLabel}}</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- Étape 14 : vérification -->
+      <sc-if value="{{isReview}}" hint-placeholder-val="{{false}}">
+        <section style="display: flex; flex-direction: column; gap: 20px; padding: 32px; border-radius: 20px; background: #151A23; border: 1px solid #2A3140">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 13px; font-weight: 600; color: #6DD4B8">Dernière étape</span>
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 32px">Vérifiez avant d'envoyer</h1>
+            <p style="margin: 0; font-size: 15px; color: #B8C1CF">{{reviewSummary}}</p>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; padding: 16px 18px; border-radius: 14px; background: #1C2230">
+            <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 4px">
+              <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8B95A5">Vos coordonnées</span>
+              <span style="font-size: 15px; font-weight: 500">{{c.first}} {{c.last}}</span>
+              <span style="font-size: 14px; color: #B8C1CF">{{c.email}} · {{phoneShown}}</span>
+            </div>
+            <button type="button" onClick="{{goIntro}}" style="height: 36px; padding: 0 12px; border-radius: 9px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 13px; cursor: pointer">Modifier</button>
+          </div>
+
+          <div style="display: flex; flex-direction: column">
+            <sc-for list="{{review}}" as="r" hint-placeholder-count="13">
+              <div style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 0; border-bottom: 1px solid #2A3140">
+                <span style="flex: none; width: 22px; height: 22px; border-radius: 11px; background: {{r.dotBg}}; border: 1px solid {{r.dotBorder}}; color: #0A0E14; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{r.mark}}</span>
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 14px; font-weight: 500">{{r.t}}</span>
+                  <span style="font-size: 13px; color: {{r.exColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.ex}}</span>
+                </span>
+                <button type="button" onClick="{{r.go}}" style="flex: none; height: 34px; padding: 0 10px; border: 0; background: transparent; color: #6DD4B8; font-size: 13px; cursor: pointer">{{r.action}}</button>
+              </div>
+            </sc-for>
+          </div>
+
+          <label style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-radius: 14px; background: #1C2230; border: 1px solid {{consentBorder}}; cursor: pointer">
+            <input type="checkbox" checked="{{consent}}" onChange="{{toggleConsent}}" style="width: 20px; height: 20px; margin: 2px 0 0; accent-color: #6DD4B8; flex: none">
+            <span style="font-size: 14px; line-height: 1.55; color: #E8EDF4">J'accepte que ces réponses, qui contiennent des informations sur ma santé, soient transmises à Claire Martin pour préparer mon accompagnement. Je peux demander leur suppression à tout moment.</span>
+          </label>
+
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+            <button type="button" onClick="{{prev}}" style="height: 48px; padding: 0 18px; border-radius: 12px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 15px; cursor: pointer">← Précédent</button>
+            <span style="flex: 1"></span>
+            <button type="button" onClick="{{submit}}" aria-disabled="{{submitDisabled}}" style="height: 50px; padding: 0 24px; border-radius: 12px; border: 0; background: {{submitBg}}; color: {{submitFg}}; font-size: 15px; font-weight: 600; cursor: pointer">Envoyer à Claire Martin</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- Étape 15 : envoyé -->
+      <sc-if value="{{isDone}}" hint-placeholder-val="{{false}}">
+        <section style="display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 48px 32px; border-radius: 20px; background: #151A23; border: 1px solid #2A3140; text-align: center">
+          <span style="width: 72px; height: 72px; border-radius: 36px; background: #23383B; display: flex; align-items: center; justify-content: center">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"></path></svg>
+          </span>
+          <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 34px">Merci {{c.first}}, c'est envoyé</h1>
+          <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #B8C1CF; max-width: 50ch">Claire Martin lira vos réponses avant votre première séance. Elle pourra vous recontacter à l'adresse {{c.email}}.</p>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; width: 100%; max-width: 520px; padding: 18px; box-sizing: border-box; border-radius: 14px; background: #1C2230; text-align: left">
+            <span style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 15px; font-weight: 600">Pas encore de rendez-vous ?</span>
+              <span style="font-size: 13px; color: #8B95A5">Choisissez un créneau en ligne, en cabinet ou en visio.</span>
+            </span>
+            <a href="#" style="display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 11px; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; text-decoration: none">Réserver une séance</a>
+          </div>
+          <span style="font-size: 13px; color: #8B95A5">Vous pouvez fermer cette page. Votre brouillon a été effacé de cet appareil.</span>
+        </section>
+      </sc-if>
+
+      <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #5C6573; text-align: center">Vos données sont hébergées dans l'Union européenne et ne sont transmises qu'à votre praticien. Afeia ne remplace jamais un médecin.</p>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startStep":{"editor":"enum","options":["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"],"default":"0"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const s = parseInt(props.startStep ?? '0', 10) || 0;
+    const R = {
+      general_profession: 'Assistante de direction, temps plein, beaucoup d’écrans. Je rentre vers 19 h.',
+      general_antecedents: 'Hypothyroïdie diagnostiquée en 2021. Ma mère a du diabète.',
+      general_traitements: 'Lévothyroxine 75 µg le matin. Magnésium de temps en temps.',
+      profil_temperament: 'Plutôt dynamique, mais je m’épuise vite et je deviens irritable.',
+      profil_emotions: 'Inquiétude, un peu de tristesse depuis l’hiver.',
+      motif_principal: 'Fatigue persistante depuis l’hiver, je me réveille vers 4 h sans réussir à me rendormir.',
+      motif_objectifs: 'Retrouver de l’énergie le matin et mieux dormir.',
+      alimentation_habitudes: 'Petit-déjeuner rapide (café, tartines), salade le midi, plat cuisiné le soir.',
+      alimentation_hydratation: 'Moyenne',
+      alimentation_ecarts: 'Chocolat l’après-midi, un verre de vin le week-end.',
+      digestion_symptomes: 'Ballonnements le soir, sans douleur.',
+      digestion_transit: 'Variable',
+      digestion_tolérances: 'Les crudités le soir passent mal.',
+      sommeil_qualite: 'Endormissement facile, réveil vers 4 h, rendormissement difficile.',
+      energie_niveau: 'Bas',
+      activite_pratique: 'Marche 20 min par jour, yoga une fois par semaine.',
+      activite_posture: 'Tensions dans la nuque et les épaules.',
+      stress_niveau: 'Modéré',
+      stress_gestion: 'Un peu de respiration, des séries le soir.',
+      elimination_peau: 'Peau sèche l’hiver.',
+      elimination_transpiration: 'Rien de particulier.',
+      femme_cycle: 'Régulier, 28 jours, règles douloureuses le premier jour.',
+      femme_contraception: 'Stérilet au cuivre.',
+      homme_urinaire: '', homme_libido: '',
+      mode_vie_habitudes: 'Pas de tabac. Téléphone au lit le soir.',
+      mode_vie_environnement: 'Appartement en ville, peu d’espaces verts.',
+      question_ouverte: ''
+    };
+    const skipped = s > 11 ? { hommes: true } : {};
+    this.state = { step: s, r: R, skipped, consent: false, tried: false,
+      c: { first: 'Nadia', last: 'Lefort', email: 'nadia.lefort@exemple.fr', phone: '06 12 45 78 90' } };
+  }
+  renderVals() {
+    const st = this.state;
+    const SECTIONS = [
+      { id: 'general', title: 'Informations générales', desc: 'Votre quotidien et votre parcours de santé, en quelques mots.', qs: [['general_profession', 'Profession et rythme de travail', 'Ex. horaires, charge mentale, déplacements.'], ['general_antecedents', 'Antécédents médicaux ou familiaux', 'Ex. problèmes de santé passés, dans la famille.'], ['general_traitements', 'Traitements, compléments ou suivis actuels', 'Ex. médicaments, compléments, autres thérapeutes.']] },
+      { id: 'profil', title: 'Profil personnel et émotionnel', desc: 'Comment vous vous décririez au quotidien.', qs: [['profil_temperament', 'Tempérament général', 'Ex. calme, anxieux, dynamique, irritable.'], ['profil_emotions', 'Émotions dominantes', 'Ex. colère, tristesse, joie, peur.']] },
+      { id: 'motif', title: 'Ce qui vous amène', desc: 'La raison de votre venue et ce que vous aimeriez voir changer.', qs: [['motif_principal', 'Motif principal', 'Pourquoi souhaitez-vous consulter ?'], ['motif_objectifs', 'Ce que vous aimeriez obtenir', 'Ex. mieux dormir, digérer sans inconfort.']] },
+      { id: 'alimentation', title: 'Alimentation et hydratation', desc: 'Vos habitudes, sans jugement : il n’y a pas de bonne réponse.', qs: [['alimentation_habitudes', 'Habitudes alimentaires', 'Ex. type de repas, horaires.'], ['alimentation_hydratation', 'Hydratation au quotidien', '', ['Insuffisante', 'Moyenne', 'Bonne']], ['alimentation_ecarts', 'Grignotage, alcool, sucre', 'Fréquence et contexte.']] },
+      { id: 'digestion', title: 'Digestion et transit', desc: 'Ce que vous ressentez après les repas.', qs: [['digestion_symptomes', 'Ballonnements, inconfort, douleurs', 'Fréquence, intensité.'], ['digestion_transit', 'Transit', '', ['Régulier', 'Constipation', 'Diarrhée', 'Variable']], ['digestion_tolérances', 'Aliments que vous tolérez mal', 'Ce que vous avez remarqué.']] },
+      { id: 'sommeil', title: 'Sommeil et énergie', desc: 'Vos nuits et votre forme au réveil.', qs: [['sommeil_qualite', 'Qualité du sommeil', 'Endormissement, réveils, récupération.'], ['energie_niveau', 'Énergie au réveil', '', ['Basse', 'Moyenne', 'Élevée']]] },
+      { id: 'activite', title: 'Activité physique et posture', desc: 'Comment vous bougez, et où ça tire.', qs: [['activite_pratique', 'Activité physique', 'Type, fréquence, durée.'], ['activite_posture', 'Posture et tensions', 'Zones sensibles, tensions.']] },
+      { id: 'stress', title: 'Stress et équilibre intérieur', desc: 'Ce qui vous pèse, et ce qui vous aide.', qs: [['stress_niveau', 'Niveau de stress ressenti', '', ['Faible', 'Modéré', 'Élevé']], ['stress_gestion', 'Ce qui vous aide à décompresser', 'Ex. respiration, sport, méditation.']] },
+      { id: 'elimination', title: 'Peau et élimination', desc: 'Quelques questions courtes.', qs: [['elimination_peau', 'État de la peau', 'Ex. sécheresse, imperfections.'], ['elimination_transpiration', 'Transpiration, odeurs', 'Votre ressenti général.']] },
+      { id: 'femmes', title: 'Cycle', desc: 'Votre cycle aide à mieux comprendre certaines variations d’énergie ou de sommeil.', optional: true, qs: [['femme_cycle', 'Cycle menstruel', 'Régularité, douleurs.'], ['femme_contraception', 'Contraception ou grossesse', 'Méthode, projet.']] },
+      { id: 'hommes', title: 'Pour les hommes', desc: 'Deux questions, si elles vous concernent.', optional: true, qs: [['homme_urinaire', 'Confort urinaire', 'Fréquence, gêne.'], ['homme_libido', 'Libido et vitalité', 'Votre ressenti général.']] },
+      { id: 'mode_vie', title: 'Mode de vie', desc: 'Votre environnement et vos habitudes.', qs: [['mode_vie_habitudes', 'Tabac, alcool, écrans', 'Fréquence, contexte.'], ['mode_vie_environnement', 'Environnement de vie', 'Ex. ville ou campagne, qualité de l’air.']] },
+      { id: 'question_ouverte', title: 'Pour finir', desc: 'Un dernier mot pour Claire ?', qs: [['question_ouverte', 'Autre chose d’important à partager ?', 'Tout ce qui vous semble utile.']] }
+    ];
+    const step = st.step;
+    const go = (n) => this.setState({ step: n, tried: false });
+    const answered = (sec) => !st.skipped[sec.id] && sec.qs.some((q) => (st.r[q[0]] || '').trim());
+    const status = (i) => {
+      const sec = SECTIONS[i];
+      if (st.skipped[sec.id]) return 'skip';
+      if (answered(sec)) return 'done';
+      return i + 1 < step ? 'empty' : 'todo';
+    };
+
+    const c = st.c;
+    const emailOk = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(c.email.trim());
+    const phoneDigits = c.phone.replace(/\D/g, '').replace(/^33/, '0');
+    const phoneOk = phoneDigits.length === 10;
+    const introOk = c.first.trim() && c.last.trim() && emailOk && phoneOk;
+    const setC = (k) => (e) => this.setState({ c: { ...this.state.c, [k]: e.target.value } });
+
+    const navItems = [{ t: 'Vos coordonnées', n: 0 }].concat(SECTIONS.map((s, i) => ({ t: s.title, n: i + 1 }))).concat([{ t: 'Vérification', n: 14 }]);
+    const nav = navItems.map((it) => {
+      const cur = it.n === step;
+      let mark = '', dotBg = 'transparent', dotBorder = '#3A4252';
+      if (it.n === 0 && step > 0) { mark = '✓'; dotBg = '#6DD4B8'; dotBorder = '#6DD4B8'; }
+      if (it.n >= 1 && it.n <= 13) {
+        const s = status(it.n - 1);
+        if (s === 'done') { mark = '✓'; dotBg = '#6DD4B8'; dotBorder = '#6DD4B8'; }
+        if (s === 'skip') { mark = '–'; dotBg = '#2A3140'; dotBorder = '#2A3140'; }
+      }
+      if (cur) { dotBorder = '#6DD4B8'; }
+      const locked = step === 0 && it.n > 0 && !introOk;
+      return { t: it.t, mark, dotBg, dotBorder, cur: cur ? 'step' : 'false',
+        bg: cur ? '#23383B' : 'transparent', fg: cur ? '#6DD4B8' : (locked ? '#5C6573' : '#B8C1CF'), w: cur ? '600' : '400',
+        go: () => { if (!locked) go(it.n); } };
+    });
+
+    const segs = Array.from({ length: 15 }, (_, i) => ({ bg: i < step ? '#6DD4B8' : (i === step ? '#3E7D6D' : '#2A3140') }));
+
+    let sec = null;
+    if (step >= 1 && step <= 13) {
+      const s = SECTIONS[step - 1];
+      sec = { n: String(step), title: s.title, desc: s.desc, optionalBlock: !!s.optional,
+        time: s.qs.length >= 3 ? 'environ 2 min' : 'environ 1 min', accent: '#6DD4B8',
+        qs: s.qs.map(([key, label, ph, opts]) => {
+          const value = st.r[key] || '';
+          const setV = (v) => this.setState({ r: { ...this.state.r, [key]: v }, skipped: { ...this.state.skipped, [s.id]: false } });
+          return { id: 'q-' + key, label, ph, value, isChoice: !!opts, isText: !opts, warn: key === 'general_traitements',
+            onInput: (e) => setV(e.target.value),
+            opts: (opts || []).map((t) => {
+              const on = value === t;
+              return { t, on: on ? 'true' : 'false', bg: on ? '#6DD4B8' : 'transparent', fg: on ? '#0A0E14' : '#E8EDF4', border: on ? '#6DD4B8' : '#3A4252',
+                pick: () => setV(on ? '' : t) };
+            }) };
+        }) };
+    }
+    const nextTitle = step < 13 ? SECTIONS[step] && SECTIONS[step].title : 'Vérification';
+
+    const doneCount = SECTIONS.filter((s, i) => status(i) === 'done').length;
+    const review = SECTIONS.map((s, i) => {
+      const stt = status(i);
+      const first = s.qs.map((q) => (st.r[q[0]] || '').trim()).find((v) => v);
+      return { t: s.title,
+        mark: stt === 'done' ? '✓' : (stt === 'skip' ? '–' : ''),
+        dotBg: stt === 'done' ? '#6DD4B8' : (stt === 'skip' ? '#2A3140' : 'transparent'),
+        dotBorder: stt === 'done' ? '#6DD4B8' : (stt === 'skip' ? '#2A3140' : '#3A4252'),
+        ex: stt === 'skip' ? 'Passée : ne vous concerne pas' : (first || 'Pas de réponse'),
+        exColor: stt === 'done' ? '#B8C1CF' : '#5C6573',
+        action: stt === 'done' ? 'Modifier' : 'Compléter',
+        go: () => go(i + 1) };
+    });
+
+    return {
+      showSaved: step > 0 && step < 15,
+      showNav: step < 15,
+      nav,
+      showProgress: step < 15,
+      progressLabel: step === 0 ? 'Vos coordonnées' : (step <= 13 ? 'Rubrique ' + step + ' sur 13' : 'Vérification'),
+      progressRight: step === 0 ? 'environ 15 min au total' : (step <= 13 ? 'encore environ ' + Math.max(1, Math.round((13 - step) * 1.1)) + ' min' : 'presque fini'),
+      segs,
+
+      isIntro: step === 0,
+      facts: [{ i: '◷', t: 'environ 15 minutes' }, { i: '☰', t: '13 rubriques courtes' }, { i: '✎', t: 'tout est facultatif, sauf vos coordonnées' }, { i: '↺', t: 'brouillon gardé si vous quittez la page' }],
+      c,
+      onFirst: setC('first'), onLast: setC('last'), onEmail: setC('email'), onPhone: setC('phone'),
+      firstBorder: st.tried && !c.first.trim() ? '#E8A87C' : '#2A3140',
+      lastBorder: st.tried && !c.last.trim() ? '#E8A87C' : '#2A3140',
+      emailBad: (st.tried || c.email.length > 8) && !emailOk,
+      emailBorder: (st.tried || c.email.length > 8) && !emailOk ? '#E8A87C' : '#2A3140',
+      phoneBad: (st.tried || phoneDigits.length > 0) && !phoneOk,
+      phoneBorder: (st.tried || phoneDigits.length > 0) && !phoneOk ? '#E8A87C' : '#2A3140',
+      startBg: introOk ? '#6DD4B8' : '#2A3140', startFg: introOk ? '#0A0E14' : '#8B95A5',
+      start: () => { if (introOk) go(1); else this.setState({ tried: true }); },
+
+      isSection: !!sec,
+      sec: sec || {},
+      nextLabel: step === 13 ? 'Vérifier mes réponses →' : 'Suivant : ' + (nextTitle || '') + ' →',
+      next: () => go(step + 1),
+      prev: () => go(Math.max(0, step - 1)),
+      skip: () => { const s = SECTIONS[step - 1]; this.setState({ skipped: { ...this.state.skipped, [s.id]: true } }); go(step + 1); },
+
+      isReview: step === 14,
+      reviewSummary: doneCount + ' rubriques remplies sur 13. Vous pouvez encore compléter ou modifier chaque rubrique.',
+      phoneShown: c.phone,
+      goIntro: () => go(0),
+      review,
+      consent: st.consent,
+      toggleConsent: () => this.setState({ consent: !this.state.consent }),
+      consentBorder: st.tried && !st.consent ? '#E8A87C' : '#2A3140',
+      submitDisabled: st.consent ? 'false' : 'true',
+      submitBg: st.consent ? '#6DD4B8' : '#2A3140', submitFg: st.consent ? '#0A0E14' : '#8B95A5',
+      submit: () => { if (st.consent) go(15); else this.setState({ tried: true }); },
+
+      isDone: step === 15
+    };
+  }
+}
+</script>
+</body>
+</html>

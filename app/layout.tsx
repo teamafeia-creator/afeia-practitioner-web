@@ -23,7 +23,7 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://afeia.fr';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'AFEIA — Espace Naturopathe',
+    default: 'AFEIA — Espace praticien',
     template: '%s | AFEIA'
   },
   description: "Plateforme d'accompagnement naturopathique — espace professionnel. Gestion de consultants, consultations et suivi bien-être.",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     locale: 'fr_FR',
     url: siteUrl,
     siteName: 'AFEIA',
-    title: 'AFEIA — Espace Naturopathe',
+    title: 'AFEIA — Espace praticien',
     description: "Plateforme d'accompagnement naturopathique — espace professionnel."
   },
   robots: {

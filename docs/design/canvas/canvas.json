@@ -1,0 +1,648 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "AdminValidation.dc.html": {
+      "expand": "fill",
+      "h": 1800,
+      "is_interactive": true,
+      "title": "7 · Admin — validation des inscriptions (interactif)",
+      "w": 1440,
+      "x": 840,
+      "y": 3240
+    },
+    "Agenda.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "title": "10 · Agenda (interactif)",
+      "w": 1440,
+      "x": 3040,
+      "y": 5460,
+      "is_interactive": true
+    },
+    "Anamnese.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "title": "14 · Dossier — Anamnèse (interactif)",
+      "w": 1440,
+      "x": 3040,
+      "y": 12700
+    },
+    "Bague.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "17 · Dossier — Objet connecté & cycle (interactif)",
+      "w": 1440,
+      "x": 7600,
+      "y": 12700
+    },
+    "BagueVerrou.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "title": "18 · Dossier — Objet connecté, offre Standard",
+      "w": 1440,
+      "x": 9120,
+      "y": 12700
+    },
+    "Bibliotheque.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "is_interactive": true,
+      "title": "19 · Bibliothèque — fiches éducatives (interactif, toutes les vues)",
+      "w": 1440,
+      "x": 0,
+      "y": 14520
+    },
+    "Connexion.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "1 · Connexion",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Conseillancier.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "16 · Dossier — Conseillancier (interactif)",
+      "w": 1440,
+      "x": 6080,
+      "y": 12700
+    },
+    "Consultant.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "title": "13 · Dossier — Synthèse",
+      "w": 1440,
+      "x": 1520,
+      "y": 12700
+    },
+    "Consultants.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "is_interactive": true,
+      "title": "12 · Consultants — liste (interactif)",
+      "w": 1440,
+      "x": 0,
+      "y": 12700
+    },
+    "DossierHead.dc.html": {
+      "h": 150,
+      "title": "Composant — En-tête dossier",
+      "w": 1120,
+      "x": 15528,
+      "y": 14520
+    },
+    "DossierNav.dc.html": {
+      "h": 760,
+      "title": "Composant — Navigation dossier",
+      "w": 220,
+      "x": 15528,
+      "y": 14790
+    },
+    "EmailAdmin.dc.html": {
+      "h": 940,
+      "title": "6 · E-mail à l'admin — nouvelle inscription",
+      "w": 760,
+      "x": 0,
+      "y": 3240
+    },
+    "Essai.dc.html": {
+      "expand": "fill",
+      "h": 2700,
+      "is_interactive": true,
+      "title": "2 · Découvrir Afeia — vidéo & aperçus (interactif)",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Inscription.dc.html": {
+      "expand": "fill",
+      "h": 1120,
+      "is_interactive": true,
+      "title": "3 · Inscription — étape 1, compte (interactif)",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "InscriptionEtape2.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "4 · Inscription — étape 2, formation & SIRET",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "InscriptionEtape3.dc.html": {
+      "expand": "fill",
+      "h": 1120,
+      "title": "5 · Inscription — étape 3, demande envoyée",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 1380,
+      "is_interactive": true,
+      "title": "8 · Tableau de bord (interactif)",
+      "w": 1440,
+      "x": -174,
+      "y": 5460
+    },
+    "Messages.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "title": "11 · Messages (interactif)",
+      "w": 1440,
+      "x": 4560,
+      "y": 5460
+    },
+    "RevueMatin.dc.html": {
+      "expand": "fill",
+      "h": 1120,
+      "is_interactive": true,
+      "title": "9 · Revue du matin (interactif)",
+      "w": 1440,
+      "x": 1520,
+      "y": 5460
+    },
+    "Sidebar.dc.html": {
+      "h": 1120,
+      "title": "Composant — Navigation",
+      "w": 248,
+      "x": 15200,
+      "y": 14520
+    },
+    "Terrain.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "15 · Dossier — Bilan de terrain",
+      "w": 1440,
+      "x": 4560,
+      "y": 12700
+    },
+    "Questionnaires.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "11 bis · Questionnaires préliminaires (interactif)",
+      "w": 1440,
+      "x": 6080,
+      "y": 5460
+    },
+    "QuestionnairePublic.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "is_interactive": true,
+      "title": "F1 · Questionnaire — vos coordonnées (interactif, parcours complet)",
+      "w": 1440,
+      "x": 0,
+      "y": 7260
+    },
+    "QuestionnairePublicEtape1.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F2 · Questionnaire — Rubrique 1 — Informations générales",
+      "w": 1440,
+      "x": 1520,
+      "y": 7260
+    },
+    "QuestionnairePublicEtape2.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F3 · Questionnaire — Rubrique 2 — Profil personnel et émotionnel",
+      "w": 1440,
+      "x": 3040,
+      "y": 7260
+    },
+    "QuestionnairePublicEtape3.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F4 · Questionnaire — Rubrique 3 — Ce qui vous amène",
+      "w": 1440,
+      "x": 4560,
+      "y": 7260
+    },
+    "QuestionnairePublicEtape4.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F5 · Questionnaire — Rubrique 4 — Alimentation et hydratation",
+      "w": 1440,
+      "x": 6080,
+      "y": 7260
+    },
+    "QuestionnairePublicEtape5.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F6 · Questionnaire — Rubrique 5 — Digestion et transit",
+      "w": 1440,
+      "x": 7600,
+      "y": 7260
+    },
+    "QuestionnairePublicEtape6.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F7 · Questionnaire — Rubrique 6 — Sommeil et énergie",
+      "w": 1440,
+      "x": 9120,
+      "y": 7260
+    },
+    "QuestionnairePublicEtape7.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F8 · Questionnaire — Rubrique 7 — Activité physique et posture",
+      "w": 1440,
+      "x": 10640,
+      "y": 7260
+    },
+    "QuestionnairePublicEtape8.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F9 · Questionnaire — Rubrique 8 — Stress et équilibre intérieur",
+      "w": 1440,
+      "x": 0,
+      "y": 8540
+    },
+    "QuestionnairePublicEtape9.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F10 · Questionnaire — Rubrique 9 — Peau et élimination",
+      "w": 1440,
+      "x": 1520,
+      "y": 8540
+    },
+    "QuestionnairePublicEtape10.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F11 · Questionnaire — Rubrique 10 — Cycle",
+      "w": 1440,
+      "x": 3040,
+      "y": 8540
+    },
+    "QuestionnairePublicEtape11.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F12 · Questionnaire — Rubrique 11 — Pour les hommes",
+      "w": 1440,
+      "x": 4560,
+      "y": 8540
+    },
+    "QuestionnairePublicEtape12.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F13 · Questionnaire — Rubrique 12 — Mode de vie",
+      "w": 1440,
+      "x": 6080,
+      "y": 8540
+    },
+    "QuestionnairePublicEtape13.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "F14 · Questionnaire — Rubrique 13 — Pour finir",
+      "w": 1440,
+      "x": 7600,
+      "y": 8540
+    },
+    "QuestionnairePublicEtape14.dc.html": {
+      "expand": "fill",
+      "h": 1560,
+      "title": "F15 · Questionnaire — Vérification et consentement",
+      "w": 1440,
+      "x": 9120,
+      "y": 8540
+    },
+    "QuestionnairePublicEtape15.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "title": "F16 · Questionnaire — Questionnaire envoyé",
+      "w": 1440,
+      "x": 10640,
+      "y": 8540
+    },
+    "AdminQuestionnaire.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "title": "7 bis · Admin — modifier le questionnaire préliminaire (interactif)",
+      "w": 1440,
+      "x": 2360,
+      "y": 3240
+    },
+    "BibliothequeBlocs.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "19b · Bibliothèque — blocs conseillancier",
+      "w": 1440,
+      "x": 1520,
+      "y": 14520
+    },
+    "BibliothequeFiche.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "19c · Fiche — lecture",
+      "w": 1440,
+      "x": 3040,
+      "y": 14520
+    },
+    "BibliothequeEnvoyer.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "19d · Fiche — envoyer à un consultant",
+      "w": 1440,
+      "x": 4560,
+      "y": 14520
+    },
+    "BibliothequeNouvelle.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "19e · Fiche — créer",
+      "w": 1440,
+      "x": 6080,
+      "y": 14520
+    },
+    "BibliothequeModifier.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "19f · Fiche — modifier",
+      "w": 1440,
+      "x": 7600,
+      "y": 14520
+    },
+    "BibliothequeBloc.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "19g · Bloc — créer",
+      "w": 1440,
+      "x": 9120,
+      "y": 14520
+    },
+    "BibliothequeBlocModifier.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "19h · Bloc — modifier",
+      "w": 1440,
+      "x": 10640,
+      "y": 14520
+    },
+    "BibliothequeRessources.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "19i · Bibliothèque — ressources (AFEIA et praticiens)",
+      "w": 1440,
+      "x": 12160,
+      "y": 14520
+    },
+    "BibliothequeRessource.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "19j · Ressource — proposer",
+      "w": 1440,
+      "x": 13680,
+      "y": 14520
+    },
+    "RendezVous.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "G1 · Prise de rendez-vous — choix de la séance (interactif, parcours complet)",
+      "w": 1440,
+      "x": 0,
+      "y": 10700,
+      "is_interactive": true
+    },
+    "RendezVousDate.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "G2 · Rendez-vous — date et créneau",
+      "w": 1440,
+      "x": 1520,
+      "y": 10700
+    },
+    "RendezVousAttente.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "G3 · Rendez-vous — liste d’attente (aucun créneau ne convient)",
+      "w": 1440,
+      "x": 3040,
+      "y": 10700
+    },
+    "RendezVousComplet.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "G4 · Rendez-vous — plus aucun créneau",
+      "w": 1440,
+      "x": 4560,
+      "y": 10700
+    },
+    "RendezVousGroupe.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "G5 · Rendez-vous — séance de groupe",
+      "w": 1440,
+      "x": 6080,
+      "y": 10700
+    },
+    "RendezVousContact.dc.html": {
+      "expand": "fill",
+      "h": 1650,
+      "title": "G6 · Rendez-vous — vos coordonnées",
+      "w": 1440,
+      "x": 7600,
+      "y": 10700
+    },
+    "RendezVousConfirme.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "G7 · Rendez-vous confirmé (cabinet)",
+      "w": 1440,
+      "x": 9120,
+      "y": 10700
+    },
+    "RendezVousConfirmeVisio.dc.html": {
+      "expand": "fill",
+      "h": 1350,
+      "title": "G8 · Rendez-vous confirmé (visio)",
+      "w": 1440,
+      "x": 10640,
+      "y": 10700
+    },
+    "Facturation.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "20 · Facturation — factures (interactif)",
+      "w": 1440,
+      "x": 7600,
+      "y": 5460,
+      "is_interactive": true
+    },
+    "FacturationFacture.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "20b · Facturation — détail d’une facture",
+      "w": 1440,
+      "x": 9120,
+      "y": 5460
+    },
+    "FacturationNouvelle.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "20c · Facturation — nouvelle facture",
+      "w": 1440,
+      "x": 10640,
+      "y": 5460
+    },
+    "FacturationPaiement.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "20d · Facturation — marquer comme payée",
+      "w": 1440,
+      "x": 12160,
+      "y": 5460
+    },
+    "Statistiques.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "21 · Statistiques (interactif)",
+      "w": 1440,
+      "x": 13680,
+      "y": 5460,
+      "is_interactive": true
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-23T13:20:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "t1": {
+      "kind": "title1",
+      "maxW": 7520,
+      "text": "Étape A — Découverte & inscription du praticien",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 3840,
+      "text": "Étape B — Validation par l'équipe Afeia",
+      "w": 240,
+      "x": 0,
+      "y": 2940
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 15200,
+      "text": "Étape C — Le quotidien du praticien",
+      "w": 240,
+      "x": 0,
+      "y": 5160
+    },
+    "t4": {
+      "kind": "title1",
+      "maxW": 8000,
+      "text": "Étape D — Consultants & dossier",
+      "w": 240,
+      "x": 0,
+      "y": 12400
+    },
+    "t5": {
+      "kind": "title1",
+      "maxW": 16700,
+      "text": "Étape E — Bibliothèque, ressources & composants",
+      "w": 240,
+      "x": 0,
+      "y": 14220
+    },
+    "t6": {
+      "kind": "title1",
+      "maxW": 12160,
+      "text": "Étape F — Le questionnaire préliminaire, côté consultant (afeia.fr/questionnaire/claire-martin)",
+      "w": 240,
+      "x": 0,
+      "y": 6960
+    },
+    "t7": {
+      "kind": "title1",
+      "maxW": 12160,
+      "text": "Étape G — La prise de rendez-vous en ligne, côté consultant (afeia.fr/rdv/claire-martin)",
+      "w": 240,
+      "x": 0,
+      "y": 10400
+    }
+  },
+  "order": [
+    "Connexion.dc.html",
+    "Essai.dc.html",
+    "Inscription.dc.html",
+    "InscriptionEtape2.dc.html",
+    "InscriptionEtape3.dc.html",
+    "EmailAdmin.dc.html",
+    "AdminValidation.dc.html",
+    "AdminQuestionnaire.dc.html",
+    "Main.dc.html",
+    "RevueMatin.dc.html",
+    "Agenda.dc.html",
+    "Messages.dc.html",
+    "Questionnaires.dc.html",
+    "Facturation.dc.html",
+    "FacturationFacture.dc.html",
+    "FacturationNouvelle.dc.html",
+    "FacturationPaiement.dc.html",
+    "Statistiques.dc.html",
+    "QuestionnairePublic.dc.html",
+    "QuestionnairePublicEtape1.dc.html",
+    "QuestionnairePublicEtape2.dc.html",
+    "QuestionnairePublicEtape3.dc.html",
+    "QuestionnairePublicEtape4.dc.html",
+    "QuestionnairePublicEtape5.dc.html",
+    "QuestionnairePublicEtape6.dc.html",
+    "QuestionnairePublicEtape7.dc.html",
+    "QuestionnairePublicEtape8.dc.html",
+    "QuestionnairePublicEtape9.dc.html",
+    "QuestionnairePublicEtape10.dc.html",
+    "QuestionnairePublicEtape11.dc.html",
+    "QuestionnairePublicEtape12.dc.html",
+    "QuestionnairePublicEtape13.dc.html",
+    "QuestionnairePublicEtape14.dc.html",
+    "QuestionnairePublicEtape15.dc.html",
+    "RendezVous.dc.html",
+    "RendezVousDate.dc.html",
+    "RendezVousAttente.dc.html",
+    "RendezVousComplet.dc.html",
+    "RendezVousGroupe.dc.html",
+    "RendezVousContact.dc.html",
+    "RendezVousConfirme.dc.html",
+    "RendezVousConfirmeVisio.dc.html",
+    "Consultants.dc.html",
+    "Consultant.dc.html",
+    "Anamnese.dc.html",
+    "Terrain.dc.html",
+    "Conseillancier.dc.html",
+    "Bague.dc.html",
+    "BagueVerrou.dc.html",
+    "Bibliotheque.dc.html",
+    "BibliothequeBlocs.dc.html",
+    "BibliothequeFiche.dc.html",
+    "BibliothequeEnvoyer.dc.html",
+    "BibliothequeNouvelle.dc.html",
+    "BibliothequeModifier.dc.html",
+    "BibliothequeBloc.dc.html",
+    "BibliothequeBlocModifier.dc.html",
+    "BibliothequeRessources.dc.html",
+    "BibliothequeRessource.dc.html",
+    "Sidebar.dc.html",
+    "DossierHead.dc.html",
+    "DossierNav.dc.html"
+  ],
+  "pages": [],
+  "title": "AFEIA — Espace praticien"
+}

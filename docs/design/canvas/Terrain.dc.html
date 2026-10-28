@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Dossier — Bilan de terrain</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1400px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="consultants" hint-size="100%,1400px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px 40px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 24px">
+      <dc-import name="DossierHead" hint-size="100%,150px"></dc-import>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+        <div style="flex: 1 1 200px; max-width: 220px; min-width: 0">
+          <dc-import name="DossierNav" active="terrain" hint-size="100%,760px"></dc-import>
+        </div>
+
+        <div style="flex: 999 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 26px">Bilan de terrain</h2>
+              <span style="font-size: 14px; color: #8B95A5">3 rubriques sur 5 évaluées · séance du 25 janv.</span>
+            </div>
+            <a href="Conseillancier.dc.html" style="display: inline-flex; align-items: center; height: 40px; padding: 0 14px; border-radius: 10px; background: #23383B; color: #6DD4B8; text-decoration: none; font-size: 14px; font-weight: 600">Reporter dans le conseillancier →</a>
+          </div>
+
+          <section style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600">Force vitale</h3>
+            <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 4px; border-radius: 12px; background: #0A0E14; border: 1px solid #2A3140">
+              <sc-for list="{{vital}}" as="v" hint-placeholder-count="4">
+                <span style="display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 8px; font-size: 14px; font-weight: 500; background: {{v.bg}}; color: {{v.fg}}">{{v.l}}</span>
+              </sc-for>
+            </div>
+            <p style="margin: 0; font-size: 14px; color: #8B95A5">Bonne réserve, entamée par le rythme des examens et le manque de sommeil.</p>
+          </section>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 18px">
+            <section style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+              <h3 style="margin: 0; font-size: 16px; font-weight: 600">Constitution & tempérament</h3>
+              <dl style="margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px">
+                <sc-for list="{{consti}}" as="c" hint-placeholder-count="4">
+                  <div style="display: flex; flex-direction: column; gap: 4px">
+                    <dt style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #8B95A5">{{c.l}}</dt>
+                    <dd style="margin: 0; font-size: 15px; color: {{c.c}}">{{c.v}}</dd>
+                  </div>
+                </sc-for>
+              </dl>
+            </section>
+
+            <section style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+              <h3 style="margin: 0; font-size: 16px; font-weight: 600">Surcharges</h3>
+              <sc-for list="{{surch}}" as="s" hint-placeholder-count="3">
+                <div style="display: grid; grid-template-columns: 90px minmax(0, 1fr) 70px; align-items: center; gap: 12px">
+                  <span style="font-size: 14px">{{s.l}}</span>
+                  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+                    <sc-for list="{{s.cells}}" as="x" hint-placeholder-count="4">
+                      <span style="height: 10px; border-radius: 3px; background: {{x}}"></span>
+                    </sc-for>
+                  </div>
+                  <span style="font-size: 13px; color: #8B95A5; text-align: right">{{s.v}}</span>
+                </div>
+              </sc-for>
+            </section>
+          </div>
+
+          <section style="display: flex; flex-direction: column; gap: 12px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+              <h3 style="margin: 0; font-size: 16px; font-weight: 600">Émonctoires</h3>
+              <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #8B95A5">
+                <sc-for list="{{legend}}" as="lg" hint-placeholder-count="4">
+                  <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{lg.c}}"></span>{{lg.l}}</span>
+                </sc-for>
+              </div>
+            </div>
+            <sc-for list="{{emon}}" as="e" hint-placeholder-count="5">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #2A3140">
+                <span style="width: 10px; height: 10px; border-radius: 5px; background: {{e.c}}"></span>
+                <span style="flex: 0 1 160px; font-size: 15px; font-weight: 500">{{e.l}}</span>
+                <span style="flex: 1 1 240px; font-size: 14px; color: {{e.nc}}">{{e.n}}</span>
+                <span style="font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 999px; background: {{e.bg}}; color: {{e.fg}}">{{e.st}}</span>
+              </div>
+            </sc-for>
+          </section>
+
+          <section style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 20px; background: #151A23; border: 1px dashed #2A3140; border-radius: 16px">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #1C2230; color: #8B95A5; display: flex; align-items: center; justify-content: center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 15px; font-weight: 600">Iridologie</span>
+              <span style="font-size: 14px; color: #8B95A5">Aucune photo. Importez l'œil droit et l'œil gauche pour les annoter côte à côte.</span>
+            </div>
+            <button type="button" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Importer des photos</button>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const lvl = ['Faible', 'Moyenne', 'Bonne', 'Excellente'];
+    const tone = { ok: ['#6DD4B8', '#23383B', '#6DD4B8', 'Fonctionnel'], slow: ['#D4A574', '#373131', '#E8A87C', 'Ralenti'], over: ['#E8A87C', '#373131', '#E8A87C', 'Surchargé'], na: ['#5C6573', '#1C2230', '#C9CFDA', 'Non évalué'] };
+    const em = (l, k, n) => ({ l, c: tone[k][0], bg: tone[k][1], fg: tone[k][2], st: tone[k][3], n: n || 'À évaluer en séance', nc: n ? '#C9CFDA' : '#8B95A5' });
+    const bar = (n) => [0, 1, 2, 3].map((i) => i < n ? (n >= 3 ? '#E8A87C' : '#6DD4B8') : '#2A3140');
+    return {
+      vital: lvl.map((l, i) => ({ l, on: i === 2 ? 'true' : 'false', bg: i === 2 ? '#6DD4B8' : 'transparent', fg: i === 2 ? '#0A0E14' : '#8B95A5' })),
+      consti: [
+        { l: 'Constitution', v: 'Neurique', c: '#E8EDF4' },
+        { l: 'Secondaire', v: 'Non renseignée', c: '#8B95A5' },
+        { l: 'Tempérament', v: 'Nerveux', c: '#E8EDF4' },
+        { l: 'Diathèse', v: 'Non renseignée', c: '#8B95A5' }
+      ],
+      surch: [
+        { l: 'Acides', cells: bar(3), v: 'Marquée' },
+        { l: 'Colles', cells: bar(1), v: 'Légère' },
+        { l: 'Cristaux', cells: bar(0), v: 'Non évalué' }
+      ],
+      legend: [
+        { l: 'Fonctionnel', c: tone.ok[0] }, { l: 'Ralenti', c: tone.slow[0] }, { l: 'Surchargé', c: tone.over[0] }, { l: 'Non évalué', c: tone.na[0] }
+      ],
+      emon: [
+        em('Foie / vésicule', 'slow', 'Café, repas sautés ; nausées pendant les crises.'),
+        em('Intestins', 'ok', 'Transit régulier.'),
+        em('Reins', 'slow', 'Hydratation insuffisante.'),
+        em('Peau', 'na'),
+        em('Poumons', 'na')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

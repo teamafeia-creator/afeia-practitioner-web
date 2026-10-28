@@ -46,10 +46,11 @@ const NAV_GROUPS = [
     label: 'Outils',
     items: [
       { href: '/messages', label: 'Messages', icon: MessageSquare, showBadge: true },
-      { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList },
+      { href: '/questionnaires', label: 'Questionnaires', icon: ClipboardList, showQuestionnaireBadge: true },
       { href: '/bibliotheque', label: 'Bibliothèque', icon: Library, children: [
         { href: '/bibliotheque', label: 'Fiches éducatives' },
         { href: '/bibliotheque/blocs', label: 'Blocs conseillancier' },
+        { href: '/bibliotheque/ressources', label: 'Ressources' },
       ]},
     ]
   },
@@ -88,6 +89,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const helpMenuRef = useRef<HTMLDivElement>(null);
   const { unreadCount: unreadMessages } = useMessageNotifications();
   const [waitlistCount, setWaitlistCount] = useState(0);
+  const [questionnaireCount, setQuestionnaireCount] = useState(0);
   const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
   const { data: morningReview } = useMorningReview();
   // Même seuil que la file d'attention de la revue du matin
@@ -223,6 +225,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     })();
   }, [checkingAuth, userEmail]);
 
+  // Questionnaires préliminaires en attente (badge de la navigation)
+  useEffect(() => {
+    if (checkingAuth || !userEmail) return;
+    (async () => {
+      const { count } = await supabase
+        .from('preliminary_questionnaires')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      setQuestionnaireCount(count ?? 0);
+    })();
+  }, [checkingAuth, userEmail, pathname]);
+
   // Auto-open submenus when pathname matches a parent with children
   useEffect(() => {
     NAV_GROUPS.forEach((group) => {
@@ -271,11 +285,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean; showWaitlistBadge?: boolean; showReviewBadge?: boolean; children?: { href: string; label: string }[] }, onClick?: () => void) => {
+  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean; showWaitlistBadge?: boolean; showReviewBadge?: boolean; showQuestionnaireBadge?: boolean; children?: { href: string; label: string }[] }, onClick?: () => void) => {
     const Icon = item.icon;
     const showBadge = item.showBadge && unreadMessages > 0;
     const showWaitlist = item.showWaitlistBadge && waitlistCount > 0;
     const showReview = item.showReviewBadge && reviewCount > 0;
+    const showQuestionnaires = item.showQuestionnaireBadge && questionnaireCount > 0;
     const hasChildren = item.children && item.children.length > 0;
 
     if (hasChildren) {
@@ -400,6 +415,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {reviewCount}
             </span>
           )}
+          {showQuestionnaires && (
+            <span
+              className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-terracotta px-1.5 text-[10px] font-semibold tabular-nums text-ink"
+              aria-label={`${questionnaireCount} questionnaire${questionnaireCount > 1 ? 's' : ''} en attente`}
+            >
+              {questionnaireCount > 99 ? '99+' : questionnaireCount}
+            </span>
+          )}
           {showWaitlist && (
             <span
               className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white/10 px-1.5 text-[10px] font-medium tabular-nums text-sidebar-text"
@@ -475,12 +498,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Pied de sidebar : praticien + paramètres */}
       <div className="border-t border-divider p-3">
         <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">
-          <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
+          <Avatar name={userName || userEmail || 'Praticien'} size="sm" />
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-charcoal truncate">
               {userName || userEmail || 'Mon compte'}
             </div>
-            <div className="text-xs text-stone truncate">Naturopathe</div>
+            <div className="text-xs text-stone truncate">Praticien</div>
           </div>
           <Link
             href="/settings"
@@ -549,7 +572,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 onClick={() => setUserMenuOpen((open) => !open)}
                 className="flex items-center gap-2 rounded-xl border border-divider bg-surface px-3 py-2 text-sm font-medium text-charcoal transition-shadow hover:shadow-sm"
               >
-                <Avatar name={userName || userEmail || 'Naturopathe'} size="sm" />
+                <Avatar name={userName || userEmail || 'Praticien'} size="sm" />
                 <span className="max-w-[120px] truncate">
                   {userName || userEmail || 'Mon compte'}
                 </span>

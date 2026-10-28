@@ -175,7 +175,7 @@ export default function ConsultantHomePage() {
           </div>
           <h1 className="text-xl font-bold text-[#E8EDF4] mb-2">Compte non trouvé</h1>
           <p className="text-[#8B95A5] mb-4">
-            Votre profil consultant n&apos;a pas été trouvé. Veuillez contacter votre naturopathe.
+            Votre profil consultant n&apos;a pas été trouvé. Veuillez contacter votre praticien.
           </p>
           <button
             onClick={handleLogout}
@@ -188,7 +188,7 @@ export default function ConsultantHomePage() {
     )
   }
 
-  const practitionerName = consultant.practitioners?.name || consultant.practitioners?.full_name || 'Votre naturopathe'
+  const practitionerName = consultant.practitioners?.name || consultant.practitioners?.full_name || 'Votre praticien'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0A0E14] to-[#151A23]">
@@ -257,7 +257,7 @@ export default function ConsultantHomePage() {
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
             </div>
             <div className="flex-1">
-              <p className="text-xs text-[#8B95A5] uppercase tracking-wide">Mon naturopathe</p>
+              <p className="text-xs text-[#8B95A5] uppercase tracking-wide">Mon praticien</p>
               <p className="font-semibold text-[#E8EDF4]">{practitionerName}</p>
               {consultant.practitioners?.phone && (
                 <p className="text-sm text-[#8B95A5]">{consultant.practitioners.phone}</p>
@@ -352,7 +352,7 @@ export default function ConsultantHomePage() {
             </div>
             <h2 className="font-semibold text-[#E8EDF4] mb-2">Bienvenue !</h2>
             <p className="text-sm text-[#8B95A5]">
-              Votre espace est prêt. Votre naturopathe va bientôt partager vos premiers conseils.
+              Votre espace est prêt. Votre praticien va bientôt partager vos premiers conseils.
             </p>
           </div>
         )}

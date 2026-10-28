@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Administration — inscriptions à valider</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button,textarea{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1800px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <nav aria-label="Administration" style="flex: 1 1 248px; min-width: 0; box-sizing: border-box; background: #151A23; border-right: 1px solid #2A3140; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 20px; border-bottom: 1px solid #2A3140">
+      <div style="width: 40px; height: 40px; border-radius: 12px; background: #23383B; display: flex; align-items: center; justify-content: center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"></path></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 600">Afeia</span>
+        <span style="font-size: 12px; color: #E8A87C">Administration</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 16px 12px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="6">
+        <a href="{{n.href}}" aria-current="{{n.cur}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 500; background: {{n.bg}}; color: {{n.fg}}">
+          <span style="flex: 1">{{n.l}}</span>
+          <sc-if value="{{n.badge}}" hint-placeholder-val="{{false}}">
+            <span style="min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box; border-radius: 11px; background: #E8A87C; color: #0A0E14; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{n.badge}}</span>
+          </sc-if>
+        </a>
+      </sc-for>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 32px">Inscriptions</h1>
+        <p style="margin: 0; font-size: 15px; color: #8B95A5">Vérifiez chaque praticien avant d'ouvrir son espace. Délai annoncé : 48 h ouvrées.</p>
+      </div>
+
+      <div role="tablist" aria-label="Statut" style="display: flex; gap: 4px; border-bottom: 1px solid #2A3140">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+          <button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 44px; padding: 0 16px; border: 0; border-bottom: 2px solid {{t.edge}}; margin-bottom: -1px; background: transparent; color: {{t.fg}}; font-size: 15px; font-weight: 500; cursor: pointer">{{t.l}} <span style="color: #8B95A5">{{t.n}}</span></button>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+        <section aria-label="Demandes" style="flex: 1 1 300px; max-width: 380px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+          <sc-if value="{{listEmpty}}" hint-placeholder-val="{{false}}">
+            <p style="margin: 0; padding: 20px; border-radius: 14px; background: #151A23; border: 1px solid #2A3140; font-size: 14px; color: #8B95A5">{{emptyText}}</p>
+          </sc-if>
+          <sc-for list="{{list}}" as="r" hint-placeholder-count="3">
+            <button type="button" onClick="{{r.pick}}" aria-current="{{r.cur}}" style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 14px; border: 1px solid {{r.border}}; background: {{r.bg}}; color: #E8EDF4; text-align: left; cursor: pointer">
+              <span style="width: 40px; height: 40px; border-radius: 20px; background: {{r.col}}; color: #0A0E14; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex: none">{{r.ini}}</span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                <span style="font-size: 15px; font-weight: 600">{{r.n}}</span>
+                <span style="font-size: 13px; color: #8B95A5">{{r.sub}}</span>
+              </span>
+              <span style="font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 999px; background: {{r.stBg}}; color: {{r.stFg}}; flex: none">{{r.st}}</span>
+            </button>
+          </sc-for>
+        </section>
+
+        <sc-if value="{{hasSel}}" hint-placeholder-val="{{true}}">
+          <section aria-label="Détail de la demande" style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 24px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px">
+              <span style="width: 52px; height: 52px; border-radius: 26px; background: {{d.col}}; color: #0A0E14; font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{d.ini}}</span>
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+                <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 24px">{{d.n}}</h2>
+                <span style="font-size: 14px; color: #8B95A5">{{d.mail}} · inscrite {{d.when}}</span>
+              </div>
+              <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: {{d.stBg}}; color: {{d.stFg}}">{{d.st}}</span>
+            </div>
+
+            <dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 24px; padding: 16px; border-radius: 12px; background: #1C2230">
+              <sc-for list="{{d.fields}}" as="f" hint-placeholder-count="4">
+                <div style="display: flex; flex-direction: column; gap: 4px">
+                  <dt style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #8B95A5">{{f.l}}</dt>
+                  <dd style="margin: 0; font-size: 15px">{{f.v}}</dd>
+                </div>
+              </sc-for>
+            </dl>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 12px; border: 1px solid {{d.pp.border}}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+                <span style="font-size: 15px; font-weight: 600">Vérification SIRET</span>
+                <span style="font-size: 12px; color: #8B95A5">automatique via Pappers</span>
+                <span style="flex: 1"></span>
+                <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: {{d.pp.bg}}; color: {{d.pp.fg}}">{{d.pp.badge}}</span>
+              </div>
+              <p style="margin: 0; font-size: 14px; line-height: 1.5; color: {{d.pp.fg}}">{{d.pp.summary}}</p>
+              <dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 20px">
+                <sc-for list="{{d.pp.rows}}" as="p" hint-placeholder-count="5">
+                  <div style="display: flex; flex-direction: column; gap: 3px">
+                    <dt style="font-size: 12px; color: #8B95A5">{{p.l}}</dt>
+                    <dd style="margin: 0; font-size: 14px; color: {{p.c}}">{{p.mark}}{{p.v}}</dd>
+                  </div>
+                </sc-for>
+              </dl>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; color: #8B95A5">
+                <span>Interrogé {{d.pp.when}}</span>
+                <button type="button" onClick="{{recheck}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 13px; cursor: pointer">Relancer la vérification</button>
+                <a href="#" style="text-decoration: none">Voir la fiche Pappers ↗</a>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 12px; border: 1px solid {{d.cc.border}}">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+                <span style="font-size: 15px; font-weight: 600">Concordance des documents</span>
+                <span style="font-size: 12px; color: #8B95A5">lecture automatique de la pièce d'identité et du certificat</span>
+                <span style="flex: 1"></span>
+                <span style="font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: {{d.cc.bg}}; color: {{d.cc.fg}}">{{d.cc.badge}}</span>
+              </div>
+              <div style="overflow-x: auto">
+                <table style="width: 100%; min-width: 520px; border-collapse: collapse; font-size: 14px">
+                  <thead>
+                    <tr style="text-align: left; color: #8B95A5; font-size: 12px">
+                      <th scope="col" style="font-weight: 500; padding: 6px 8px 6px 0">Point vérifié</th>
+                      <th scope="col" style="font-weight: 500; padding: 6px 8px">Pièce d'identité</th>
+                      <th scope="col" style="font-weight: 500; padding: 6px 8px">Certificat</th>
+                      <th scope="col" style="font-weight: 500; padding: 6px 8px">Déclaré / Pappers</th>
+                      <th scope="col" style="font-weight: 500; padding: 6px 0 6px 8px; text-align: right">Résultat</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <sc-for list="{{d.cc.rows}}" as="r" hint-placeholder-count="4">
+                      <tr style="border-top: 1px solid #2A3140">
+                        <th scope="row" style="text-align: left; font-weight: 500; padding: 10px 8px 10px 0">{{r.l}}</th>
+                        <td style="padding: 10px 8px; color: #C9CFDA">{{r.a}}</td>
+                        <td style="padding: 10px 8px; color: #C9CFDA">{{r.b}}</td>
+                        <td style="padding: 10px 8px; color: #C9CFDA">{{r.c}}</td>
+                        <td style="padding: 10px 0 10px 8px; text-align: right; white-space: nowrap">
+                          <span style="font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: {{r.bg}}; color: {{r.fg}}">{{r.res}}</span>
+                        </td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+              <p style="margin: 0; font-size: 13px; line-height: 1.5; color: {{d.cc.fg}}">{{d.cc.summary}}</p>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid #2A3140">
+              <span style="width: 40px; height: 40px; border-radius: 10px; background: #23383B; color: #6DD4B8; display: flex; align-items: center; justify-content: center; flex: none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6"></path></svg>
+              </span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-size: 14px; font-weight: 500">{{d.file}}</span>
+                <span style="font-size: 13px; color: #8B95A5">Justificatif de formation</span>
+              </span>
+              <a href="#" style="display: inline-flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 13px">Ouvrir</a>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid #2A3140">
+              <span style="width: 40px; height: 40px; border-radius: 10px; background: #23383B; color: #6DD4B8; display: flex; align-items: center; justify-content: center; flex: none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"></rect><circle cx="8" cy="12" r="2.5"></circle><path d="M14 10h5M14 14h3"></path></svg>
+              </span>
+              <span style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-size: 14px; font-weight: 500">carte-identite-recto-verso.jpg</span>
+                <span style="font-size: 13px; color: #8B95A5">Pièce d'identité · supprimée automatiquement après la décision</span>
+              </span>
+              <a href="#" style="display: inline-flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 13px">Ouvrir</a>
+            </div>
+
+            <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 4px">
+              <legend style="font-size: 15px; font-weight: 600; margin-bottom: 8px">Contrôles</legend>
+              <sc-for list="{{d.checks}}" as="c" hint-placeholder-count="3">
+                <label style="display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 14px; cursor: pointer">
+                  <input type="checkbox" checked="{{c.on}}" disabled="{{c.locked}}" onChange="{{c.toggle}}" style="width: 18px; height: 18px; accent-color: #6DD4B8; flex: none">
+                  <span style="flex: 1">{{c.l}}</span>
+                  <sc-if value="{{c.hasTag}}" hint-placeholder-val="{{false}}">
+                    <span style="font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: {{c.tagBg}}; color: {{c.tagFg}}">{{c.tag}}</span>
+                  </sc-if>
+                </label>
+              </sc-for>
+            </fieldset>
+
+            <sc-if value="{{d.pending}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 8px; border-top: 1px solid #2A3140">
+                <sc-if value="{{d.composing}}" hint-placeholder-val="{{false}}">
+                  <div style="display: flex; flex-direction: column; gap: 8px">
+                    <label for="motif" style="font-size: 14px; font-weight: 500">{{d.composeLabel}}</label>
+                    <textarea id="motif" rows="3" value="{{d.motif}}" onInput="{{onMotif}}" style="width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; background: #0A0E14; border: 1px solid #2A3140; color: #E8EDF4; font-size: 14px; line-height: 1.5; resize: vertical"></textarea>
+                    <span style="font-size: 13px; color: #8B95A5">Ce message est envoyé par e-mail à la praticienne.</span>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end">
+                      <button type="button" onClick="{{cancelCompose}}" style="height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+                      <button type="button" onClick="{{confirmCompose}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 0; background: {{d.composeBg}}; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">{{d.composeCta}}</button>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{d.idle}}" hint-placeholder-val="{{true}}">
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+                    <button type="button" onClick="{{validate}}" disabled="{{d.cantValidate}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: {{d.valBg}}; color: {{d.valFg}}; font-size: 14px; font-weight: 600; cursor: {{d.valCursor}}">Valider l'inscription</button>
+                    <button type="button" onClick="{{askMore}}" style="height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Demander un complément</button>
+                    <span style="flex: 1"></span>
+                    <button type="button" onClick="{{refuse}}" style="height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #F2A3A3; font-size: 14px; cursor: pointer">Refuser</button>
+                  </div>
+                  <span style="font-size: 13px; color: #8B95A5">{{d.hint}}</span>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{d.decided}}" hint-placeholder-val="{{false}}">
+              <div role="status" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; background: {{d.stBg}}">
+                <span style="flex: 1; font-size: 14px; line-height: 1.5; color: {{d.stFg}}">{{d.outcome}}</span>
+                <button type="button" onClick="{{undo}}" style="height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 13px; cursor: pointer">Annuler la décision</button>
+              </div>
+            </sc-if>
+          </section>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'attente', sel: 'jm', checks: {}, dec: {}, compose: null, motif: '', rechecked: {} };
+  }
+  pappers(id, siret, name) {
+    const ok = '✓ ', ko = '✕ ', G = '#E8EDF4', R = '#F2A3A3', A = '#E8A87C';
+    if (id === 'jm') return { status: 'ok', badge: 'Conforme', bg: '#23383B', fg: '#6DD4B8', border: '#2F5A50',
+      summary: 'SIRET trouvé, établissement actif, dirigeante identique au nom déclaré. Contrôle coché automatiquement.',
+      rows: [
+        { l: 'Établissement', v: 'Actif', mark: ok, c: G },
+        { l: 'Dénomination', v: 'MARCHAND Julie (EI)', mark: '', c: G },
+        { l: 'Dirigeant', v: 'Julie Marchand', mark: ok, c: G },
+        { l: 'Code NAF', v: '96.09Z · Autres services personnels', mark: '', c: G },
+        { l: 'Adresse', v: 'Bordeaux (33)', mark: ok, c: G },
+        { l: 'Création', v: 'mars 2022', mark: '', c: G }
+      ] };
+    if (id === 'kh') return { status: 'warn', badge: 'À vérifier', bg: '#373131', fg: '#E8A87C', border: '#5A4636',
+      summary: 'SIRET actif, mais le dirigeant enregistré ne correspond pas au nom déclaré. Vérifiez à la main avant de cocher.',
+      rows: [
+        { l: 'Établissement', v: 'Actif', mark: ok, c: G },
+        { l: 'Dénomination', v: 'HADDAD BIEN-ÊTRE (SASU)', mark: '', c: G },
+        { l: 'Dirigeant', v: 'Sarah Haddad', mark: ko, c: A },
+        { l: 'Code NAF', v: '96.04Z · Entretien corporel', mark: '', c: G },
+        { l: 'Adresse', v: 'Lille (59)', mark: ok, c: G },
+        { l: 'Création', v: 'juin 2020', mark: '', c: G }
+      ] };
+    return { status: 'ko', badge: 'Non conforme', bg: '#3A2224', fg: '#F2A3A3', border: '#6B3438',
+      summary: 'Établissement fermé : ce SIRET n’est plus actif. Demandez un SIRET à jour ou refusez la demande.',
+      rows: [
+        { l: 'Établissement', v: 'Fermé le 30 juin 2025', mark: ko, c: R },
+        { l: 'Dénomination', v: 'PERRIN Élodie (EI)', mark: '', c: G },
+        { l: 'Dirigeant', v: 'Élodie Perrin', mark: ok, c: G },
+        { l: 'Code NAF', v: '96.09Z · Autres services personnels', mark: '', c: G },
+        { l: 'Adresse', v: 'Annecy (74)', mark: ok, c: G },
+        { l: 'Création', v: 'janv. 2024', mark: '', c: G }
+      ] };
+  }
+  concordance(id) {
+    const OK = ['Concordant', '#23383B', '#6DD4B8'], WARN = ['À vérifier', '#373131', '#E8A87C'], KO = ['Non conforme', '#3A2224', '#F2A3A3'];
+    const row = (l, a, b, c, s) => ({ l, a, b, c, res: s[0], bg: s[1], fg: s[2] });
+    if (id === 'jm') return { status: 'ok', badge: 'Tout concorde', bg: OK[1], fg: OK[2], border: '#2F5A50',
+      summary: 'Même identité sur les deux documents, le compte et Pappers. Contrôle d’identité coché automatiquement.',
+      rows: [
+        row('Nom et prénom', 'MARCHAND Julie', 'Julie Marchand', 'Julie Marchand', OK),
+        row('Date de naissance', '12/04/1990', '12/04/1990', '—', OK),
+        row('Validité de la pièce', 'jusqu’au 03/2031', '—', '—', OK),
+        row('École et année', '—', 'École [NOM], 2021', 'École [NOM], 2021', OK)
+      ] };
+    if (id === 'kh') return { status: 'warn', badge: '1 écart', bg: WARN[1], fg: WARN[2], border: '#5A4636',
+      summary: 'Pièce d’identité et certificat concordent, mais le dirigeant Pappers est une autre personne. À clarifier avec le praticien.',
+      rows: [
+        row('Nom et prénom', 'HADDAD Karim', 'Karim Haddad', 'Sarah Haddad (Pappers)', WARN),
+        row('Date de naissance', '03/09/1986', '03/09/1986', '—', OK),
+        row('Validité de la pièce', 'jusqu’au 11/2029', '—', '—', OK),
+        row('École et année', '—', 'Centre [NOM], 2019', 'Centre [NOM], 2019', OK)
+      ] };
+    return { status: 'ko', badge: '2 écarts', bg: KO[1], fg: KO[2], border: '#6B3438',
+      summary: 'Pièce d’identité expirée et année de certificat différente de celle déclarée. Demandez une pièce valide et une précision sur la formation.',
+      rows: [
+        row('Nom et prénom', 'PERRIN Élodie', 'Élodie Perrin', 'Élodie Perrin', OK),
+        row('Date de naissance', '27/01/1995', 'non indiquée', '—', WARN),
+        row('Validité de la pièce', 'expirée le 02/2024', '—', '—', KO),
+        row('École et année', '—', 'École [NOM], 2022', 'École [NOM], 2023', WARN)
+      ] };
+  }
+  renderVals() {
+    const { tab, sel, checks, dec, compose, motif } = this.state;
+    const reqs = [
+      { id: 'jm', n: 'Julie Marchand', ini: 'JM', col: '#6DD4B8', mail: 'julie.marchand@exemple.fr', when: 'il y a 5 min', city: 'Bordeaux', school: 'École de naturopathie [NOM]', year: '2021', siret: '123 456 789 00012', file: 'certificat-naturopathie.pdf' },
+      { id: 'kh', n: 'Karim Haddad', ini: 'KH', col: '#7B93DB', mail: 'karim.haddad@exemple.fr', when: 'hier', city: 'Lille', school: 'Centre de formation [NOM]', year: '2019', siret: '987 654 321 00034', file: 'diplome.jpg' },
+      { id: 'ep', n: 'Élodie Perrin', ini: 'ÉP', col: '#E8A5C6', mail: 'elodie.perrin@exemple.fr', when: 'il y a 2 jours', city: 'Annecy', school: 'École [NOM]', year: '2023', siret: '456 789 123 00056', file: 'attestation.pdf' }
+    ];
+    const ST = {
+      attente: ['En attente', '#373131', '#E8A87C'],
+      validee: ['Validée', '#23383B', '#6DD4B8'],
+      complement: ['Complément demandé', '#1F2640', '#A9B8EC'],
+      refusee: ['Refusée', '#3A2224', '#F2A3A3']
+    };
+    const statusOf = (id) => (dec[id] && dec[id].s) || 'attente';
+    const inTab = (r) => tab === 'attente' ? statusOf(r.id) === 'attente' : statusOf(r.id) !== 'attente';
+    const visible = reqs.filter((r) => inTab(r) || r.id === sel);
+    const selR = visible.find((r) => r.id === sel) || visible[0] || null;
+    const pendingCount = reqs.filter((r) => statusOf(r.id) === 'attente').length;
+    const ck = (id) => checks[id] || {};
+    const toggleCheck = (id, k) => () => {
+      const cur = this.state.checks[id] || {};
+      this.setState({ checks: { ...this.state.checks, [id]: { ...cur, [k]: !cur[k] } } });
+    };
+    let d = null;
+    const ppOf = (r) => this.pappers(r.id, r.siret, r.n);
+    if (selR) {
+      const pp = ppOf(selR);
+      const c0 = ck(selR.id);
+      const cc = this.concordance(selR.id);
+      const c = { ...c0, siret: pp.status === 'ok' ? true : !!c0.siret, id: cc.status === 'ok' ? true : !!c0.id };
+      const s = statusOf(selR.id);
+      const allOk = c.id && c.siret && c.doc;
+      const pending = s === 'attente';
+      const decision = dec[selR.id];
+      d = {
+        ...selR,
+        st: ST[s][0], stBg: ST[s][1], stFg: ST[s][2],
+        fields: [
+          { l: 'Activité', v: 'Praticien · ' + selR.city },
+          { l: 'Formation', v: selR.school + ', ' + selR.year },
+          { l: 'SIRET', v: selR.siret },
+          { l: 'Charte de pratique', v: 'Acceptée' }
+        ],
+        cc,
+        pp: { ...pp, when: (this.state.rechecked[selR.id] ? 'à l’instant' : 'à l’inscription') },
+        checks: [
+          { l: cc.status === 'ok' ? 'Pièce d’identité valide, identité concordante' : 'Identité vérifiée manuellement', k: 'id', auto: cc.status === 'ok', tag: cc.status === 'ok' ? 'Automatique · concordance' : cc.badge, tagBg: cc.bg, tagFg: cc.fg },
+          { l: pp.status === 'ok' ? 'SIRET actif et dirigeant identique' : 'SIRET vérifié manuellement', k: 'siret', auto: pp.status === 'ok', tag: pp.status === 'ok' ? 'Automatique · Pappers' : pp.badge, tagBg: pp.bg, tagFg: pp.fg },
+          { l: 'Justificatif lisible et authentique', k: 'doc' }
+        ].map((x) => ({ ...x, on: !!c[x.k], locked: !pending || !!x.auto, hasTag: !!x.tag, tag: x.tag || '', tagBg: x.tagBg || '', tagFg: x.tagFg || '', toggle: toggleCheck(selR.id, x.k) })),
+        pending,
+        decided: !pending,
+        composing: pending && !!compose,
+        idle: pending && !compose,
+        composeLabel: compose === 'refus' ? 'Motif du refus' : 'Élément à fournir',
+        composeCta: compose === 'refus' ? 'Confirmer le refus' : 'Envoyer la demande',
+        composeBg: compose === 'refus' ? '#E57B7B' : '#7B93DB',
+        motif,
+        cantValidate: !allOk,
+        valBg: allOk ? '#6DD4B8' : '#2A3140',
+        valFg: allOk ? '#0A0E14' : '#8B95A5',
+        valCursor: allOk ? 'pointer' : 'not-allowed',
+        hint: allOk ? 'Tout est vérifié : la validation ouvre son espace et lui envoie un e-mail de bienvenue.' : 'Cochez les trois contrôles pour pouvoir valider.',
+        outcome: decision ? decision.msg : ''
+      };
+    }
+    const firstName = selR ? selR.n.split(' ')[0] : '';
+    const decide = (s, msg) => { if (!selR) return; this.setState({ dec: { ...this.state.dec, [selR.id]: { s, msg } }, compose: null, motif: '' }); };
+    return {
+      nav: [['Tableau de bord'], ['Inscriptions', true, String(pendingCount)], ['Praticiens'], ['Consultants'], ['Questionnaire', false, '0', 'AdminQuestionnaire.dc.html'], ['Facturation'], ['Objet connecté']].map(([l, on, b, href]) => ({
+        l, href: href || '#', cur: on ? 'page' : 'false', bg: on ? '#23383B' : 'transparent', fg: on ? '#6DD4B8' : '#E8EDF4', badge: on && b !== '0' ? b : false
+      })),
+      tabs: [['attente', 'À valider', pendingCount], ['traitees', 'Traitées', reqs.length - pendingCount]].map(([k, l, n]) => ({
+        l, n, sel: k === tab ? 'true' : 'false', edge: k === tab ? '#6DD4B8' : 'transparent', fg: k === tab ? '#E8EDF4' : '#8B95A5',
+        pick: () => this.setState({ tab: k, sel: null, compose: null, motif: '' })
+      })),
+      list: visible.map((r) => {
+        const on = selR && r.id === selR.id;
+        const s = statusOf(r.id);
+        const p = ppOf(r);
+        return { ...r, sub: r.city + ' · ' + r.when + ' · SIRET ' + (p.status === 'ok' ? '✓' : p.status === 'warn' ? 'à vérifier' : '✕'), st: ST[s][0], stBg: ST[s][1], stFg: ST[s][2], cur: on ? 'true' : 'false', bg: on ? '#1C2230' : '#151A23', border: on ? '#2F5A50' : '#2A3140',
+          pick: () => this.setState({ sel: r.id, compose: null, motif: '' }) };
+      }),
+      listEmpty: visible.length === 0,
+      emptyText: tab === 'attente' ? 'Aucune inscription en attente. Bravo !' : 'Aucune demande traitée pour l’instant.',
+      hasSel: !!d,
+      d: d || {},
+      onMotif: (e) => this.setState({ motif: e.target.value }),
+      recheck: () => { if (selR) this.setState({ rechecked: { ...this.state.rechecked, [selR.id]: true } }); },
+      validate: () => { const c0 = selR ? ck(selR.id) : {}; const c = { ...c0, siret: (selR && ppOf(selR).status === 'ok') || !!c0.siret, id: (selR && this.concordance(selR.id).status === 'ok') || !!c0.id }; if (c.id && c.siret && c.doc) decide('validee', 'Inscription validée. ' + firstName + ' a reçu un e-mail de bienvenue et peut se connecter.'); },
+      askMore: () => this.setState({ compose: 'complement', motif: 'Bonjour ' + firstName + ', pourriez-vous déposer une version plus lisible de votre justificatif de formation ?' }),
+      refuse: () => this.setState({ compose: 'refus', motif: '' }),
+      cancelCompose: () => this.setState({ compose: null, motif: '' }),
+      confirmCompose: () => {
+        const m = this.state.motif.trim();
+        if (!m) return;
+        if (this.state.compose === 'refus') decide('refusee', 'Inscription refusée. ' + firstName + ' a été informée par e-mail, avec le motif.');
+        else decide('complement', 'Complément demandé par e-mail. La demande reviendra dans « À valider » quand ' + firstName + ' aura répondu.');
+      },
+      undo: () => { if (!selR) return; const next = { ...this.state.dec }; delete next[selR.id]; this.setState({ dec: next, tab: 'attente', sel: selR.id }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

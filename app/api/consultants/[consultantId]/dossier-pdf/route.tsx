@@ -89,7 +89,7 @@ function DossierPdfDocument({ data }: { data: DossierPdfData }) {
           <Text style={s.headerSub}>{consultantName}</Text>
           <View style={s.headerMeta}>
             <View style={s.headerMetaCol}>
-              <Text style={s.headerMetaLabel}>Naturopathe</Text>
+              <Text style={s.headerMetaLabel}>Praticien</Text>
               <Text style={s.headerMetaValue}>{practitionerName}</Text>
             </View>
             <View style={s.headerMetaCol}>
@@ -342,7 +342,7 @@ export async function GET(
     // 4. Build PDF data
     const pdfData = {
       consultant,
-      practitionerName: practitionerResult.data?.full_name || 'Naturopathe',
+      practitionerName: practitionerResult.data?.full_name || 'Praticien',
       medicalHistory: medicalHistoryResult.data || [],
       allergies: allergiesResult.data || [],
       treatments: treatmentsResult.data || [],

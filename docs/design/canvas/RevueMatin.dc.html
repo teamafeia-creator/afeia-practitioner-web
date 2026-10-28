@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Revue du matin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1120px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="revue" hint-size="100%,1120px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+    <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; max-width: 1180px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <a href="Main.dc.html" style="font-size: 14px; text-decoration: none">← Tableau de bord</a>
+        <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 36px; line-height: 1.15">Revue du matin</h1>
+        <p style="margin: 0; font-size: 15px; color: #8B95A5">Ce qui a bougé depuis hier soir chez vos consultants. Indicateurs de bien-être, non médicaux.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; min-width: 240px">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; color: #8B95A5">
+          <span>Progression</span><span style="color: #E8EDF4; font-weight: 600">{{doneCount}} / {{total}}</span>
+        </div>
+        <div role="progressbar" aria-label="Consultants traités" aria-valuemin="0" aria-valuemax="{{total}}" aria-valuenow="{{doneCount}}" style="height: 8px; border-radius: 4px; background: #2A3140; overflow: hidden">
+          <div style="height: 100%; width: {{pct}}; background: #6DD4B8; border-radius: 4px; transition: width 300ms ease"></div>
+        </div>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 24px; max-width: 1180px; align-items: flex-start">
+      <section aria-label="File d'attention" style="flex: 2 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <sc-if value="{{allDone}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 56px 32px; text-align: center; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <div style="width: 64px; height: 64px; border-radius: 32px; background: #23383B; color: #6DD4B8; display: flex; align-items: center; justify-content: center">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+            </div>
+            <h2 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 26px">Revue terminée</h2>
+            <p style="margin: 0; font-size: 15px; color: #8B95A5; max-width: 420px">{{summary}}</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center">
+              <button type="button" onClick="{{reset}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Recommencer la démo</button>
+              <a href="Main.dc.html" style="display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 10px; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; text-decoration: none">Retour au tableau de bord</a>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-for list="{{queue}}" as="c" hint-placeholder-count="4">
+          <article style="display: flex; flex-direction: column; gap: 16px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+            <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px">
+              <span style="width: 44px; height: 44px; border-radius: 22px; background: {{c.color}}; color: #0A0E14; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none">{{c.ini}}</span>
+              <div style="flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+                  <a href="Consultant.dc.html" style="font-size: 16px; font-weight: 600; color: #E8EDF4; text-decoration: none">{{c.name}}</a>
+                  <span style="font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 999px; background: {{c.tagBg}}; color: {{c.tagFg}}">{{c.tag}}</span>
+                  <span title="{{c.ageTitle}}" style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 999px; border: 1px solid {{c.ageBorder}}; color: {{c.ageFg}}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                    {{c.age}}
+                  </span>
+                </div>
+                <span style="font-size: 15px">{{c.signal}}</span>
+                <span style="font-size: 13px; color: #8B95A5">{{c.context}}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+                <svg width="140" height="44" viewBox="0 0 140 44" role="img" aria-label="{{c.sparkLabel}}">
+                  <line x1="0" y1="{{c.baseY}}" x2="140" y2="{{c.baseY}}" stroke="#2A3140" stroke-dasharray="3 3"></line>
+                  <polyline points="{{c.pts}}" fill="none" stroke="{{c.color}}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                </svg>
+                <span style="font-size: 12px; color: #8B95A5">{{c.sparkCaption}}</span>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: #1C2230; font-size: 14px; line-height: 1.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 3px"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"></path></svg>
+              <span><strong style="font-weight: 600">Piste :</strong> {{c.hint}}</span>
+            </div>
+
+            <sc-if value="{{c.composing}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <label for="msg-{{c.id}}" style="font-size: 13px; color: #8B95A5">Message à {{c.first}}</label>
+                <textarea id="msg-{{c.id}}" rows="3" style="width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; background: #1C2230; border: 1px solid #2A3140; color: #E8EDF4; font: 14px/1.5 Inter, system-ui, sans-serif; resize: vertical">{{c.draft}}</textarea>
+                <div style="display: flex; gap: 8px; justify-content: flex-end">
+                  <button type="button" onClick="{{c.cancel}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Annuler</button>
+                  <button type="button" onClick="{{c.send}}" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: #6DD4B8; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">Envoyer</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{c.idle}}" hint-placeholder-val="{{true}}">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(max(200px, calc((100% - 24px) / 4)), 1fr)); gap: 8px">
+                <button type="button" onClick="{{c.compose}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 1px solid #2F5A50; background: #23383B; color: #6DD4B8; font-size: 14px; font-weight: 600; cursor: pointer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                  Écrire à {{c.first}}
+                </button>
+                <button type="button" onClick="{{c.note}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 1px solid #2A3140; background: #1C2230; color: #E8EDF4; font-size: 14px; font-weight: 500; cursor: pointer"><span aria-hidden="true">🔒</span> Ajouter aux notes privées</button>
+                <button type="button" onClick="{{c.snooze}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 1px solid #2A3140; background: #1C2230; color: #E8EDF4; font-size: 14px; font-weight: 500; cursor: pointer"><span aria-hidden="true">🔔</span> Me le rappeler demain</button>
+                <button type="button" onClick="{{c.seen}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 14px; border-radius: 10px; border: 1px solid #2A3140; background: #1C2230; color: #E8EDF4; font-size: 14px; font-weight: 500; cursor: pointer">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+                  Vu, rien à faire
+                </button>
+              </div>
+            </sc-if>
+          </article>
+        </sc-for>
+      </section>
+
+      <aside style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
+        <div style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600">Vue d'ensemble · 7 derniers jours</h2>
+          <sc-for list="{{panorama}}" as="p" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="display: flex; justify-content: space-between; font-size: 14px">
+                <span style="color: #8B95A5">{{p.l}}</span><span style="font-weight: 600; font-variant-numeric: tabular-nums">{{p.v}}</span>
+              </div>
+              <div style="height: 6px; border-radius: 3px; background: #2A3140"><div style="height: 100%; width: {{p.w}}; border-radius: 3px; background: {{p.c}}"></div></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 20px; background: #151A23; border: 1px solid #2A3140; border-radius: 16px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">Traités ce matin</h2>
+            <sc-if value="{{someDone}}" hint-placeholder-val="{{false}}">
+              <button type="button" onClick="{{reset}}" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid #2A3140; background: transparent; color: #8B95A5; font-size: 13px; cursor: pointer">Tout remettre</button>
+            </sc-if>
+          </div>
+          <sc-if value="{{noneDone}}" hint-placeholder-val="{{true}}">
+            <p style="margin: 0; font-size: 14px; color: #8B95A5">Rien pour l'instant. Chaque action apparaîtra ici.</p>
+          </sc-if>
+          <sc-for list="{{log}}" as="l" hint-placeholder-count="0">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 0; border-top: 1px solid #2A3140; font-size: 14px">
+              <span style="width: 8px; height: 8px; border-radius: 4px; background: {{l.c}}; flex: none"></span>
+              <span style="flex: 1 1 120px; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                <span style="font-weight: 500">{{l.name}}</span>
+                <span style="font-size: 12px; color: #8B95A5">{{l.what}}</span>
+              </span>
+              <a href="Consultant.dc.html" style="display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid #2A3140; color: #E8EDF4; text-decoration: none; font-size: 13px">Dossier ↗</a>
+              <button type="button" onClick="{{l.undo}}" aria-label="Remettre {{l.name}} dans la file" style="height: 32px; padding: 0 10px; border-radius: 8px; border: 0; background: transparent; color: #6DD4B8; font-size: 13px; cursor: pointer">Annuler</button>
+            </div>
+          </sc-for>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { done: {}, composing: null };
+  }
+  spark(vals, lo, hi) {
+    const n = vals.length;
+    return vals.map((v, i) => {
+      const x = Math.round((i / (n - 1)) * 136) + 2;
+      const y = Math.round(40 - ((v - lo) / (hi - lo)) * 36);
+      return x + ',' + y;
+    }).join(' ');
+  }
+  renderVals() {
+    const { done, composing } = this.state;
+    const mark = (id, what) => () => this.setState({ done: { ...this.state.done, [id]: what }, composing: null });
+    const items = [
+      { id: 'cd', days: 0, snoozes: 0, name: 'Camille Dupont', first: 'Camille', ini: 'CD', color: '#6DD4B8',
+        tag: 'Objet connecté', tagBg: '#23383B', tagFg: '#6DD4B8',
+        signal: 'Sommeil en baisse 5 nuits de suite : 6 h 02 en moyenne (habituellement 7 h 20).',
+        context: 'Avis sur le conseillancier · « Rituel du soir » : « réveils vers 3 h, tête qui tourne ». Séance de suivi aujourd’hui à 11 h.',
+        hint: 'à aborder en séance de 11 h plutôt que par message, avec le rituel du soir du conseillancier.',
+        vals: [7.4, 7.2, 7.5, 7.1, 6.4, 6.1, 5.9, 6.0, 5.8], lo: 5.5, hi: 8, base: 7.2,
+        sparkLabel: 'Sommeil sur 9 nuits, en baisse', sparkCaption: 'Sommeil · 9 nuits',
+        draft: 'Bonjour Camille, j’ai vu que vos nuits étaient plus courtes cette semaine. On en parle tout à l’heure à 11 h ?' },
+      { id: 'tl', days: 3, snoozes: 2, name: 'Thomas Leroy', first: 'Thomas', ini: 'TL', color: '#E8A87C',
+        tag: 'Journal silencieux', tagBg: '#373131', tagFg: '#E8A87C',
+        signal: 'Aucune entrée de journal depuis 9 jours.',
+        context: 'Avant : 5 entrées par semaine. Dernière observance plantes déclarée : 90 %.',
+        hint: 'un message court et non culpabilisant ; proposer de simplifier le journal à 2 questions.',
+        vals: [5, 5, 4, 5, 3, 1, 0, 0, 0], lo: 0, hi: 6, base: 4.5,
+        sparkLabel: 'Entrées de journal par semaine, en chute', sparkCaption: 'Entrées / semaine',
+        draft: 'Bonjour Thomas, comment se passent ces derniers jours ? Si le journal est trop long, on peut le réduire à deux questions.' },
+      { id: 'sb', days: 1, snoozes: 1, name: 'Sarah Benali', first: 'Sarah', ini: 'SB', color: '#7B93DB',
+        tag: 'Variabilité cardiaque', tagBg: '#1F2640', tagFg: '#A9B8EC',
+        signal: 'VFC nocturne −18 % par rapport à sa moyenne sur 30 jours.',
+        context: 'Coïncide avec une semaine de travail chargée notée dans le journal. Bilan de terrain ce soir.',
+        hint: 'mettre en avant la cohérence cardiaque prévue au conseillancier (3 × 5 min).',
+        vals: [46, 48, 45, 47, 44, 41, 39, 38, 38], lo: 34, hi: 50, base: 46,
+        sparkLabel: 'Variabilité cardiaque nocturne, en baisse', sparkCaption: 'VFC · ms',
+        draft: 'Bonjour Sarah, semaine intense on dirait. Pensez aux 3 pauses de cohérence cardiaque ; on fait le point ce soir.' },
+      { id: 'lg', days: 0, snoozes: 0, name: 'Léa Garnier', first: 'Léa', ini: 'LG', color: '#E8A5C6',
+        tag: 'Cycle', tagBg: '#3A2733', tagFg: '#F0C2D8',
+        signal: 'Phase lutéale : fatigue et ballonnements notés 3 jours de suite.',
+        context: 'Même motif que les deux cycles précédents, à J21-J24.',
+        hint: 'motif récurrent à intégrer au conseillancier pour la prochaine phase lutéale.',
+        vals: [1, 1, 0, 1, 2, 3, 3, 3, 2], lo: 0, hi: 4, base: 1,
+        sparkLabel: 'Intensité des symptômes déclarés, en hausse', sparkCaption: 'Symptômes · intensité',
+        draft: 'Bonjour Léa, je vois que la fin de cycle est inconfortable, comme les mois précédents. Je prépare un ajustement pour la prochaine fois.' }
+    ];
+    const ageOf = (c) => {
+      if (c.days === 0) return { age: 'Nouveau ce matin', ageFg: '#8B95A5', ageBorder: '#2A3140', ageTitle: 'Apparu dans la revue ce matin' };
+      const rep = c.snoozes > 0 ? ' · reporté ' + c.snoozes + ' fois' : '';
+      const hot = c.snoozes >= 2;
+      return { age: 'Depuis ' + c.days + ' jour' + (c.days > 1 ? 's' : '') + rep,
+        ageFg: hot ? '#E8A87C' : '#C9CFDA', ageBorder: hot ? '#5A4636' : '#2A3140',
+        ageTitle: 'Dans la revue du matin depuis ' + c.days + ' jour' + (c.days > 1 ? 's' : '') + rep };
+    };
+    const queue = items.filter((c) => !done[c.id]).sort((a, b) => b.days - a.days).map((c) => ({
+      ...c,
+      ...ageOf(c),
+      pts: this.spark(c.vals, c.lo, c.hi),
+      baseY: Math.round(40 - ((c.base - c.lo) / (c.hi - c.lo)) * 36),
+      composing: composing === c.id,
+      idle: composing !== c.id,
+      compose: () => this.setState({ composing: c.id }),
+      cancel: () => this.setState({ composing: null }),
+      send: mark(c.id, 'Message envoyé'),
+      note: mark(c.id, '🔒 Ajouté aux notes privées'),
+      snooze: mark(c.id, '🔔 Rappel demain'),
+      seen: mark(c.id, 'Vu')
+    }));
+    const log = items.filter((c) => done[c.id]).map((c) => ({ name: c.name, what: done[c.id], c: c.color, undo: () => { const next = { ...this.state.done }; delete next[c.id]; this.setState({ done: next }); } }));
+    const doneCount = log.length;
+    const sent = log.filter((l) => l.what === 'Message envoyé').length;
+    return {
+      queue, log, doneCount, total: items.length,
+      pct: Math.round((doneCount / items.length) * 100) + '%',
+      allDone: doneCount === items.length,
+      noneDone: doneCount === 0,
+      someDone: doneCount > 0,
+      summary: sent + ' message' + (sent > 1 ? 's' : '') + ' envoyé' + (sent > 1 ? 's' : '') + ', ' + (doneCount - sent) + ' suivi' + (doneCount - sent > 1 ? 's' : '') + ' consigné' + (doneCount - sent > 1 ? 's' : '') + '. Bonne journée.',
+      reset: () => this.setState({ done: {}, composing: null }),
+      panorama: [
+        { l: 'Consultants silencieux depuis 14 j', v: '5 / 38', w: '13%', c: '#E8A87C' },
+        { l: 'Journaux remplis', v: '61 %', w: '61%', c: '#7B93DB' },
+        { l: 'Recommandations suivies', v: '68 %', w: '68%', c: '#6DD4B8' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

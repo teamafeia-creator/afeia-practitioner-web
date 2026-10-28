@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Conseillancier — édition</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0A0E14}
+a{color:#6DD4B8}a:hover{color:#A8E6CF}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1180px; background: #0A0E14; font-family: Inter, system-ui, sans-serif; color: #E8EDF4">
+  <div style="flex: 1 1 248px; min-width: 0">
+    <dc-import name="Sidebar" active="consultants" hint-size="100%,1180px"></dc-import>
+  </div>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px 40px; box-sizing: border-box">
+    <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 22px">
+      <a href="Consultant.dc.html" style="font-size: 14px; text-decoration: none">← Camille Dupont</a>
+
+      <section style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+            <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 34px; line-height: 1.1">Conseillancier v4</h1>
+            <span style="font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 999px; background: {{statusBg}}; color: {{statusFg}}">{{status}}</span>
+          </div>
+          <p style="margin: 0; font-size: 15px; color: #8B95A5">Objectif prioritaire : retrouver 7 h de sommeil · à partir du 23 octobre</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px">
+          <button type="button" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #2A3140; background: transparent; color: #E8EDF4; font-size: 14px; cursor: pointer">Ajouter un bloc</button>
+          <button type="button" onClick="{{share}}" disabled="{{shareDisabled}}" aria-describedby="share-hint" style="height: 44px; padding: 0 18px; border-radius: 10px; border: 0; font-size: 14px; font-weight: 600; cursor: {{shareCursor}}; background: {{shareBg}}; color: {{shareFg}}">{{shareLabel}}</button>
+        </div>
+      </section>
+
+      <sc-if value="{{showBanner}}" hint-placeholder-val="{{true}}">
+        <div role="alert" style="display: flex; flex-wrap: wrap; gap: 14px; padding: 18px 20px; border-radius: 14px; background: #3A2224; border: 1px solid #6B3438">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F2A3A3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"></path></svg>
+          <div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 15px; font-weight: 600; color: #F7D4D4">Contre-indication à vérifier avant partage</span>
+            <span style="font-size: 14px; line-height: 1.5; color: #E8C4C4">Millepertuis : interaction connue avec la contraception orale, renseignée dans l'anamnèse de Camille (mars 2026). Le millepertuis peut en réduire l'efficacité.</span>
+            <label style="display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; color: #F7D4D4; cursor: pointer">
+              <input type="checkbox" checked="{{ack}}" onChange="{{toggleAck}}" style="width: 18px; height: 18px; accent-color: #E57B7B">
+              J'ai vérifié et je maintiens ce conseil en connaissance de cause
+            </label>
+          </div>
+          <div style="display: flex; align-items: flex-start">
+            <button type="button" onClick="{{removePlant}}" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 0; background: #E57B7B; color: #0A0E14; font-size: 14px; font-weight: 600; cursor: pointer">Retirer le millepertuis</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{shared}}" hint-placeholder-val="{{false}}">
+        <div role="status" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 14px; background: #23383B; border: 1px solid #2F5A50">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6DD4B8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+          <span style="flex: 1; font-size: 14px">Partagé à Camille. Elle reçoit une notification sur l'app et ses rappels démarrent ce soir.</span>
+          <button type="button" onClick="{{reset}}" style="height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid #2F5A50; background: transparent; color: #6DD4B8; font-size: 14px; cursor: pointer">Rejouer la démo</button>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+        <section aria-label="Blocs du conseillancier" style="flex: 3 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+          <sc-for list="{{blocks}}" as="b" hint-placeholder-count="5">
+            <article style="display: flex; gap: 16px; padding: 18px 20px; background: #151A23; border: 1px solid {{b.border}}; border-radius: 14px">
+              <span aria-hidden="true" style="width: 20px; flex: none; display: flex; flex-direction: column; gap: 3px; padding-top: 6px; opacity: 0.5">
+                <span style="height: 2px; background: #8B95A5; border-radius: 1px"></span>
+                <span style="height: 2px; background: #8B95A5; border-radius: 1px"></span>
+                <span style="height: 2px; background: #8B95A5; border-radius: 1px"></span>
+              </span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+                  <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: {{b.c}}">{{b.cat}}</span>
+                  <sc-if value="{{b.flag}}" hint-placeholder-val="{{false}}">
+                    <span style="font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: #3A2224; color: #F2A3A3">À vérifier</span>
+                  </sc-if>
+                  <span style="flex: 1"></span>
+                  <span style="font-size: 13px; color: #8B95A5">{{b.when}}</span>
+                </div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600">{{b.t}}</h3>
+                <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #C9CFDA">{{b.body}}</p>
+                <span style="font-size: 12px; color: #8B95A5">{{b.src}}</span>
+              </div>
+            </article>
+          </sc-for>
+          <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 52px; border-radius: 14px; border: 1px dashed #2A3140; background: transparent; color: #8B95A5; font-size: 14px; cursor: pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            Ajouter depuis la bibliothèque de blocs
+          </button>
+        </section>
+
+        <aside aria-label="Aperçu côté consultant" style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 12px">
+          <span style="align-self: flex-start; font-size: 13px; color: #8B95A5">Ce que Camille verra dans l'app</span>
+          <div style="width: 100%; max-width: 340px; box-sizing: border-box; padding: 12px; border-radius: 40px; background: #1C2230; border: 1px solid #2A3140">
+            <div style="border-radius: 30px; background: #0A0E14; padding: 26px 18px 22px; display: flex; flex-direction: column; gap: 14px; min-height: 560px">
+              <span style="font-size: 13px; color: #8B95A5">Ce soir</span>
+              <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; line-height: 1.2">Votre programme, Camille</span>
+              <sc-for list="{{preview}}" as="p" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: #151A23">
+                  <span style="width: 36px; height: 36px; border-radius: 10px; background: {{p.tint}}; flex: none; display: flex; align-items: center; justify-content: center">
+                    <span style="width: 10px; height: 10px; border-radius: 5px; background: {{p.c}}"></span>
+                  </span>
+                  <span style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                    <span style="font-size: 14px; font-weight: 500">{{p.t}}</span>
+                    <span style="font-size: 12px; color: #8B95A5">{{p.when}}</span>
+                  </span>
+                  <span style="width: 22px; height: 22px; border-radius: 11px; border: 2px solid #2A3140; flex: none"></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </aside>
+      </div>
+      <p id="share-hint" style="margin: 0; font-size: 13px; color: #8B95A5">{{shareHint}}</p>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { removed: false, ack: false, shared: false };
+  }
+  renderVals() {
+    const { removed, ack, shared } = this.state;
+    const all = [
+      { id: 'soir', cat: 'Sommeil', c: '#6DD4B8', tint: '#23383B', t: 'Rituel du soir', when: 'Tous les soirs · 21 h 30', body: 'Écrans coupés une heure avant le coucher, lumière tamisée, tisane mélisse et tilleul.', src: 'Bloc de la bibliothèque · modifié' },
+      { id: 'coh', cat: 'Respiration', c: '#7B93DB', tint: '#1F2640', t: 'Cohérence cardiaque 3 × 5 min', when: 'Matin, midi, 17 h', body: 'Cinq minutes, six respirations par minute. Un rappel est envoyé sur l’app aux trois moments.', src: 'Bloc de la bibliothèque' },
+      { id: 'marche', cat: 'Mouvement', c: '#E8A87C', tint: '#373131', t: 'Marche digestive', when: 'Après le déjeuner · 20 min', body: 'Vingt minutes de marche à allure tranquille, idéalement dehors à la lumière du jour.', src: 'Nouveau bloc' },
+      { id: 'repas', cat: 'Alimentation', c: '#D4A574', tint: '#373131', t: 'Dîner léger avant 20 h', when: 'En semaine', body: 'Légumes cuits, une céréale complète, peu de protéines animales le soir. Protéines au petit-déjeuner.', src: 'Bloc de la bibliothèque' },
+      { id: 'mille', cat: 'Plantes', c: '#B89FD9', tint: '#2E2738', t: 'Millepertuis (gélules)', when: 'Le matin · 3 semaines', body: 'Selon la posologie indiquée par le fabricant, avec le petit-déjeuner.', src: 'Bloc de la bibliothèque', flag: true }
+    ];
+    const blocks = all.filter((b) => !(removed && b.id === 'mille')).map((b) => ({ ...b, flag: !!b.flag && !ack, border: b.flag && !ack ? '#6B3438' : '#2A3140' }));
+    const resolved = removed || ack;
+    const ready = resolved && !shared;
+    return {
+      blocks,
+      preview: blocks.slice(0, 4).map((b) => ({ t: b.t, when: b.when, c: b.c, tint: b.tint })),
+      showBanner: !removed && !shared,
+      ack,
+      shared,
+      status: shared ? 'Partagé' : 'Brouillon',
+      statusBg: shared ? '#23383B' : '#2A3140',
+      statusFg: shared ? '#6DD4B8' : '#C9CFDA',
+      shareDisabled: !ready,
+      shareCursor: ready ? 'pointer' : 'not-allowed',
+      shareBg: ready ? '#6DD4B8' : '#2A3140',
+      shareFg: ready ? '#0A0E14' : '#8B95A5',
+      shareLabel: shared ? 'Partagé' : 'Partager à Camille',
+      shareHint: shared ? 'Les modifications ultérieures créeront une v5.' : resolved ? 'Prêt à partager.' : 'Le partage est bloqué tant que la contre-indication n’est pas traitée.',
+      toggleAck: () => this.setState({ ack: !this.state.ack }),
+      removePlant: () => this.setState({ removed: true }),
+      share: () => { if (this.state.removed || this.state.ack) this.setState({ shared: true }); },
+      reset: () => this.setState({ removed: false, ack: false, shared: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
