@@ -339,6 +339,14 @@ function AgendaPageInner() {
                 try {
                   await cancelAppointment(selectedApt.id, null, 'practitioner');
                   triggerWaitlistNotification(selectedApt.id);
+                  // Acompte payé en ligne : remboursé quand le praticien annule
+                  const { data: sess } = await supabase.auth.getSession();
+                  const refund = await fetch(`/api/appointments/${selectedApt.id}/refund-deposit`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${sess.session?.access_token ?? ''}` },
+                  }).then((r) => r.json()).catch(() => null);
+                  if (refund?.error) showToast.error(refund.error);
+                  if (refund?.refunded) showToast.success('Acompte remboursé au consultant');
                   showToast.success(`Séance annulée · ${appointmentName(selectedApt)} a été prévenu·e`);
                   setSelectedId(null);
                   refresh();

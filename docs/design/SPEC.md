@@ -115,6 +115,7 @@ Ce document liste **toutes** les décisions prises pendant les revues du canevas
 | 3 | Agenda : grille Jour / Semaine / Liste, séance sélectionnée, liste d'attente, types de séance, lieu par séance | fait |
 | 6 | Bibliothèque : fiches (thèmes libres, favoris, envoi groupé avec petit mot, lu / pas lu, dupliquer, éditeur avec aperçu téléphone), blocs du praticien (motifs libres), ressources praticiens (proposition, relecture) | fait |
 | 7 | Facturation (KPI, séances sans facture, rappel URSSAF, onglets, tableau, export, détail papier, paiement / lien / avoir / annulation, nouvelle facture) et statistiques (périodes, comparaison, séances par semaine, CA 12 mois, motifs, accompagnement) | fait |
+| 8 | Questionnaire public `/questionnaire/[slug]` et prise de rendez-vous `/rdv/[slug]` (lieu, acompte Stripe, erreurs explicites, annulation par lien) | fait |
 | 4 | Messages (bandeau médicament informatif), questionnaires préliminaires (liste + détail, doublon, conclusion), correction de la fusion d'anamnèse | fait |
 
 Choix faits en attendant une décision :
@@ -127,4 +128,9 @@ Choix faits en attendant une décision :
 - thème libre d'une fiche : `category = 'general'` + `theme_label` ; motifs libres d'un bloc : `blocks.custom_motifs` ;
 - facturation : une facture peut désormais être liée à une séance de l'agenda (`consultation_invoices.appointment_id`) ; « séances terminées sans facture » = séances marquées terminées depuis 30 jours sans facture liée ;
 - rappel URSSAF : encaissements du trimestre civil en cours, date limite de la déclaration trimestrielle (micro-entreprise) ;
+- acompte : saisi sur la page de paiement sécurisée Stripe (Checkout, compte Connect du praticien) au lieu de champs carte dans la page ; le créneau est tenu 30 min, libéré si le paiement est abandonné ou expiré ; confirmation et e-mails envoyés une fois l'acompte payé ;
+- sans compte Stripe actif, la réservation est confirmée sans paiement en ligne (bandeau dans Paramètres › Réservation) ;
+- séances de groupe : pas d'acompte en ligne pour l'instant ;
+- annulation par le consultant : lien personnel dans l'e-mail (`/rdv/annuler/{jeton}`), remboursement si au-delà du délai d'annulation du praticien (24 h par défaut), acompte conservé sinon ; annulation par le praticien dans l'agenda = remboursement ;
+- l'ancien questionnaire `/questionnaire` (avec liste de praticiens) reste en place pour les liens déjà diffusés ;
 - l'ancienneté d'un consultant dans la revue du matin est mémorisée par navigateur ; le nombre de reports vient des actions enregistrées.

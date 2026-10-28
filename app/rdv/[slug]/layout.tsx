@@ -4,27 +4,6 @@ export const metadata: Metadata = {
   title: 'Prise de rendez-vous — AFEIA',
 };
 
-export default function BookingLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-cream to-surface">
-      <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
-        {children}
-      </div>
-      <footer className="border-t border-divider py-6 text-center text-xs text-stone">
-        <span>Powered by </span>
-        <a
-          href="https://afeia.fr"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sage hover:underline"
-        >
-          AFEIA
-        </a>
-      </footer>
-    </div>
-  );
+export default function BookingLayout({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-screen bg-cream text-charcoal">{children}</div>;
 }

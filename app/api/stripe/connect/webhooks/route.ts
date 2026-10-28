@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
 import { constructConnectWebhookEvent } from '@/lib/invoicing/stripe';
+import { confirmDeposit, releasePendingAppointment } from '@/lib/server/booking';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,12 +38,28 @@ export async function POST(request: NextRequest) {
 
     // Traiter selon le type d'evenement
     switch (event.type) {
-      case 'checkout.session.completed':
-        await handleCheckoutCompleted(
-          supabase,
-          event.data.object as Stripe.Checkout.Session
-        );
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.type === 'booking_deposit' && session.metadata.appointment_id) {
+          if (session.payment_status === 'paid') {
+            await confirmDeposit(
+              session.metadata.appointment_id,
+              typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id ?? null
+            );
+          }
+        } else {
+          await handleCheckoutCompleted(supabase, session);
+        }
         break;
+      }
+
+      case 'checkout.session.expired': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.type === 'booking_deposit' && session.metadata.appointment_id) {
+          await releasePendingAppointment(session.metadata.appointment_id);
+        }
+        break;
+      }
 
       case 'payment_intent.payment_failed':
         await handlePaymentFailed(
