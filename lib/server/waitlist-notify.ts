@@ -8,8 +8,9 @@ const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'AFEIA <contact@afeia.fr>';
 /**
  * Un créneau s'est libéré : prévient les personnes compatibles de la liste d'attente.
  * Si practitionerId est fourni, vérifie que la séance lui appartient.
+ * freedStartsAt : début du créneau libéré quand la séance a été déplacée (sinon son propre horaire).
  */
-export async function notifyWaitlistForAppointment(appointmentId: string, practitionerId?: string): Promise<{ notified: number; forbidden?: boolean; notFound?: boolean }> {
+export async function notifyWaitlistForAppointment(appointmentId: string, practitionerId?: string, freedStartsAt?: Date): Promise<{ notified: number; forbidden?: boolean; notFound?: boolean }> {
   const supabase = createSupabaseAdminClient();
 
   // Fetch appointment with consultation type
@@ -52,7 +53,7 @@ export async function notifyWaitlistForAppointment(appointmentId: string, practi
   if (!ct) {
     return { notified: 0 };
   }
-  const slotDate = new Date(appointment.starts_at);
+  const slotDate = freedStartsAt ?? new Date(appointment.starts_at);
 
   // Find matching waitlist entries
   const entries = await getMatchingWaitlistEntries(appointment.practitioner_id, {

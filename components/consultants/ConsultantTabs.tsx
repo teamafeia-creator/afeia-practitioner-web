@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '../../lib/cn';
 import { Badge } from '../ui/Badge';
@@ -977,6 +977,46 @@ export function ConsultantTabs({
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
+
+  // ?conclusion={questionnaireId} (bouton « Écrire ma conclusion ») : notes privées ouvertes en édition,
+  // ligne préremplie ajoutée à la fin, enregistrée seulement si le praticien enregistre
+  const conclusionFor = searchParams.get('conclusion');
+  const conclusionApplied = useRef<string | null>(null);
+  const [noteFocusPending, setNoteFocusPending] = useState(false);
+  // Curseur à la fin du champ, une fois le champ affiché
+  useEffect(() => {
+    if (!noteFocusPending || !noteEditing || tab !== T.tabNotesSeance) return;
+    const field = document.getElementById('practitioner-note-field') as HTMLTextAreaElement | null;
+    if (!field) return;
+    setNoteFocusPending(false);
+    field.focus();
+    field.setSelectionRange(field.value.length, field.value.length);
+    field.scrollTop = field.scrollHeight;
+  }, [noteFocusPending, noteEditing, tab, noteContent]);
+  useEffect(() => {
+    if (!conclusionFor || conclusionApplied.current === conclusionFor) return;
+    conclusionApplied.current = conclusionFor;
+    (async () => {
+      const { data } = await supabase.from('preliminary_questionnaires').select('created_at').eq('id', conclusionFor).maybeSingle();
+      const date = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(
+        data?.created_at ? new Date(data.created_at as string) : new Date()
+      );
+      const line = `Conclusion du questionnaire préliminaire du ${date} : `;
+      setTab(T.tabNotesSeance as Tab);
+      setNoteEditing(true);
+      setNoteContent((prev) => {
+        if (prev.includes(line.trim())) return prev;
+        const base = prev.replace(/\s+$/, '');
+        return base ? `${base}\n\n${line}` : line;
+      });
+      setNoteFocusPending(true);
+      // Paramètre retiré de l'URL, ?tab= conservé
+      const next = new URLSearchParams(window.location.search);
+      next.delete('conclusion');
+      const qs = next.toString();
+      router.replace(`${window.location.pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
+    })();
+  }, [conclusionFor, router]);
 
   // Refetch appointments when the "Rendez-vous" tab becomes active
   useEffect(() => {
@@ -3635,6 +3675,8 @@ export function ConsultantTabs({
             </div>
             {noteEditing ? (
               <Textarea
+                id="practitioner-note-field"
+                aria-label="Notes privées"
                 value={noteContent}
                 onChange={(event) => setNoteContent(event.target.value)}
                 placeholder="Renseignez vos observations confidentielles..."

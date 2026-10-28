@@ -80,6 +80,7 @@ export async function createDepositCheckout(params: {
 type ApptRow = {
   id: string;
   practitioner_id: string;
+  consultant_id: string | null;
   consultation_type_id: string | null;
   starts_at: string;
   ends_at: string;
@@ -104,13 +105,12 @@ async function loadAppointment(id: string): Promise<ApptRow | null> {
   return (data as ApptRow | null) ?? null;
 }
 
-/** E-mails de confirmation (consultant + praticien), une seule fois par séance. */
-export async function notifyBooking(appointmentId: string, opts: { reason?: string | null; isNewConsultant?: boolean } = {}) {
-  const supabase = createAdminClient();
-  const a = await loadAppointment(appointmentId);
-  if (!a || a.confirmation_sent_at || !a.booking_email) return;
-  await supabase.from('appointments').update({ confirmation_sent_at: new Date().toISOString() }).eq('id', a.id).is('confirmation_sent_at', null);
+const parisDate = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris' });
+const parisTime = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
 
+/** Données communes des e-mails de rendez-vous (gabarit de confirmation). */
+async function bookingEmailData(a: ApptRow, name: string, email: string, reason: string | null) {
+  const supabase = createAdminClient();
   const [{ data: prac }, { data: type }] = await Promise.all([
     supabase.from('practitioners').select('full_name, email, booking_address, cancellation_policy_hours, cancellation_policy_text').eq('id', a.practitioner_id).maybeSingle(),
     a.consultation_type_id ? supabase.from('consultation_types').select('name, duration_minutes, price_cents').eq('id', a.consultation_type_id).maybeSingle() : Promise.resolve({ data: null }),
@@ -118,29 +118,63 @@ export async function notifyBooking(appointmentId: string, opts: { reason?: stri
   const p = prac as { full_name: string; email: string | null; booking_address: string | null; cancellation_policy_hours: number | null; cancellation_policy_text: string | null } | null;
   const t = type as { name: string; duration_minutes: number; price_cents: number | null } | null;
   const start = new Date(a.starts_at);
-  const name = a.booking_name ?? '';
   const first = name.split(' ')[0] ?? '';
   const deposit = a.deposit_status === 'paid' && a.deposit_cents ? a.deposit_cents / 100 : null;
   const balance = deposit != null && t?.price_cents ? Math.max(0, t.price_cents / 100 - deposit) : null;
   const data = {
     consultantFirstName: first,
     consultantName: name,
-    consultantEmail: a.booking_email,
+    consultantEmail: email,
     practitionerName: p?.full_name ?? '',
     practitionerAddress: p?.booking_address ?? null,
-    dateFormatted: new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris' }).format(start),
-    timeFormatted: new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }).format(start),
+    dateFormatted: parisDate.format(start),
+    timeFormatted: parisTime.format(start),
     consultationTypeName: t?.name ?? 'Séance',
     durationMinutes: t?.duration_minutes ?? Math.round((new Date(a.ends_at).getTime() - start.getTime()) / 60000),
     cancellationPolicyHours: p?.cancellation_policy_hours ?? 24,
     cancellationPolicyText: p?.cancellation_policy_text ?? null,
-    reason: opts.reason ?? null,
+    reason,
     videoLink: a.video_link,
     depositEuros: deposit,
     balanceEuros: balance,
     cancelUrl: `${appUrl()}/rdv/annuler/${a.cancel_token}`,
     isVisio: a.location_type === 'video',
   };
+  return { data, practitionerEmail: p?.email ?? null };
+}
+
+/** Séance déplacée par le praticien : e-mail de changement d'horaire au consultant. */
+export async function notifyReschedule(appointmentId: string, previousStartsAt: string): Promise<boolean> {
+  const supabase = createAdminClient();
+  const a = await loadAppointment(appointmentId);
+  if (!a) return false;
+  let name = a.booking_name ?? '';
+  let email = a.booking_email;
+  if (a.consultant_id) {
+    const { data: c } = await supabase.from('consultants').select('name, first_name, last_name, email').eq('id', a.consultant_id).maybeSingle();
+    const row = c as { name: string | null; first_name: string | null; last_name: string | null; email: string | null } | null;
+    if (row) {
+      name = row.name || [row.first_name, row.last_name].filter(Boolean).join(' ') || name;
+      email = row.email || email;
+    }
+  }
+  if (!email) return false;
+  const { data } = await bookingEmailData(a, name, email, null);
+  const prev = new Date(previousStartsAt);
+  const mail = buildConfirmationEmail({ ...data, previousDateFormatted: `${parisDate.format(prev)} à ${parisTime.format(prev)}` });
+  await sendEmail({ to: email, from: FROM_EMAIL, subject: mail.subject, html: mail.html, text: mail.text });
+  return true;
+}
+
+/** E-mails de confirmation (consultant + praticien), une seule fois par séance. */
+export async function notifyBooking(appointmentId: string, opts: { reason?: string | null; isNewConsultant?: boolean } = {}) {
+  const supabase = createAdminClient();
+  const a = await loadAppointment(appointmentId);
+  if (!a || a.confirmation_sent_at || !a.booking_email) return;
+  await supabase.from('appointments').update({ confirmation_sent_at: new Date().toISOString() }).eq('id', a.id).is('confirmation_sent_at', null);
+
+  const { data, practitionerEmail } = await bookingEmailData(a, a.booking_name ?? '', a.booking_email, opts.reason ?? null);
+  const start = new Date(a.starts_at);
   try {
     const mail = buildConfirmationEmail(data);
     await sendEmail({ to: a.booking_email, from: FROM_EMAIL, subject: mail.subject, html: mail.html, text: mail.text });
@@ -148,14 +182,14 @@ export async function notifyBooking(appointmentId: string, opts: { reason?: stri
     console.error('[booking] confirmation email failed', e);
   }
   try {
-    if (p?.email) {
+    if (practitionerEmail) {
       const notif = buildPractitionerNotificationEmail({
         ...data,
         consultantPhone: a.booking_phone ?? '',
         agendaUrl: `${appUrl()}/agenda?date=${a.starts_at.slice(0, 10)}`,
         isNewConsultant: !!opts.isNewConsultant,
       });
-      await sendEmail({ to: p.email, from: FROM_EMAIL, subject: notif.subject, html: notif.html, text: notif.text });
+      await sendEmail({ to: practitionerEmail, from: FROM_EMAIL, subject: notif.subject, html: notif.html, text: notif.text });
     }
   } catch (e) {
     console.error('[booking] practitioner email failed', e);
