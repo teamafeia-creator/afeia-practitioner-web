@@ -121,7 +121,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const allowedFields = ['title', 'content', 'section', 'motifs', 'tags', 'ai_keywords', 'is_archived'];
+    const allowedFields = ['title', 'content', 'section', 'motifs', 'custom_motifs', 'tags', 'ai_keywords', 'is_archived'];
     const updateData: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (body[field] !== undefined) {

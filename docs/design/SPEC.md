@@ -113,6 +113,7 @@ Ce document liste **toutes** les décisions prises pendant les revues du canevas
 | 1 | Connexion, page Découvrir, navigation, vocabulaire « praticien » | fait |
 | 2 | Tableau de bord, revue du matin (actions consignées, notes privées en ajout) | fait |
 | 3 | Agenda : grille Jour / Semaine / Liste, séance sélectionnée, liste d'attente, types de séance, lieu par séance | fait |
+| 6 | Bibliothèque : fiches (thèmes libres, favoris, envoi groupé avec petit mot, lu / pas lu, dupliquer, éditeur avec aperçu téléphone), blocs du praticien (motifs libres), ressources praticiens (proposition, relecture) | fait |
 | 4 | Messages (bandeau médicament informatif), questionnaires préliminaires (liste + détail, doublon, conclusion), correction de la fusion d'anamnèse | fait |
 
 Choix faits en attendant une décision :
@@ -121,4 +122,6 @@ Choix faits en attendant une décision :
 - « Décaler » ouvre le formulaire de report (le design proposait « Décaler d'1 h ») ; « Annuler la séance » demande une confirmation et prévient la liste d'attente ;
 - le bandeau « Question sur un médicament » s'affiche quand un message du consultant resté sans réponse cite un médicament ou un traitement (liste de mots dans `lib/messages/medication.ts`) ;
 - « Annuler » après création ou association d'un questionnaire n'est pas proposé (l'anamnèse a déjà été complétée) ; il l'est après un archivage ;
+- ressources praticiens : table `practitioner_resources` (privée, en relecture, publiée, refusée) ; l'écran admin de relecture reste à faire (question ouverte) — en attendant, la publication se fait en base (`review_status = 'published'`) ;
+- thème libre d'une fiche : `category = 'general'` + `theme_label` ; motifs libres d'un bloc : `blocks.custom_motifs` ;
 - l'ancienneté d'un consultant dans la revue du matin est mémorisée par navigateur ; le nombre de reports vient des actions enregistrées.

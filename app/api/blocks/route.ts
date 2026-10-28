@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     const supabase = createSupabaseAdminClient();
 
     const body = await request.json();
-    const { title, content, section, motifs, tags, ai_keywords } = body;
+    const { title, content, section, motifs, tags, ai_keywords, custom_motifs } = body;
 
     if (!title || !content || !section) {
       return NextResponse.json(
@@ -149,6 +149,7 @@ export async function POST(request: Request) {
         motifs: motifs ?? [],
         tags: tags ?? [],
         ai_keywords: ai_keywords ?? [],
+        custom_motifs: Array.isArray(custom_motifs) ? custom_motifs : [],
         source: 'praticien',
         owner_id: practitionerId,
       })
