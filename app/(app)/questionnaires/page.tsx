@@ -175,12 +175,19 @@ function QuestionnairesInner() {
   const setStatusLocal = (id: string, patch: Partial<PreliminaryQuestionnaire>) =>
     setItems((list) => list.map((x) => (x.id === id ? { ...x, ...patch } : x)));
 
+  // Le questionnaire associé quitte « En attente » : on le suit dans « Associés » pour garder « Écrire ma conclusion » sous les yeux
+  const keepInView = (id: string) => {
+    setSelId(id);
+    setTab((t) => (t === 'pending' ? 'linked_to_consultant' : t));
+  };
+
   async function create() {
     if (!sel) return;
     setBusy(true);
     try {
       const r = await createConsultantFromQuestionnaire(sel.id);
       setStatusLocal(sel.id, { status: 'linked_to_consultant', linked_consultant_id: r.consultantId, linked_at: new Date().toISOString() });
+      keepInView(sel.id);
       showToast.success(`Dossier de ${sel.first_name} créé · code d’accès envoyé à ${r.email ?? sel.email}`);
       void load();
     } catch (e) {
@@ -197,6 +204,7 @@ function QuestionnairesInner() {
       const r = await linkQuestionnaireToExistingConsultant(sel.id, consultantId);
       const name = consultants.find((c) => c.id === consultantId)?.name ?? 'ce consultant';
       setStatusLocal(sel.id, { status: 'linked_to_consultant', linked_consultant_id: consultantId, linked_at: new Date().toISOString() });
+      keepInView(sel.id);
       setLinkOpen(false);
       setPick(null);
       showToast.success(
@@ -466,14 +474,14 @@ function QuestionnairesInner() {
                 </span>
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href={`/consultants/${sel.linked_consultant_id}?tab=notes`}
+                    href={`/consultants/${sel.linked_consultant_id}?tab=notes&conclusion=${sel.id}`}
                     title="Ouvre l'onglet Notes privées du dossier, invisible pour le consultant"
                     className="inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-sage px-3.5 text-sm font-semibold text-ink"
                   >
-                    🔒 Écrire ma conclusion ↗
+                    🔒 Écrire ma conclusion
                   </Link>
                   <Link href={`/consultants/${sel.linked_consultant_id}?tab=anamnese`} className="inline-flex h-10 items-center rounded-[10px] border border-[#2F5A50] px-3.5 text-sm font-medium text-[#CFEFE5]">
-                    Voir l’anamnèse ↗
+                    Voir l’anamnèse
                   </Link>
                 </div>
               </div>

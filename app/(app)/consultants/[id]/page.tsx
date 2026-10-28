@@ -35,6 +35,17 @@ export default function ConsultantDetailPage() {
 
   const deleteConsultantMutation = useDeleteConsultant();
 
+  // Retire ?created et ?activation_code de l'URL sans perdre les autres paramètres (?tab=, ?conclusion=)
+  const cleanUrl = useCallback(() => {
+    const next = new URLSearchParams(window.location.search);
+    next.delete('created');
+    next.delete('activation_code');
+    const qs = next.toString();
+    router.replace(`/consultants/${consultantId}${qs ? `?${qs}` : ''}`, { scroll: false });
+  }, [consultantId, router]);
+  // Onglet demandé par un lien (ex. « Écrire ma conclusion ») : le dossier s'affiche même avant l'activation
+  const requestedTab = searchParams.get('tab');
+
   // Handler pour exporter le dossier en PDF
   const handleExportDossier = async () => {
     setExportingPdf(true);
@@ -99,8 +110,7 @@ export default function ConsultantDetailPage() {
       const urlCode = searchParams.get('activation_code');
       if (urlCode) {
         setActivationCode(urlCode);
-        // Clean URL
-        router.replace(`/consultants/${consultantId}`, { scroll: false });
+        cleanUrl();
         return;
       }
 
@@ -138,7 +148,7 @@ export default function ConsultantDetailPage() {
     } catch (err) {
       console.error('Error fetching activation code:', err);
     }
-  }, [consultant?.email, consultantId, router, searchParams]);
+  }, [consultant?.email, cleanUrl, searchParams]);
 
   // Handler pour renvoyer le code d'activation
   const handleResendCode = async (): Promise<{ success: boolean; code?: string; error?: string }> => {
@@ -211,9 +221,9 @@ export default function ConsultantDetailPage() {
     }
     // Clean URL after reading params
     if (searchParams.get('created') === '1' || urlCode) {
-      router.replace(`/consultants/${consultantId}`, { scroll: false });
+      cleanUrl();
     }
-  }, [searchParams, consultantId, router]);
+  }, [searchParams, cleanUrl]);
 
   // Fetch activation code when consultant is loaded and not activated
   useEffect(() => {
@@ -386,49 +396,51 @@ export default function ConsultantDetailPage() {
           </Card>
         )}
 
-        {/* Informations consultant basiques */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-charcoal mb-4">
-            Informations du consultant
-          </h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-sm text-stone">Nom</p>
-              <p className="text-charcoal">{consultantDisplayName}</p>
+        {/* Informations consultant basiques (le dossier complet les reprend quand un onglet est demandé) */}
+        {!requestedTab && (
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-charcoal mb-4">
+              Informations du consultant
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-sm text-stone">Nom</p>
+                <p className="text-charcoal">{consultantDisplayName}</p>
+              </div>
+              {consultant.email && (
+                <div>
+                  <p className="text-sm text-stone">Email</p>
+                  <p className="text-charcoal">{consultant.email}</p>
+                </div>
+              )}
+              {consultant.phone && (
+                <div>
+                  <p className="text-sm text-stone">Téléphone</p>
+                  <p className="text-charcoal">{consultant.phone}</p>
+                </div>
+              )}
+              {consultant.city && (
+                <div>
+                  <p className="text-sm text-stone">Ville</p>
+                  <p className="text-charcoal">{consultant.city}</p>
+                </div>
+              )}
             </div>
-            {consultant.email && (
-              <div>
-                <p className="text-sm text-stone">Email</p>
-                <p className="text-charcoal">{consultant.email}</p>
-              </div>
-            )}
-            {consultant.phone && (
-              <div>
-                <p className="text-sm text-stone">Téléphone</p>
-                <p className="text-charcoal">{consultant.phone}</p>
-              </div>
-            )}
-            {consultant.city && (
-              <div>
-                <p className="text-sm text-stone">Ville</p>
-                <p className="text-charcoal">{consultant.city}</p>
-              </div>
-            )}
-          </div>
-          <div className="mt-6 pt-4 border-t border-divider flex justify-between items-center">
-            <Button variant="secondary" onClick={() => router.push('/consultants')}>
-              Retour à la liste
-            </Button>
-            <Button
-              variant="ghost"
-              className="text-red-600 hover:bg-red-50"
-              onClick={() => setShowDeleteModal(true)}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Supprimer le consultant
-            </Button>
-          </div>
-        </Card>
+            <div className="mt-6 pt-4 border-t border-divider flex justify-between items-center">
+              <Button variant="secondary" onClick={() => router.push('/consultants')}>
+                Retour à la liste
+              </Button>
+              <Button
+                variant="ghost"
+                className="text-red-600 hover:bg-red-50"
+                onClick={() => setShowDeleteModal(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer le consultant
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* Modal de confirmation de suppression */}
         <Modal
@@ -460,6 +472,14 @@ export default function ConsultantDetailPage() {
             </Button>
           </ModalFooter>
         </Modal>
+
+        {requestedTab ? (
+          <ConsultantTabs
+            consultant={consultant}
+            onExportDossier={handleExportDossier}
+            exportingDossier={exportingPdf}
+          />
+        ) : null}
 
         {toast ? (
           <Toast
