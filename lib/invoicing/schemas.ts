@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const createInvoiceSchema = z.object({
   consultant_id: z.string().uuid(),
   consultation_id: z.string().uuid().nullable(),
+  appointment_id: z.string().uuid().nullable().optional(),
   template_id: z.string().nullable(),
   description: z.string().min(3, 'La description est requise'),
   montant: z.number().positive('Le montant doit être positif'),

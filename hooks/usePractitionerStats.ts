@@ -23,7 +23,8 @@ const EMPTY_STATS: PractitionerStats = {
   inactiveJournalConsultants: [],
 };
 
-export function usePractitionerStats(periodKey: PeriodKey = 'this_month') {
+/** Période nommée, ou plage explicite (mémoïsez-la côté appelant). */
+export function usePractitionerStats(periodKey: PeriodKey | { start: Date; end: Date } = 'this_month') {
   const [stats, setStats] = useState<PractitionerStats>(EMPTY_STATS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +40,7 @@ export function usePractitionerStats(periodKey: PeriodKey = 'this_month') {
         return;
       }
 
-      const { start, end } = getPeriodRange(periodKey);
+      const { start, end } = typeof periodKey === 'string' ? getPeriodRange(periodKey) : periodKey;
 
       const { data, error: rpcError } = await supabase.rpc('get_practitioner_stats', {
         p_practitioner_id: userData.user.id,
