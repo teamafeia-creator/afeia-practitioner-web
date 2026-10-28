@@ -17,7 +17,7 @@ export async function getPublicPractitioners(): Promise<PublicPractitioner[]> {
   const { data, error } = await supabase.rpc('get_public_practitioners');
 
   if (error) {
-    throw new Error(error.message ?? 'Impossible de charger la liste des naturopathes.');
+    throw new Error(error.message ?? 'Impossible de charger la liste des praticiens.');
   }
 
   return data ?? [];
@@ -49,7 +49,7 @@ export async function submitPreliminaryQuestionnaire(params: {
       throw new Error('Format d\'email invalide.');
     }
     if (error.message.includes('Invalid naturopath_id')) {
-      throw new Error('Naturopathe non trouvé.');
+      throw new Error('Praticien non trouvé.');
     }
     if (error.message.includes('required')) {
       throw new Error('Tous les champs obligatoires doivent être remplis.');
@@ -175,9 +175,6 @@ export async function createConsultantFromQuestionnaire(questionnaireId: string)
     const result = await response.json();
 
     if (result.ok) {
-      console.log('[questionnaire] Code d\'activation envoye pour consultant cree depuis questionnaire');
-      console.log('[questionnaire] Email:', consultant.email);
-      console.log('[questionnaire] Code:', result.code);
       return {
         consultantId,
         code: result.code,
@@ -207,87 +204,81 @@ export async function archivePreliminaryQuestionnaire(questionnaireId: string): 
   }
 }
 
+const isEmpty = (v: unknown) => v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
+
 /**
- * Link a preliminary questionnaire to an existing consultant
- * Merges the questionnaire responses into the consultant's anamnesis
+ * Fusionne les réponses d'un questionnaire dans une anamnèse existante.
+ * Règle : on ne complète que les champs vides ; une valeur déjà saisie n'est jamais écrasée.
+ * Les réponses différentes restent consultables dans le questionnaire associé.
+ */
+export function mergeQuestionnaireIntoAnamnesis(
+  existing: Record<string, Record<string, unknown>>,
+  responses: Record<string, Record<string, string>>
+): { merged: Record<string, Record<string, unknown>>; filled: number; kept: number } {
+  const merged: Record<string, Record<string, unknown>> = {};
+  for (const [section, values] of Object.entries(existing ?? {})) merged[section] = { ...(values ?? {}) };
+  let filled = 0;
+  let kept = 0;
+  for (const [section, values] of Object.entries(responses ?? {})) {
+    const target = (merged[section] = { ...(merged[section] ?? {}) });
+    for (const [key, value] of Object.entries(values ?? {})) {
+      if (isEmpty(value)) continue;
+      if (isEmpty(target[key])) {
+        target[key] = value;
+        filled += 1;
+      } else if (String(target[key]).trim() !== String(value).trim()) {
+        kept += 1;
+      }
+    }
+  }
+  return { merged, filled, kept };
+}
+
+/**
+ * Associe un questionnaire à un consultant existant.
+ * Les réponses complètent l'anamnèse sans écraser ce qui est déjà rempli ;
+ * la version précédente est conservée par l'historique de l'anamnèse (trigger).
  */
 export async function linkQuestionnaireToExistingConsultant(
   questionnaireId: string,
   consultantId: string
-): Promise<void> {
-  console.log('[questionnaire] LIAISON QUESTIONNAIRE -> CONSULTANT');
-  console.log('Questionnaire ID:', questionnaireId);
-  console.log('Consultant ID:', consultantId);
-
-  // 1. Récupérer les données du questionnaire
+): Promise<{ filled: number; kept: number }> {
   const { data: questionnaire, error: qError } = await supabase
     .from('preliminary_questionnaires')
     .select('responses, status')
     .eq('id', questionnaireId)
     .single();
 
-  if (qError || !questionnaire) {
-    console.error('[questionnaire] Questionnaire non trouve:', qError);
-    throw new Error('Questionnaire non trouvé.');
-  }
+  if (qError || !questionnaire) throw new Error('Questionnaire non trouvé.');
+  if (questionnaire.status !== 'pending') throw new Error('Ce questionnaire est déjà associé à un consultant.');
 
-  if (questionnaire.status !== 'pending') {
-    throw new Error('Ce questionnaire est déjà associé à un consultant.');
-  }
-
-  // 2. Récupérer l'anamnèse du consultant (si elle existe)
   const { data: anamnesis, error: aError } = await supabase
     .from('consultant_anamnesis')
     .select('answers, version')
     .eq('consultant_id', consultantId)
     .maybeSingle();
 
-  if (aError) {
-    console.error('[questionnaire] Erreur recuperation anamnese:', aError);
-    throw new Error('Impossible de récupérer l\'anamnèse du consultant.');
+  if (aError) throw new Error('Impossible de récupérer l’anamnèse du consultant.');
+
+  const { merged, filled, kept } = mergeQuestionnaireIntoAnamnesis(
+    (anamnesis?.answers ?? {}) as Record<string, Record<string, unknown>>,
+    (questionnaire.responses ?? {}) as Record<string, Record<string, string>>
+  );
+
+  if (filled > 0 || !anamnesis) {
+    const { error: upsertError } = await supabase.from('consultant_anamnesis').upsert(
+      {
+        consultant_id: consultantId,
+        answers: merged,
+        version: (anamnesis?.version || 0) + 1,
+        status: 'COMPLETED',
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: 'consultant_id' }
+    );
+    if (upsertError) throw new Error('Impossible de mettre à jour l’anamnèse.');
   }
 
-  // 3. Fusionner les réponses (les données du questionnaire complètent l'anamnèse)
-  const existingAnswers = anamnesis?.answers || {};
-  const questionnaireResponses = questionnaire.responses || {};
-
-  // Convertir les réponses du questionnaire au format anamnèse si nécessaire
-  const mergedAnswers = {
-    ...existingAnswers,
-    // Les réponses du questionnaire préliminaire remplacent les valeurs vides
-    ...Object.fromEntries(
-      Object.entries(questionnaireResponses).map(([section, values]) => {
-        const existingSection = (existingAnswers as Record<string, unknown>)[section] || {};
-        return [section, { ...existingSection, ...(values as Record<string, unknown>) }];
-      })
-    )
-  };
-
-  console.log('[questionnaire] Fusion des reponses...');
-
-  // 4. Mettre à jour ou créer l'anamnèse
-  const newVersion = (anamnesis?.version || 0) + 1;
-
-  const { error: upsertError } = await supabase
-    .from('consultant_anamnesis')
-    .upsert({
-      consultant_id: consultantId,
-      answers: mergedAnswers,
-      version: newVersion,
-      status: 'COMPLETED',
-      updated_at: new Date().toISOString()
-    }, {
-      onConflict: 'consultant_id'
-    });
-
-  if (upsertError) {
-    console.error('[questionnaire] Erreur mise a jour anamnese:', upsertError);
-    throw new Error('Impossible de mettre à jour l\'anamnèse.');
-  }
-
-  console.log('[questionnaire] Anamnese mise a jour (version', newVersion, ')');
-
-  // 5. Marquer le questionnaire comme lié
   const { error: linkError } = await supabase
     .from('preliminary_questionnaires')
     .update({
@@ -298,12 +289,20 @@ export async function linkQuestionnaireToExistingConsultant(
     })
     .eq('id', questionnaireId);
 
-  if (linkError) {
-    console.error('[questionnaire] Erreur liaison questionnaire:', linkError);
-    throw new Error('Impossible de lier le questionnaire.');
-  }
+  if (linkError) throw new Error('Impossible de lier le questionnaire.');
+  return { filled, kept };
+}
 
-  console.log('[questionnaire] Questionnaire lie au consultant');
+/**
+ * Remet un questionnaire archivé en attente.
+ */
+export async function restorePreliminaryQuestionnaire(questionnaireId: string): Promise<void> {
+  const { error } = await supabase
+    .from('preliminary_questionnaires')
+    .update({ status: 'pending', updated_at: new Date().toISOString() })
+    .eq('id', questionnaireId)
+    .eq('status', 'archived');
+  if (error) throw new Error(error.message ?? 'Impossible de remettre le questionnaire en attente.');
 }
 
 /**

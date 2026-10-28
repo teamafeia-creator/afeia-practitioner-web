@@ -44,6 +44,8 @@ export function Toaster() {
 interface ToastOptions {
   duration?: number;
   id?: string;
+  /** Bouton d'action dans le toast (ex. « Annuler »). */
+  action?: { label: string; onClick: () => void };
 }
 
 export const showToast = {
@@ -61,15 +63,28 @@ export const showToast = {
           <div className="flex-1">
             <p className="text-sm font-medium text-charcoal">{message}</p>
           </div>
+          {options?.action && (
+            <button
+              type="button"
+              onClick={() => {
+                options.action?.onClick();
+                toast.dismiss(t.id);
+              }}
+              className="flex-shrink-0 text-sm font-semibold text-sage hover:text-sage-dark"
+            >
+              {options.action.label}
+            </button>
+          )}
           <button
             onClick={() => toast.dismiss(t.id)}
-            className="flex-shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors"
+            aria-label="Fermer"
+            className="flex-shrink-0 text-stone hover:text-charcoal transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       ),
-      { duration: options?.duration || 4000, id: options?.id }
+      { duration: options?.duration || (options?.action ? 6000 : 4000), id: options?.id }
     );
   },
 

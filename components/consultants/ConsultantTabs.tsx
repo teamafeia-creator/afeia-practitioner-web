@@ -258,6 +258,10 @@ const TAB_META: Record<Tab, { title: string; description: string }> = {
 const LEGACY_TAB_ALIASES: Record<string, Tab> = {
   'Dossier médical': T.tabDossierMedical,
   'Bague connectée': T.tabBagueConnectee,
+  notes: T.tabNotesSeance,
+  anamnese: T.tabAnamnese,
+  messages: T.tabMessages,
+  conseillancier: T.tabConseillancier,
 };
 
 const SIDEBAR_GROUPS = [
