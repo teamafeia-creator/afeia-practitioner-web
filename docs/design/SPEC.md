@@ -105,3 +105,17 @@ Ce document liste **toutes** les décisions prises pendant les revues du canevas
   - coordonnées (téléphone obligatoire), **acompte obligatoire payé par carte (Stripe)**, solde après la séance (cabinet, virement ou lien) ; acompte remboursé si annulation > 24 h, conservé sinon ; acompte par défaut 30 % (réglage par praticien et par type) ;
   - **messages d'erreur explicites** : encadré « Pour confirmer, il reste à : » + message sous chaque champ ;
   - confirmation (cabinet / visio), ajout à l'agenda, lien vers le questionnaire préliminaire.
+
+## 7. Suivi de l'implémentation (branche `design/canvas-afeia`)
+
+| Lot | Contenu | État |
+|---|---|---|
+| 1 | Connexion, page Découvrir, navigation, vocabulaire « praticien » | fait |
+| 2 | Tableau de bord, revue du matin (actions consignées, notes privées en ajout) | fait |
+| 3 | Agenda : grille Jour / Semaine / Liste, séance sélectionnée, liste d'attente, types de séance, lieu par séance | fait |
+
+Choix faits en attendant une décision :
+- le type « Consultation visio » n'est plus créé pour les nouveaux comptes ; les types existants des praticiens ne sont **pas** modifiés ;
+- « Proposer un créneau » (liste d'attente) crée la séance (rattachée au dossier si l'e-mail correspond, sinon au nom / e-mail de la personne) puis retire la personne de la liste ;
+- « Décaler » ouvre le formulaire de report (le design proposait « Décaler d'1 h ») ; « Annuler la séance » demande une confirmation et prévient la liste d'attente ;
+- l'ancienneté d'un consultant dans la revue du matin est mémorisée par navigateur ; le nombre de reports vient des actions enregistrées.
