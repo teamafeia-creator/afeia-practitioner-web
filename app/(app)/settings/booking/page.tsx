@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Toast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabase';
+import { PUBLIC_CONSULTATION_TYPE_COLUMNS } from '@/lib/queries/booking-columns';
 
 interface BookingConfig {
   booking_slug: string | null;
@@ -25,6 +26,8 @@ interface BookingConfig {
 
 interface ValidationState {
   hasConsultationTypes: boolean;
+  /** Erreur technique de la requête des types (ex. colonne manquante en base). */
+  consultationTypesError: string | null;
   hasAvailability: boolean;
   hasSlug: boolean;
 }
@@ -40,6 +43,7 @@ export default function BookingSettingsPage() {
   const [copied, setCopied] = useState(false);
   const [validation, setValidation] = useState<ValidationState>({
     hasConsultationTypes: false,
+    consultationTypesError: null,
     hasAvailability: false,
     hasSlug: false,
   });
@@ -95,10 +99,12 @@ export default function BookingSettingsPage() {
         });
       }
 
-      // Check validation requirements (filtrer par praticien)
-      const { data: types } = await supabase
+      // Check validation requirements (filtrer par praticien).
+      // Mêmes colonnes que la page publique /rdv/[slug] : un schéma incomplet
+      // y est détecté dès l'activation plutôt qu'en production.
+      const { data: types, error: typesError } = await supabase
         .from('consultation_types')
-        .select('id')
+        .select(PUBLIC_CONSULTATION_TYPE_COLUMNS)
         .eq('practitioner_id', userData.user.id)
         .eq('is_active', true)
         .eq('is_bookable_online', true)
@@ -111,8 +117,22 @@ export default function BookingSettingsPage() {
         .eq('is_active', true)
         .limit(1);
 
+      const consultationTypesError = typesError
+        ? `${typesError.message}${typesError.code ? ` (code ${typesError.code})` : ''}`
+        : null;
+
+      if (typesError) {
+        console.error('Error checking consultation types for booking:', typesError);
+        setToast({
+          title: 'Erreur technique sur les types de consultation',
+          description: `Impossible de vérifier vos types de consultation : la page publique de prise de RDV ne pourra pas s'afficher. Détail : ${consultationTypesError}`,
+          variant: 'error',
+        });
+      }
+
       setValidation({
-        hasConsultationTypes: (types?.length || 0) > 0,
+        hasConsultationTypes: !typesError && (types?.length || 0) > 0,
+        consultationTypesError,
         hasAvailability: (schedules?.length || 0) > 0,
         hasSlug: !!practitioner?.booking_slug,
       });
@@ -185,6 +205,14 @@ export default function BookingSettingsPage() {
       }
       if (!/^[a-z0-9-]+$/.test(form.booking_slug)) {
         setToast({ title: 'Le slug ne peut contenir que des lettres minuscules, chiffres et tirets.', variant: 'error' });
+        return;
+      }
+      if (validation.consultationTypesError) {
+        setToast({
+          title: 'Impossible d\'activer le booking',
+          description: `Un problème technique empêche la vérification de vos types de consultation. Détail : ${validation.consultationTypesError}`,
+          variant: 'error',
+        });
         return;
       }
       if (!validation.hasConsultationTypes) {
@@ -320,7 +348,10 @@ export default function BookingSettingsPage() {
                 </li>
                 <li className={validation.hasConsultationTypes ? 'text-sage' : ''}>
                   {validation.hasConsultationTypes ? '\u2713' : '\u2717'} Au moins un type de consultation réservable en ligne{' '}
-                  {!validation.hasConsultationTypes && (
+                  {validation.consultationTypesError && (
+                    <span className="text-rose">(vérification impossible : erreur technique)</span>
+                  )}
+                  {!validation.hasConsultationTypes && !validation.consultationTypesError && (
                     <button onClick={() => router.push('/settings/consultation-types')} className="text-sage underline">
                       Configurer
                     </button>

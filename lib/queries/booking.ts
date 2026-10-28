@@ -4,6 +4,9 @@ import type {
   AvailabilitySchedule,
   AvailabilityOverride,
 } from '../types';
+import { PUBLIC_CONSULTATION_TYPE_COLUMNS } from './booking-columns';
+
+export { PUBLIC_CONSULTATION_TYPE_COLUMNS };
 
 // ============================================
 // PUBLIC BOOKING QUERIES (server-side only)
@@ -32,6 +35,24 @@ export interface PractitionerPublicProfile {
   }>;
 }
 
+/**
+ * Erreur technique lors du chargement des données publiques de booking
+ * (ex. colonne manquante en base, code Postgres 42703). Distincte d'un
+ * praticien introuvable (null) ou sans type réservable (liste vide).
+ */
+export class BookingDataError extends Error {
+  readonly code: string | null;
+
+  constructor(message: string, code: string | null) {
+    super(message);
+    this.name = 'BookingDataError';
+    this.code = code;
+  }
+}
+
+/**
+ * @throws {BookingDataError} si la requête des types de consultation échoue.
+ */
 export async function getPractitionerBySlug(slug: string): Promise<PractitionerPublicProfile | null> {
   const supabase = createAdminClient();
 
@@ -46,7 +67,7 @@ export async function getPractitionerBySlug(slug: string): Promise<PractitionerP
 
   const { data: types, error: typesError } = await supabase
     .from('consultation_types')
-    .select('id, name, duration_minutes, price_cents, color, description, buffer_minutes, sort_order, is_group, price_per_participant')
+    .select(PUBLIC_CONSULTATION_TYPE_COLUMNS)
     .eq('practitioner_id', practitioner.id)
     .eq('is_active', true)
     .eq('is_bookable_online', true)
@@ -54,6 +75,10 @@ export async function getPractitionerBySlug(slug: string): Promise<PractitionerP
 
   if (typesError) {
     console.error('Error fetching consultation types for booking page:', typesError);
+    throw new BookingDataError(
+      `Failed to fetch consultation types: ${typesError.message}`,
+      typesError.code ?? null
+    );
   }
 
   return {
