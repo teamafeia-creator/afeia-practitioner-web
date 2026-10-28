@@ -94,7 +94,6 @@ export async function POST(
   const code = generateNumericOTP();
   const codeHash = hashQuestionnaireCode(code);
 
-  console.log('[questionnaire] Code OTP généré:', code);
   console.log('[questionnaire] Email:', consultant.email);
 
   const { error: revokeError } = await supabase
@@ -145,7 +144,6 @@ export async function POST(
   } else {
     console.log('[questionnaire] Code stocke dans otp_codes avec succès');
     console.log('[questionnaire] Email:', consultant.email.toLowerCase().trim());
-    console.log('[questionnaire] Code:', code);
     console.log('[questionnaire] Expiré:', expiresAt.toISOString());
   }
 

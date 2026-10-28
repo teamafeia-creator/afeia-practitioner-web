@@ -154,7 +154,6 @@ export async function POST(request: Request) {
     const expiresInDays = 7;
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
 
-    console.log('[activation] Code OTP généré:', code);
     console.log('[activation] Email:', normalizedEmail);
     console.log('[activation] Expiré:', expiresAt.toISOString());
 

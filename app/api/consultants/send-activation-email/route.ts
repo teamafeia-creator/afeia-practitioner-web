@@ -106,7 +106,6 @@ export async function POST(request: Request) {
 
     console.log('ENVOI EMAIL ACTIVATION (code existant)');
     console.log('Email:', normalizedEmail);
-    console.log('Code:', code);
     console.log('Consultant ID:', consultantId);
 
     // 3. Envoyer l'email
