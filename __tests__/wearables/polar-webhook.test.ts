@@ -111,7 +111,8 @@ const fetchMock = vi.fn(async (input: string | URL, init?: RequestInit) => {
 
 const { POST } = await import('@/app/api/webhooks/polar/route');
 const { signPolarPayload } = await import('@/lib/wearables/polar/webhook');
-const { REVOKED_MESSAGE } = await import('@/lib/wearables/polar/process-event');
+const { REVOKED_MESSAGE, processPolarEvent } = await import('@/lib/wearables/polar/process-event');
+const { recordEvent } = await import('@/lib/wearables/events');
 
 const SLEEP_URL = 'https://www.polaraccesslink.com/v3/users/sleep/2026-10-31';
 const NR_URL = 'https://www.polaraccesslink.com/v3/users/nightly-recharge/2026-10-31';
@@ -221,8 +222,11 @@ describe('POST /api/webhooks/polar : signature et ping', () => {
       const { POST: freshPost } = await import('@/app/api/webhooks/polar/route');
       const res = await freshPost(webhookRequest(JSON.stringify({ event: 'PING', timestamp: 'x' })));
       expect(res.status).toBe(200);
+      // Événement signé mais secret inconnu de notre côté : 503 (Polar réessaiera), rien d'enregistré.
       const refused = await freshPost(signed(sleepBody()));
-      expect(refused.status).toBe(401);
+      expect(refused.status).toBe(503);
+      expect((await refused.json()).error).toBe('polar_unavailable');
+      expect(events).toHaveLength(0);
     } finally {
       process.env.POLAR_WEBHOOK_SECRET = saved;
       vi.resetModules();
@@ -278,6 +282,24 @@ describe('POST /api/webhooks/polar : file et traitement', () => {
     expect(sleepFetches).toBe(2); // traité, puis retraité une seule fois
     expect(runInBackground).toHaveBeenCalledOnce(); // le doublon n'a pas lancé de second traitement en parallèle
     expect(ingest.mock.calls.filter(([type]) => type === 'sleep').map(([, json]) => (json as { sleep_score: number }).sleep_score)).toEqual([81, 82]);
+  });
+
+  it("connexion de démonstration (« seed-… ») → ignored, jamais d'appel Polar ni de passage en erreur", async () => {
+    connections.set('seed-demo-1', { consultantId: CONSULTANT, status: 'active' });
+    try {
+      const { id } = await recordEvent({
+        provider: 'polar', eventType: 'SLEEP', providerUserId: 'seed-demo-1', eventDate: '2026-10-31',
+        resourceUrl: SLEEP_URL, payload: {}, idempotencyKey: 'polar:SLEEP:seed-demo-1:2026-10-31',
+      });
+      expect(await processPolarEvent(id)).toBe('ignored');
+      expect(events.find((e) => e.id === id)?.status).toBe('ignored');
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(ingest).not.toHaveBeenCalled();
+      expect(markError).not.toHaveBeenCalled();
+      expect(markSynced).not.toHaveBeenCalled();
+    } finally {
+      connections.delete('seed-demo-1');
+    }
   });
 
   it('utilisateur Polar inconnu → ignored, aucun appel Polar', async () => {

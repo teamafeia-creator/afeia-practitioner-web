@@ -57,6 +57,20 @@ const fetchMock = vi.fn(async (input: string | URL, init?: RequestInit) => {
 const { GET: connect } = await import('@/app/api/wearables/polar/connect/route');
 const { GET: callback } = await import('@/app/api/wearables/polar/callback/route');
 const { signState } = await import('@/lib/wearables/polar/state');
+const { resetPolarConfigCache } = await import('@/lib/wearables/polar/config');
+
+/** Exécute `fn` avec des variables retirées, cache de config vidé avant et après. */
+async function withoutEnv(names: string[], fn: () => Promise<void>) {
+  const saved = Object.fromEntries(names.map((n) => [n, process.env[n]]));
+  for (const n of names) delete process.env[n];
+  resetPolarConfigCache();
+  try {
+    await fn();
+  } finally {
+    for (const [n, v] of Object.entries(saved)) if (v !== undefined) process.env[n] = v;
+    resetPolarConfigCache();
+  }
+}
 
 const logs: string[] = [];
 function captureLogs() {
@@ -140,6 +154,41 @@ describe('GET /api/wearables/polar/connect', () => {
     expect((await res.json()).authorizeUrl).toMatch(/^https:\/\/flow\.polar\.com\/oauth2\/authorization\?/);
   });
 
+  it('sans POLAR_STATE_SECRET → 503 clair, nom de la variable logué, aucune valeur', async () => {
+    resolveConsultantId.mockResolvedValue(consultantId);
+    await withoutEnv(['POLAR_STATE_SECRET'], async () => {
+      const res = await connect(connectRequest());
+      expect(res.status).toBe(503);
+      const body = await res.json();
+      expect(body.error).toBe('polar_unavailable');
+      expect(body.message).toMatch(/indisponible/);
+      expect(JSON.stringify(body)).not.toContain('POLAR_');
+    });
+    const all = logs.join('\n');
+    expect(all).toContain('POLAR_STATE_SECRET');
+    for (const value of ['client-id-test', 'client-secret-test']) expect(all).not.toContain(value);
+  });
+
+  it('sans aucune variable Polar → 503 (jamais 500)', async () => {
+    resolveConsultantId.mockResolvedValue(consultantId);
+    await withoutEnv(['POLAR_CLIENT_ID', 'POLAR_CLIENT_SECRET', 'POLAR_REDIRECT_URI', 'POLAR_STATE_SECRET'], async () => {
+      expect((await connect(connectRequest())).status).toBe(503);
+    });
+  });
+
+  it('sans POLAR_WEBHOOK_SECRET → la connexion fonctionne (seule la route webhook en dépend)', async () => {
+    resolveConsultantId.mockResolvedValue(consultantId);
+    await withoutEnv(['POLAR_WEBHOOK_SECRET'], async () => {
+      for (const VERCEL_ENV of ['production', undefined]) {
+        if (VERCEL_ENV) process.env.VERCEL_ENV = VERCEL_ENV;
+        else delete process.env.VERCEL_ENV;
+        resetPolarConfigCache();
+        expect((await connect(connectRequest())).status).toBe(200);
+      }
+    });
+    delete process.env.VERCEL_ENV;
+  });
+
   it('401 sans utilisateur connecté', async () => {
     resolveConsultantId.mockResolvedValue(null);
     const res = await connect(new NextRequest('https://afeia.fr/api/wearables/polar/connect'));
@@ -172,6 +221,26 @@ describe('GET /api/wearables/polar/connect', () => {
 
 // ---------------------------------------------------------------------------
 describe('GET /api/wearables/polar/callback : state', () => {
+  it('config OAuth incomplète → 503 (page claire), aucun échange de code ni consommation du state', async () => {
+    const state = freshState();
+    await withoutEnv(['POLAR_CLIENT_SECRET'], async () => {
+      const res = await callback(callbackRequest({ code: 'abc', state }));
+      expect(res.status).toBe(503);
+      expect(await res.text()).toMatch(/indisponible/);
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(consumedNonces.size).toBe(0);
+    expect(logs.join('\n')).toContain('POLAR_CLIENT_SECRET');
+  });
+
+  it('sans POLAR_WEBHOOK_SECRET → le callback fonctionne', async () => {
+    await withoutEnv(['POLAR_WEBHOOK_SECRET'], async () => {
+      const res = await callback(callbackRequest({ code: 'abc', state: freshState() }));
+      expect(res.status).toBe(303);
+      expect(location(res).searchParams.get('wearable')).toBe('connected');
+    });
+  });
+
   it('400 si le state est absent', async () => {
     const res = await callback(callbackRequest({ code: 'abc' }));
     expect(res.status).toBe(400);

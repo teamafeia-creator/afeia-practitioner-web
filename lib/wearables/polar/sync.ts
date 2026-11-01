@@ -7,6 +7,7 @@
 // Traitement par lots, avec un budget de temps pour rester sous maxDuration.
 import 'server-only';
 import { getAccessToken, listActiveConnections, listBackfillsToResume, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
+import { isDemoProviderUserId } from '@/lib/wearables/demo';
 import { requeueDueEvents } from '@/lib/wearables/events';
 import { alertWebhookDown } from './alerts';
 import { runBackfill, type BackfillOutcome } from './backfill';
@@ -36,7 +37,8 @@ export function lastDays(days: number, now: Date = new Date()): string[] {
 }
 
 export type SyncSummary = {
-  connections: { total: number; processed: number; deferred: number; revoked: number; errors: number };
+  /** demo : connexions de démonstration (« seed-… ») ignorées, jamais envoyées à Polar. */
+  connections: { total: number; processed: number; deferred: number; revoked: number; errors: number; demo: number };
   resources: { ingested: number; empty: number };
   replay: { due: number; done: number; failed: number; ignored: number; skipped: number };
   webhook: { checked: boolean; active: boolean | null; alerted: boolean };
@@ -95,7 +97,7 @@ export async function runPolarSync(opts: { budgetMs?: number; now?: Date } = {})
   const budgetMs = opts.budgetMs ?? 240_000;
   const outOfTime = () => Date.now() - started > budgetMs;
   const summary: SyncSummary = {
-    connections: { total: 0, processed: 0, deferred: 0, revoked: 0, errors: 0 },
+    connections: { total: 0, processed: 0, deferred: 0, revoked: 0, errors: 0, demo: 0 },
     resources: { ingested: 0, empty: 0 },
     replay: { due: 0, done: 0, failed: 0, ignored: 0, skipped: 0 },
     webhook: { checked: false, active: null, alerted: false },
@@ -133,7 +135,10 @@ export async function runPolarSync(opts: { budgetMs?: number; now?: Date } = {})
 
   // 2. Rattrapage des connexions actives, par lots, les moins récemment synchronisées d'abord.
   const dates = lastDays(BACKFILL_DAYS, opts.now);
-  const connections = summary.rateLimited ? [] : await listActiveConnections('polar');
+  const listed = summary.rateLimited ? [] : await listActiveConnections('polar');
+  // Connexions de démonstration (« seed-… », faux jeton) : ni appel Polar, ni markError.
+  const connections = listed.filter((c) => !isDemoProviderUserId(c.providerUserId));
+  summary.connections.demo = listed.length - connections.length;
   summary.connections.total = connections.length;
   for (let i = 0; i < connections.length; i += BATCH_SIZE) {
     if (outOfTime()) {

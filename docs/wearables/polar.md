@@ -11,6 +11,45 @@
 >
 > Les pages commerciales (polar.com/…/loop, boutique) n'ont pas été utilisées.
 
+## 0. Configuration serveur (POL-01) : règle de robustesse
+
+> **Critère (corrigé) : une config Polar absente ou invalide ne doit jamais casser le reste de
+> l'app.** La version initiale de POL-01 faisait l'inverse (« le serveur refuse de démarrer si
+> la config Polar est invalide », via `instrumentation.ts`) : en production, l'absence de
+> `POLAR_WEBHOOK_SECRET` — qui n'existe qu'après la création du webhook, laquelle exige que le
+> site réponde — a fait répondre 500 à toute l'app. Ce mécanisme est supprimé.
+
+- **Rien n'est validé au démarrage** ni à l'import d'un module : pas d'`instrumentation.ts`,
+  pas de lecture `POLAR_*` / `WEARABLES_*` au niveau module. Les pages et routes non Polar
+  n'importent jamais `lib/wearables/polar/config.ts` (test : `polar-config-isolation.test.tsx`).
+- **Validation à la demande, par fonctionnalité** (`lib/wearables/polar/env.ts`) ; un résultat
+  valide est mis en cache, une erreur ne l'est pas (revalidée à l'appel suivant) :
+
+  | Fonctionnalité | Getter | Variables vérifiées |
+  | --- | --- | --- |
+  | `GET /api/wearables/polar/connect`, `…/callback` | `getPolarConfig()` | `POLAR_CLIENT_ID`, `POLAR_CLIENT_SECRET`, `POLAR_REDIRECT_URI`, `POLAR_STATE_SECRET` |
+  | `POST /api/webhooks/polar` (hors PING) | `getPolarWebhookSecret()` | `POLAR_WEBHOOK_SECRET` |
+  | `GET /api/cron/polar-sync` | `getCronSecret()` | `CRON_SECRET` |
+  | vérification du webhook dans le cron (`GET /v3/webhooks`) | `getPolarApiCredentials()` | `POLAR_CLIENT_ID`, `POLAR_CLIENT_SECRET` |
+
+- **Config incomplète** → la route concernée répond **`503`**
+  `{ "error": "polar_unavailable", "message": "…momentanément indisponible…" }` (le callback :
+  une page HTML 503), et logue `configuration incomplète` avec les **noms** des variables,
+  jamais leurs valeurs (`lib/wearables/polar/unavailable.ts`). Dans le cron, l'absence
+  d'identifiants client n'affecte que la vérification du webhook (erreur dans le récapitulatif).
+- **Fiche patient** : la section « Objet connecté » lit la base, pas la config Polar. En cas
+  d'erreur de lecture ou de rendu, elle s'affiche « indisponible » (barrière d'erreur
+  `PatientWearableErrorBoundary`) ; le reste de la fiche fonctionne.
+- `WEARABLES_ENABLED_FOR` / `WEARABLES_INTERNAL_EMAILS` ne sont jamais « validées » : une
+  valeur absente ou inconnue retombe sur `internal` (fermé par défaut, `lib/wearables/access.ts`).
+- **Connexions de démonstration** : une connexion dont `provider_user_id` commence par
+  `seed-` (données de démo insérées en base, avec un faux jeton dans Vault) n'est jamais
+  envoyée à Polar et ne passe jamais en erreur (`lib/wearables/demo.ts`) :
+  - exclue des listes du cron (`listActiveConnections`, `listBackfillsToResume`), et filtrée
+    aussi dans `runPolarSync` (compteur `connections.demo` du récapitulatif) ;
+  - `processPolarEvent` marque ses événements `ignored` sans lire le jeton ;
+  - `runBackfill` répond `skipped` sans rien écrire.
+
 ## 1. Ce qu'il faut retenir
 
 - La Loop n'a pas d'écran. Elle se synchronise en Bluetooth avec l'app **Polar Flow**, qui
@@ -213,8 +252,9 @@ npm run polar:webhook -- delete          # demande confirmation (--yes pour pass
   **une seule fois** le `signature_secret_key`, encadré. Ce secret est à copier dans
   `POLAR_WEBHOOK_SECRET` sur Vercel, puis il faut redéployer. Le script ne l'écrit nulle part.
 - Si le secret est perdu, la seule solution est `delete` puis `create`, qui en donne un nouveau.
-- `POLAR_WEBHOOK_SECRET` est **obligatoire en production Vercel** (`VERCEL_ENV=production`) et
-  facultatif ailleurs (`lib/wearables/polar/env.ts`).
+- `POLAR_WEBHOOK_SECRET` n'est **jamais exigé au démarrage**, y compris en production : seule la
+  route webhook en dépend (§0, §6.3). Tant qu'il manque, le site répond normalement et le PING
+  de création passe.
 - Ordre de mise en service : déployer POL-08, puis lancer `create`, copier le secret dans
   Vercel, redéployer, et enfin vérifier avec `get`.
 
@@ -227,7 +267,17 @@ npm run polar:webhook -- delete          # demande confirmation (--yes pour pass
 - **Route** `POST /api/webhooks/polar` (`app/api/webhooks/polar/route.ts`) :
   1. elle lit le corps brut ;
   2. un PING reçoit `200` sans rien enregistrer ;
-  3. pour tout autre événement, elle vérifie le HMAC avec `POLAR_WEBHOOK_SECRET`, et répond `401` si la signature ou le secret manque ;
+  3. pour tout autre événement, elle lit `POLAR_WEBHOOK_SECRET` à la demande, puis vérifie le HMAC et répond `401` si la signature manque ou est fausse ;
+- **Comportement choisi quand `POLAR_WEBHOOK_SECRET` n'est pas défini** (fenêtre entre le
+  déploiement et la copie du secret) :
+  - **PING → `200`**, sans lire aucune config ni rien enregistrer : c'est ce qui permet à
+    `POST /v3/webhooks` (le PING de création) de réussir et à Polar de nous donner le secret.
+    Sans risque : un PING ne déclenche aucun traitement.
+  - **Tout autre événement → `503`** (`polar_unavailable`), rien n'est enregistré, et le log
+    nomme `POLAR_WEBHOOK_SECRET`. On ne peut pas vérifier la signature, donc on n'accepte rien ;
+    `503` (et non `401`) signale un problème de notre côté. Les données ne sont pas perdues :
+    le cron (§6.4) relit les 3 derniers jours de chaque connexion.
+  - Le reste de l'app (connexion, callback, cron, pages) n'est pas affecté.
   4. elle enregistre l'événement dans `wearable_events`, répond `200`, puis lance le traitement avec `waitUntil` de `@vercel/functions`. Next 14 n'a pas `after()`.
 - **Une ligne par ressource** : la clé d'idempotence est `polar:{event}:{user_id}:{date|entity_id}`,
   sans timestamp. Un doublon met à jour `last_notified_at`. Si l'événement était `done`,
@@ -236,7 +286,7 @@ npm run polar:webhook -- delete          # demande confirmation (--yes pour pass
   `processing_started_at` à la fin du traitement, l'événement repasse en `pending` et il est
   retraité une fois.
 - **`processPolarEvent`** (`lib/wearables/polar/process-event.ts`) :
-  - un utilisateur Polar inconnu ou révoqué donne `ignored` ;
+  - un utilisateur Polar inconnu ou révoqué, ou une connexion de démonstration (`seed-…`), donne `ignored` ;
   - le jeton n'est envoyé qu'à `https://www.polaraccesslink.com/v3/…` ;
   - après un `SLEEP`, elle va chercher `/v3/users/nightly-recharge/{date}`. Si la réponse est
     vide, elle crée un événement interne `NIGHTLY_RECHARGE` en `pending`, à rejouer dans 6 h ;
@@ -248,8 +298,9 @@ npm run polar:webhook -- delete          # demande confirmation (--yes pour pass
 
 - **Cron Vercel** `GET /api/cron/polar-sync`, déclaré dans `vercel.json` avec `0 3 * * *` (UTC).
   Les crons Vercel sont en UTC : cela donne 4 h à Paris en hiver (CET) et 5 h en été (CEST).
-  La route exige `Authorization: Bearer ${CRON_SECRET}` et répond `401` sinon, y compris
-  quand `CRON_SECRET` n'est pas défini.
+  La route exige `Authorization: Bearer ${CRON_SECRET}` et répond `401` sinon. Si
+  `CRON_SECRET` n'est pas défini, elle répond `503` sans rien traiter (nom logué, §0).
+  Les connexions de démonstration (`seed-…`) sont ignorées (§0).
 - **Ordre d'exécution** (`lib/wearables/polar/sync.ts`) :
   1. **Webhook** : `GET /v3/webhooks`. S'il est absent ou inactif, un e-mail part à l'équipe,
      par le même canal que les inscriptions praticien (`sendEmail` vers `adminEmails()`).
@@ -442,6 +493,7 @@ connecté » de la fiche patient (accès premium inchangé).
   - non connecté ;
   - import en cours ;
   - données, avec « Dernière synchronisation : il y a X » ;
+  - **indisponible** : lecture ou rendu en échec, message neutre, le reste de la fiche fonctionne (§0) ;
   - **connexion interrompue** (`error` ou `revoked`) : un bandeau « interrompue depuis le
     <date> », où la date est `interrupted_at` (migration `20261110`), sinon la dernière
     synchronisation. Les graphiques restent affichés avec les données déjà reçues.

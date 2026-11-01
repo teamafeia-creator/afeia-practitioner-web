@@ -4,6 +4,7 @@
 // Jamais de jeton ni de corps de réponse dans les logs.
 import 'server-only';
 import { findConnectionByProviderUserId, getAccessToken, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
+import { isDemoProviderUserId } from '@/lib/wearables/demo';
 import { claimEvent, finishEvent, recordEvent, type WearableEvent } from '@/lib/wearables/events';
 import { dataTypeForEvent, ingestPolarResource } from '@/lib/wearables/ingest';
 import { PolarRateLimitError, isAccessRevoked, polarFetch } from './api';
@@ -70,6 +71,13 @@ async function runOnce(eventId: string): Promise<RunResult> {
   if (!dataType) {
     console.info(LOG, 'type hors périmètre, ignoré', { eventId: event.id, type: event.event_type });
     return finish('ignored', { error: undefined });
+  }
+
+  // Connexion de démonstration (« seed-… », faux jeton dans Vault) : jamais d'appel Polar,
+  // jamais de passage en erreur. L'événement est simplement ignoré.
+  if (isDemoProviderUserId(event.provider_user_id)) {
+    console.info(LOG, 'connexion de démonstration, ignoré', { eventId: event.id });
+    return finish('ignored');
   }
 
   let consultantId: string | undefined;

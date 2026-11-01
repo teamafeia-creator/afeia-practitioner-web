@@ -1,9 +1,10 @@
 // POST /api/webhooks/polar — notifications Polar AccessLink (docs/wearables/polar.md §6).
 //
 // 1. Lit le corps BRUT (la signature porte sur les octets reçus).
-// 2. PING → 200 sans rien enregistrer. Le PING de création arrive AVANT que Polar ne nous
-//    donne le secret : il ne peut pas toujours être vérifié, et il ne déclenche rien.
-// 3. Autres événements : HMAC-SHA256 (hex) avec POLAR_WEBHOOK_SECRET, temps constant ; sinon 401.
+// 2. PING → 200 sans rien enregistrer ni lire aucune config. Le PING de création arrive AVANT
+//    que Polar ne nous donne le secret : il ne peut pas toujours être vérifié, et il ne déclenche rien.
+// 3. Autres événements : POLAR_WEBHOOK_SECRET lu à la demande. Absent → 503 (Polar réessaiera ;
+//    le cron rattrape les 3 derniers jours). Présent : HMAC-SHA256 (hex), temps constant ; sinon 401.
 // 4. Enregistre l'événement (une ligne par ressource), répond 200, puis traite en arrière-plan
 //    dès que l'événement est (re)passé en pending.
 //
@@ -11,8 +12,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runInBackground } from '@/lib/server/background';
 import { recordEvent } from '@/lib/wearables/events';
-import { getPolarConfig } from '@/lib/wearables/polar/config';
+import { getPolarWebhookSecret } from '@/lib/wearables/polar/config';
 import { processPolarEvent } from '@/lib/wearables/polar/process-event';
+import { readPolarConfig } from '@/lib/wearables/polar/unavailable';
 import {
   EVENT_HEADER,
   InvalidPayloadError,
@@ -44,12 +46,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const secret = getPolarConfig().webhookSecret;
-  if (!secret) {
-    console.error(LOG, 'POLAR_WEBHOOK_SECRET absent : événement refusé', { event: headerEvent });
-    return NextResponse.json({ error: 'signature invalide' }, { status: 401 });
-  }
-  if (!verifyPolarSignature(rawBody, request.headers.get(SIGNATURE_HEADER), secret)) {
+  const secret = readPolarConfig('webhook', getPolarWebhookSecret);
+  if (!secret.ok) return secret.response;
+  if (!verifyPolarSignature(rawBody, request.headers.get(SIGNATURE_HEADER), secret.value)) {
     console.warn(LOG, 'signature absente ou invalide', { event: headerEvent });
     return NextResponse.json({ error: 'signature invalide' }, { status: 401 });
   }
