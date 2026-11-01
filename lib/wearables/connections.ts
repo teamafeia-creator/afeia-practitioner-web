@@ -225,3 +225,43 @@ export async function listBackfillsToResume(provider: WearableProvider): Promise
   if (error) throw new WearableConnectionError('listBackfillsToResume', error);
   return (data ?? []).map((r) => r.id as string);
 }
+
+// ---------------------------------------------------------------------------
+// Déconnexion par le patient (POL-17)
+// ---------------------------------------------------------------------------
+export type ConnectionSummary = { providerUserId: string; status: WearableConnectionStatus };
+
+/** Connexion du consultant pour un fournisseur (sans le jeton), ou null. */
+export async function getConnection(consultantId: string, provider: WearableProvider): Promise<ConnectionSummary | null> {
+  const { data, error } = await createSupabaseAdminClient()
+    .from('wearable_connections')
+    .select('provider_user_id, status')
+    .eq('consultant_id', consultantId)
+    .eq('provider', provider)
+    .maybeSingle();
+  if (error) throw new WearableConnectionError('getConnection', error);
+  return data ? { providerUserId: data.provider_user_id as string, status: data.status as WearableConnectionStatus } : null;
+}
+
+export type DisconnectCounts = Partial<
+  Record<'sleep_sessions' | 'hrv_nightly' | 'hr_samples' | 'daily_activity' | 'wearable_raw' | 'wearable_events', number>
+>;
+
+/**
+ * Révoque la connexion (jeton et secret Vault effacés) et, si demandé, supprime les données
+ * du consultant pour ce fournisseur — en une transaction (wearable_disconnect).
+ */
+export async function revokeAndPurge(
+  consultantId: string,
+  provider: WearableProvider,
+  deleteData: boolean
+): Promise<{ found: boolean; deleted: DisconnectCounts; consentsWithdrawn: number }> {
+  const { data, error } = await createSupabaseAdminClient().rpc('wearable_disconnect', {
+    p_consultant_id: consultantId,
+    p_provider: provider,
+    p_delete_data: deleteData,
+  });
+  if (error) throw new WearableConnectionError('revokeAndPurge', error);
+  const res = (data ?? {}) as { found?: boolean; deleted?: DisconnectCounts; consents_withdrawn?: number };
+  return { found: res.found === true, deleted: res.deleted ?? {}, consentsWithdrawn: res.consents_withdrawn ?? 0 };
+}

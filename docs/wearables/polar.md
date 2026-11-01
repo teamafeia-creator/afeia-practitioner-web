@@ -447,6 +447,66 @@ connecté » de la fiche patient (accès premium inchangé).
     synchronisation. Les graphiques restent affichés avec les données déjà reçues.
 - **Mise en page** : grille 2 × 2, une colonne sur mobile.
 
+### 6.10 Déconnexion par le patient (POL-17)
+
+- **Interface** : `WearableConnectionCard` propose le bouton « Déconnecter mon objet connecté »,
+  quand la connexion est active ou en erreur. Une confirmation suit, avec la case « Supprimer
+  aussi mes données déjà importées », **cochée par défaut**.
+- **Route** `POST /api/wearables/disconnect` (`{ "deleteData": true }`, `true` par défaut) :
+  - elle est authentifiée par `Authorization: Bearer`. Les sessions ne sont pas dans des
+    cookies, une server action ne pourrait donc pas identifier l'utilisateur ;
+  - le consultant est déduit du jeton : on ne peut déconnecter que soi-même.
+- **Ordre des opérations** (`lib/wearables/polar/disconnect.ts`) :
+  1. `DELETE /v3/users/{user-id}` chez Polar, via `polarRequest`. Selon la doc, cela révoque
+     aussi le jeton côté Polar. `204` = succès ; `404` = déjà désinscrit, traité comme un succès.
+  2. **Quelle que soit la réponse de Polar** : `wearable_disconnect` révoque la connexion côté
+     Afeia. Une erreur de Polar est journalisée, sans jeton, et ne bloque pas.
+- **`wearable_disconnect`** fait tout en une transaction :
+  - la connexion passe en `revoked`, `access_token_secret_id` est mis à NULL et le secret Vault
+    est supprimé ;
+  - `interrupted_at` est renseigné ;
+  - si la suppression est demandée : effacement des lignes du consultant dans `sleep_sessions`,
+    `hrv_nightly`, `hr_samples`, `daily_activity`, `wearable_raw` et `wearable_events`. Pour
+    `wearable_events`, cela inclut les événements pas encore rattachés au consultant, retrouvés
+    par son identifiant Polar.
+- **Déjà déconnecté** : pas d'appel à Polar, mais la suppression des données reste possible.
+- **Webhooks reçus après la déconnexion** : la connexion est `revoked`, donc l'événement passe en `ignored`.
+- **Reconnexion** :
+  - `POST /v3/users` répond `200`, ou `409` qui est traité comme un succès ;
+  - `wearable_save_connection` réactive **la même ligne**, avec un nouveau secret ;
+  - `interrupted_at` est remis à NULL et l'import de l'historique est relancé.
+
+### 6.11 Ouverture progressive et consentement (POL-18)
+
+- **Ouverture** (`lib/wearables/access.ts`) :
+  - `WEARABLES_ENABLED_FOR=internal` est la valeur par défaut ; une valeur inconnue revient
+    aussi à `internal`. Dans ce mode, seuls les consultants dont l'e-mail figure dans
+    `WEARABLES_INTERNAL_EMAILS` voient la carte « Objet connecté ».
+  - Pour les autres, `/api/wearables/status` renvoie `enabled: false`, et
+    `/api/wearables/polar/connect` comme `/api/wearables/consent` répondent `403 not_enabled`.
+  - `all` ouvre à tous, sans aucun changement de code.
+  - ⚠ **Ne pas passer à `all` en Production avant la validation de
+    [la décision HDS](./hds-decision.md).**
+- **Texte de consentement** : un fichier unique et versionné,
+  `content/consents/wearables-v1.md`, avec `WEARABLES_CONSENT_VERSION = 'v1'`
+  (`lib/wearables/consent-text.ts`). Il est embarqué au build par un import `?raw`. Si le sens
+  du texte change, il faut créer `wearables-v2.md` et passer la constante à `v2` : les patients
+  devront alors accepter de nouveau.
+- **Parcours** :
+  1. « Connecter mon objet connecté » ouvre le texte, avec la case « J'ai lu… ».
+  2. `POST /api/wearables/consent { version }` répond `409` si la version n'est pas la version
+     courante, sinon il crée la ligne.
+  3. Le client passe ensuite à `/api/wearables/polar/connect`, puis à Polar.
+- **Garde-fou** : `/connect` répond `403 consent_required` s'il n'existe pas de consentement
+  actif (`withdrawn_at` NULL) sur la version courante.
+- **`wearable_consents`** (migration `20261112`) contient le patient, `text_version`,
+  `accepted_at` et `withdrawn_at`, avec un seul consentement actif par version.
+  - RLS : le patient lit et crée ses propres consentements. Il ne peut ni les modifier, ni les
+    antidater, ni fixer `withdrawn_at`.
+  - Le reste passe par `service_role`.
+- **Retrait** : la déconnexion (`wearable_disconnect`) renseigne `withdrawn_at`, dans la même
+  transaction. La ligne est conservée comme trace. Une reconnexion demande un nouveau consentement.
+
 ## 7. Limites de débit
 
 Source : [AccessLink §Rate limiting](https://www.polar.com/accesslink-api/).

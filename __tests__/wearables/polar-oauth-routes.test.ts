@@ -14,6 +14,12 @@ const consultantId = '00000000-0000-0000-0000-0000000000b1';
 const resolveConsultantId = vi.fn();
 vi.mock('@/lib/mobile-auth', () => ({ resolveConsultantId: (req: unknown) => resolveConsultantId(req) }));
 
+let canUse = true;
+let activeConsent: { version: string; acceptedAt: string } | null = { version: 'v1', acceptedAt: '2026-11-01T10:00:00Z' };
+vi.mock('@/lib/wearables/consents', () => ({
+  consultantCanUseWearables: async () => canUse,
+  getActiveConsent: async (_c: string, v: string) => (activeConsent && activeConsent.version === v ? activeConsent : null),
+}));
 const saveConnection = vi.fn();
 const runInBackground = vi.fn();
 vi.mock('@/lib/server/background', () => ({ runInBackground: (l: string, t: () => Promise<unknown>) => runInBackground(l, t) }));
@@ -76,6 +82,8 @@ function location(res: Response) {
 }
 
 beforeEach(() => {
+  canUse = true;
+  activeConsent = { version: 'v1', acceptedAt: '2026-11-01T10:00:00Z' };
   vi.stubGlobal('fetch', fetchMock);
   fetchMock.mockClear();
   resolveConsultantId.mockReset();
@@ -98,6 +106,40 @@ afterEach(() => {
 
 // ---------------------------------------------------------------------------
 describe('GET /api/wearables/polar/connect', () => {
+  const connectRequest = () =>
+    new NextRequest('https://afeia.fr/api/wearables/polar/connect?returnTo=/consultant/home', {
+      headers: { authorization: 'Bearer user-session' },
+    });
+
+  it('utilisateur non interne (WEARABLES_ENABLED_FOR=internal) → 403 not_enabled', async () => {
+    resolveConsultantId.mockResolvedValue(consultantId);
+    canUse = false;
+    const res = await connect(connectRequest());
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: 'not_enabled' });
+  });
+
+  it('pas de consentement actif → 403 consent_required', async () => {
+    resolveConsultantId.mockResolvedValue(consultantId);
+    activeConsent = null;
+    const res = await connect(connectRequest());
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: 'consent_required', version: 'v1' });
+  });
+
+  it('consentement sur une ancienne version → 403 consent_required', async () => {
+    resolveConsultantId.mockResolvedValue(consultantId);
+    activeConsent = { version: 'v0', acceptedAt: '2026-01-01T00:00:00Z' };
+    expect((await connect(connectRequest())).status).toBe(403);
+  });
+
+  it('consentement v1 actif → URL de redirection vers Polar', async () => {
+    resolveConsultantId.mockResolvedValue(consultantId);
+    const res = await connect(connectRequest());
+    expect(res.status).toBe(200);
+    expect((await res.json()).authorizeUrl).toMatch(/^https:\/\/flow\.polar\.com\/oauth2\/authorization\?/);
+  });
+
   it('401 sans utilisateur connecté', async () => {
     resolveConsultantId.mockResolvedValue(null);
     const res = await connect(new NextRequest('https://afeia.fr/api/wearables/polar/connect'));

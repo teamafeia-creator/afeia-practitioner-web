@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Watch } from 'lucide-react';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner } from '@/components/ui';
 import {
@@ -9,6 +10,7 @@ import {
   readableSyncError,
   type WearableConnectionOverview,
 } from '@/lib/wearables/display';
+import { DisconnectWearableDialog } from './DisconnectWearableDialog';
 
 export const CONTINUOUS_HR_HELP =
   "Activez la fréquence cardiaque continue dans l'app Polar Flow (On ou Night-time only). Vos données de récupération nocturne apparaîtront après 3 nuits.";
@@ -20,6 +22,9 @@ type Props = {
   connecting?: boolean;
   /** Afficher l'aide de configuration (juste après la connexion). */
   showSetupHelp?: boolean;
+  /** Déconnexion demandée par le patient (deleteData : supprimer aussi les données importées). */
+  onDisconnect?: (deleteData: boolean) => Promise<void> | void;
+  disconnecting?: boolean;
   /** Injectable pour les tests. */
   now?: Date;
 };
@@ -31,8 +36,17 @@ type Props = {
  *  - en erreur : message lisible et bouton « Reconnecter ».
  * Purement présentationnelle : les données et l'action viennent de WearableConnectionSection.
  */
-export function WearableConnectionCard({ connection, onConnect, connecting = false, showSetupHelp = false, now }: Props) {
+export function WearableConnectionCard({
+  connection,
+  onConnect,
+  connecting = false,
+  showSetupHelp = false,
+  onDisconnect,
+  disconnecting = false,
+  now,
+}: Props) {
   const state = !connection || connection.status === 'revoked' ? 'disconnected' : connection.status;
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <Card data-testid="wearable-connection-card" data-state={state}>
@@ -97,8 +111,25 @@ export function WearableConnectionCard({ connection, onConnect, connecting = fal
           </p>
         )}
 
+        {onDisconnect && state !== 'disconnected' ? (
+          <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(true)} disabled={disconnecting}>
+            Déconnecter mon objet connecté
+          </Button>
+        ) : null}
+
         <p className="text-xs text-stone">Compatible : Polar</p>
       </CardContent>
+      {onDisconnect ? (
+        <DisconnectWearableDialog
+          isOpen={confirmOpen}
+          onClose={() => setConfirmOpen(false)}
+          loading={disconnecting}
+          onConfirm={async (deleteData) => {
+            await onDisconnect(deleteData);
+            setConfirmOpen(false);
+          }}
+        />
+      ) : null}
     </Card>
   );
 }

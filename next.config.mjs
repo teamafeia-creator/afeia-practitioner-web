@@ -15,6 +15,9 @@ const nextConfig = {
   },
   transpilePackages: ['@excalidraw/excalidraw'],
   webpack: (config, { isServer }) => {
+    // Fichiers texte importés tels quels (`import texte from './fichier.md?raw'`), ex. le texte
+    // de consentement content/consents/wearables-v1.md.
+    config.module.rules.push({ resourceQuery: /raw/, type: 'asset/source' });
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
