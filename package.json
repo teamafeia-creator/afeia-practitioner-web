@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "auth:smoke": "node scripts/auth-smoke-test.mjs",
     "questionnaire:smoke": "node scripts/questionnaire-code-smoke-test.mjs",
     "screenshots": "node scripts/screenshot-dashboard.mjs",
@@ -54,6 +55,7 @@
     "eslint-config-next": "^14.2.5",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.10",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^3.2.7"
   }
 }
