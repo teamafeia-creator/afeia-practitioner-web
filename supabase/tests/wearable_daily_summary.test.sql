@@ -1,7 +1,8 @@
 -- POL-15 · Séries quotidiennes (pgTAP). Lancer avec : supabase test db
--- Période : 7 jours se terminant le 2026-10-31 (bascule à l'heure d'hiver le 2026-10-25 à 3 h).
+-- Période : 7 jours se terminant le 2026-10-31 (bascule à l'heure d'hiver le 2026-10-25 à 3 h :
+-- les jours restent des jours civils Europe/Paris, 7 lignes malgré la journée de 25 h).
 BEGIN;
-SELECT plan(16);
+SELECT plan(15);
 
 CREATE FUNCTION pg_temp.login(p_sub TEXT) RETURNS VOID LANGUAGE plpgsql AS $$
 BEGIN
@@ -34,7 +35,7 @@ INSERT INTO public.sleep_sessions (consultant_id, provider, source_raw_id, night
 INSERT INTO public.hrv_nightly (consultant_id, provider, source_raw_id, night_date, hrv_rmssd_avg_ms, hr_avg_bpm) VALUES
   ('00000000-0000-0000-0000-00000000005a', 'polar', '00000000-0000-0000-0000-0000000005a1', '2026-10-26', 40, 55),
   ('00000000-0000-0000-0000-00000000005a', 'polar', '00000000-0000-0000-0000-0000000005a1', '2026-10-30', 45, NULL);
--- FC continue, autour de la bascule d'heure du 25 octobre
+-- FC continue (ignorée par la série : la FC affichée est la FC nocturne seule)
 INSERT INTO public.hr_samples (consultant_id, provider, source_raw_id, recorded_at, hr_bpm) VALUES
   ('00000000-0000-0000-0000-00000000005a', 'polar', '00000000-0000-0000-0000-0000000005a1', '2026-10-24T21:30:00Z', 49), -- 23:30 le 24 à Paris (UTC+2) : hors période
   ('00000000-0000-0000-0000-00000000005a', 'polar', '00000000-0000-0000-0000-0000000005a1', '2026-10-24T22:30:00Z', 60), -- 00:30 le 25 (UTC+2)
@@ -68,11 +69,11 @@ SELECT results_eq('SELECT day, steps FROM s ORDER BY day',
   'pas : trou → NULL, 0 réel → 0');
 SELECT is((SELECT hrv_ms FROM s WHERE day = '2026-10-26'), 40, 'VFC nocturne (ms)');
 SELECT is((SELECT hrv_ms FROM s WHERE day = '2026-10-27'), NULL::int, 'VFC : jour sans donnée → NULL');
-SELECT is((SELECT resting_hr_bpm FROM s WHERE day = '2026-10-26'), 55, 'FC : la FC nocturne prime sur la FC continue');
-SELECT is((SELECT resting_hr_bpm FROM s WHERE day = '2026-10-30'), 52, 'FC : repli sur la plus basse FC continue du jour');
-SELECT is((SELECT resting_hr_bpm FROM s WHERE day = '2026-10-25'), 58,
-  'bascule d''heure : 00:30 (UTC+2) et 23:30 (UTC+1) comptent tous deux pour le 25 ; 23:30 le 24 exclu');
-SELECT is((SELECT resting_hr_bpm FROM s WHERE day = '2026-10-29'), NULL::int, 'FC : aucun échantillon → NULL');
+SELECT is((SELECT night_hr_bpm FROM s WHERE day = '2026-10-26'), 55, 'FC nocturne = hr_avg_bpm (Nightly Recharge)');
+SELECT is((SELECT night_hr_bpm FROM s WHERE day = '2026-10-30'), NULL::int,
+  'FC nocturne absente → NULL, sans repli sur la FC continue de la journée');
+SELECT is((SELECT night_hr_bpm FROM s WHERE day = '2026-10-25'), NULL::int,
+  'jour sans Nightly Recharge → NULL, même avec des échantillons de FC continue');
 SELECT is((SELECT count(*)::int FROM public.wearable_daily_summary('00000000-0000-0000-0000-00000000005a', 14, '2026-10-31')), 14,
   '14 jours (période + période précédente)');
 

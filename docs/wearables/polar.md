@@ -410,10 +410,10 @@ Les écrans n'utilisent que `getWearableSummary(patientId, { days: 7 | 30 })`
   génère les jours avec `generate_series`, en **jours civils Europe/Paris**.
   - `sleepMin` = `total_sleep_s / 60`, la nuit étant rattachée au jour du réveil.
   - `hrvMs` = VFC nocturne (RMSSD).
-  - `restingHrBpm` = FC nocturne moyenne (Nightly Recharge). À défaut, c'est la plus basse FC
-    continue à 5 min du jour civil. Les échantillons sont découpés en Europe/Paris, y compris
-    lors des changements d'heure.
-  - `steps` = nombre de pas de la journée.
+  - `nightHrBpm` = FC nocturne moyenne (`hrv_nightly.hr_avg_bpm`, Nightly Recharge), **sans
+    repli** sur la FC continue de la journée (migration `20261110`).
+  - `steps` = nombre de pas de la journée. La **journée en cours** (`partialDay`, aujourd'hui en
+    Europe/Paris) est incomplète : ses pas sont exclus de la moyenne et de la comparaison.
   - S'il y a plusieurs fournisseurs le même jour : moyenne pour le sommeil, la VFC et la FC ;
     maximum pour les pas.
 - **Accès** : la fonction est en SECURITY INVOKER et `getWearableSummary` utilise le client de
@@ -422,6 +422,30 @@ Les écrans n'utilisent que `getWearableSummary(patientId, { days: 7 | 30 })`
   (praticien d'un autre, utilisateur sans lien) reçoit une **liste vide**, et non une série de
   trous. Les écrans praticien lisent déjà avec le client du navigateur. Une route serveur devra
   passer un client créé avec le jeton de l'utilisateur.
+
+### 6.9 Section « Objet connecté » de la fiche patient (POL-16)
+
+`components/wearables/practitioner/PatientWearableSection.tsx`, en tête de l'onglet « Objet
+connecté » de la fiche patient (accès premium inchangé).
+
+- **Période** : sélecteur 7 jours ou 30 jours, gardé dans l'URL (`?periode=30`).
+- **Graphiques** : quatre petits graphiques linéaires, d'une seule couleur neutre : sommeil (h),
+  VFC nocturne (ms), FC nocturne (bpm) et pas.
+  - L'axe Y affiche le minimum et le maximum de la période, avec l'unité.
+  - Un jour sans donnée laisse un **trou** dans la courbe.
+  - Pour les pas, la journée en cours est un point en creux, relié en pointillé.
+  - L'infobulle (survol ou tap) donne la date, la valeur et l'unité, et indique « en cours »
+    pour la journée en cours.
+- **Sous chaque graphique** : la moyenne et l'écart neutre avec la période précédente. Aucune
+  interprétation, aucune couleur de jugement.
+- **États** :
+  - non connecté ;
+  - import en cours ;
+  - données, avec « Dernière synchronisation : il y a X » ;
+  - **connexion interrompue** (`error` ou `revoked`) : un bandeau « interrompue depuis le
+    <date> », où la date est `interrupted_at` (migration `20261110`), sinon la dernière
+    synchronisation. Les graphiques restent affichés avec les données déjà reçues.
+- **Mise en page** : grille 2 × 2, une colonne sur mobile.
 
 ## 7. Limites de débit
 

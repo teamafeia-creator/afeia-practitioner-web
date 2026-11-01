@@ -12,22 +12,27 @@ export type WearableSummaryDay = {
   date: string;
   sleepMin: number | null;
   hrvMs: number | null;
-  restingHrBpm: number | null;
+  nightHrBpm: number | null;
   steps: number | null;
 };
 
 export type WearableMetricAverages = {
   sleepMin: number | null;
   hrvMs: number | null;
-  restingHrBpm: number | null;
+  nightHrBpm: number | null;
   steps: number | null;
 };
 
 export type WearableSummary = {
   /** Un élément par jour, du plus ancien au plus récent ; null = pas de donnée (trou). */
   days: WearableSummaryDay[];
+  /**
+   * Jour en cours (dernier jour de la série, aujourd'hui en Europe/Paris) : journée incomplète.
+   * Ses pas sont exclus des moyennes et de la comparaison.
+   */
+  partialDay: string | null;
   averages: {
-    /** Moyenne des jours renseignés de la période affichée. */
+    /** Moyenne des jours renseignés de la période affichée (pas : jour en cours exclu). */
     current: WearableMetricAverages;
     /** Même calcul sur la période précédente de même longueur. */
     previous: WearableMetricAverages;
@@ -46,13 +51,13 @@ type Row = {
   day: string;
   sleep_min: number | null;
   hrv_ms: number | null;
-  resting_hr_bpm: number | null;
+  night_hr_bpm: number | null;
   steps: number | null;
 };
 
-const METRICS = ['sleepMin', 'hrvMs', 'restingHrBpm', 'steps'] as const;
+const METRICS = ['sleepMin', 'hrvMs', 'nightHrBpm', 'steps'] as const;
 
-const EMPTY_AVERAGES: WearableMetricAverages = { sleepMin: null, hrvMs: null, restingHrBpm: null, steps: null };
+const EMPTY_AVERAGES: WearableMetricAverages = { sleepMin: null, hrvMs: null, nightHrBpm: null, steps: null };
 
 /** Moyenne des valeurs renseignées (les trous sont ignorés, pas comptés comme 0), à 0,1 près. */
 export function averageOf(values: (number | null)[]): number | null {
@@ -61,15 +66,23 @@ export function averageOf(values: (number | null)[]): number | null {
   return Math.round((present.reduce((a, b) => a + b, 0) / present.length) * 10) / 10;
 }
 
-function averages(days: WearableSummaryDay[]): WearableMetricAverages {
-  return Object.fromEntries(METRICS.map((m) => [m, averageOf(days.map((d) => d[m]))])) as WearableMetricAverages;
+/** Métriques cumulées sur la journée : la journée en cours est incomplète. */
+export const CUMULATIVE_METRICS: readonly (typeof METRICS)[number][] = ['steps'];
+
+function averages(days: WearableSummaryDay[], partialDay: string | null = null): WearableMetricAverages {
+  return Object.fromEntries(
+    METRICS.map((m) => [
+      m,
+      averageOf(days.filter((d) => !(CUMULATIVE_METRICS.includes(m) && d.date === partialDay)).map((d) => d[m])),
+    ])
+  ) as WearableMetricAverages;
 }
 
 const toDay = (r: Row): WearableSummaryDay => ({
   date: r.day,
   sleepMin: r.sleep_min,
   hrvMs: r.hrv_ms,
-  restingHrBpm: r.resting_hr_bpm,
+  nightHrBpm: r.night_hr_bpm,
   steps: r.steps,
 });
 
@@ -95,11 +108,13 @@ export async function getWearableSummary(patientId: string, options: WearableSum
   const rows = ((data ?? []) as Row[]).slice().sort((a, b) => a.day.localeCompare(b.day));
   if (!rows.length) {
     // Pas d'accès (RLS) : liste vide, pas une série de trous.
-    return { days: [], averages: { current: { ...EMPTY_AVERAGES }, previous: { ...EMPTY_AVERAGES } } };
+    return { days: [], partialDay: null, averages: { current: { ...EMPTY_AVERAGES }, previous: { ...EMPTY_AVERAGES } } };
   }
 
   const all = rows.map(toDay);
   const current = all.slice(-n);
   const previous = all.slice(0, Math.max(0, all.length - n));
-  return { days: current, averages: { current: averages(current), previous: averages(previous) } };
+  // La série se termine toujours par aujourd'hui (Europe/Paris, ou options.today) : jour en cours.
+  const partialDay = current[current.length - 1]?.date ?? null;
+  return { days: current, partialDay, averages: { current: averages(current, partialDay), previous: averages(previous) } };
 }

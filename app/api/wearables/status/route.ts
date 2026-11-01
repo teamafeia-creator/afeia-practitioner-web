@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await createSupabaseAdminClient()
     .from('wearable_connection_overview')
-    .select('provider, status, connected_at, last_sync_at, last_error, backfill_status, backfill_cursor')
+    .select('provider, status, connected_at, last_sync_at, last_error, backfill_status, backfill_cursor, interrupted_at')
     .eq('consultant_id', consultantId);
 
   if (error) {

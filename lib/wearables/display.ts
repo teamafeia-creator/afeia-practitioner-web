@@ -12,6 +12,8 @@ export type WearableConnectionOverview = {
   /** Avancement de l'import d'historique (POL-14). */
   backfill_status?: 'pending' | 'running' | 'done' | 'failed' | null;
   backfill_cursor?: string | null;
+  /** Date d'interruption (status error ou revoked), POL-16. */
+  interrupted_at?: string | null;
 };
 
 /** L'import d'historique n'est pas terminé. */

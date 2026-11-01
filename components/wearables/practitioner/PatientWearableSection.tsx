@@ -5,14 +5,14 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Watch } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Skeleton, Spinner, TabsPills } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatRelative, isBackfillInProgress, type WearableConnectionOverview } from '@/lib/wearables/display';
+import { formatDay, formatRelative, isBackfillInProgress, type WearableConnectionOverview } from '@/lib/wearables/display';
 import { getWearableSummary, type WearableSummary } from '@/lib/wearables/summary';
 import { WearableMetricChart } from './WearableMetricChart';
 
 export type WearablePeriod = 7 | 30;
 const PERIOD_LABELS = { 7: '7 jours', 30: '30 jours' } as const;
 const LABEL_TO_PERIOD: Record<string, WearablePeriod> = { '7 jours': 7, '30 jours': 30 };
-const METRICS = ['sleepMin', 'hrvMs', 'restingHrBpm', 'steps'] as const;
+const METRICS = ['sleepMin', 'hrvMs', 'nightHrBpm', 'steps'] as const;
 
 export function parsePeriod(value: string | null): WearablePeriod {
   return value === '30' ? 30 : 7;
@@ -32,8 +32,11 @@ type ViewProps = {
  * Aucune interprétation ni couleur de jugement : des valeurs, des moyennes et des écarts.
  */
 export function PatientWearableSectionView({ connection, summary, period, onPeriodChange, loading = false, now }: ViewProps) {
-  const connected = connection !== null && connection.status !== 'revoked';
-  const importing = connected && isBackfillInProgress(connection);
+  // Une connexion existe (active, en erreur ou révoquée) : les données déjà reçues restent affichées.
+  const connected = connection !== null;
+  const interrupted = connection !== null && (connection.status === 'error' || connection.status === 'revoked');
+  const importing = connected && !interrupted && isBackfillInProgress(connection);
+  const interruptedSince = connection?.interrupted_at ?? connection?.last_sync_at ?? connection?.connected_at ?? null;
 
   return (
     <Card data-testid="patient-wearable-section">
@@ -66,10 +69,11 @@ export function PatientWearableSectionView({ connection, summary, period, onPeri
           </p>
         ) : (
           <>
-            {connection.status === 'error' ? (
-              <p className="text-[13px] text-stone">
-                La connexion de l&apos;objet connecté est interrompue : le patient doit la relancer depuis son espace.
-              </p>
+            {interrupted ? (
+              <div className="rounded-lg border border-divider px-3 py-2 text-[13px] text-stone" role="status" data-testid="patient-wearable-interrupted">
+                La connexion à l&apos;objet connecté est interrompue
+                {interruptedSince ? ` depuis le ${formatDay(interruptedSince)}` : ''}. Le patient doit la rétablir.
+              </div>
             ) : null}
             {importing ? (
               <div className="flex items-center gap-2 text-[13px] text-stone" role="status" data-testid="patient-wearable-importing">
@@ -86,7 +90,14 @@ export function PatientWearableSectionView({ connection, summary, period, onPeri
             ) : (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2" data-testid="patient-wearable-grid">
                 {METRICS.map((m) => (
-                  <WearableMetricChart key={m} metric={m} days={summary.days} averages={summary.averages} period={period} />
+                  <WearableMetricChart
+                    key={m}
+                    metric={m}
+                    days={summary.days}
+                    averages={summary.averages}
+                    period={period}
+                    partialDay={summary.partialDay}
+                  />
                 ))}
               </div>
             )}
@@ -116,7 +127,7 @@ export function PatientWearableSection({ consultantId }: { consultantId: string 
     let cancelled = false;
     supabase
       .from('wearable_connection_overview')
-      .select('provider, status, connected_at, last_sync_at, last_error, backfill_status, backfill_cursor')
+      .select('provider, status, connected_at, last_sync_at, last_error, backfill_status, backfill_cursor, interrupted_at')
       .eq('consultant_id', consultantId)
       .eq('provider', 'polar')
       .maybeSingle()
@@ -130,7 +141,7 @@ export function PatientWearableSection({ consultantId }: { consultantId: string 
     };
   }, [consultantId]);
 
-  const connected = connection !== null && connection.status !== 'revoked';
+  const connected = connection !== null;
   useEffect(() => {
     if (!connected) return;
     let cancelled = false;

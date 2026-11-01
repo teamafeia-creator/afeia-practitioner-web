@@ -22,10 +22,11 @@ const rpc = vi.fn(async (fn: string, args: Record<string, unknown>) => {
   }
 });
 const update = vi.fn();
-const query = { update, eq: vi.fn(), neq: vi.fn() };
+const query = { update, eq: vi.fn(), neq: vi.fn(), is: vi.fn() };
 update.mockReturnValue(query);
 query.eq.mockReturnValue(query);
 query.neq.mockResolvedValue({ error: null });
+query.is.mockResolvedValue({ error: null });
 const from = vi.fn(() => query);
 
 vi.mock('@/lib/server/supabaseAdmin', () => ({
@@ -50,6 +51,7 @@ describe('wearable connections', () => {
     update.mockReturnValue(query);
     query.eq.mockReturnValue(query);
     query.neq.mockResolvedValue({ error: null });
+    query.is.mockResolvedValue({ error: null });
   });
 
   it('aller-retour : saveConnection puis getAccessToken renvoie le même jeton', async () => {
@@ -106,6 +108,10 @@ describe('wearable connections', () => {
     expect(payload.last_error).not.toContain('abc.def-123');
     expect(payload.last_error).not.toContain('xyz');
     expect(query.neq).toHaveBeenCalledWith('status', 'revoked');
+    // Date d'interruption posée une seule fois (connexions en erreur sans date).
+    expect(update.mock.calls[1][0]).toEqual({ interrupted_at: expect.any(String) });
+    expect(query.eq).toHaveBeenCalledWith('status', 'error');
+    expect(query.is).toHaveBeenCalledWith('interrupted_at', null);
   });
 
   it('sanitizeErrorMessage tronque à 500 caractères', () => {

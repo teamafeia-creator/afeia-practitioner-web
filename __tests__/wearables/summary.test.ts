@@ -4,7 +4,7 @@ import { averageOf, getWearableSummary } from '@/lib/wearables/summary';
 
 const PATIENT = '00000000-0000-0000-0000-00000000005a';
 
-type Row = { day: string; sleep_min: number | null; hrv_ms: number | null; resting_hr_bpm: number | null; steps: number | null };
+type Row = { day: string; sleep_min: number | null; hrv_ms: number | null; night_hr_bpm: number | null; steps: number | null };
 
 /** Faux client de session : renvoie les lignes de wearable_daily_summary (logique SQL testée en pgTAP). */
 function sessionClient(rows: Row[] | null, error: { message: string; code?: string } | null = null) {
@@ -12,7 +12,7 @@ function sessionClient(rows: Row[] | null, error: { message: string; code?: stri
   return { client: { rpc } as unknown as SupabaseClient, rpc };
 }
 
-const day = (d: string, v: Partial<Row> = {}): Row => ({ day: d, sleep_min: null, hrv_ms: null, resting_hr_bpm: null, steps: null, ...v });
+const day = (d: string, v: Partial<Row> = {}): Row => ({ day: d, sleep_min: null, hrv_ms: null, night_hr_bpm: null, steps: null, ...v });
 const range = (from: string, n: number) =>
   Array.from({ length: n }, (_, i) => new Date(Date.parse(`${from}T00:00:00Z`) + i * 86_400_000).toISOString().slice(0, 10));
 
@@ -27,7 +27,7 @@ describe('getWearableSummary', () => {
   it('trous → null (pas 0) ; moyennes sur les seuls jours renseignés', async () => {
     const rows = [
       ...range('2026-10-18', 7).map((d, i) => day(d, { sleep_min: 400 + i * 10, steps: 5000 })),
-      day('2026-10-25', { sleep_min: 420, hrv_ms: 40, resting_hr_bpm: 55, steps: 8000 }),
+      day('2026-10-25', { sleep_min: 420, hrv_ms: 40, night_hr_bpm: 55, steps: 8000 }),
       day('2026-10-26', { sleep_min: 451, steps: 9000 }),
       day('2026-10-27', { steps: 7000 }),
       day('2026-10-28', { sleep_min: 400, steps: 6500 }),
@@ -38,17 +38,18 @@ describe('getWearableSummary', () => {
     const { client } = sessionClient(rows);
     const s = await getWearableSummary(PATIENT, { days: 7, client, today: '2026-10-31' });
 
-    expect(s.days[2]).toEqual({ date: '2026-10-27', sleepMin: null, hrvMs: null, restingHrBpm: null, steps: 7000 });
-    expect(s.days[5]).toEqual({ date: '2026-10-30', sleepMin: null, hrvMs: null, restingHrBpm: null, steps: null });
+    expect(s.days[2]).toEqual({ date: '2026-10-27', sleepMin: null, hrvMs: null, nightHrBpm: null, steps: 7000 });
+    expect(s.days[5]).toEqual({ date: '2026-10-30', sleepMin: null, hrvMs: null, nightHrBpm: null, steps: null });
     expect(s.days[6].steps).toBe(0); // 0 réel conservé
 
+    expect(s.partialDay).toBe('2026-10-31');
     expect(s.averages.current).toEqual({
       sleepMin: 423.7, // (420 + 451 + 400) / 3 : les trous ne comptent pas
       hrvMs: 42.5,
-      restingHrBpm: 55,
-      steps: 6750, // (8000 + 9000 + 7000 + 6500 + 10000 + 0) / 6 : le 0 compte, le trou non
+      nightHrBpm: 55,
+      steps: 8100, // (8000 + 9000 + 7000 + 6500 + 10000) / 5 : journée en cours (0 pas à 12 h) exclue
     });
-    expect(s.averages.previous).toEqual({ sleepMin: 430, hrvMs: null, restingHrBpm: null, steps: 5000 });
+    expect(s.averages.previous).toEqual({ sleepMin: 430, hrvMs: null, nightHrBpm: null, steps: 5000 });
   });
 
   it('30 jours → 60 jours demandés, 30 renvoyés', async () => {
@@ -63,9 +64,10 @@ describe('getWearableSummary', () => {
     const { client } = sessionClient([]);
     expect(await getWearableSummary(PATIENT, { days: 7, client })).toEqual({
       days: [],
+      partialDay: null,
       averages: {
-        current: { sleepMin: null, hrvMs: null, restingHrBpm: null, steps: null },
-        previous: { sleepMin: null, hrvMs: null, restingHrBpm: null, steps: null },
+        current: { sleepMin: null, hrvMs: null, nightHrBpm: null, steps: null },
+        previous: { sleepMin: null, hrvMs: null, nightHrBpm: null, steps: null },
       },
     });
   });
@@ -80,6 +82,23 @@ describe('getWearableSummary', () => {
   it('erreur Supabase → erreur explicite, sans détail technique', async () => {
     const { client } = sessionClient(null, { message: 'permission denied for function', code: '42501' });
     await expect(getWearableSummary(PATIENT, { days: 7, client })).rejects.toThrow("Lecture des données de l'objet connecté impossible (42501)");
+  });
+});
+
+describe('journée en cours', () => {
+  it('pas exclus de la moyenne courante ; un 0 un autre jour reste compté ; autres métriques inchangées', async () => {
+    const rows = [
+      ...range('2026-10-18', 7).map((d) => day(d, { steps: 5000 })),
+      ...range('2026-10-25', 5).map((d) => day(d, { steps: 6000, sleep_min: 400 })),
+      day('2026-10-30', { steps: 0, sleep_min: 400 }),
+      day('2026-10-31', { steps: 1200, sleep_min: 470 }),
+    ];
+    const { client } = sessionClient(rows);
+    const s = await getWearableSummary(PATIENT, { days: 7, client, today: '2026-10-31' });
+    // (6000 × 5 + 0) / 6 = 5000 : le 31 (en cours) exclu, le 0 du 30 compté. Avec le 31 : 4457,1.
+    expect(s.averages.current.steps).toBe(5000);
+    expect(s.averages.current.sleepMin).toBe(410); // le sommeil de la nuit du 31 est complet : compté
+    expect(s.averages.previous.steps).toBe(5000);
   });
 });
 

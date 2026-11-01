@@ -21,7 +21,7 @@ export function formatSleepMinutes(min: number): string {
 export const METRIC_META: Record<WearableMetric, { title: string; unit: string }> = {
   sleepMin: { title: 'Sommeil', unit: 'h' },
   hrvMs: { title: 'VFC nocturne', unit: 'ms' },
-  restingHrBpm: { title: 'FC de repos', unit: 'bpm' },
+  nightHrBpm: { title: 'FC nocturne', unit: 'bpm' },
   steps: { title: 'Pas', unit: 'pas' },
 };
 
@@ -33,7 +33,7 @@ export function formatMetricValue(metric: WearableMetric, value: number | null):
       return formatSleepMinutes(value);
     case 'hrvMs':
       return `${int(value)}${NBSP}ms`;
-    case 'restingHrBpm':
+    case 'nightHrBpm':
       return `${int(value)}${NBSP}bpm`;
     case 'steps':
       return `${int(value)}${NBSP}pas`;
@@ -46,8 +46,49 @@ export function chartValue(metric: WearableMetric, value: number | null): number
   return metric === 'sleepMin' ? Math.round((value / 60) * 100) / 100 : value;
 }
 
-export function chartData(metric: WearableMetric, days: WearableSummaryDay[]) {
-  return days.map((d) => ({ date: d.date, value: chartValue(metric, d[metric]) }));
+export type ChartPoint = {
+  date: string;
+  /** Valeur des journées complètes (null = trou). */
+  value: number | null;
+  /** Segment pointillé vers la journée en cours : veille et jour en cours seulement. */
+  partial: number | null;
+  /** Point de la journée en cours (affiché en creux). */
+  isPartial: boolean;
+};
+
+/**
+ * Points du graphique. Pour une métrique cumulée (pas), la journée en cours est sortie de la
+ * courbe pleine et portée par une série « partial » (pointillés, point en creux).
+ */
+export function chartData(metric: WearableMetric, days: WearableSummaryDay[], partialDay: string | null = null): ChartPoint[] {
+  const cumulative = metric === 'steps';
+  const lastIdx = days.length - 1;
+  const partialIdx = cumulative && partialDay && days[lastIdx]?.date === partialDay ? lastIdx : -1;
+  return days.map((d, i) => {
+    const v = chartValue(metric, d[metric]);
+    const isPartial = i === partialIdx;
+    return {
+      date: d.date,
+      value: isPartial ? null : v,
+      partial: partialIdx >= 0 && (i === partialIdx || i === partialIdx - 1) ? v : null,
+      isPartial: isPartial && v !== null,
+    };
+  });
+}
+
+/** Graduation de l'axe Y avec son unité (min et max de la période). */
+export function formatAxisValue(metric: WearableMetric, value: number): string {
+  if (metric === 'sleepMin') {
+    return `${(Math.round(value * 10) / 10).toLocaleString('fr-FR')}${NBSP}h`;
+  }
+  return `${int(value)}${NBSP}${METRIC_META[metric].unit}`;
+}
+
+/** Min et max des valeurs affichées (journée en cours comprise), null si aucune. */
+export function chartRange(points: ChartPoint[]): [number, number] | null {
+  const values = points.flatMap((p) => [p.value, p.partial]).filter((v): v is number => v !== null);
+  if (!values.length) return null;
+  return [Math.min(...values), Math.max(...values)];
 }
 
 /**
@@ -62,7 +103,7 @@ export function formatDelta(metric: WearableMetric, current: number | null, prev
   if (diff === 0) return `Identique aux ${ref}`;
   const sign = diff > 0 ? '+' : MINUS;
   const abs = Math.abs(diff);
-  const unit = metric === 'sleepMin' ? 'min' : metric === 'hrvMs' ? 'ms' : metric === 'restingHrBpm' ? 'bpm' : 'pas';
+  const unit = metric === 'sleepMin' ? 'min' : metric === 'hrvMs' ? 'ms' : metric === 'nightHrBpm' ? 'bpm' : 'pas';
   return `${sign}${int(abs)}${NBSP}${unit} vs ${ref}`;
 }
 
