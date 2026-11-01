@@ -270,6 +270,95 @@ npm run polar:webhook -- delete          # demande confirmation (--yes pour pass
   reportées, révoquées, en erreur), les ressources ingérées, les événements rejoués par
   résultat, l'état du webhook et les erreurs.
 
+### 6.5 Données brutes (POL-10)
+
+- **`wearable_raw`** garde tout ce que Polar renvoie, tel quel. Les tables normalisées
+  (POL-11) peuvent donc être recalculées à tout moment.
+  - Une ligne par enregistrement : contrainte d'unicité sur (`provider`, `data_type`, `provider_record_id`).
+  - Une nouvelle version **remplace** l'ancienne (upsert) et met à jour `fetched_at`.
+  - Valeurs de `data_type` : `sleep`, `nightly_recharge`, `continuous_hr`, `daily_activity`.
+- **`ingestPolarResource(type, json, consultantId, options)`** (`lib/wearables/ingest.ts`) :
+  - **sommeil, Nightly Recharge, FC continue** : un enregistrement par utilisateur et par
+    jour. `provider_record_id` vaut `<id de polar_user>:<date>`, et `data_date` vaut `date`.
+    Les listes `nights` et `recharges` sont acceptées ;
+  - **activité quotidienne** : la ressource ne contient pas l'utilisateur, qui est donc fourni
+    par l'appelant. `data_date` suit la règle de date d'activité du §6.6. S'il y a plusieurs
+    enregistrements pour un même jour, on garde le plus récent, celui dont le `end_time` est le plus grand ;
+  - après l'upsert, la fonction appelle `normalize()` (`lib/wearables/normalize.ts`, voir §6.6).
+
+### 6.6 Tables normalisées et adaptateur Polar (POL-11)
+
+Le reste de l'app ne lit que ces tables. Pour ajouter un fournisseur, il suffit d'écrire ses
+mappers ; les écrans ne changent pas.
+
+| Table | Clé métier (unique) | Source Polar |
+|---|---|---|
+| `sleep_sessions` | (`consultant_id`, `provider`, `night_date`) | sommeil |
+| `hrv_nightly` | (`consultant_id`, `provider`, `night_date`) | Nightly Recharge |
+| `hr_samples` | (`consultant_id`, `provider`, `recorded_at`) | FC continue |
+| `daily_activity` | (`consultant_id`, `provider`, `activity_date`) | activité |
+
+Chaque ligne porte `consultant_id`, `provider` et `source_raw_id` (clé étrangère vers
+`wearable_raw`, suppression en cascade).
+
+**Accès (POL-12, migration `20261107`)** : RLS activée et forcée, lecture seule pour `authenticated`.
+- Un **consultant** lit ses propres lignes : `consultant_memberships.consultant_user_id = auth.uid()`.
+- Un **praticien** lit les lignes de ses consultants : `consultants.practitioner_id = auth.uid()`.
+- Ces deux règles sont celles qu'utilise déjà le reste de l'app. Elles sont regroupées dans
+  `auth_self_consultant_ids()` et `auth_practitioner_consultant_ids()`, deux fonctions en
+  SECURITY INVOKER : elles s'exécutent sous la RLS existante, sans élargir aucun accès.
+- `anon` n'a aucun droit.
+- Insertion, modification et suppression sont réservées à `service_role` : aucune politique
+  d'écriture, aucun privilège d'écriture.
+- L'app mobile s'authentifie avec son propre JWT, pas avec une session Supabase. Elle doit
+  donc lire ces données par une route API (client admin filtré par `resolveConsultantId`).
+- Tests : `supabase/tests/wearable_normalized_rls.test.sql`.
+
+**Conventions**
+- **Unité dans le nom des colonnes** : `_s`, `_ms`, `_bpm`, `_kcal`, `_m`, `_per_min`.
+  Les durées sont en **secondes**, comme Polar les fournit.
+- **Champ absent** dans la réponse → `NULL`, jamais 0. Un 0 fourni par Polar reste 0.
+- **Horodatages en `timestamptz` (UTC).** Le fuseau se détermine ainsi : le décalage fourni
+  par Polar s'il existe, sinon `consultants.timezone`, sinon `Europe/Paris`.
+  - Sommeil : `sleep_start_time` et `sleep_end_time` contiennent leur décalage.
+  - FC continue : `sample_time` est l'heure de l'appareil, sans décalage. Elle est donc
+    interprétée dans le fuseau du consultant.
+  - Changement d'heure : une heure qui n'existe pas (passage à l'heure d'été) est placée
+    juste après le saut. Une heure ambiguë (passage à l'heure d'hiver) prend sa première occurrence.
+- **Date de la nuit** (`night_date`) : le champ `date` de Polar (« Result date of the
+  sleep »), c'est-à-dire **le jour du réveil**. Une nuit du 30 au 31 octobre a la date du 31.
+  Sommeil et Nightly Recharge partagent cette date. **À vérifier** sur de vraies données.
+- **Date d'activité** (`activity_date`), dans cet ordre :
+  1. la date contenue dans la réponse, `date` puis `samples.date` ;
+  2. sinon, le jour local de `start_time` ;
+  3. sinon, en repli, la date demandée à Polar.
+
+  Si la date de la réponse diffère de la date demandée, un avertissement est journalisé.
+  La doc décrit `start_time` comme une heure « UTC » mais l'exemple ressemble à une heure
+  locale : **à vérifier**.
+- **Total de sommeil** : `total_sleep_s` = `light_sleep` + `deep_sleep` + `rem_sleep` +
+  `unrecognized_sleep_stage`.
+  - Il vaut `NULL` si le léger, le profond ou le paradoxal manque : pas de somme partielle.
+  - Le stade non reconnu compte pour 0 s'il est absent.
+  - Justification : d'après la doc AccessLink, le stade non reconnu est du temps endormi dont
+    le stade n'a pas pu être identifié, donc il fait partie du sommeil. Contrôle de cohérence
+    testé : `total_sleep_s` ≈ (`sleep_end_time` − `sleep_start_time`) − `total_interruption_duration`.
+  - **À confirmer contre l'app Polar Flow**, sur une vraie nuit : saisir le total affiché
+    dans `lib/wearables/polar/__fixtures__/flow-totals.json`. Le test correspondant de
+    `__tests__/wearables/mappers.test.ts` passe alors de « à faire » à une vérification réelle.
+- **Restent seulement dans `wearable_raw`** : la continuité, les cycles, `sleep_charge`,
+  l'objectif et la note de sommeil, les scores par thème, l'hypnogramme, les échantillons
+  nocturnes de FC, de VFC et de respiration, les échantillons de pas et de zones, et le
+  nombre d'alertes d'inactivité.
+
+**Code**
+- **Mappers purs** : `lib/wearables/polar/mappers/{sleep,nightlyRecharge,continuousHr,dailyActivity}.ts`.
+- **Écriture** : `lib/wearables/normalized.ts`, un upsert sur la clé métier. Le module est pur
+  (client passé en paramètre) et partagé par `normalize()` et par le script de reconstruction.
+- **Reconstruction** : `npm run wearables:rebuild`, qui demande confirmation (sauf avec `--yes`).
+  Il vide les 4 tables (`wearable_truncate_normalized()`), relit `wearable_raw` par pages de
+  500 et réapplique les mappers. On peut le relancer sans risque.
+
 ## 7. Limites de débit
 
 Source : [AccessLink §Rate limiting](https://www.polar.com/accesslink-api/).

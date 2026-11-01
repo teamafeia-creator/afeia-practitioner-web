@@ -10,7 +10,7 @@ import { getAccessToken, listActiveConnections, markError, markSynced, sanitizeE
 import { requeueDueEvents } from '@/lib/wearables/events';
 import { alertWebhookDown } from './alerts';
 import { fetchPolar, getWebhookStatus, isAccessRevoked } from './api';
-import { ingestPolarResource, type PolarDataType } from './ingest';
+import { ingestPolarResource, type WearableDataType } from '@/lib/wearables/ingest';
 import { processPolarEvent, REVOKED_MESSAGE } from './process-event';
 import { POLAR_API_ORIGIN } from './webhook';
 
@@ -20,11 +20,11 @@ export const MAX_ATTEMPTS = 5;
 const BATCH_SIZE = 5;
 
 /** Ressources journalières du périmètre MVP (docs/wearables/polar.md §3). */
-const DAILY_RESOURCES: { dataType: PolarDataType; path: (date: string) => string }[] = [
+const DAILY_RESOURCES: { dataType: WearableDataType; path: (date: string) => string }[] = [
   { dataType: 'sleep', path: (d) => `/v3/users/sleep/${d}` },
   { dataType: 'nightly_recharge', path: (d) => `/v3/users/nightly-recharge/${d}` },
-  { dataType: 'continuous_heart_rate', path: (d) => `/v3/users/continuous-heart-rate/${d}` },
-  { dataType: 'activity', path: (d) => `/v3/users/activities/${d}` },
+  { dataType: 'continuous_hr', path: (d) => `/v3/users/continuous-heart-rate/${d}` },
+  { dataType: 'daily_activity', path: (d) => `/v3/users/activities/${d}` },
 ];
 
 /** Les `days` derniers jours, hier compris (YYYY-MM-DD, UTC). */
@@ -60,13 +60,14 @@ async function backfillConnection(
           summary.resources.empty += 1;
           continue;
         }
-        await ingestPolarResource(r.dataType, fetched.json, {
-          consultantId: c.consultantId,
+        // Pas de `+= await` : les connexions d'un lot tournent en parallèle, et `x += await y`
+        // lirait x avant l'attente (incréments perdus).
+        const ingested = await ingestPolarResource(r.dataType, fetched.json, c.consultantId, {
           providerUserId: c.providerUserId,
           date,
           sourceEventId: null,
         });
-        summary.resources.ingested += 1;
+        summary.resources.ingested += ingested;
       }
     }
     await markSynced(c.consultantId, 'polar');

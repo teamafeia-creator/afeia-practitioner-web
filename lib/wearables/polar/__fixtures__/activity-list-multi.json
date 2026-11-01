@@ -1,0 +1,26 @@
+[
+  {
+    "start_time": "2026-10-31T00:00:00",
+    "end_time": "2026-10-31T14:05:00",
+    "active_duration": "PT1H40M",
+    "calories": 1400,
+    "active_calories": 600,
+    "steps": 4120
+  },
+  {
+    "start_time": "2026-10-31T00:00:00",
+    "end_time": "2026-10-31T23:59:59",
+    "active_duration": "PT3H11M",
+    "calories": 2500,
+    "active_calories": 1500,
+    "steps": 8823
+  },
+  {
+    "start_time": "2026-10-30T00:00:00",
+    "end_time": "2026-10-30T23:59:59",
+    "active_duration": "PT2H05M",
+    "calories": 2210,
+    "active_calories": 1100,
+    "steps": 6412
+  }
+]

@@ -26,11 +26,12 @@ vi.mock('@/lib/wearables/connections', () => ({
 
 // --- Stockage brut simulé : upsert sur (data_type, provider_record_id), comme wearable_raw ---
 const raw = new Map<string, unknown>();
-const ingest = vi.fn(async (dataType: string, json: unknown, ctx: { providerUserId: string; date: string | null }) => {
+const ingest = vi.fn(async (dataType: string, json: unknown, _consultantId: string, ctx: { providerUserId: string; date: string | null }) => {
   raw.set(`${dataType}|${ctx.providerUserId}:${ctx.date}`, json);
+  return 1;
 });
-vi.mock('@/lib/wearables/polar/ingest', async (orig) => ({
-  ...(await orig<typeof import('@/lib/wearables/polar/ingest')>()),
+vi.mock('@/lib/wearables/ingest', async (orig) => ({
+  ...(await orig<typeof import('@/lib/wearables/ingest')>()),
   ingestPolarResource: (...a: Parameters<typeof ingest>) => ingest(...a),
 }));
 
@@ -141,7 +142,7 @@ describe('runPolarSync', () => {
     expect(lastDays(3, now)).toEqual(['2026-10-31', '2026-10-30', '2026-10-29']);
     expect(ingest).toHaveBeenCalledTimes(2 * 3 * 4);
     expect(summary.resources.ingested).toBe(24);
-    expect(new Set(ingest.mock.calls.map(([t]) => t))).toEqual(new Set(['sleep', 'nightly_recharge', 'continuous_heart_rate', 'activity']));
+    expect(new Set(ingest.mock.calls.map(([t]) => t))).toEqual(new Set(['sleep', 'nightly_recharge', 'continuous_hr', 'daily_activity']));
     expect(markSynced).toHaveBeenCalledWith(A.consultantId, 'polar');
     expect(markSynced).toHaveBeenCalledWith(B.consultantId, 'polar');
   });
@@ -150,11 +151,11 @@ describe('runPolarSync', () => {
     const now = new Date('2026-11-01T03:00:00Z');
     await runPolarSync({ now });
     const afterFirst = new Map(raw);
-    const keysFirst = ingest.mock.calls.map(([t, , c]) => `${t}|${c.providerUserId}:${c.date}`);
+    const keysFirst = ingest.mock.calls.map(([t, , , c]) => `${t}|${c.providerUserId}:${c.date}`);
     ingest.mockClear();
 
     await runPolarSync({ now });
-    const keysSecond = ingest.mock.calls.map(([t, , c]) => `${t}|${c.providerUserId}:${c.date}`);
+    const keysSecond = ingest.mock.calls.map(([t, , , c]) => `${t}|${c.providerUserId}:${c.date}`);
 
     expect(new Set(keysFirst).size).toBe(keysFirst.length); // pas de double ingestion dans une exécution
     expect(keysSecond.sort()).toEqual(keysFirst.sort()); // mêmes enregistrements, upsertés

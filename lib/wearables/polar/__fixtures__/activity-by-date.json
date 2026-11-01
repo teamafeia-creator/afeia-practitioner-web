@@ -1,0 +1,18 @@
+{
+  "start_time": "2026-10-31T00:00:00",
+  "end_time": "2026-10-31T23:59:59",
+  "active_duration": "PT3H11M",
+  "inactive_duration": "PT18H23M30S",
+  "daily_activity": 89.1,
+  "calories": 2500,
+  "active_calories": 1500,
+  "steps": 8823,
+  "inactivity_alert_count": 1,
+  "distance_from_steps": 4590.53,
+  "samples": {
+    "date": "2026-10-31",
+    "steps": { "interval_ms": 60000, "total_steps": 8823, "samples": [{ "steps": 12, "timestamp": "2026-10-31T08:02" }] },
+    "activity_zones": { "samples": [{ "zone": "SEDENTARY", "timestamp": "2026-10-31T08:08:30" }] },
+    "inactivity_stamps": [{ "stamp": "2026-10-31T16:04" }]
+  }
+}
