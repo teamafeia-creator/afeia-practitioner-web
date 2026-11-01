@@ -1,0 +1,9 @@
+{
+  "polar_user": "https://polaraccesslink.com/v3/users/123456",
+  "date": "2026-10-31",
+  "heart_rate_samples": [
+    { "heart_rate": 63, "sample_time": "00:02:08" },
+    { "heart_rate": 62, "sample_time": "00:07:08" },
+    { "heart_rate": 71, "sample_time": "08:12:08" }
+  ]
+}

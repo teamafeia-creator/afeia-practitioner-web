@@ -5,7 +5,7 @@
 import 'server-only';
 import { findConnectionByProviderUserId, getAccessToken, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
 import { claimEvent, finishEvent, recordEvent, type WearableEvent } from '@/lib/wearables/events';
-import { dataTypeForEvent, ingestPolarResource } from './ingest';
+import { dataTypeForEvent, ingestPolarResource } from '@/lib/wearables/ingest';
 import { fetchPolar, isAccessRevoked } from './api';
 import { POLAR_API_ORIGIN, isPolarApiUrl } from './webhook';
 
@@ -31,8 +31,7 @@ async function followNightlyRecharge(event: WearableEvent, consultantId: string,
   const url = `${POLAR_API_ORIGIN}/v3/users/nightly-recharge/${event.event_date}`;
   const nr = await fetchPolar(url, token);
   if (nr.status === 'ok') {
-    await ingestPolarResource('nightly_recharge', nr.json, {
-      consultantId,
+    await ingestPolarResource('nightly_recharge', nr.json, consultantId, {
       providerUserId: event.provider_user_id,
       date: event.event_date,
       sourceEventId: event.id,
@@ -103,8 +102,7 @@ async function runOnce(eventId: string): Promise<RunResult> {
       throw new Error(`Polar ${new URL(url).pathname} : ressource vide`);
     }
 
-    await ingestPolarResource(dataType, fetched.json, {
-      consultantId,
+    await ingestPolarResource(dataType, fetched.json, consultantId, {
       providerUserId: event.provider_user_id,
       date: event.event_date,
       sourceEventId: event.id,

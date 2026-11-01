@@ -270,6 +270,23 @@ npm run polar:webhook -- delete          # demande confirmation (--yes pour pass
   reportées, révoquées, en erreur), les ressources ingérées, les événements rejoués par
   résultat, l'état du webhook et les erreurs.
 
+### 6.5 Données brutes (POL-10)
+
+- **`wearable_raw`** garde tout ce que Polar renvoie, tel quel. Les tables normalisées
+  (POL-11) peuvent donc être recalculées à tout moment.
+  - Une ligne par enregistrement : contrainte d'unicité sur (`provider`, `data_type`, `provider_record_id`).
+  - Une nouvelle version **remplace** l'ancienne (upsert) et met à jour `fetched_at`.
+  - Valeurs de `data_type` : `sleep`, `nightly_recharge`, `continuous_hr`, `daily_activity`.
+- **`ingestPolarResource(type, json, consultantId, options)`** (`lib/wearables/ingest.ts`) :
+  - **sommeil, Nightly Recharge, FC continue** : un enregistrement par utilisateur et par
+    jour. `provider_record_id` vaut `<id de polar_user>:<date>`, et `data_date` vaut `date`.
+    Les listes `nights` et `recharges` sont acceptées ;
+  - **activité quotidienne** : la ressource ne contient ni utilisateur ni champ `date`.
+    L'utilisateur est donc fourni par l'appelant, et `data_date` est le jour de `start_time`
+    (heure de l'appareil). S'il y a plusieurs enregistrements pour un même jour, on garde
+    le plus récent, celui dont le `end_time` est le plus grand ;
+  - après l'upsert, la fonction appelle `normalize()` (`lib/wearables/normalize.ts`), qui reste à écrire en POL-11.
+
 ## 7. Limites de débit
 
 Source : [AccessLink §Rate limiting](https://www.polar.com/accesslink-api/).

@@ -81,9 +81,9 @@ vi.mock('@/lib/wearables/connections', async () => ({
 }));
 
 // --- Ingestion (POL-10) ---------------------------------------------------------
-const ingest = vi.fn();
-vi.mock('@/lib/wearables/polar/ingest', async (orig) => ({
-  ...(await orig<typeof import('@/lib/wearables/polar/ingest')>()),
+const ingest = vi.fn(async (..._args: unknown[]) => 1);
+vi.mock('@/lib/wearables/ingest', async (orig) => ({
+  ...(await orig<typeof import('@/lib/wearables/ingest')>()),
   ingestPolarResource: (...a: unknown[]) => ingest(...a),
 }));
 
@@ -140,7 +140,7 @@ const logs: string[] = [];
 beforeEach(() => {
   events = [];
   background.length = 0;
-  ingest.mockReset().mockResolvedValue(undefined);
+  ingest.mockReset().mockResolvedValue(1);
   markError.mockReset();
   markSynced.mockReset();
   runInBackground.mockClear();
@@ -177,8 +177,8 @@ describe('POST /api/webhooks/polar : signature et ping', () => {
     await drainBackground();
     expect(events[0].status).toBe('done');
     expect(events[0].consultant_id).toBe(CONSULTANT);
-    expect(ingest).toHaveBeenCalledWith('sleep', { date: '2026-10-31', sleep_score: 80 }, expect.objectContaining({ consultantId: CONSULTANT, date: '2026-10-31' }));
-    expect(ingest).toHaveBeenCalledWith('nightly_recharge', { date: '2026-10-31', ans_charge: 1.5 }, expect.objectContaining({ consultantId: CONSULTANT }));
+    expect(ingest).toHaveBeenCalledWith('sleep', { date: '2026-10-31', sleep_score: 80 }, CONSULTANT, expect.objectContaining({ date: '2026-10-31', providerUserId: POLAR_USER }));
+    expect(ingest).toHaveBeenCalledWith('nightly_recharge', { date: '2026-10-31', ans_charge: 1.5 }, CONSULTANT, expect.anything());
     expect(markSynced).toHaveBeenCalledWith(CONSULTANT, 'polar');
   });
 
