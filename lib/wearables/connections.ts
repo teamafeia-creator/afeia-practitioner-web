@@ -95,6 +95,16 @@ export async function markError(consultantId: string, provider: WearableProvider
     .eq('provider', provider)
     .neq('status', 'revoked');
   if (error) throw new WearableConnectionError('markError', error);
+
+  // Date d'interruption : la première seulement (pas d'écrasement à chaque nouvel échec).
+  const { error: interruptedError } = await supabase
+    .from('wearable_connections')
+    .update({ interrupted_at: new Date().toISOString() })
+    .eq('consultant_id', consultantId)
+    .eq('provider', provider)
+    .eq('status', 'error')
+    .is('interrupted_at', null);
+  if (interruptedError) throw new WearableConnectionError('markError', interruptedError);
 }
 
 export type ConnectionRef = {
@@ -127,7 +137,7 @@ export async function markSynced(consultantId: string, provider: WearableProvide
   const now = new Date().toISOString();
   const { error } = await supabase
     .from('wearable_connections')
-    .update({ last_sync_at: now, status: 'active', last_error: null, updated_at: now })
+    .update({ last_sync_at: now, status: 'active', last_error: null, interrupted_at: null, updated_at: now })
     .eq('consultant_id', consultantId)
     .eq('provider', provider)
     .neq('status', 'revoked');
