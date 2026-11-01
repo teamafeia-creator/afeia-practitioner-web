@@ -4,9 +4,12 @@
 // puis normalisé (POL-11). On peut ainsi recalculer les tables normalisées à tout moment.
 import 'server-only';
 import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import type { WearableDataType } from './ingest-types';
 import { normalize } from './normalize';
+import { activityDate } from './polar/mappers/dailyActivity';
+import { resolveTimezone } from './time';
 
-export type WearableDataType = 'sleep' | 'nightly_recharge' | 'continuous_hr' | 'daily_activity';
+export type { WearableDataType } from './ingest-types';
 
 /** Type d'événement Polar → type de donnée. null = hors périmètre MVP (événement ignoré). */
 export function dataTypeForEvent(eventType: string): WearableDataType | null {
@@ -31,6 +34,8 @@ export type IngestOptions = {
   date?: string | null;
   /** Événement webhook d'origine ; null pour le rattrapage du cron. */
   sourceEventId?: string | null;
+  /** Fuseau du consultant (jour local de start_time) ; Europe/Paris par défaut. */
+  timezone?: string | null;
   /** Injectable pour les tests. */
   now?: Date;
 };
@@ -73,9 +78,11 @@ function items(json: unknown): Record<string, unknown>[] {
  * Règles par type (déduites des réponses AccessLink, voir __fixtures__) :
  *  - sleep, nightly_recharge, continuous_hr : un enregistrement par utilisateur et par jour.
  *    date = `date` de la ressource ; utilisateur = fin de l'URL `polar_user`.
- *  - daily_activity : la ressource ne porte ni utilisateur ni champ `date`. date = jour de
- *    `start_time` (heure de l'appareil). Plusieurs enregistrements peuvent exister pour un
- *    même jour (résumés partiels) : on garde le plus récent (plus grand `end_time`).
+ *  - daily_activity : la ressource ne porte pas l'utilisateur (fourni par l'appelant).
+ *    date = date contenue dans la réponse (`date`, sinon `samples.date`, sinon jour local
+ *    de `start_time`), la date demandée seulement en repli ; divergence → avertissement.
+ *    Plusieurs enregistrements peuvent exister pour un même jour (résumés partiels) :
+ *    on garde le plus récent (plus grand `end_time`).
  *  provider_record_id = `<polar_user_id>:<YYYY-MM-DD>`.
  */
 export function extractPolarRecords(type: WearableDataType, json: unknown, options: IngestOptions = {}): RawRecord[] {
@@ -83,10 +90,14 @@ export function extractPolarRecords(type: WearableDataType, json: unknown, optio
 
   for (const item of items(json)) {
     const userId = polarUserIdFromUrl(item.polar_user) ?? options.providerUserId ?? null;
-    const dataDate =
-      type === 'daily_activity'
-        ? asDate(item.start_time) ?? asDate((item.samples as Record<string, unknown> | undefined)?.date) ?? asDate(options.date)
-        : asDate(item.date) ?? asDate(options.date);
+    let dataDate: string | null;
+    if (type === 'daily_activity') {
+      const resolved = activityDate(item, { timezone: resolveTimezone(options.timezone), requestedDate: options.date ?? null });
+      if (resolved.warning) console.warn('[wearables/ingest]', resolved.warning);
+      dataDate = resolved.date;
+    } else {
+      dataDate = asDate(item.date) ?? asDate(options.date);
+    }
 
     if (!userId) throw new IngestError(`identifiant utilisateur introuvable (${type})`);
     if (!dataDate) throw new IngestError(`date introuvable (${type})`);
@@ -118,7 +129,7 @@ export async function ingestPolarResource(
   if (!records.length) return 0;
 
   const fetchedAt = (options.now ?? new Date()).toISOString();
-  const { error } = await createSupabaseAdminClient()
+  const { data, error } = await createSupabaseAdminClient()
     .from('wearable_raw')
     .upsert(
       records.map((r) => ({
@@ -133,11 +144,20 @@ export async function ingestPolarResource(
         updated_at: fetchedAt,
       })),
       { onConflict: 'provider,data_type,provider_record_id' }
-    );
+    )
+    .select('id, provider_record_id');
   if (error) throw new IngestError(`écriture wearable_raw impossible (${error.code ?? 'inconnu'})`);
 
+  const rawIds = new Map((data ?? []).map((row) => [row.provider_record_id as string, row.id as string]));
   for (const r of records) {
-    await normalize(type, r.payload, consultantId, { dataDate: r.dataDate, providerRecordId: r.providerRecordId });
+    const rawId = rawIds.get(r.providerRecordId);
+    if (!rawId) throw new IngestError(`identifiant wearable_raw introuvable pour ${r.providerRecordId}`);
+    await normalize(type, r.payload, consultantId, {
+      dataDate: r.dataDate,
+      providerRecordId: r.providerRecordId,
+      rawId,
+      ...(options.timezone !== undefined ? { timezone: options.timezone } : {}),
+    });
   }
   return records.length;
 }

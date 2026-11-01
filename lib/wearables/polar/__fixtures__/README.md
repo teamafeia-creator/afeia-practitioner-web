@@ -13,3 +13,10 @@ Pour les remplacer par de vraies réponses : `npm run polar:spike` (POL-03). Le 
 `member-id` → `member-fixture`, `device_id` → `DEVICE00`, nom/prénom/date de
 naissance/poids/taille remplacés, jeton remplacé par `fixture-access-token`).
 Relire chaque fichier avant de le commiter : les dates, horaires et mesures sont réels.
+
+## Total de sommeil Polar Flow (`flow-totals.json`)
+
+Pour valider la règle `total_sleep_s` (docs/wearables/polar.md §6.6) : après le spike, ouvrir
+la nuit dans l'app Polar Flow, relever le temps de sommeil affiché et le saisir en secondes
+dans `flow-totals.json` pour le fichier correspondant. Le test passe alors de « à faire » à
+une vérification réelle.

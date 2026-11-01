@@ -9,15 +9,18 @@ import activityList from '@/lib/wearables/polar/__fixtures__/activity-list-multi
 type Row = Record<string, unknown> & { id: string };
 const table = new Map<string, Row>();
 let lastOnConflict: string | undefined;
-const upsert = vi.fn(async (rows: Record<string, unknown>[], opts: { onConflict?: string }) => {
+const upsert = vi.fn((rows: Record<string, unknown>[], opts: { onConflict?: string }) => {
   lastOnConflict = opts.onConflict;
   const cols = (opts.onConflict ?? '').split(',');
+  const written: Row[] = [];
   for (const row of rows) {
     const key = cols.map((c) => row[c]).join('|');
     const existing = table.get(key);
-    table.set(key, { ...(existing ?? { id: `raw-${table.size + 1}` }), ...row } as Row);
+    const next = { ...(existing ?? { id: `raw-${table.size + 1}` }), ...row } as Row;
+    table.set(key, next);
+    written.push(next);
   }
-  return { error: null };
+  return { select: async () => ({ data: written.map((r) => ({ id: r.id, provider_record_id: r.provider_record_id })), error: null }) };
 });
 vi.mock('@/lib/server/supabaseAdmin', () => ({
   createSupabaseAdminClient: () => ({ from: (name: string) => (expect(name).toBe('wearable_raw'), { upsert }) }),
@@ -98,7 +101,7 @@ describe('ingestPolarResource', () => {
       payload: sleep,
       source_event_id: 'ev-1',
     });
-    expect(normalize).toHaveBeenCalledWith('sleep', sleep, CONSULTANT, { dataDate: '2026-10-31', providerRecordId: '123456:2026-10-31' });
+    expect(normalize).toHaveBeenCalledWith('sleep', sleep, CONSULTANT, { dataDate: '2026-10-31', providerRecordId: '123456:2026-10-31', rawId: rows()[0].id });
   });
 
   it.each([

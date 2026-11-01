@@ -6,10 +6,10 @@
   "device_id": "DEVICE00",
   "continuity": 2.1,
   "continuity_class": 2,
-  "light_sleep": 14400,
+  "light_sleep": 14430,
   "deep_sleep": 5400,
   "rem_sleep": 5400,
-  "unrecognized_sleep_stage": 0,
+  "unrecognized_sleep_stage": 600,
   "sleep_score": 80,
   "total_interruption_duration": 1800,
   "sleep_charge": 3,
@@ -21,6 +21,14 @@
   "group_duration_score": 100,
   "group_solidity_score": 75,
   "group_regeneration_score": 54.2,
-  "hypnogram": { "23:39": 2, "23:50": 3, "00:23": 5 },
-  "heart_rate_samples": { "23:41": 66, "23:46": 64, "23:51": 63 }
+  "hypnogram": {
+    "23:39": 2,
+    "23:50": 3,
+    "00:23": 5
+  },
+  "heart_rate_samples": {
+    "23:41": 66,
+    "23:46": 64,
+    "23:51": 63
+  }
 }

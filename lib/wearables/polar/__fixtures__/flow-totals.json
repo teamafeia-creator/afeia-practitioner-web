@@ -1,0 +1,4 @@
+{
+  "_comment": "Total de sommeil affiché dans l'app Polar Flow pour chaque nuit réelle capturée par npm run polar:spike, en secondes (ex. 7 h 10 → 25800). null = pas encore relevé. Le test __tests__/wearables/mappers.test.ts compare ce total à total_sleep_s (tolérance 60 s, Flow affiche des minutes).",
+  "sleep-by-date.json": null
+}
