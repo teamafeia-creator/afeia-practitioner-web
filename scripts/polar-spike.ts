@@ -19,11 +19,11 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
+import { getRateLimitState, polarRequest } from '../lib/wearables/polar/client';
 import { parsePolarConfig } from '../lib/wearables/polar/env';
 
 const AUTHORIZE_URL = 'https://flow.polar.com/oauth2/authorization';
 const TOKEN_URL = 'https://polarremote.com/v2/oauth2/token';
-const API = 'https://www.polaraccesslink.com';
 const MEMBER_ID = 'afeia-spike-test';
 const FIXTURES_DIR = path.resolve(__dirname, '../lib/wearables/polar/__fixtures__');
 const CALLBACK_TIMEOUT_MS = 5 * 60_000;
@@ -114,12 +114,11 @@ async function readBody(res: Response): Promise<unknown> {
 }
 
 async function polarGet(accessToken: string, pathAndQuery: string): Promise<{ status: number; body: unknown }> {
-  const res = await fetch(`${API}${pathAndQuery}`, {
-    headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
-  });
-  const limit = res.headers.get('RateLimit-Usage');
-  console.log(`  GET ${pathAndQuery} → ${res.status}${limit ? ` (RateLimit-Usage ${limit})` : ''}`);
-  return { status: res.status, body: await readBody(res) };
+  // Client commun (quotas, nouvelles tentatives) ; 400 renvoyé tel quel pour l'afficher.
+  const { status, data } = await polarRequest(pathAndQuery, { token: accessToken, passthroughStatuses: [400] });
+  const [short] = getRateLimitState();
+  console.log(`  GET ${pathAndQuery} → ${status}${short ? ` (quota 15 min : ${short.usage}/${short.limit})` : ''}`);
+  return { status, body: data };
 }
 
 // ---------------------------------------------------------------------------
@@ -240,12 +239,13 @@ async function main() {
 
   // 4. Enregistrement de l'utilisateur
   console.log('\n3. Enregistrement de l\'utilisateur (POST /v3/users)');
-  const registerRes = await fetch(`${API}/v3/users`, {
+  const { status: registerStatus, data: registerBody } = await polarRequest('/v3/users', {
+    token: accessToken,
     method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ 'member-id': MEMBER_ID }),
+    body: { 'member-id': MEMBER_ID },
+    passthroughStatuses: [403, 409],
   });
-  const registerBody = await readBody(registerRes);
+  const registerRes = { status: registerStatus };
   if (registerRes.status === 200) {
     console.log('   200 : utilisateur enregistré.');
     saveFixture('register-user-200', registerBody, userId);

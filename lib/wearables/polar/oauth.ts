@@ -2,11 +2,11 @@
 // Appels HTTP du flux OAuth Polar AccessLink (docs/wearables/polar.md §4-5).
 // Aucun accès base ici. Le jeton n'est jamais logué ni inclus dans une erreur.
 import 'server-only';
+import { polarRequest } from './client';
 import { getPolarConfig } from './config';
 
 export const POLAR_AUTHORIZE_URL = 'https://flow.polar.com/oauth2/authorization';
 export const POLAR_TOKEN_URL = 'https://polarremote.com/v2/oauth2/token';
-export const POLAR_API_BASE = 'https://www.polaraccesslink.com';
 export const POLAR_SCOPE = 'accesslink.read_all';
 
 export class PolarOAuthError extends Error {
@@ -82,19 +82,15 @@ export type RegisterUserResult = 'registered' | 'already_registered' | 'consents
 
 /** POST /v3/users. 200 → registered, 409 → already_registered, 403 → consents_missing. */
 export async function registerUser(accessToken: string, memberId: string): Promise<RegisterUserResult> {
-  const res = await fetch(`${POLAR_API_BASE}/v3/users`, {
+  // 403 = consentements manquants et 409 = déjà inscrit : réponses métier, pas des erreurs.
+  const { status } = await polarRequest('/v3/users', {
+    token: accessToken,
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify({ 'member-id': memberId }),
-    cache: 'no-store',
+    body: { 'member-id': memberId },
+    passthroughStatuses: [403, 409],
   });
-
-  if (res.status === 200 || res.status === 201) return 'registered';
-  if (res.status === 409) return 'already_registered';
-  if (res.status === 403) return 'consents_missing';
-  throw new PolarOAuthError('register_user', res.status);
+  if (status === 200 || status === 201) return 'registered';
+  if (status === 409) return 'already_registered';
+  if (status === 403) return 'consents_missing';
+  throw new PolarOAuthError('register_user', status);
 }

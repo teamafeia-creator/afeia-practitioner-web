@@ -6,7 +6,7 @@ import 'server-only';
 import { findConnectionByProviderUserId, getAccessToken, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
 import { claimEvent, finishEvent, recordEvent, type WearableEvent } from '@/lib/wearables/events';
 import { dataTypeForEvent, ingestPolarResource } from '@/lib/wearables/ingest';
-import { fetchPolar, isAccessRevoked } from './api';
+import { PolarRateLimitError, isAccessRevoked, polarFetch } from './api';
 import { POLAR_API_ORIGIN, isPolarApiUrl } from './webhook';
 
 export { PolarHttpError } from './api';
@@ -29,9 +29,9 @@ function resourceUrlFor(event: WearableEvent): string | null {
 async function followNightlyRecharge(event: WearableEvent, consultantId: string, token: string) {
   if (!event.event_date) return;
   const url = `${POLAR_API_ORIGIN}/v3/users/nightly-recharge/${event.event_date}`;
-  const nr = await fetchPolar(url, token);
-  if (nr.status === 'ok') {
-    await ingestPolarResource('nightly_recharge', nr.json, consultantId, {
+  const nr = await polarFetch(url, { token });
+  if (nr !== null) {
+    await ingestPolarResource('nightly_recharge', nr, consultantId, {
       providerUserId: event.provider_user_id,
       date: event.event_date,
       sourceEventId: event.id,
@@ -90,8 +90,8 @@ async function runOnce(eventId: string): Promise<RunResult> {
       return finish('ignored', { consultantId });
     }
 
-    const fetched = await fetchPolar(url, token);
-    if (fetched.status === 'empty') {
+    const fetched = await polarFetch(url, { token });
+    if (fetched === null) {
       if (event.event_type === 'NIGHTLY_RECHARGE') {
         return finish('failed', {
           consultantId,
@@ -102,7 +102,7 @@ async function runOnce(eventId: string): Promise<RunResult> {
       throw new Error(`Polar ${new URL(url).pathname} : ressource vide`);
     }
 
-    await ingestPolarResource(dataType, fetched.json, consultantId, {
+    await ingestPolarResource(dataType, fetched, consultantId, {
       providerUserId: event.provider_user_id,
       date: event.event_date,
       sourceEventId: event.id,
@@ -121,7 +121,9 @@ async function runOnce(eventId: string): Promise<RunResult> {
       }
     }
     console.warn(LOG, 'traitement échoué', { eventId: event.id, consultantId, error: message });
-    return finish('failed', { consultantId, error: message });
+    // Quota Polar : nouvel essai après la réinitialisation plutôt qu'au prochain passage du cron.
+    const retryAt = error instanceof PolarRateLimitError ? error.retryAt ?? undefined : undefined;
+    return finish('failed', { consultantId, error: message, retryAt });
   }
 }
 

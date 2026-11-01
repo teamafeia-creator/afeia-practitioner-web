@@ -216,6 +216,21 @@ describe('runPolarSync', () => {
     expect(summary.replay).toMatchObject({ due: 2, done: 1, failed: 1 });
   });
 
+  it('quota Polar épuisé pendant le rattrapage → arrêt propre, connexions reportées, pas de rejeu ni de markError', async () => {
+    dueEvents = [{ id: 'ev-1', event_type: 'SLEEP', attempts: 0 }];
+    fetchMock.mockImplementation(async (input: string | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname === '/v3/webhooks') return new Response(JSON.stringify(webhook), { status: 200 });
+      return new Response('', { status: 429, headers: { 'Retry-After': '900' } }); // au-delà du plafond d'attente
+    });
+    const summary = await runPolarSync();
+    expect(summary.rateLimited).toMatchObject({ at: 'rattrapage' });
+    expect(summary.rateLimited!.retryAt).not.toBeNull();
+    expect(summary.connections.deferred).toBe(2);
+    expect(markError).not.toHaveBeenCalled();
+    expect(processPolarEvent).not.toHaveBeenCalled();
+  });
+
   it('budget de temps épuisé → connexions restantes reportées, pas de dépassement', async () => {
     activeConnections = Array.from({ length: 12 }, (_, i) => ({ consultantId: `c-${i}`, providerUserId: `${i}`, lastSyncAt: null }));
     const summary = await runPolarSync({ budgetMs: -1 });
