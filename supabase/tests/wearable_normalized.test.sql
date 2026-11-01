@@ -45,8 +45,11 @@ DELETE FROM public.wearable_raw WHERE id = '00000000-0000-0000-0000-00000000aa02
 SELECT is((SELECT count(*)::int FROM public.hr_samples), 0, 'suppression de wearable_raw → lignes normalisées supprimées');
 
 -- Droits
+-- Accès détaillé : supabase/tests/wearable_normalized_rls.test.sql (POL-12).
 SET LOCAL ROLE authenticated;
-SELECT throws_ok('SELECT * FROM public.sleep_sessions', '42501', NULL, 'authenticated : interdit');
+SELECT set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000ee', true);
+SELECT set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000ee","role":"authenticated"}', true);
+SELECT is((SELECT count(*)::int FROM public.sleep_sessions), 0, 'authenticated sans lien : aucune ligne');
 RESET ROLE;
 SELECT lives_ok('SELECT public.wearable_truncate_normalized()', 'truncate (service_role/postgres)');
 

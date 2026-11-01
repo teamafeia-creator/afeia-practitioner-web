@@ -299,7 +299,20 @@ mappers ; les écrans ne changent pas.
 | `daily_activity` | (`consultant_id`, `provider`, `activity_date`) | activité |
 
 Chaque ligne porte `consultant_id`, `provider` et `source_raw_id` (clé étrangère vers
-`wearable_raw`, suppression en cascade). Ces tables sont réservées à `service_role`.
+`wearable_raw`, suppression en cascade).
+
+**Accès (POL-12, migration `20261107`)** : RLS activée et forcée, lecture seule pour `authenticated`.
+- Un **consultant** lit ses propres lignes : `consultant_memberships.consultant_user_id = auth.uid()`.
+- Un **praticien** lit les lignes de ses consultants : `consultants.practitioner_id = auth.uid()`.
+- Ces deux règles sont celles qu'utilise déjà le reste de l'app. Elles sont regroupées dans
+  `auth_self_consultant_ids()` et `auth_practitioner_consultant_ids()`, deux fonctions en
+  SECURITY INVOKER : elles s'exécutent sous la RLS existante, sans élargir aucun accès.
+- `anon` n'a aucun droit.
+- Insertion, modification et suppression sont réservées à `service_role` : aucune politique
+  d'écriture, aucun privilège d'écriture.
+- L'app mobile s'authentifie avec son propre JWT, pas avec une session Supabase. Elle doit
+  donc lire ces données par une route API (client admin filtré par `resolveConsultantId`).
+- Tests : `supabase/tests/wearable_normalized_rls.test.sql`.
 
 **Conventions**
 - **Unité dans le nom des colonnes** : `_s`, `_ms`, `_bpm`, `_kcal`, `_m`, `_per_min`.
