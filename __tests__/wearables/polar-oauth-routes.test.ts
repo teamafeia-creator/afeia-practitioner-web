@@ -15,6 +15,10 @@ const resolveConsultantId = vi.fn();
 vi.mock('@/lib/mobile-auth', () => ({ resolveConsultantId: (req: unknown) => resolveConsultantId(req) }));
 
 const saveConnection = vi.fn();
+const runInBackground = vi.fn();
+vi.mock('@/lib/server/background', () => ({ runInBackground: (l: string, t: () => Promise<unknown>) => runInBackground(l, t) }));
+const runBackfill = vi.fn();
+vi.mock('@/lib/wearables/polar/backfill', () => ({ runBackfill: (...a: unknown[]) => runBackfill(...a) }));
 vi.mock('@/lib/wearables/connections', () => ({ saveConnection: (input: unknown) => saveConnection(input) }));
 
 const consumedNonces = new Set<string>();
@@ -76,6 +80,8 @@ beforeEach(() => {
   fetchMock.mockClear();
   resolveConsultantId.mockReset();
   saveConnection.mockReset().mockResolvedValue('connection-id');
+  runInBackground.mockReset();
+  runBackfill.mockReset();
   consumedNonces.clear();
   registerStatus = 200;
   tokenStatus = 200;
@@ -188,6 +194,12 @@ describe('GET /api/wearables/polar/callback : flux', () => {
       accessToken: ACCESS_TOKEN,
       expiresIn: 31535999,
     });
+
+    // Import de l'historique lancé en arrière-plan, sans être attendu par la redirection.
+    expect(runInBackground).toHaveBeenCalledOnce();
+    expect(runBackfill).not.toHaveBeenCalled();
+    await runInBackground.mock.calls[0][1]();
+    expect(runBackfill).toHaveBeenCalledWith('connection-id', { maxDurationMs: 240_000 });
   });
 
   it('409 sur /v3/users (déjà inscrit) → traité comme un succès', async () => {
@@ -216,6 +228,7 @@ describe('GET /api/wearables/polar/callback : flux', () => {
     expect(dest.searchParams.get('reason')).toBe('access_denied');
     expect(fetchMock).not.toHaveBeenCalled();
     expect(saveConnection).not.toHaveBeenCalled();
+    expect(runInBackground).not.toHaveBeenCalled();
   });
 
   it("échec de l'échange du code → erreur token_exchange_failed, aucune connexion", async () => {

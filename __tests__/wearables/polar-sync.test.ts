@@ -16,8 +16,10 @@ let activeConnections = [A, B];
 const markError = vi.fn();
 const markSynced = vi.fn();
 const getAccessToken = vi.fn(async (_id: string) => TOKEN);
+let backfillsToResume: string[] = [];
 vi.mock('@/lib/wearables/connections', () => ({
   listActiveConnections: async () => activeConnections,
+  listBackfillsToResume: async () => backfillsToResume,
   getAccessToken: (id: string) => getAccessToken(id),
   markError: (...a: unknown[]) => markError(...a),
   markSynced: (...a: unknown[]) => markSynced(...a),
@@ -45,6 +47,11 @@ vi.mock('@/lib/wearables/polar/process-event', () => ({
   processPolarEvent: (id: string) => processPolarEvent(id),
   REVOKED_MESSAGE: 'Accès révoqué côté Polar, reconnexion nécessaire',
 }));
+
+// --- Import d'historique (POL-14) -----------------------------------------------------
+type BackfillOutcome = 'done' | 'paused' | 'rate_limited' | 'failed' | 'skipped' | 'error';
+const runBackfill = vi.fn(async (_id: string, _opts: unknown) => ({ outcome: 'done' as BackfillOutcome, chunks: 1, records: 1, cursor: null as string | null }));
+vi.mock('@/lib/wearables/polar/backfill', () => ({ runBackfill: (id: string, o: unknown) => runBackfill(id, o) }));
 
 // --- E-mail équipe (même canal que les inscriptions praticien) ----------------------
 const sendEmail = vi.fn();
@@ -78,6 +85,8 @@ const cronRequest = (auth?: string) =>
 const logs: string[] = [];
 beforeEach(() => {
   activeConnections = [A, B];
+  backfillsToResume = [];
+  runBackfill.mockClear();
   raw.clear();
   ingest.mockClear();
   markError.mockReset();
@@ -228,6 +237,27 @@ describe('runPolarSync', () => {
     expect(summary.rateLimited!.retryAt).not.toBeNull();
     expect(summary.connections.deferred).toBe(2);
     expect(markError).not.toHaveBeenCalled();
+    expect(processPolarEvent).not.toHaveBeenCalled();
+  });
+
+  it('reprend les imports d’historique non terminés, avant le rattrapage quotidien', async () => {
+    backfillsToResume = ['conn-1', 'conn-2'];
+    runBackfill.mockResolvedValueOnce({ outcome: 'done', chunks: 4, records: 90, cursor: '2026-08-04' })
+      .mockResolvedValueOnce({ outcome: 'paused', chunks: 1, records: 28, cursor: '2026-10-04' });
+    const summary = await runPolarSync();
+    expect(runBackfill.mock.calls.map(([id]) => id)).toEqual(['conn-1', 'conn-2']);
+    expect(summary.backfill).toMatchObject({ done: 1, paused: 1 });
+    expect(ingest).toHaveBeenCalled(); // le rattrapage quotidien a quand même lieu
+  });
+
+  it('quota atteint pendant un import → arrêt, pas de rattrapage ni de rejeu', async () => {
+    backfillsToResume = ['conn-1', 'conn-2'];
+    dueEvents = [{ id: 'ev-1', event_type: 'SLEEP', attempts: 0 }];
+    runBackfill.mockResolvedValueOnce({ outcome: 'rate_limited', chunks: 0, records: 0, cursor: null });
+    const summary = await runPolarSync();
+    expect(runBackfill).toHaveBeenCalledOnce();
+    expect(summary.rateLimited).toMatchObject({ at: 'import historique' });
+    expect(ingest).not.toHaveBeenCalled();
     expect(processPolarEvent).not.toHaveBeenCalled();
   });
 

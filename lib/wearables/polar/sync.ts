@@ -6,9 +6,10 @@
 //  3. état du webhook ; alerte à l'équipe s'il est absent ou inactif.
 // Traitement par lots, avec un budget de temps pour rester sous maxDuration.
 import 'server-only';
-import { getAccessToken, listActiveConnections, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
+import { getAccessToken, listActiveConnections, listBackfillsToResume, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
 import { requeueDueEvents } from '@/lib/wearables/events';
 import { alertWebhookDown } from './alerts';
+import { runBackfill, type BackfillOutcome } from './backfill';
 import { PolarRateLimitError, getWebhookStatus, isAccessRevoked, polarFetch } from './api';
 import { ingestPolarResource, type WearableDataType } from '@/lib/wearables/ingest';
 import { processPolarEvent, REVOKED_MESSAGE } from './process-event';
@@ -39,6 +40,8 @@ export type SyncSummary = {
   resources: { ingested: number; empty: number };
   replay: { due: number; done: number; failed: number; ignored: number; skipped: number };
   webhook: { checked: boolean; active: boolean | null; alerted: boolean };
+  /** Imports d'historique repris (POL-14), par résultat. */
+  backfill: Record<BackfillOutcome, number>;
   /** Quota Polar presque épuisé : arrêt anticipé, reprise au prochain passage. */
   rateLimited: { at: string; retryAt: string | null } | null;
   errors: string[];
@@ -96,6 +99,7 @@ export async function runPolarSync(opts: { budgetMs?: number; now?: Date } = {})
     resources: { ingested: 0, empty: 0 },
     replay: { due: 0, done: 0, failed: 0, ignored: 0, skipped: 0 },
     webhook: { checked: false, active: null, alerted: false },
+    backfill: { done: 0, paused: 0, rate_limited: 0, failed: 0, skipped: 0, error: 0 },
     rateLimited: null,
     errors: [],
     durationMs: 0,
@@ -113,9 +117,23 @@ export async function runPolarSync(opts: { budgetMs?: number; now?: Date } = {})
     summary.errors.push(`webhook : ${sanitizeErrorMessage((error as Error).message ?? 'erreur')}`);
   }
 
+  // 1 bis. Imports d'historique non terminés (connexion récente interrompue, quota, échec passager).
+  //        La moitié du budget au plus, pour garder du temps pour le rattrapage quotidien.
+  const backfillDeadline = started + budgetMs / 2;
+  for (const connectionId of await listBackfillsToResume('polar')) {
+    const remaining = backfillDeadline - Date.now();
+    if (remaining <= 0) break;
+    const result = await runBackfill(connectionId, { maxDurationMs: remaining, today: opts.now?.toISOString().slice(0, 10) });
+    summary.backfill[result.outcome] += 1;
+    if (result.outcome === 'rate_limited') {
+      summary.rateLimited = { at: 'import historique', retryAt: null };
+      break;
+    }
+  }
+
   // 2. Rattrapage des connexions actives, par lots, les moins récemment synchronisées d'abord.
   const dates = lastDays(BACKFILL_DAYS, opts.now);
-  const connections = await listActiveConnections('polar');
+  const connections = summary.rateLimited ? [] : await listActiveConnections('polar');
   summary.connections.total = connections.length;
   for (let i = 0; i < connections.length; i += BATCH_SIZE) {
     if (outOfTime()) {
@@ -160,6 +178,7 @@ export async function runPolarSync(opts: { budgetMs?: number; now?: Date } = {})
     ressources: summary.resources,
     rejeu: summary.replay,
     webhook: summary.webhook,
+    import_historique: summary.backfill,
     quota: summary.rateLimited,
     erreurs: summary.errors.length,
     durée_ms: summary.durationMs,

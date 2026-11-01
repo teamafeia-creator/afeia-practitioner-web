@@ -152,3 +152,66 @@ export async function listActiveConnections(provider: WearableProvider): Promise
     lastSyncAt: (r.last_sync_at as string | null) ?? null,
   }));
 }
+
+// ---------------------------------------------------------------------------
+// Import de l'historique (POL-14)
+// ---------------------------------------------------------------------------
+export type BackfillStatus = 'pending' | 'running' | 'done' | 'failed';
+
+export type BackfillJob = {
+  connectionId: string;
+  consultantId: string;
+  providerUserId: string;
+  /** Date la plus ancienne déjà importée (YYYY-MM-DD), null si rien. */
+  cursor: string | null;
+  days: number;
+};
+
+/** pending → running (ou reprise d'un running figé). null si déjà pris, terminé ou connexion inactive. */
+export async function claimBackfill(connectionId: string): Promise<BackfillJob | null> {
+  const { data, error } = await createSupabaseAdminClient().rpc('wearable_claim_backfill', {
+    p_connection_id: connectionId,
+    p_stale_after: '10 minutes',
+  });
+  if (error) throw new WearableConnectionError('claimBackfill', error);
+  const row = ((data ?? []) as Record<string, unknown>[])[0];
+  if (!row) return null;
+  return {
+    connectionId: row.id as string,
+    consultantId: row.consultant_id as string,
+    providerUserId: row.provider_user_id as string,
+    cursor: (row.backfill_cursor as string | null) ?? null,
+    days: row.backfill_days as number,
+  };
+}
+
+/** Enregistre l'avancement (statut et date la plus ancienne importée). */
+export async function saveBackfillProgress(
+  connectionId: string,
+  progress: { status: BackfillStatus; cursor?: string | null }
+): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await createSupabaseAdminClient()
+    .from('wearable_connections')
+    .update({
+      backfill_status: progress.status,
+      ...(progress.cursor !== undefined ? { backfill_cursor: progress.cursor } : {}),
+      backfill_updated_at: now,
+      updated_at: now,
+    })
+    .eq('id', connectionId);
+  if (error) throw new WearableConnectionError('saveBackfillProgress', error);
+}
+
+/** Connexions actives dont l'import n'est pas terminé (pending, ou running interrompu). */
+export async function listBackfillsToResume(provider: WearableProvider): Promise<string[]> {
+  const { data, error } = await createSupabaseAdminClient()
+    .from('wearable_connections')
+    .select('id')
+    .eq('provider', provider)
+    .eq('status', 'active')
+    .in('backfill_status', ['pending', 'running'])
+    .order('connected_at', { ascending: true });
+  if (error) throw new WearableConnectionError('listBackfillsToResume', error);
+  return (data ?? []).map((r) => r.id as string);
+}

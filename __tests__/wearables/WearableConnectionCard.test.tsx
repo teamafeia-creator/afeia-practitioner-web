@@ -53,6 +53,16 @@ describe('WearableConnectionCard', () => {
     expect(screen.getByTestId('wearable-setup-help').textContent).toBe(CONTINUOUS_HR_HELP);
   });
 
+  it.each(['pending', 'running'] as const)('import %s → « Import de l’historique en cours »', (backfill_status) => {
+    render(<WearableConnectionCard connection={{ ...base, backfill_status }} onConnect={vi.fn()} now={NOW} />);
+    expect(screen.getByTestId('wearable-backfill').textContent).toContain('Import de l’historique en cours'.replace('’', "'"));
+  });
+
+  it.each(['done', 'failed', null] as const)('import %s → pas de mention d’import', (backfill_status) => {
+    render(<WearableConnectionCard connection={{ ...base, backfill_status }} onConnect={vi.fn()} now={NOW} />);
+    expect(screen.queryByTestId('wearable-backfill')).toBeNull();
+  });
+
   it('en erreur : message lisible (pas le détail technique) et bouton « Reconnecter »', () => {
     const onConnect = vi.fn();
     const { container } = render(

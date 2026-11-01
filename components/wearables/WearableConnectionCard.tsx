@@ -1,10 +1,11 @@
 'use client';
 
 import { Watch } from 'lucide-react';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner } from '@/components/ui';
 import {
   formatDay,
   formatRelative,
+  isBackfillInProgress,
   readableSyncError,
   type WearableConnectionOverview,
 } from '@/lib/wearables/display';
@@ -80,6 +81,13 @@ export function WearableConnectionCard({ connection, onConnect, connecting = fal
               Reconnecter
             </Button>
           </>
+        )}
+
+        {state === 'active' && isBackfillInProgress(connection) && (
+          <p className="flex items-center gap-2 text-[13px] text-stone" role="status" data-testid="wearable-backfill">
+            <Spinner size="sm" />
+            Import de l&apos;historique en cours
+          </p>
         )}
 
         {showSetupHelp && state === 'active' && (

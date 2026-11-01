@@ -9,7 +9,15 @@ export type WearableConnectionOverview = {
   connected_at: string;
   last_sync_at: string | null;
   last_error: string | null;
+  /** Avancement de l'import d'historique (POL-14). */
+  backfill_status?: 'pending' | 'running' | 'done' | 'failed' | null;
+  backfill_cursor?: string | null;
 };
+
+/** L'import d'historique n'est pas terminé. */
+export function isBackfillInProgress(c: Pick<WearableConnectionOverview, 'backfill_status'> | null): boolean {
+  return c?.backfill_status === 'pending' || c?.backfill_status === 'running';
+}
 
 /** « il y a 2 heures » */
 export function formatRelative(iso: string, now: Date = new Date()): string {

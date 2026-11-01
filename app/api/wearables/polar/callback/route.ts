@@ -8,14 +8,19 @@
 //
 // Le jeton ne quitte jamais le serveur : ni log, ni réponse, ni URL.
 import { NextRequest, NextResponse } from 'next/server';
+import { runInBackground } from '@/lib/server/background';
 import { saveConnection } from '@/lib/wearables/connections';
 import { consumeOAuthState } from '@/lib/wearables/oauth-states';
+import { runBackfill } from '@/lib/wearables/polar/backfill';
 import { getPolarConfig } from '@/lib/wearables/polar/config';
 import type { PolarConnectReason } from '@/lib/wearables/polar/messages';
 import { exchangeCode, registerUser, type PolarToken } from '@/lib/wearables/polar/oauth';
 import { InvalidStateError, verifyState, type StatePayload } from '@/lib/wearables/polar/state';
 
 export const dynamic = 'force-dynamic';
+/** L'import d'historique continue après la réponse (waitUntil) dans cette limite. */
+export const maxDuration = 300;
+const BACKFILL_BUDGET_MS = 240_000;
 
 const LOG_PREFIX = '[wearables/polar/callback]';
 
@@ -109,9 +114,10 @@ export async function GET(request: NextRequest) {
     return redirectTo(state.returnTo, 'error', 'register_failed');
   }
 
-  // 6. Connexion enregistrée (jeton chiffré dans Vault).
+  // 6. Connexion enregistrée (jeton chiffré dans Vault ; import d'historique remis en pending).
+  let connectionId: string;
   try {
-    await saveConnection({
+    connectionId = await saveConnection({
       consultantId: state.cid,
       provider: 'polar',
       providerUserId: token.polarUserId,
@@ -122,6 +128,9 @@ export async function GET(request: NextRequest) {
     console.error(LOG_PREFIX, 'enregistrement de la connexion échoué', { consultantId: state.cid, message: (error as Error).message });
     return redirectTo(state.returnTo, 'error', 'save_failed');
   }
+
+  // 7. Import de l'historique en arrière-plan : la redirection n'attend pas.
+  runInBackground(`backfill ${connectionId}`, () => runBackfill(connectionId, { maxDurationMs: BACKFILL_BUDGET_MS }));
 
   console.info(LOG_PREFIX, 'connexion Polar enregistrée', { consultantId: state.cid });
   return redirectTo(state.returnTo, 'connected');
