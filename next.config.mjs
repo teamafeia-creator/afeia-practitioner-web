@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    // Active instrumentation.ts (vérification des variables d'env au démarrage).
+    instrumentationHook: true,
+  },
   images: {
     // Optimisation activée (redimensionnement + AVIF/WebP). Les images distantes
     // proviennent du stockage Supabase ; on autorise ce seul hôte.
