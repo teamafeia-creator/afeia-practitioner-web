@@ -13,6 +13,7 @@
 // (upsert), donc rejouer une tranche ne crée pas de doublon.
 import 'server-only';
 import { getAccessToken, markError, markSynced, sanitizeErrorMessage, claimBackfill, saveBackfillProgress, type BackfillJob } from '@/lib/wearables/connections';
+import { isDemoProviderUserId } from '@/lib/wearables/demo';
 import { ingestPolarResource, type WearableDataType } from '@/lib/wearables/ingest';
 import { PolarRateLimitError, isAccessRevoked, polarFetch } from './api';
 import { REVOKED_MESSAGE } from './process-event';
@@ -79,6 +80,9 @@ export async function runBackfill(
 
   const job = await claimBackfill(connectionId);
   if (!job) return { outcome: 'skipped', chunks: 0, records: 0, cursor: null };
+  // Connexion de démonstration (« seed-… », faux jeton) : jamais d'appel Polar, rien n'est modifié.
+  // (listBackfillsToResume les exclut déjà ; garde-fou si un appel direct arrivait ici.)
+  if (isDemoProviderUserId(job.providerUserId)) return { outcome: 'skipped', chunks: 0, records: 0, cursor: job.cursor };
 
   let cursor = job.cursor;
   let chunksDone = 0;

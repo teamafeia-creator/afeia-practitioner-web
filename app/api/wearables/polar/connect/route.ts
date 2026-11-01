@@ -10,6 +10,7 @@ import { consultantCanUseWearables, getActiveConsent } from '@/lib/wearables/con
 import { getPolarConfig } from '@/lib/wearables/polar/config';
 import { buildAuthorizeUrl } from '@/lib/wearables/polar/oauth';
 import { signState } from '@/lib/wearables/polar/state';
+import { readPolarConfig } from '@/lib/wearables/polar/unavailable';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,10 @@ export async function GET(request: NextRequest) {
   if (!consultantId) {
     return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
   }
+
+  // Config OAuth vérifiée à la demande : incomplète → 503, sans toucher au reste de l'app.
+  const config = readPolarConfig('connect', getPolarConfig);
+  if (!config.ok) return config.response;
 
   // Ouverture progressive (WEARABLES_ENABLED_FOR) : en « internal », seuls les comptes de l'équipe.
   if (!(await consultantCanUseWearables(consultantId))) {
@@ -30,7 +35,7 @@ export async function GET(request: NextRequest) {
 
   const { state } = signState(
     { consultantId, returnTo: request.nextUrl.searchParams.get('returnTo') },
-    getPolarConfig().stateSecret
+    config.value.stateSecret
   );
 
   return NextResponse.json(

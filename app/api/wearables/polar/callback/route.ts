@@ -12,10 +12,11 @@ import { runInBackground } from '@/lib/server/background';
 import { saveConnection } from '@/lib/wearables/connections';
 import { consumeOAuthState } from '@/lib/wearables/oauth-states';
 import { runBackfill } from '@/lib/wearables/polar/backfill';
-import { getPolarConfig } from '@/lib/wearables/polar/config';
+import { getPolarConfig, type PolarConfig } from '@/lib/wearables/polar/config';
 import type { PolarConnectReason } from '@/lib/wearables/polar/messages';
 import { exchangeCode, registerUser, type PolarToken } from '@/lib/wearables/polar/oauth';
 import { InvalidStateError, verifyState, type StatePayload } from '@/lib/wearables/polar/state';
+import { POLAR_UNAVAILABLE_MESSAGE, logPolarUnavailable, missingPolarVariables } from '@/lib/wearables/polar/unavailable';
 
 export const dynamic = 'force-dynamic';
 /** L'import d'historique continue après la réponse (waitUntil) dans cette limite. */
@@ -24,21 +25,23 @@ const BACKFILL_BUDGET_MS = 240_000;
 
 const LOG_PREFIX = '[wearables/polar/callback]';
 
-function badRequest(message: string) {
+function htmlPage(message: string, status: number) {
   const html = `<!doctype html><html lang="fr"><meta charset="utf-8"><title>Connexion Polar</title>
 <body style="font-family:system-ui;max-width:32rem;margin:4rem auto;padding:0 1rem">
 <h1>Connexion Polar impossible</h1><p>${message}</p>
 <p>Revenez dans Afeia et relancez la connexion depuis votre espace.</p></body></html>`;
   return new NextResponse(html, {
-    status: 400,
+    status,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
   });
 }
 
-function redirectTo(returnTo: string, outcome: 'connected' | 'error', reason?: PolarConnectReason) {
+const badRequest = (message: string) => htmlPage(message, 400);
+
+function redirectTo(config: PolarConfig, returnTo: string, outcome: 'connected' | 'error', reason?: PolarConnectReason) {
   // returnTo est déjà validé (chemin interne ou afeia://). Les chemins sont résolus
   // sur l'origine du redirect URI configuré.
-  const url = new URL(returnTo, new URL(getPolarConfig().redirectUri).origin);
+  const url = new URL(returnTo, new URL(config.redirectUri).origin);
   url.searchParams.set('wearable', outcome);
   if (reason) url.searchParams.set('reason', reason);
   else url.searchParams.delete('reason');
@@ -50,10 +53,21 @@ function redirectTo(returnTo: string, outcome: 'connected' | 'error', reason?: P
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
 
+  // 0. Config OAuth vérifiée à la demande : incomplète → 503 (page claire), rien d'autre n'est tenté.
+  let config: PolarConfig;
+  try {
+    config = getPolarConfig();
+  } catch (error) {
+    const variables = missingPolarVariables(error);
+    if (!variables) throw error;
+    logPolarUnavailable('callback', variables);
+    return htmlPage(POLAR_UNAVAILABLE_MESSAGE, 503);
+  }
+
   // 1. State signé : absent, falsifié ou expiré → 400 (returnTo non fiable, pas de redirection).
   let state: StatePayload;
   try {
-    state = verifyState(params.get('state'), getPolarConfig().stateSecret);
+    state = verifyState(params.get('state'), config.stateSecret);
   } catch (error) {
     const reason = error instanceof InvalidStateError ? error.reason : 'malformed';
     console.warn(LOG_PREFIX, 'state refusé', { reason });
@@ -75,7 +89,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error(LOG_PREFIX, 'consommation du state impossible', { consultantId: state.cid, message: (error as Error).message });
-    return redirectTo(state.returnTo, 'error', 'server_error');
+    return redirectTo(config, state.returnTo, 'error', 'server_error');
   }
   if (!firstUse) {
     console.warn(LOG_PREFIX, 'state déjà utilisé', { consultantId: state.cid });
@@ -86,11 +100,11 @@ export async function GET(request: NextRequest) {
   const polarError = params.get('error');
   if (polarError) {
     console.info(LOG_PREFIX, 'autorisation non accordée', { consultantId: state.cid, error: polarError });
-    return redirectTo(state.returnTo, 'error', polarError === 'access_denied' ? 'access_denied' : 'polar_error');
+    return redirectTo(config, state.returnTo, 'error', polarError === 'access_denied' ? 'access_denied' : 'polar_error');
   }
   const code = params.get('code');
   if (!code) {
-    return redirectTo(state.returnTo, 'error', 'polar_error');
+    return redirectTo(config, state.returnTo, 'error', 'polar_error');
   }
 
   // 4. Échange du code.
@@ -99,7 +113,7 @@ export async function GET(request: NextRequest) {
     token = await exchangeCode(code);
   } catch (error) {
     console.error(LOG_PREFIX, 'échange du code échoué', { consultantId: state.cid, message: (error as Error).message });
-    return redirectTo(state.returnTo, 'error', 'token_exchange_failed');
+    return redirectTo(config, state.returnTo, 'error', 'token_exchange_failed');
   }
 
   // 5. Enregistrement chez Polar (member-id = UUID du consultant).
@@ -107,11 +121,11 @@ export async function GET(request: NextRequest) {
     const registration = await registerUser(token.accessToken, state.cid);
     if (registration === 'consents_missing') {
       console.info(LOG_PREFIX, 'consentements Polar manquants', { consultantId: state.cid });
-      return redirectTo(state.returnTo, 'error', 'polar_consents_missing');
+      return redirectTo(config, state.returnTo, 'error', 'polar_consents_missing');
     }
   } catch (error) {
     console.error(LOG_PREFIX, 'enregistrement Polar échoué', { consultantId: state.cid, message: (error as Error).message });
-    return redirectTo(state.returnTo, 'error', 'register_failed');
+    return redirectTo(config, state.returnTo, 'error', 'register_failed');
   }
 
   // 6. Connexion enregistrée (jeton chiffré dans Vault ; import d'historique remis en pending).
@@ -126,12 +140,12 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error(LOG_PREFIX, 'enregistrement de la connexion échoué', { consultantId: state.cid, message: (error as Error).message });
-    return redirectTo(state.returnTo, 'error', 'save_failed');
+    return redirectTo(config, state.returnTo, 'error', 'save_failed');
   }
 
   // 7. Import de l'historique en arrière-plan : la redirection n'attend pas.
   runInBackground(`backfill ${connectionId}`, () => runBackfill(connectionId, { maxDurationMs: BACKFILL_BUDGET_MS }));
 
   console.info(LOG_PREFIX, 'connexion Polar enregistrée', { consultantId: state.cid });
-  return redirectTo(state.returnTo, 'connected');
+  return redirectTo(config, state.returnTo, 'connected');
 }

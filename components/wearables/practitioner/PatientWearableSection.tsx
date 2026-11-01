@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Component, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Watch } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, Skeleton, Spinner, TabsPills } from '@/components/ui';
@@ -24,14 +24,36 @@ type ViewProps = {
   period: WearablePeriod;
   onPeriodChange: (p: WearablePeriod) => void;
   loading?: boolean;
+  /** Lecture impossible (erreur réseau, base, config) : la section s'affiche « indisponible ». */
+  unavailable?: boolean;
   now?: Date;
 };
+
+/** État « indisponible » : la section reste à sa place, le reste de la fiche fonctionne. */
+export function PatientWearableSectionUnavailable() {
+  return (
+    <Card data-testid="patient-wearable-section">
+      <CardHeader className="flex items-start gap-3">
+        <div className="flex items-start gap-3">
+          <Watch className="mt-0.5 h-5 w-5 shrink-0 text-stone" aria-hidden />
+          <CardTitle>Objet connecté</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-stone" role="status" data-testid="patient-wearable-unavailable">
+          Les données de l&apos;objet connecté sont momentanément indisponibles. Réessayez plus tard.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 
 /**
  * Section « Objet connecté » de la fiche patient (vue praticien). Présentation seule.
  * Aucune interprétation ni couleur de jugement : des valeurs, des moyennes et des écarts.
  */
-export function PatientWearableSectionView({ connection, summary, period, onPeriodChange, loading = false, now }: ViewProps) {
+export function PatientWearableSectionView({ connection, summary, period, onPeriodChange, loading = false, unavailable = false, now }: ViewProps) {
+  if (unavailable) return <PatientWearableSectionUnavailable />;
   // Une connexion existe (active, en erreur ou révoquée) : les données déjà reçues restent affichées.
   const connected = connection !== null;
   const interrupted = connection !== null && (connection.status === 'error' || connection.status === 'revoked');
@@ -112,7 +134,7 @@ export function PatientWearableSectionView({ connection, summary, period, onPeri
  * Section branchée : période dans l'URL (?periode=7|30), état de connexion lu dans la vue sans
  * jeton et séries via getWearableSummary — avec la session du praticien (RLS appliquée).
  */
-export function PatientWearableSection({ consultantId }: { consultantId: string }) {
+function ConnectedPatientWearableSection({ consultantId }: { consultantId: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -122,20 +144,25 @@ export function PatientWearableSection({ consultantId }: { consultantId: string 
   const [connectionLoaded, setConnectionLoaded] = useState(false);
   const [summary, setSummary] = useState<WearableSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    supabase
-      .from('wearable_connection_overview')
-      .select('provider, status, connected_at, last_sync_at, last_error, backfill_status, backfill_cursor, interrupted_at')
-      .eq('consultant_id', consultantId)
-      .eq('provider', 'polar')
-      .maybeSingle()
-      .then(({ data }) => {
+    Promise.resolve(
+      supabase
+        .from('wearable_connection_overview')
+        .select('provider, status, connected_at, last_sync_at, last_error, backfill_status, backfill_cursor, interrupted_at')
+        .eq('consultant_id', consultantId)
+        .eq('provider', 'polar')
+        .maybeSingle()
+    )
+      .then(({ data, error }) => {
         if (cancelled) return;
+        if (error) setUnavailable(true);
         setConnection((data as WearableConnectionOverview | null) ?? null);
-        setConnectionLoaded(true);
-      });
+      })
+      .catch(() => !cancelled && setUnavailable(true))
+      .finally(() => !cancelled && setConnectionLoaded(true));
     return () => {
       cancelled = true;
     };
@@ -148,7 +175,11 @@ export function PatientWearableSection({ consultantId }: { consultantId: string 
     setLoading(true);
     getWearableSummary(consultantId, { days: period, client: supabase })
       .then((s) => !cancelled && setSummary(s))
-      .catch(() => !cancelled && setSummary(null))
+      .catch(() => {
+        if (cancelled) return;
+        setSummary(null);
+        setUnavailable(true);
+      })
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -166,6 +197,38 @@ export function PatientWearableSection({ consultantId }: { consultantId: string 
 
   if (!connectionLoaded) return <Skeleton className="h-40 rounded-xl" />;
   return (
-    <PatientWearableSectionView connection={connection} summary={summary} period={period} onPeriodChange={onPeriodChange} loading={loading} />
+    <PatientWearableSectionView
+      connection={connection}
+      summary={summary}
+      period={period}
+      onPeriodChange={onPeriodChange}
+      loading={loading}
+      unavailable={unavailable}
+    />
+  );
+}
+
+/** Une erreur dans la section ne doit jamais faire tomber la fiche patient. */
+export class PatientWearableErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('[PatientWearableSection] section indisponible', { message: error.message });
+  }
+
+  render() {
+    return this.state.failed ? <PatientWearableSectionUnavailable /> : this.props.children;
+  }
+}
+
+export function PatientWearableSection({ consultantId }: { consultantId: string }) {
+  return (
+    <PatientWearableErrorBoundary>
+      <ConnectedPatientWearableSection consultantId={consultantId} />
+    </PatientWearableErrorBoundary>
   );
 }

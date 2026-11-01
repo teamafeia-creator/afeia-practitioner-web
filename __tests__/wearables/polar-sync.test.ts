@@ -78,6 +78,7 @@ const fetchMock = vi.fn(defaultFetch);
 
 const { GET } = await import('@/app/api/cron/polar-sync/route');
 const { runPolarSync, lastDays } = await import('@/lib/wearables/polar/sync');
+const { resetPolarConfigCache } = await import('@/lib/wearables/polar/config');
 
 const cronRequest = (auth?: string) =>
   new NextRequest('https://afeia.fr/api/cron/polar-sync', { headers: auth ? { authorization: auth } : {} });
@@ -124,14 +125,54 @@ describe('GET /api/cron/polar-sync : protection', () => {
     expect((await GET(cronRequest('cron-secret-for-tests'))).status).toBe(401);
   });
 
-  it('401 si CRON_SECRET n’est pas défini, même avec « Bearer »', async () => {
+  it('503 si CRON_SECRET n’est pas défini, même avec « Bearer » : rien n’est traité, le nom est logué', async () => {
     const saved = process.env.CRON_SECRET;
     delete process.env.CRON_SECRET;
+    resetPolarConfigCache();
     try {
-      expect((await GET(cronRequest('Bearer '))).status).toBe(401);
-      expect((await GET(cronRequest('Bearer undefined'))).status).toBe(401);
+      for (const auth of ['Bearer ', 'Bearer undefined', undefined]) {
+        const res = await GET(cronRequest(auth));
+        expect(res.status).toBe(503);
+        expect((await res.json()).error).toBe('polar_unavailable');
+      }
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(logs.some((l) => l.includes('configuration incomplète') && l.includes('CRON_SECRET'))).toBe(true);
     } finally {
       process.env.CRON_SECRET = saved;
+      resetPolarConfigCache();
+    }
+  });
+
+  it('sans POLAR_WEBHOOK_SECRET → le cron fonctionne (seule la route webhook en dépend)', async () => {
+    const saved = process.env.POLAR_WEBHOOK_SECRET;
+    delete process.env.POLAR_WEBHOOK_SECRET;
+    resetPolarConfigCache();
+    try {
+      const res = await GET(cronRequest('Bearer cron-secret-for-tests'));
+      expect(res.status).toBe(200);
+      expect((await res.json()).summary.connections).toMatchObject({ total: 2, processed: 2, errors: 0 });
+    } finally {
+      if (saved !== undefined) process.env.POLAR_WEBHOOK_SECRET = saved;
+      resetPolarConfigCache();
+    }
+  });
+
+  it('sans identifiants client Polar → 200 : seule la vérification du webhook échoue (noms logués)', async () => {
+    const saved = { id: process.env.POLAR_CLIENT_ID, secret: process.env.POLAR_CLIENT_SECRET };
+    delete process.env.POLAR_CLIENT_ID;
+    delete process.env.POLAR_CLIENT_SECRET;
+    resetPolarConfigCache();
+    try {
+      const res = await GET(cronRequest('Bearer cron-secret-for-tests'));
+      expect(res.status).toBe(200);
+      const { summary } = await res.json();
+      expect(summary.webhook.checked).toBe(false);
+      expect(summary.connections).toMatchObject({ total: 2, processed: 2 });
+      expect(summary.errors.join(' ')).toContain('POLAR_CLIENT_ID');
+    } finally {
+      process.env.POLAR_CLIENT_ID = saved.id;
+      process.env.POLAR_CLIENT_SECRET = saved.secret;
+      resetPolarConfigCache();
     }
   });
 
@@ -267,5 +308,27 @@ describe('runPolarSync', () => {
     expect(summary.connections.processed).toBe(0);
     expect(summary.connections.deferred).toBe(12);
     expect(ingest).not.toHaveBeenCalled();
+  });
+});
+
+describe('connexions de démonstration (« seed-… »)', () => {
+  const SEED = { consultantId: '00000000-0000-0000-0000-0000000000d1', providerUserId: 'seed-demo-1', lastSyncAt: null };
+
+  it("le cron ne touche pas une connexion seed : ni jeton lu, ni appel Polar, ni markError/markSynced", async () => {
+    activeConnections = [SEED, A];
+    // Même si Polar répondait 401 pour elle, elle ne doit jamais passer en erreur.
+    fetchMock.mockImplementation(async (input, init) => {
+      const auth = (init?.headers as Record<string, string>)?.Authorization ?? '';
+      if (auth.includes('seed')) return new Response('', { status: 401 });
+      return defaultFetch(input, init);
+    });
+    const summary = await runPolarSync({ now: new Date('2026-11-01T03:00:00Z') });
+
+    expect(summary.connections).toMatchObject({ total: 1, processed: 1, demo: 1, revoked: 0, errors: 0 });
+    expect(getAccessToken).not.toHaveBeenCalledWith(SEED.consultantId);
+    expect(markError).not.toHaveBeenCalled();
+    expect(markSynced).not.toHaveBeenCalledWith(SEED.consultantId, 'polar');
+    expect(markSynced).toHaveBeenCalledWith(A.consultantId, 'polar');
+    expect([...raw.keys()].some((k) => k.includes('seed-'))).toBe(false);
   });
 });

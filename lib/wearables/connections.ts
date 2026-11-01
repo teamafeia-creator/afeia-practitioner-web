@@ -1,6 +1,7 @@
 // lib/wearables/connections.ts
 import 'server-only';
 import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { DEMO_PROVIDER_USER_ID_LIKE } from './demo';
 
 /**
  * Connexions aux objets connectés (table wearable_connections, migration 20261101).
@@ -154,6 +155,8 @@ export async function listActiveConnections(provider: WearableProvider): Promise
     .select('consultant_id, provider_user_id, last_sync_at')
     .eq('provider', provider)
     .eq('status', 'active')
+    // Connexions de démonstration (« seed-… ») : jamais synchronisées (lib/wearables/demo.ts).
+    .not('provider_user_id', 'like', DEMO_PROVIDER_USER_ID_LIKE)
     .order('last_sync_at', { ascending: true, nullsFirst: true });
   if (error) throw new WearableConnectionError('listActiveConnections', error);
   return (data ?? []).map((r) => ({
@@ -220,6 +223,7 @@ export async function listBackfillsToResume(provider: WearableProvider): Promise
     .select('id')
     .eq('provider', provider)
     .eq('status', 'active')
+    .not('provider_user_id', 'like', DEMO_PROVIDER_USER_ID_LIKE)
     .in('backfill_status', ['pending', 'running'])
     .order('connected_at', { ascending: true });
   if (error) throw new WearableConnectionError('listBackfillsToResume', error);

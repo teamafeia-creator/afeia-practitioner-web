@@ -16,11 +16,12 @@ const progress: { status: string; cursor?: string | null }[] = [];
 const markError = vi.fn();
 const markSynced = vi.fn();
 let token: string | null = TOKEN;
+let providerUserId = '475';
 vi.mock('@/lib/wearables/connections', () => ({
   claimBackfill: async (id: string) => {
     if (conn.status !== 'pending' && conn.status !== 'running') return null;
     conn.status = 'running';
-    return { connectionId: id, consultantId: CONSULTANT, providerUserId: '475', cursor: conn.cursor, days: conn.days };
+    return { connectionId: id, consultantId: CONSULTANT, providerUserId, cursor: conn.cursor, days: conn.days };
   },
   saveBackfillProgress: async (_id: string, p: { status: Conn['status']; cursor?: string | null }) => {
     progress.push(p);
@@ -128,6 +129,20 @@ describe('planChunks / clipToDepth', () => {
 });
 
 describe('runBackfill', () => {
+  it('connexion de démonstration (« seed-… ») → skipped, aucun appel Polar, rien enregistré', async () => {
+    providerUserId = 'seed-demo-1';
+    try {
+      const result = await runBackfill('conn-seed', { maxDurationMs: 60_000, today: TODAY });
+      expect(result.outcome).toBe('skipped');
+      expect(requests).toHaveLength(0);
+      expect(progress).toHaveLength(0);
+      expect(markError).not.toHaveBeenCalled();
+      expect(markSynced).not.toHaveBeenCalled();
+    } finally {
+      providerUserId = '475';
+    }
+  });
+
   it('import complet : 90 jours d’activité en tranches ≤ 28 j, 28 nuits, FC 28 jours, puis done', async () => {
     const result = await runBackfill('conn-1', { maxDurationMs: 60_000, today: TODAY });
     expect(result.outcome).toBe('done');

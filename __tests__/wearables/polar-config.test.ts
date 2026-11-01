@@ -1,8 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
+  getCronSecret,
+  getPolarApiCredentials,
+  getPolarConfig,
+  getPolarWebhookSecret,
+  parsePolarApiCredentials,
   parsePolarConfig,
+  parsePolarWebhookSecret,
   PolarConfigError,
   POLAR_ENV_VARS,
+  resetPolarConfigCache,
 } from '@/lib/wearables/polar/config';
 
 const validEnv = {
@@ -19,7 +26,6 @@ describe('parsePolarConfig', () => {
       clientSecret: 'client-secret-test',
       redirectUri: 'http://localhost:3000/api/wearables/polar/callback',
       stateSecret: 'state-secret-for-tests-0123456789abcdef',
-      webhookSecret: null,
     });
   });
 
@@ -59,16 +65,29 @@ describe('parsePolarConfig', () => {
     }
   });
 
-  it('POLAR_WEBHOOK_SECRET : facultatif hors production, lu quand présent', () => {
-    expect(parsePolarConfig({ ...validEnv, VERCEL_ENV: 'preview' }).webhookSecret).toBeNull();
-    expect(parsePolarConfig({ ...validEnv, POLAR_WEBHOOK_SECRET: 'whsec' }).webhookSecret).toBe('whsec');
+  it('la config OAuth ne dépend jamais de POLAR_WEBHOOK_SECRET, même en production', () => {
+    expect(() => parsePolarConfig({ ...validEnv, VERCEL_ENV: 'production' })).not.toThrow();
   });
 
-  it('POLAR_WEBHOOK_SECRET : obligatoire en production Vercel, erreur qui le nomme', () => {
-    expect(() => parsePolarConfig({ ...validEnv, VERCEL_ENV: 'production' })).toThrow('POLAR_WEBHOOK_SECRET');
-    expect(() =>
-      parsePolarConfig({ ...validEnv, VERCEL_ENV: 'production', POLAR_WEBHOOK_SECRET: 'whsec' })
-    ).not.toThrow();
+  it('POLAR_WEBHOOK_SECRET : vérifié seul, erreur qui le nomme', () => {
+    expect(parsePolarWebhookSecret({ POLAR_WEBHOOK_SECRET: ' whsec ' })).toBe('whsec');
+    try {
+      parsePolarWebhookSecret({ ...validEnv, VERCEL_ENV: 'production' });
+      throw new Error('aurait dû échouer');
+    } catch (error) {
+      expect(error).toBeInstanceOf(PolarConfigError);
+      expect((error as PolarConfigError).variables).toEqual(['POLAR_WEBHOOK_SECRET']);
+    }
+  });
+
+  it('identifiants client : seuls POLAR_CLIENT_ID et POLAR_CLIENT_SECRET sont exigés', () => {
+    expect(parsePolarApiCredentials({ POLAR_CLIENT_ID: 'a', POLAR_CLIENT_SECRET: 'b' })).toEqual({ clientId: 'a', clientSecret: 'b' });
+    try {
+      parsePolarApiCredentials({ POLAR_CLIENT_ID: 'a' });
+      throw new Error('aurait dû échouer');
+    } catch (error) {
+      expect((error as PolarConfigError).variables).toEqual(['POLAR_CLIENT_SECRET']);
+    }
   });
 
   it('refuse un POLAR_STATE_SECRET trop court', () => {
@@ -93,5 +112,33 @@ describe('parsePolarConfig', () => {
       expect((error as Error).message).not.toContain(secret);
       expect((error as Error).message).not.toContain('client-id-test');
     }
+  });
+});
+
+describe('getters à la demande (lazy, mis en cache)', () => {
+  const saved = { ...process.env };
+  afterEach(() => {
+    process.env = { ...saved };
+    resetPolarConfigCache();
+  });
+
+  it('chaque getter ne vérifie que ses variables', () => {
+    for (const k of [...POLAR_ENV_VARS, 'POLAR_WEBHOOK_SECRET', 'CRON_SECRET']) delete process.env[k];
+    resetPolarConfigCache();
+    process.env.CRON_SECRET = 'cron';
+    expect(getCronSecret()).toBe('cron');
+    expect(() => getPolarConfig()).toThrow(PolarConfigError);
+    expect(() => getPolarWebhookSecret()).toThrow('POLAR_WEBHOOK_SECRET');
+    expect(() => getPolarApiCredentials()).toThrow('POLAR_CLIENT_ID');
+  });
+
+  it('un résultat valide est mis en cache ; une erreur ne l’est pas', () => {
+    for (const k of POLAR_ENV_VARS) delete process.env[k];
+    resetPolarConfigCache();
+    expect(() => getPolarConfig()).toThrow(PolarConfigError);
+    Object.assign(process.env, validEnv);
+    const first = getPolarConfig();
+    process.env.POLAR_CLIENT_ID = 'autre';
+    expect(getPolarConfig()).toBe(first);
   });
 });

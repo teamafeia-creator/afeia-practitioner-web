@@ -3,7 +3,7 @@
 // Tous les appels passent par polarFetch (lib/wearables/polar/client.ts).
 import 'server-only';
 import { PolarAuthError, polarFetch } from './client';
-import { getPolarConfig } from './config';
+import { getPolarApiCredentials } from './config';
 
 export { PolarAuthError, PolarHttpError, PolarRateLimitError, polarFetch } from './client';
 
@@ -16,7 +16,7 @@ export type WebhookStatus =
 
 /** GET /v3/webhooks (Basic auth client). La réponse est un tableau `data`. */
 export async function getWebhookStatus(): Promise<WebhookStatus> {
-  const { clientId, clientSecret } = getPolarConfig();
+  const { clientId, clientSecret } = getPolarApiCredentials();
   const body = await polarFetch<{ data?: unknown }>('/v3/webhooks', { basic: { clientId, clientSecret } });
   const list = Array.isArray(body?.data) ? body.data : body?.data ? [body.data] : [];
   const w = list[0] as { id?: string; url?: string; events?: string[]; active?: boolean } | undefined;
