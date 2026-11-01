@@ -96,3 +96,40 @@ export async function markError(consultantId: string, provider: WearableProvider
     .neq('status', 'revoked');
   if (error) throw new WearableConnectionError('markError', error);
 }
+
+export type ConnectionRef = {
+  consultantId: string;
+  status: WearableConnectionStatus;
+};
+
+/** Connexion associée à un identifiant utilisateur du fournisseur (ex. x_user_id Polar), ou null. */
+export async function findConnectionByProviderUserId(
+  provider: WearableProvider,
+  providerUserId: string
+): Promise<ConnectionRef | null> {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('wearable_connections')
+    .select('consultant_id, status')
+    .eq('provider', provider)
+    .eq('provider_user_id', providerUserId)
+    .maybeSingle();
+  if (error) throw new WearableConnectionError('findConnectionByProviderUserId', error);
+  return data ? { consultantId: data.consultant_id as string, status: data.status as WearableConnectionStatus } : null;
+}
+
+/**
+ * Note une synchronisation réussie : last_sync_at = maintenant. Une connexion en `error`
+ * redevient `active` (l'accès fonctionne de nouveau). Une connexion révoquée n'est pas touchée.
+ */
+export async function markSynced(consultantId: string, provider: WearableProvider): Promise<void> {
+  const supabase = createSupabaseAdminClient();
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from('wearable_connections')
+    .update({ last_sync_at: now, status: 'active', last_error: null, updated_at: now })
+    .eq('consultant_id', consultantId)
+    .eq('provider', provider)
+    .neq('status', 'revoked');
+  if (error) throw new WearableConnectionError('markSynced', error);
+}

@@ -222,6 +222,28 @@ npm run polar:webhook -- delete          # demande confirmation (--yes pour pass
   disponibles. Son exemple de réponse renvoie toutefois vers les URL `activity-transactions`
   dépréciées : l'intérêt de cet endpoint hors transactions est **à vérifier**.
 
+### 6.3 Réception et traitement (POL-08)
+
+- **Route** `POST /api/webhooks/polar` (`app/api/webhooks/polar/route.ts`) :
+  1. elle lit le corps brut ;
+  2. un PING reçoit `200` sans rien enregistrer ;
+  3. pour tout autre événement, elle vérifie le HMAC avec `POLAR_WEBHOOK_SECRET`, et répond `401` si la signature ou le secret manque ;
+  4. elle enregistre l'événement dans `wearable_events`, répond `200`, puis lance le traitement avec `waitUntil` de `@vercel/functions`. Next 14 n'a pas `after()`.
+- **Une ligne par ressource** : la clé d'idempotence est `polar:{event}:{user_id}:{date|entity_id}`,
+  sans timestamp. Un doublon met à jour `last_notified_at`. Si l'événement était `done`,
+  `failed` ou `ignored`, il repasse en `pending` avec `attempts` remis à 0, et il est retraité.
+- **Notification pendant le traitement** : si `last_notified_at` est plus récent que
+  `processing_started_at` à la fin du traitement, l'événement repasse en `pending` et il est
+  retraité une fois.
+- **`processPolarEvent`** (`lib/wearables/polar/process-event.ts`) :
+  - un utilisateur Polar inconnu ou révoqué donne `ignored` ;
+  - le jeton n'est envoyé qu'à `https://www.polaraccesslink.com/v3/…` ;
+  - après un `SLEEP`, elle va chercher `/v3/users/nightly-recharge/{date}`. Si la réponse est
+    vide, elle crée un événement interne `NIGHTLY_RECHARGE` en `pending`, à rejouer dans 6 h ;
+  - un `401` ou `403` de Polar met la connexion en `error` avec le message « Accès révoqué
+    côté Polar, reconnexion nécessaire » ;
+  - le stockage se fait dans `wearable_raw` via `ingestPolarResource` (POL-10).
+
 ## 7. Limites de débit
 
 Source : [AccessLink §Rate limiting](https://www.polar.com/accesslink-api/).
