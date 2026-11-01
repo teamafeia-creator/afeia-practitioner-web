@@ -396,6 +396,33 @@ Chaque ligne porte `consultant_id`, `provider` et `source_raw_id` (clé étrang�
 - **Pas de doublon** : relancer l'import, par exemple après une reconnexion, refait les mêmes
   upserts sur `wearable_raw` et sur les tables normalisées.
 
+### 6.8 Lecture agrégée pour les écrans (POL-15)
+
+Les écrans n'utilisent que `getWearableSummary(patientId, { days: 7 | 30 })`
+(`lib/wearables/summary.ts`). Ils ne lisent jamais les tables brutes ni normalisées directement.
+
+- **Sortie** : `{ days: [{ date, sleepMin, hrvMs, restingHrBpm, steps }], averages: { current, previous } }`.
+  - `days` contient un élément par jour, du plus ancien au plus récent.
+  - Un jour sans donnée vaut **`null`**, jamais 0 : le graphique montre alors un trou. Un 0 réel reste 0.
+  - Les moyennes sont calculées sur les seuls jours renseignés, sur la période affichée puis
+    sur la période précédente de même longueur (à 0,1 près).
+- **Calcul** : la fonction SQL `wearable_daily_summary(consultant, jours, aujourd'hui?, fuseau?)`
+  génère les jours avec `generate_series`, en **jours civils Europe/Paris**.
+  - `sleepMin` = `total_sleep_s / 60`, la nuit étant rattachée au jour du réveil.
+  - `hrvMs` = VFC nocturne (RMSSD).
+  - `restingHrBpm` = FC nocturne moyenne (Nightly Recharge). À défaut, c'est la plus basse FC
+    continue à 5 min du jour civil. Les échantillons sont découpés en Europe/Paris, y compris
+    lors des changements d'heure.
+  - `steps` = nombre de pas de la journée.
+  - S'il y a plusieurs fournisseurs le même jour : moyenne pour le sommeil, la VFC et la FC ;
+    maximum pour les pas.
+- **Accès** : la fonction est en SECURITY INVOKER et `getWearableSummary` utilise le client de
+  la **session** (le client du navigateur par défaut, ou celui passé en option), jamais
+  `service_role`. La RLS de POL-12 s'applique donc. Un appelant sans lien avec le patient
+  (praticien d'un autre, utilisateur sans lien) reçoit une **liste vide**, et non une série de
+  trous. Les écrans praticien lisent déjà avec le client du navigateur. Une route serveur devra
+  passer un client créé avec le jeton de l'utilisateur.
+
 ## 7. Limites de débit
 
 Source : [AccessLink §Rate limiting](https://www.polar.com/accesslink-api/).
