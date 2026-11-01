@@ -18,7 +18,11 @@ export const POLAR_ENV_VARS = [
   'POLAR_CLIENT_ID',
   'POLAR_CLIENT_SECRET',
   'POLAR_REDIRECT_URI',
+  'POLAR_STATE_SECRET',
 ] as const;
+
+/** Longueur minimale du secret de signature du state OAuth (≥ 256 bits en hex/base64). */
+export const POLAR_STATE_SECRET_MIN_LENGTH = 32;
 
 export const POLAR_CALLBACK_PATH = '/api/wearables/polar/callback';
 
@@ -43,12 +47,18 @@ const polarEnvSchema = z.object({
       },
       `POLAR_REDIRECT_URI doit pointer vers ${POLAR_CALLBACK_PATH}`
     ),
+  POLAR_STATE_SECRET: required('POLAR_STATE_SECRET').min(
+    POLAR_STATE_SECRET_MIN_LENGTH,
+    `POLAR_STATE_SECRET doit faire au moins ${POLAR_STATE_SECRET_MIN_LENGTH} caractères`
+  ),
 });
 
 export type PolarConfig = {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
+  /** Secret HMAC du paramètre `state` OAuth (propre à Afeia, pas fourni par Polar). */
+  stateSecret: string;
 };
 
 export class PolarConfigError extends Error {
@@ -89,6 +99,7 @@ export function parsePolarConfig(
     clientId: result.data.POLAR_CLIENT_ID,
     clientSecret: result.data.POLAR_CLIENT_SECRET,
     redirectUri: result.data.POLAR_REDIRECT_URI,
+    stateSecret: result.data.POLAR_STATE_SECRET,
   };
 }
 
