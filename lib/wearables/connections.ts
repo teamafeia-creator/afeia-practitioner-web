@@ -1,0 +1,98 @@
+// lib/wearables/connections.ts
+import 'server-only';
+import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+
+/**
+ * Connexions aux objets connectés (table wearable_connections, migration 20261101).
+ *
+ * Le jeton OAuth est chiffré dans Supabase Vault ; seules les fonctions SQL
+ * SECURITY DEFINER, exécutables par service_role uniquement, le lisent ou l'écrivent.
+ * Ce module utilise donc le client admin et ne doit jamais être importé côté client.
+ *
+ * Règle : aucun jeton dans les logs ni dans les messages d'erreur.
+ */
+
+export type WearableProvider = 'polar';
+export type WearableConnectionStatus = 'active' | 'revoked' | 'error';
+
+const MAX_ERROR_LENGTH = 500;
+
+export class WearableConnectionError extends Error {
+  constructor(operation: string, cause: { message?: string; code?: string } | null) {
+    super(`wearable_connections.${operation} a échoué${cause?.code ? ` (${cause.code})` : ''}: ${cause?.message ?? 'erreur inconnue'}`);
+    this.name = 'WearableConnectionError';
+  }
+}
+
+export type SaveConnectionInput = {
+  consultantId: string;
+  provider: WearableProvider;
+  providerUserId: string;
+  accessToken: string;
+  /** `expires_in` de la réponse token (secondes). Absent ou nul → pas d'expiration connue. */
+  expiresIn?: number | null;
+  /** Injectable pour les tests. */
+  now?: Date;
+};
+
+export function computeTokenExpiresAt(expiresIn: number | null | undefined, now: Date = new Date()): string | null {
+  if (!expiresIn || !Number.isFinite(expiresIn) || expiresIn <= 0) return null;
+  return new Date(now.getTime() + expiresIn * 1000).toISOString();
+}
+
+/** Crée ou met à jour la connexion (statut `active`) et chiffre le jeton. Renvoie l'id de la connexion. */
+export async function saveConnection(input: SaveConnectionInput): Promise<string> {
+  if (!input.accessToken) throw new Error('saveConnection : accessToken manquant');
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc('wearable_save_connection', {
+    p_consultant_id: input.consultantId,
+    p_provider: input.provider,
+    p_provider_user_id: input.providerUserId,
+    p_access_token: input.accessToken,
+    p_token_expires_at: computeTokenExpiresAt(input.expiresIn, input.now),
+  });
+  if (error) throw new WearableConnectionError('saveConnection', error);
+  return data as string;
+}
+
+/** Jeton déchiffré, ou `null` si la connexion n'existe pas ou a été révoquée. */
+export async function getAccessToken(consultantId: string, provider: WearableProvider): Promise<string | null> {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc('wearable_get_access_token', {
+    p_consultant_id: consultantId,
+    p_provider: provider,
+  });
+  if (error) throw new WearableConnectionError('getAccessToken', error);
+  return (data as string | null) ?? null;
+}
+
+/** Passe la connexion en `revoked` et supprime le jeton de Vault. */
+export async function markRevoked(consultantId: string, provider: WearableProvider): Promise<void> {
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.rpc('wearable_revoke_connection', {
+    p_consultant_id: consultantId,
+    p_provider: provider,
+  });
+  if (error) throw new WearableConnectionError('markRevoked', error);
+}
+
+/** Retire d'un message tout ce qui ressemble à un jeton, puis le tronque. */
+export function sanitizeErrorMessage(message: string): string {
+  return message
+    .replace(/(bearer|basic)\s+[A-Za-z0-9._~+/=-]+/gi, '$1 [redacted]')
+    .replace(/(access_token|token|secret|code)(["']?\s*[:=]\s*["']?)[^\s"'&,}]+/gi, '$1$2[redacted]')
+    .slice(0, MAX_ERROR_LENGTH);
+}
+
+/** Passe la connexion en `error`. Le jeton est conservé pour que la prochaine synchro réessaie. */
+export async function markError(consultantId: string, provider: WearableProvider, message: string): Promise<void> {
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase
+    .from('wearable_connections')
+    .update({ status: 'error', last_error: sanitizeErrorMessage(message), updated_at: new Date().toISOString() })
+    .eq('consultant_id', consultantId)
+    .eq('provider', provider)
+    .neq('status', 'revoked');
+  if (error) throw new WearableConnectionError('markError', error);
+}
