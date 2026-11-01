@@ -6,7 +6,10 @@ import 'server-only';
 import { findConnectionByProviderUserId, getAccessToken, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
 import { claimEvent, finishEvent, recordEvent, type WearableEvent } from '@/lib/wearables/events';
 import { dataTypeForEvent, ingestPolarResource } from './ingest';
+import { fetchPolar, isAccessRevoked } from './api';
 import { POLAR_API_ORIGIN, isPolarApiUrl } from './webhook';
+
+export { PolarHttpError } from './api';
 
 const LOG = '[wearables/polar/process-event]';
 export const REVOKED_MESSAGE = 'Accès révoqué côté Polar, reconnexion nécessaire';
@@ -14,32 +17,6 @@ export const REVOKED_MESSAGE = 'Accès révoqué côté Polar, reconnexion néce
 export const NIGHTLY_RECHARGE_RETRY_MS = 6 * 3600_000;
 /** Garde-fou : nombre maximal de retraitements enchaînés après des notifications pendant le traitement. */
 const MAX_RUNS = 3;
-
-export class PolarHttpError extends Error {
-  constructor(readonly status: number, path: string) {
-    super(`Polar ${path} : HTTP ${status}`);
-    this.name = 'PolarHttpError';
-  }
-}
-
-type Fetched = { status: 'ok'; json: unknown } | { status: 'empty' };
-
-async function fetchPolar(url: string, token: string): Promise<Fetched> {
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-    cache: 'no-store',
-  });
-  const path = new URL(url).pathname;
-  if (res.status === 204 || res.status === 404) return { status: 'empty' };
-  if (!res.ok) throw new PolarHttpError(res.status, path);
-  const text = await res.text();
-  if (!text.trim()) return { status: 'empty' };
-  try {
-    return { status: 'ok', json: JSON.parse(text) };
-  } catch {
-    throw new Error(`Polar ${path} : réponse JSON invalide`);
-  }
-}
 
 function resourceUrlFor(event: WearableEvent): string | null {
   if (event.event_type === 'NIGHTLY_RECHARGE' && event.event_date) {
@@ -138,7 +115,7 @@ async function runOnce(eventId: string): Promise<RunResult> {
     return finish('done', { consultantId });
   } catch (error) {
     const message = sanitizeErrorMessage((error as Error)?.message ?? 'erreur inconnue');
-    if (consultantId && error instanceof PolarHttpError && (error.status === 401 || error.status === 403)) {
+    if (consultantId && isAccessRevoked(error)) {
       try {
         await markError(consultantId, 'polar', REVOKED_MESSAGE);
       } catch (markErr) {

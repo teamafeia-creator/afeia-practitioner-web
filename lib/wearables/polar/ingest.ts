@@ -26,7 +26,8 @@ export type IngestContext = {
   providerUserId: string;
   /** Date de la ressource (YYYY-MM-DD) quand le webhook la fournit. */
   date: string | null;
-  sourceEventId: string;
+  /** Événement d'origine, ou null pour le rattrapage du cron. */
+  sourceEventId: string | null;
 };
 
 export class IngestionNotImplementedError extends Error {

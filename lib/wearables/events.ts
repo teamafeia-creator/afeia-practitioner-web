@@ -80,3 +80,17 @@ export async function finishEvent(
   const row = (Array.isArray(data) ? data[0] : data) as { requeued: boolean; status: WearableEventStatus; attempts: number };
   return row;
 }
+
+/**
+ * Remet en file les événements à rejouer (failed avec attempts < maxAttempts et dus,
+ * processing bloqués) et renvoie les événements pending dus.
+ */
+export async function requeueDueEvents(opts: { maxAttempts?: number; limit?: number } = {}): Promise<{ id: string; event_type: string; attempts: number }[]> {
+  const { data, error } = await createSupabaseAdminClient().rpc('wearable_requeue_due_events', {
+    p_max_attempts: opts.maxAttempts ?? 5,
+    p_stale_after: '15 minutes',
+    p_limit: opts.limit ?? 200,
+  });
+  if (error) fail('requeueDueEvents', error);
+  return (data ?? []) as { id: string; event_type: string; attempts: number }[];
+}

@@ -244,6 +244,32 @@ npm run polar:webhook -- delete          # demande confirmation (--yes pour pass
     côté Polar, reconnexion nécessaire » ;
   - le stockage se fait dans `wearable_raw` via `ingestPolarResource` (POL-10).
 
+### 6.4 Rattrapage quotidien et surveillance (POL-09)
+
+- **Cron Vercel** `GET /api/cron/polar-sync`, déclaré dans `vercel.json` avec `0 3 * * *` (UTC).
+  Les crons Vercel sont en UTC : cela donne 4 h à Paris en hiver (CET) et 5 h en été (CEST).
+  La route exige `Authorization: Bearer ${CRON_SECRET}` et répond `401` sinon, y compris
+  quand `CRON_SECRET` n'est pas défini.
+- **Ordre d'exécution** (`lib/wearables/polar/sync.ts`) :
+  1. **Webhook** : `GET /v3/webhooks`. S'il est absent ou inactif, un e-mail part à l'équipe,
+     par le même canal que les inscriptions praticien (`sendEmail` vers `adminEmails()`).
+     L'alerte est renvoyée chaque jour tant que le problème dure.
+  2. **Connexions `active`**, par lots de 5, les moins récemment synchronisées d'abord. Pour
+     chacune, le cron lit sommeil, Nightly Recharge, FC continue et activité sur les 3
+     derniers jours (12 appels) et les ingère avec `ingestPolarResource`, qui est idempotent.
+     - Un `401` ou `403` met la connexion en `error` (« Accès révoqué côté Polar, reconnexion nécessaire »).
+     - Une synchronisation réussie met à jour `last_sync_at`.
+  3. **Rejeu** avec `wearable_requeue_due_events` : les événements `failed` avec moins de 5
+     tentatives et dus, les `pending` dus (dont les Nightly Recharge différés) et les
+     `processing` bloqués depuis plus de 15 min. `attempts` n'est pas remis à zéro.
+- **Budget** : `maxDuration = 300` s, et le traitement s'arrête de lui-même 60 s avant. Les
+  connexions restantes sont reportées au lendemain et comptées dans `deferred`.
+- **Coût en requêtes** : 12 appels par connexion et par jour, bien en dessous de la limite de
+  15 min (`500 + 20 × n`).
+- **Journal** : un récapitulatif par exécution, avec les connexions (total, traitées,
+  reportées, révoquées, en erreur), les ressources ingérées, les événements rejoués par
+  résultat, l'état du webhook et les erreurs.
+
 ## 7. Limites de débit
 
 Source : [AccessLink §Rate limiting](https://www.polar.com/accesslink-api/).

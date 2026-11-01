@@ -133,3 +133,22 @@ export async function markSynced(consultantId: string, provider: WearableProvide
     .neq('status', 'revoked');
   if (error) throw new WearableConnectionError('markSynced', error);
 }
+
+export type ActiveConnection = { consultantId: string; providerUserId: string; lastSyncAt: string | null };
+
+/** Connexions `active` d'un fournisseur, les moins récemment synchronisées d'abord. */
+export async function listActiveConnections(provider: WearableProvider): Promise<ActiveConnection[]> {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('wearable_connections')
+    .select('consultant_id, provider_user_id, last_sync_at')
+    .eq('provider', provider)
+    .eq('status', 'active')
+    .order('last_sync_at', { ascending: true, nullsFirst: true });
+  if (error) throw new WearableConnectionError('listActiveConnections', error);
+  return (data ?? []).map((r) => ({
+    consultantId: r.consultant_id as string,
+    providerUserId: r.provider_user_id as string,
+    lastSyncAt: (r.last_sync_at as string | null) ?? null,
+  }));
+}
