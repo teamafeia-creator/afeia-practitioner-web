@@ -83,11 +83,12 @@ export function WearableConnectionCard({ connection, onConnect, connecting = fal
           </>
         )}
 
+        {/* div et non p : Spinner rend une div, interdite dans un p (erreur d'hydratation). */}
         {state === 'active' && isBackfillInProgress(connection) && (
-          <p className="flex items-center gap-2 text-[13px] text-stone" role="status" data-testid="wearable-backfill">
+          <div className="flex items-center gap-2 text-[13px] text-stone" role="status" data-testid="wearable-backfill">
             <Spinner size="sm" />
             Import de l&apos;historique en cours
-          </p>
+          </div>
         )}
 
         {showSetupHelp && state === 'active' && (
