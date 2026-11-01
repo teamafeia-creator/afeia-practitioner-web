@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "polar:spike": "tsx scripts/polar-spike.ts",
+    "polar:webhook": "tsx scripts/polar-webhook.ts",
     "auth:smoke": "node scripts/auth-smoke-test.mjs",
     "questionnaire:smoke": "node scripts/questionnaire-code-smoke-test.mjs",
     "screenshots": "node scripts/screenshot-dashboard.mjs",
