@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { Toaster } from '@/components/ui'
+import { WearableConnectionSection } from '@/components/wearables/WearableConnectionSection'
 
 type ConsultantData = {
   id: string
@@ -192,6 +194,7 @@ export default function ConsultantHomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0A0E14] to-[#151A23]">
+      <Toaster />
       {/* Header */}
       <div className="bg-gradient-to-r from-[#6DD4B8] to-[#2D7A6E] text-white px-6 py-8 rounded-b-3xl">
         <div className="max-w-2xl mx-auto">
@@ -265,6 +268,11 @@ export default function ConsultantHomePage() {
             </div>
           </div>
         </div>
+
+        {/* Objet connecté */}
+        <Suspense fallback={null}>
+          <WearableConnectionSection />
+        </Suspense>
 
         {/* Plans Section */}
         {plans.length > 0 && (

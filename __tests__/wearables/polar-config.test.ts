@@ -9,6 +9,7 @@ const validEnv = {
   POLAR_CLIENT_ID: 'client-id-test',
   POLAR_CLIENT_SECRET: 'client-secret-test',
   POLAR_REDIRECT_URI: 'http://localhost:3000/api/wearables/polar/callback',
+  POLAR_STATE_SECRET: 'state-secret-for-tests-0123456789abcdef',
 };
 
 describe('parsePolarConfig', () => {
@@ -17,6 +18,7 @@ describe('parsePolarConfig', () => {
       clientId: 'client-id-test',
       clientSecret: 'client-secret-test',
       redirectUri: 'http://localhost:3000/api/wearables/polar/callback',
+      stateSecret: 'state-secret-for-tests-0123456789abcdef',
     });
   });
 
@@ -54,6 +56,10 @@ describe('parsePolarConfig', () => {
       expect(error).toBeInstanceOf(PolarConfigError);
       expect((error as PolarConfigError).variables).toEqual([...POLAR_ENV_VARS]);
     }
+  });
+
+  it('refuse un POLAR_STATE_SECRET trop court', () => {
+    expect(() => parsePolarConfig({ ...validEnv, POLAR_STATE_SECRET: 'court' })).toThrow('POLAR_STATE_SECRET');
   });
 
   it('refuse une redirect URI qui ne pointe pas vers le callback', () => {
