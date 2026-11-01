@@ -19,6 +19,48 @@ function textOf(container: HTMLElement) {
   return container.textContent ?? '';
 }
 
+describe('WearableConnectionCard : déconnexion', () => {
+  it('bouton « Déconnecter mon objet connecté » si connecté ou en erreur, pas sinon', () => {
+    const { unmount } = render(<WearableConnectionCard connection={base} onConnect={vi.fn()} onDisconnect={vi.fn()} now={NOW} />);
+    expect(screen.getByRole('button', { name: 'Déconnecter mon objet connecté' })).toBeTruthy();
+    unmount();
+    render(<WearableConnectionCard connection={{ ...base, status: 'error' }} onConnect={vi.fn()} onDisconnect={vi.fn()} now={NOW} />);
+    expect(screen.getByRole('button', { name: 'Déconnecter mon objet connecté' })).toBeTruthy();
+    cleanup();
+    render(<WearableConnectionCard connection={null} onConnect={vi.fn()} onDisconnect={vi.fn()} now={NOW} />);
+    expect(screen.queryByRole('button', { name: 'Déconnecter mon objet connecté' })).toBeNull();
+  });
+
+  it('confirmation : case « Supprimer aussi mes données déjà importées » cochée par défaut', async () => {
+    const onDisconnect = vi.fn();
+    render(<WearableConnectionCard connection={base} onConnect={vi.fn()} onDisconnect={onDisconnect} now={NOW} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Déconnecter mon objet connecté' }));
+    const box = (await screen.findByTestId('disconnect-delete-data')) as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    expect(screen.getByText('Supprimer aussi mes données déjà importées')).toBeTruthy();
+    expect(onDisconnect).not.toHaveBeenCalled(); // rien sans confirmation
+    fireEvent.click(screen.getByTestId('disconnect-confirm'));
+    expect(onDisconnect).toHaveBeenCalledWith(true);
+  });
+
+  it('case décochée → déconnexion sans suppression', async () => {
+    const onDisconnect = vi.fn();
+    render(<WearableConnectionCard connection={base} onConnect={vi.fn()} onDisconnect={onDisconnect} now={NOW} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Déconnecter mon objet connecté' }));
+    fireEvent.click(await screen.findByTestId('disconnect-delete-data'));
+    fireEvent.click(screen.getByTestId('disconnect-confirm'));
+    expect(onDisconnect).toHaveBeenCalledWith(false);
+  });
+
+  it('annuler → aucune déconnexion', async () => {
+    const onDisconnect = vi.fn();
+    render(<WearableConnectionCard connection={base} onConnect={vi.fn()} onDisconnect={onDisconnect} now={NOW} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Déconnecter mon objet connecté' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Annuler' }));
+    expect(onDisconnect).not.toHaveBeenCalled();
+  });
+});
+
 describe('WearableConnectionCard', () => {
   it('non connecté : bouton « Connecter mon objet connecté »', () => {
     const onConnect = vi.fn();

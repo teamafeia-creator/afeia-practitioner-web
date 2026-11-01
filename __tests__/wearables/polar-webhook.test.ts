@@ -69,7 +69,9 @@ vi.mock('@/lib/wearables/events', () => ({
 }));
 
 // --- Connexions ---------------------------------------------------------------
-const connections = new Map([[POLAR_USER, { consultantId: CONSULTANT, status: 'active' as const }]]);
+const connections = new Map<string, { consultantId: string; status: 'active' | 'error' | 'revoked' }>([
+  [POLAR_USER, { consultantId: CONSULTANT, status: 'active' }],
+]);
 const markError = vi.fn();
 const markSynced = vi.fn();
 vi.mock('@/lib/wearables/connections', async () => ({
@@ -284,6 +286,19 @@ describe('POST /api/webhooks/polar : file et traitement', () => {
     expect(events[0].status).toBe('ignored');
     expect(fetchMock).not.toHaveBeenCalled();
     expect(ingest).not.toHaveBeenCalled();
+  });
+
+  it('webhook reçu après déconnexion (connexion revoked) → ignored, aucun appel Polar', async () => {
+    connections.set(POLAR_USER, { consultantId: CONSULTANT, status: 'revoked' });
+    try {
+      await POST(signed(sleepBody()));
+      await drainBackground();
+      expect(events[0].status).toBe('ignored');
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(ingest).not.toHaveBeenCalled();
+    } finally {
+      connections.set(POLAR_USER, { consultantId: CONSULTANT, status: 'active' });
+    }
   });
 
   it('échec HTTP Polar → failed avec erreur, attempts 1 (4xx : pas de nouvelle tentative)', async () => {

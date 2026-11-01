@@ -447,6 +447,35 @@ connecté » de la fiche patient (accès premium inchangé).
     synchronisation. Les graphiques restent affichés avec les données déjà reçues.
 - **Mise en page** : grille 2 × 2, une colonne sur mobile.
 
+### 6.10 Déconnexion par le patient (POL-17)
+
+- **Interface** : `WearableConnectionCard` propose le bouton « Déconnecter mon objet connecté »,
+  quand la connexion est active ou en erreur. Une confirmation suit, avec la case « Supprimer
+  aussi mes données déjà importées », **cochée par défaut**.
+- **Route** `POST /api/wearables/disconnect` (`{ "deleteData": true }`, `true` par défaut) :
+  - elle est authentifiée par `Authorization: Bearer`. Les sessions ne sont pas dans des
+    cookies, une server action ne pourrait donc pas identifier l'utilisateur ;
+  - le consultant est déduit du jeton : on ne peut déconnecter que soi-même.
+- **Ordre des opérations** (`lib/wearables/polar/disconnect.ts`) :
+  1. `DELETE /v3/users/{user-id}` chez Polar, via `polarRequest`. Selon la doc, cela révoque
+     aussi le jeton côté Polar. `204` = succès ; `404` = déjà désinscrit, traité comme un succès.
+  2. **Quelle que soit la réponse de Polar** : `wearable_disconnect` révoque la connexion côté
+     Afeia. Une erreur de Polar est journalisée, sans jeton, et ne bloque pas.
+- **`wearable_disconnect`** fait tout en une transaction :
+  - la connexion passe en `revoked`, `access_token_secret_id` est mis à NULL et le secret Vault
+    est supprimé ;
+  - `interrupted_at` est renseigné ;
+  - si la suppression est demandée : effacement des lignes du consultant dans `sleep_sessions`,
+    `hrv_nightly`, `hr_samples`, `daily_activity`, `wearable_raw` et `wearable_events`. Pour
+    `wearable_events`, cela inclut les événements pas encore rattachés au consultant, retrouvés
+    par son identifiant Polar.
+- **Déjà déconnecté** : pas d'appel à Polar, mais la suppression des données reste possible.
+- **Webhooks reçus après la déconnexion** : la connexion est `revoked`, donc l'événement passe en `ignored`.
+- **Reconnexion** :
+  - `POST /v3/users` répond `200`, ou `409` qui est traité comme un succès ;
+  - `wearable_save_connection` réactive **la même ligne**, avec un nouveau secret ;
+  - `interrupted_at` est remis à NULL et l'import de l'historique est relancé.
+
 ## 7. Limites de débit
 
 Source : [AccessLink §Rate limiting](https://www.polar.com/accesslink-api/).

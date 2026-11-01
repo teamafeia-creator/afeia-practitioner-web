@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 let search = '';
 const replace = vi.fn();
@@ -61,5 +61,25 @@ describe('WearableConnectionSection', () => {
     await waitFor(() => expect(error).toHaveBeenCalled());
     expect(error.mock.calls[0][0]).toContain('account.polar.com');
     expect(replace).toHaveBeenCalledWith('/consultant/home', { scroll: false });
+  });
+
+  it('déconnexion : POST /api/wearables/disconnect avec la session et deleteData, toast, état rechargé', async () => {
+    search = '';
+    fetchMock.mockReset();
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify({ connections: [{ provider: 'polar', status: 'active', connected_at: '2026-10-20T09:00:00Z', last_sync_at: null, last_error: null }] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, polar: 'deregistered', deleted: {} })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ connections: [{ provider: 'polar', status: 'revoked', connected_at: '2026-10-20T09:00:00Z', last_sync_at: null, last_error: null }] })));
+    render(<WearableConnectionSection />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Déconnecter mon objet connecté' }));
+    fireEvent.click(await screen.findByTestId('disconnect-confirm'));
+
+    await screen.findByRole('button', { name: 'Connecter mon objet connecté' });
+    const [url, init] = fetchMock.mock.calls[1];
+    expect(url).toBe('/api/wearables/disconnect');
+    expect(init.method).toBe('POST');
+    expect(init.headers).toMatchObject({ Authorization: 'Bearer session-jwt' });
+    expect(JSON.parse(init.body)).toEqual({ deleteData: true });
+    expect(success).toHaveBeenCalledWith('Objet connecté déconnecté. Vos données importées ont été supprimées.');
   });
 });

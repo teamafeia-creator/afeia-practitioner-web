@@ -30,6 +30,7 @@ export function WearableConnectionSection() {
   const [loaded, setLoaded] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [justConnected, setJustConnected] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
   const handledReturn = useRef(false);
 
   const loadStatus = useCallback(async () => {
@@ -94,6 +95,33 @@ export function WearableConnectionSection() {
     }
   }, [pathname]);
 
+  const onDisconnect = useCallback(
+    async (deleteData: boolean) => {
+      setDisconnecting(true);
+      try {
+        const res = await fetch('/api/wearables/disconnect', {
+          method: 'POST',
+          headers: { ...(await authHeader()), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deleteData }),
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        showToast.success(
+          deleteData
+            ? 'Objet connecté déconnecté. Vos données importées ont été supprimées.'
+            : 'Objet connecté déconnecté. Vos données déjà importées sont conservées.'
+        );
+        setJustConnected(false);
+        await loadStatus();
+      } catch {
+        showToast.error('La déconnexion a échoué. Réessayez.');
+      } finally {
+        setDisconnecting(false);
+      }
+    },
+    [loadStatus]
+  );
+
   if (!loaded) return null;
 
   return (
@@ -102,6 +130,8 @@ export function WearableConnectionSection() {
       onConnect={onConnect}
       connecting={connecting}
       showSetupHelp={justConnected}
+      onDisconnect={onDisconnect}
+      disconnecting={disconnecting}
     />
   );
 }
