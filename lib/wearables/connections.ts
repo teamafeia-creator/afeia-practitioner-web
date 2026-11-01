@@ -255,13 +255,13 @@ export async function revokeAndPurge(
   consultantId: string,
   provider: WearableProvider,
   deleteData: boolean
-): Promise<{ found: boolean; deleted: DisconnectCounts }> {
+): Promise<{ found: boolean; deleted: DisconnectCounts; consentsWithdrawn: number }> {
   const { data, error } = await createSupabaseAdminClient().rpc('wearable_disconnect', {
     p_consultant_id: consultantId,
     p_provider: provider,
     p_delete_data: deleteData,
   });
   if (error) throw new WearableConnectionError('revokeAndPurge', error);
-  const res = (data ?? {}) as { found?: boolean; deleted?: DisconnectCounts };
-  return { found: res.found === true, deleted: res.deleted ?? {} };
+  const res = (data ?? {}) as { found?: boolean; deleted?: DisconnectCounts; consents_withdrawn?: number };
+  return { found: res.found === true, deleted: res.deleted ?? {}, consentsWithdrawn: res.consents_withdrawn ?? 0 };
 }

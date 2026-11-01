@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveConsultantId } from '@/lib/mobile-auth';
 import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
+import { WEARABLES_CONSENT_VERSION } from '@/lib/wearables/consent-text';
+import { consultantCanUseWearables, getActiveConsent } from '@/lib/wearables/consents';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,5 +25,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "État de l'objet connecté indisponible." }, { status: 500 });
   }
 
-  return NextResponse.json({ connections: data ?? [] }, { headers: { 'Cache-Control': 'no-store' } });
+  const [enabled, consent] = await Promise.all([
+    consultantCanUseWearables(consultantId),
+    getActiveConsent(consultantId, WEARABLES_CONSENT_VERSION),
+  ]);
+
+  return NextResponse.json(
+    {
+      // false : fonctionnalité non ouverte à ce compte (WEARABLES_ENABLED_FOR=internal), la carte est masquée.
+      enabled,
+      consent: { version: WEARABLES_CONSENT_VERSION, accepted: consent !== null, acceptedAt: consent?.acceptedAt ?? null },
+      connections: data ?? [],
+    },
+    { headers: { 'Cache-Control': 'no-store' } }
+  );
 }

@@ -20,6 +20,14 @@ vi.mock('@/components/ui', async (orig) => ({
 }));
 
 const fetchMock = vi.fn();
+const statusResponse = (body: { connections: unknown[]; enabled?: boolean; accepted?: boolean }) =>
+  new Response(
+    JSON.stringify({
+      enabled: body.enabled ?? true,
+      consent: { version: 'v1', accepted: body.accepted ?? true, acceptedAt: null },
+      connections: body.connections,
+    })
+  );
 const { WearableConnectionSection } = await import('@/components/wearables/WearableConnectionSection');
 
 beforeEach(() => {
@@ -27,7 +35,7 @@ beforeEach(() => {
   success.mockReset();
   error.mockReset();
   fetchMock.mockReset().mockResolvedValue(
-    new Response(JSON.stringify({ connections: [{ provider: 'polar', status: 'active', connected_at: '2026-10-20T09:00:00Z', last_sync_at: null, last_error: null }] }))
+    statusResponse({ connections: [{ provider: 'polar', status: 'active', connected_at: '2026-10-20T09:00:00Z', last_sync_at: null, last_error: null }] })
   );
   vi.stubGlobal('fetch', fetchMock);
 });
@@ -67,9 +75,9 @@ describe('WearableConnectionSection', () => {
     search = '';
     fetchMock.mockReset();
     fetchMock
-      .mockResolvedValueOnce(new Response(JSON.stringify({ connections: [{ provider: 'polar', status: 'active', connected_at: '2026-10-20T09:00:00Z', last_sync_at: null, last_error: null }] })))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, polar: 'deregistered', deleted: {} })))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ connections: [{ provider: 'polar', status: 'revoked', connected_at: '2026-10-20T09:00:00Z', last_sync_at: null, last_error: null }] })));
+      .mockResolvedValueOnce(statusResponse({ connections: [{ provider: 'polar', status: 'active', connected_at: '2026-10-20T09:00:00Z', last_sync_at: null, last_error: null }] }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, polar: 'deregistered', deleted: {}, consentsWithdrawn: 1 })))
+      .mockResolvedValueOnce(statusResponse({ accepted: false, connections: [{ provider: 'polar', status: 'revoked', connected_at: '2026-10-20T09:00:00Z', last_sync_at: null, last_error: null }] }));
     render(<WearableConnectionSection />);
     fireEvent.click(await screen.findByRole('button', { name: 'Déconnecter mon objet connecté' }));
     fireEvent.click(await screen.findByTestId('disconnect-confirm'));
@@ -81,5 +89,52 @@ describe('WearableConnectionSection', () => {
     expect(init.headers).toMatchObject({ Authorization: 'Bearer session-jwt' });
     expect(JSON.parse(init.body)).toEqual({ deleteData: true });
     expect(success).toHaveBeenCalledWith('Objet connecté déconnecté. Vos données importées ont été supprimées.');
+  });
+
+  it('compte non ouvert (WEARABLES_ENABLED_FOR=internal hors équipe) → rien d’affiché', async () => {
+    search = '';
+    fetchMock.mockReset().mockResolvedValue(statusResponse({ enabled: false, connections: [] }));
+    const { container } = render(<WearableConnectionSection />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(container.textContent).toBe('');
+  });
+
+  it('sans consentement : la connexion ouvre le texte, accord enregistré puis redirection vers /connect', async () => {
+    search = '';
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign, search: '' });
+    fetchMock
+      .mockReset()
+      .mockResolvedValueOnce(statusResponse({ accepted: false, connections: [] }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ authorizeUrl: 'https://flow.polar.com/oauth2/authorization?state=x' })));
+    render(<WearableConnectionSection />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Connecter mon objet connecté' }));
+
+    expect((await screen.findByTestId('wearable-consent-text')).textContent).toContain('Quelles données');
+    const accept = screen.getByTestId('wearable-consent-accept') as HTMLButtonElement;
+    expect(accept.disabled).toBe(true); // rien sans la case cochée
+    fireEvent.click(screen.getByTestId('wearable-consent-checkbox'));
+    fireEvent.click(accept);
+
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('https://flow.polar.com/oauth2/authorization?state=x'));
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/wearables/consent');
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ version: 'v1' });
+    expect(String(fetchMock.mock.calls[2][0])).toMatch(/^\/api\/wearables\/polar\/connect\?returnTo=/);
+  });
+
+  it('consentement déjà accepté : redirection directe, sans texte', async () => {
+    search = '';
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign, search: '' });
+    fetchMock
+      .mockReset()
+      .mockResolvedValueOnce(statusResponse({ accepted: true, connections: [] }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ authorizeUrl: 'https://flow.polar.com/x' })));
+    render(<WearableConnectionSection />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Connecter mon objet connecté' }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('https://flow.polar.com/x'));
+    expect(screen.queryByTestId('wearable-consent-text')).toBeNull();
   });
 });

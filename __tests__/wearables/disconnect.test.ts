@@ -14,6 +14,7 @@ let token: string | null;
 const revokeAndPurge = vi.fn(async (_c: string, _p: string, deleteData: boolean) => ({
   found: true,
   deleted: deleteData ? { sleep_sessions: 28, wearable_raw: 120, wearable_events: 40 } : {},
+  consentsWithdrawn: 1,
 }));
 vi.mock('@/lib/wearables/connections', () => ({
   getConnection: async () => connection,
@@ -60,7 +61,12 @@ describe('disconnectPolar', () => {
     expect(init?.method).toBe('DELETE');
     expect((init?.headers as Record<string, string>).Authorization).toBe(`Bearer ${TOKEN}`);
     expect(revokeAndPurge).toHaveBeenCalledWith(CONSULTANT, 'polar', true);
-    expect(r).toEqual({ status: 'disconnected', polar: 'deregistered', deleted: { sleep_sessions: 28, wearable_raw: 120, wearable_events: 40 } });
+    expect(r).toEqual({
+      status: 'disconnected',
+      polar: 'deregistered',
+      deleted: { sleep_sessions: 28, wearable_raw: 120, wearable_events: 40 },
+      consentsWithdrawn: 1, // retrait du consentement à la déconnexion (withdrawn_at, testé en pgTAP)
+    });
   });
 
   it('sans suppression : révocation seule, données conservées', async () => {

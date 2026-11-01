@@ -15,16 +15,18 @@ export type DisconnectResult = {
   /** deregistered : Polar a confirmé ; failed : erreur Polar (journalisée) ; skipped : rien à désinscrire. */
   polar: 'deregistered' | 'failed' | 'skipped';
   deleted: DisconnectCounts;
+  /** Consentements retirés (withdrawn_at renseigné). */
+  consentsWithdrawn: number;
 };
 
 export async function disconnectPolar(consultantId: string, opts: { deleteData: boolean }): Promise<DisconnectResult> {
   const connection = await getConnection(consultantId, 'polar');
-  if (!connection) return { status: 'not_connected', polar: 'skipped', deleted: {} };
+  if (!connection) return { status: 'not_connected', polar: 'skipped', deleted: {}, consentsWithdrawn: 0 };
 
   // Déjà révoquée : pas d'appel Polar, mais la suppression des données reste possible.
   if (connection.status === 'revoked') {
-    const { deleted } = await revokeAndPurge(consultantId, 'polar', opts.deleteData);
-    return { status: 'disconnected', polar: 'skipped', deleted };
+    const { deleted, consentsWithdrawn } = await revokeAndPurge(consultantId, 'polar', opts.deleteData);
+    return { status: 'disconnected', polar: 'skipped', deleted, consentsWithdrawn };
   }
 
   let polar: DisconnectResult['polar'] = 'skipped';
@@ -48,7 +50,7 @@ export async function disconnectPolar(consultantId: string, opts: { deleteData: 
     }
   }
 
-  const { deleted } = await revokeAndPurge(consultantId, 'polar', opts.deleteData);
-  console.info(LOG, 'objet connecté déconnecté', { consultantId, polar, deleteData: opts.deleteData, deleted });
-  return { status: 'disconnected', polar, deleted };
+  const { deleted, consentsWithdrawn } = await revokeAndPurge(consultantId, 'polar', opts.deleteData);
+  console.info(LOG, 'objet connecté déconnecté', { consultantId, polar, deleteData: opts.deleteData, deleted, consentsWithdrawn });
+  return { status: 'disconnected', polar, deleted, consentsWithdrawn };
 }

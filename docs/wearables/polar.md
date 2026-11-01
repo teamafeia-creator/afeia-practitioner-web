@@ -476,6 +476,37 @@ connecté » de la fiche patient (accès premium inchangé).
   - `wearable_save_connection` réactive **la même ligne**, avec un nouveau secret ;
   - `interrupted_at` est remis à NULL et l'import de l'historique est relancé.
 
+### 6.11 Ouverture progressive et consentement (POL-18)
+
+- **Ouverture** (`lib/wearables/access.ts`) :
+  - `WEARABLES_ENABLED_FOR=internal` est la valeur par défaut ; une valeur inconnue revient
+    aussi à `internal`. Dans ce mode, seuls les consultants dont l'e-mail figure dans
+    `WEARABLES_INTERNAL_EMAILS` voient la carte « Objet connecté ».
+  - Pour les autres, `/api/wearables/status` renvoie `enabled: false`, et
+    `/api/wearables/polar/connect` comme `/api/wearables/consent` répondent `403 not_enabled`.
+  - `all` ouvre à tous, sans aucun changement de code.
+  - ⚠ **Ne pas passer à `all` en Production avant la validation de
+    [la décision HDS](./hds-decision.md).**
+- **Texte de consentement** : un fichier unique et versionné,
+  `content/consents/wearables-v1.md`, avec `WEARABLES_CONSENT_VERSION = 'v1'`
+  (`lib/wearables/consent-text.ts`). Il est embarqué au build par un import `?raw`. Si le sens
+  du texte change, il faut créer `wearables-v2.md` et passer la constante à `v2` : les patients
+  devront alors accepter de nouveau.
+- **Parcours** :
+  1. « Connecter mon objet connecté » ouvre le texte, avec la case « J'ai lu… ».
+  2. `POST /api/wearables/consent { version }` répond `409` si la version n'est pas la version
+     courante, sinon il crée la ligne.
+  3. Le client passe ensuite à `/api/wearables/polar/connect`, puis à Polar.
+- **Garde-fou** : `/connect` répond `403 consent_required` s'il n'existe pas de consentement
+  actif (`withdrawn_at` NULL) sur la version courante.
+- **`wearable_consents`** (migration `20261112`) contient le patient, `text_version`,
+  `accepted_at` et `withdrawn_at`, avec un seul consentement actif par version.
+  - RLS : le patient lit et crée ses propres consentements. Il ne peut ni les modifier, ni les
+    antidater, ni fixer `withdrawn_at`.
+  - Le reste passe par `service_role`.
+- **Retrait** : la déconnexion (`wearable_disconnect`) renseigne `withdrawn_at`, dans la même
+  transaction. La ligne est conservée comme trace. Une reconnexion demande un nouveau consentement.
+
 ## 7. Limites de débit
 
 Source : [AccessLink §Rate limiting](https://www.polar.com/accesslink-api/).
