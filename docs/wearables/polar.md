@@ -162,13 +162,113 @@ Sources : [AccessLink §Accesslink webhooks et §Webhooks](https://www.polar.com
 - **Désactivation automatique** si aucune notification n'a pu être livrée pendant **7 jours**.
   - Réactivation : `POST /v3/webhooks/activate`, qui refait un PING.
   - Pause volontaire : `POST /v3/webhooks/deactivate`.
-- **Autres opérations** :
-  - `GET /v3/webhooks` : état du webhook.
-  - `PATCH /v3/webhooks/{webhook-id}` : modifier les événements ou l'URL. Changer l'URL refait un PING.
-  - `DELETE /v3/webhooks/{webhook-id}` : supprimer le webhook.
+- **Autres opérations** : voir le tableau de référence ci-dessous.
+
+### 6.1 Référence exacte des endpoints webhook
+
+Vérifié dans la doc officielle le 2026-11-01 ([§Webhooks](https://www.polar.com/accesslink-api/#webhooks),
+schémas `webhookRequest`, `createdWebhook`, `webhookInfo`, `webhookPatch`, `webhookPing`, `error`).
+Toutes les requêtes utilisent les **identifiants client** :
+`Authorization: Basic base64(client_id:client_secret)`, avec `Accept: application/json`.
+
+| Opération | Requête | Corps | Réponses | PING envoyé ? |
+|---|---|---|---|---|
+| Créer | `POST /v3/webhooks` | `{"events": ["SLEEP", …], "url": "https://…"}` (les deux obligatoires) | `201` `{"data": {"id", "events", "url", "signature_secret_key"}}` · `400` création impossible · `409` un webhook existe déjà | **Oui**, vers `url` ; sans réponse `200`, rien n'est créé |
+| Lire | `GET /v3/webhooks` | aucun | `200` `{"data": [{"id", "events", "url", "active"}]}`, un **tableau** (vide s'il n'y a pas de webhook) | Non |
+| Modifier | `PATCH /v3/webhooks/{webhook-id}` | `{"events"?: [...], "url"?: "…"}` | `200` `webhookInfo` · `400` · `404` | **Oui** si l'URL change ; sans réponse `200`, rien n'est modifié |
+| Activer | `POST /v3/webhooks/activate` | aucun | `200` activé · **`204` aucun webhook** | **Oui** ; l'activation n'aboutit que si l'URL répond `200` |
+| Désactiver | `POST /v3/webhooks/deactivate` | aucun | `200` désactivé · **`204` aucun webhook** | Non |
+| Supprimer | `DELETE /v3/webhooks/{webhook-id}` | aucun | `204` supprimé · `404` introuvable | Non |
+
+- **Format d'erreur** : `{"timestamp", "status", "errorType", "message", "corrId"}`.
+  Le `corrId` sert à contacter le support (b2bhelpdesk@polar.com).
+- **PING** : `POST` vers l'URL, avec les en-têtes `Polar-Webhook-Event: PING` et
+  `Polar-Webhook-Signature`, et le corps `{"timestamp": "…", "event": "PING"}`. Il doit recevoir `200 OK`.
+- **Pas d'événement Nightly Recharge** : la liste ci-dessus est exhaustive. Le Nightly Recharge
+  se récupère à la réception de `SLEEP` (voir §3).
+- **⚠ Le PING de création arrive avant que l'on connaisse le secret.** Le `signature_secret_key`
+  n'est renvoyé que dans la réponse à `POST /v3/webhooks`, une fois le PING validé. La route
+  webhook (POL-08) doit donc **répondre `200` à un PING même sans pouvoir vérifier sa
+  signature**, par exemple quand `POLAR_WEBHOOK_SECRET` n'est pas encore défini. Un PING ne
+  déclenche aucun traitement, donc l'accepter sans vérification ne présente pas de risque.
+  Tous les autres événements doivent être signés et vérifiés.
+
+### 6.2 Script d'administration (`npm run polar:webhook`)
+
+`scripts/polar-webhook.ts` (POL-07). Il lit `POLAR_CLIENT_ID` et `POLAR_CLIENT_SECRET` dans
+`.env.local`, ou dans le fichier donné par `--env-file`.
+
+```bash
+npm run polar:webhook -- get
+npm run polar:webhook -- create          # défaut : https://afeia.fr/api/webhooks/polar, événements MVP
+npm run polar:webhook -- create --url https://… --events SLEEP,CONTINUOUS_HEART_RATE,ACTIVITY_SUMMARY
+npm run polar:webhook -- update --events SLEEP,ACTIVITY_SUMMARY
+npm run polar:webhook -- activate
+npm run polar:webhook -- deactivate
+npm run polar:webhook -- delete          # demande confirmation (--yes pour passer)
+```
+
+- `create` refuse de continuer si le client a déjà un webhook. Il fait d'abord sa propre
+  pré-vérification, un PING vers l'URL (que `--skip-preflight` désactive), puis il affiche
+  **une seule fois** le `signature_secret_key`, encadré. Ce secret est à copier dans
+  `POLAR_WEBHOOK_SECRET` sur Vercel, puis il faut redéployer. Le script ne l'écrit nulle part.
+- Si le secret est perdu, la seule solution est `delete` puis `create`, qui en donne un nouveau.
+- `POLAR_WEBHOOK_SECRET` est **obligatoire en production Vercel** (`VERCEL_ENV=production`) et
+  facultatif ailleurs (`lib/wearables/polar/env.ts`).
+- Ordre de mise en service : déployer POL-08, puis lancer `create`, copier le secret dans
+  Vercel, redéployer, et enfin vérifier avec `get`.
+
 - **Filet de sécurité** : `GET /v3/notifications` (identifiants client) liste les données
   disponibles. Son exemple de réponse renvoie toutefois vers les URL `activity-transactions`
   dépréciées : l'intérêt de cet endpoint hors transactions est **à vérifier**.
+
+### 6.3 Réception et traitement (POL-08)
+
+- **Route** `POST /api/webhooks/polar` (`app/api/webhooks/polar/route.ts`) :
+  1. elle lit le corps brut ;
+  2. un PING reçoit `200` sans rien enregistrer ;
+  3. pour tout autre événement, elle vérifie le HMAC avec `POLAR_WEBHOOK_SECRET`, et répond `401` si la signature ou le secret manque ;
+  4. elle enregistre l'événement dans `wearable_events`, répond `200`, puis lance le traitement avec `waitUntil` de `@vercel/functions`. Next 14 n'a pas `after()`.
+- **Une ligne par ressource** : la clé d'idempotence est `polar:{event}:{user_id}:{date|entity_id}`,
+  sans timestamp. Un doublon met à jour `last_notified_at`. Si l'événement était `done`,
+  `failed` ou `ignored`, il repasse en `pending` avec `attempts` remis à 0, et il est retraité.
+- **Notification pendant le traitement** : si `last_notified_at` est plus récent que
+  `processing_started_at` à la fin du traitement, l'événement repasse en `pending` et il est
+  retraité une fois.
+- **`processPolarEvent`** (`lib/wearables/polar/process-event.ts`) :
+  - un utilisateur Polar inconnu ou révoqué donne `ignored` ;
+  - le jeton n'est envoyé qu'à `https://www.polaraccesslink.com/v3/…` ;
+  - après un `SLEEP`, elle va chercher `/v3/users/nightly-recharge/{date}`. Si la réponse est
+    vide, elle crée un événement interne `NIGHTLY_RECHARGE` en `pending`, à rejouer dans 6 h ;
+  - un `401` ou `403` de Polar met la connexion en `error` avec le message « Accès révoqué
+    côté Polar, reconnexion nécessaire » ;
+  - le stockage se fait dans `wearable_raw` via `ingestPolarResource` (POL-10).
+
+### 6.4 Rattrapage quotidien et surveillance (POL-09)
+
+- **Cron Vercel** `GET /api/cron/polar-sync`, déclaré dans `vercel.json` avec `0 3 * * *` (UTC).
+  Les crons Vercel sont en UTC : cela donne 4 h à Paris en hiver (CET) et 5 h en été (CEST).
+  La route exige `Authorization: Bearer ${CRON_SECRET}` et répond `401` sinon, y compris
+  quand `CRON_SECRET` n'est pas défini.
+- **Ordre d'exécution** (`lib/wearables/polar/sync.ts`) :
+  1. **Webhook** : `GET /v3/webhooks`. S'il est absent ou inactif, un e-mail part à l'équipe,
+     par le même canal que les inscriptions praticien (`sendEmail` vers `adminEmails()`).
+     L'alerte est renvoyée chaque jour tant que le problème dure.
+  2. **Connexions `active`**, par lots de 5, les moins récemment synchronisées d'abord. Pour
+     chacune, le cron lit sommeil, Nightly Recharge, FC continue et activité sur les 3
+     derniers jours (12 appels) et les ingère avec `ingestPolarResource`, qui est idempotent.
+     - Un `401` ou `403` met la connexion en `error` (« Accès révoqué côté Polar, reconnexion nécessaire »).
+     - Une synchronisation réussie met à jour `last_sync_at`.
+  3. **Rejeu** avec `wearable_requeue_due_events` : les événements `failed` avec moins de 5
+     tentatives et dus, les `pending` dus (dont les Nightly Recharge différés) et les
+     `processing` bloqués depuis plus de 15 min. `attempts` n'est pas remis à zéro.
+- **Budget** : `maxDuration = 300` s, et le traitement s'arrête de lui-même 60 s avant. Les
+  connexions restantes sont reportées au lendemain et comptées dans `deferred`.
+- **Coût en requêtes** : 12 appels par connexion et par jour, bien en dessous de la limite de
+  15 min (`500 + 20 × n`).
+- **Journal** : un récapitulatif par exécution, avec les connexions (total, traitées,
+  reportées, révoquées, en erreur), les ressources ingérées, les événements rejoués par
+  résultat, l'état du webhook et les erreurs.
 
 ## 7. Limites de débit
 
@@ -208,7 +308,7 @@ Tous les endpoints à « transactions » sont dépréciés : **n'en utiliser auc
    (date maximale, plage maximale), et si les données antérieures à l'enregistrement sont accessibles.
 4. Si Nightly Recharge est disponible dès la réception du webhook `SLEEP`, ou plus tard.
 5. Si les échantillons d'activité sont couverts par l'événement `ACTIVITY_SUMMARY`.
-6. Le calcul exact de la signature (octets bruts du corps, encodage hexadécimal en minuscules).
+6. Le calcul exact de la signature (octets bruts du corps, encodage hexadécimal en minuscules), et si le PING de création est signé avec la clé qui sera renvoyée.
 7. La politique de nouvelle tentative des webhooks avant la désactivation au bout de 7 jours.
 8. Si la Loop alimente la température cutanée, la température corporelle, les contacts peau et Cardio load dans AccessLink.
 9. Le sens du code `204` sur `POST /v3/users`.

@@ -21,6 +21,13 @@ export const POLAR_ENV_VARS = [
   'POLAR_STATE_SECRET',
 ] as const;
 
+/**
+ * Secret de signature des webhooks (signature_secret_key renvoyé par Polar à la création,
+ * voir scripts/polar-webhook.ts). Obligatoire en production Vercel (VERCEL_ENV=production),
+ * facultatif ailleurs : il n'existe qu'après `npm run polar:webhook create`.
+ */
+export const POLAR_WEBHOOK_SECRET_VAR = 'POLAR_WEBHOOK_SECRET';
+
 /** Longueur minimale du secret de signature du state OAuth (≥ 256 bits en hex/base64). */
 export const POLAR_STATE_SECRET_MIN_LENGTH = 32;
 
@@ -59,6 +66,8 @@ export type PolarConfig = {
   redirectUri: string;
   /** Secret HMAC du paramètre `state` OAuth (propre à Afeia, pas fourni par Polar). */
   stateSecret: string;
+  /** Secret HMAC des webhooks Polar ; null tant que le webhook n'est pas créé (hors production). */
+  webhookSecret: string | null;
 };
 
 export class PolarConfigError extends Error {
@@ -100,7 +109,19 @@ export function parsePolarConfig(
     clientSecret: result.data.POLAR_CLIENT_SECRET,
     redirectUri: result.data.POLAR_REDIRECT_URI,
     stateSecret: result.data.POLAR_STATE_SECRET,
+    webhookSecret: parseWebhookSecret(env),
   };
+}
+
+function parseWebhookSecret(env: Record<string, string | undefined>): string | null {
+  const value = env[POLAR_WEBHOOK_SECRET_VAR]?.trim() || null;
+  if (!value && env.VERCEL_ENV === 'production') {
+    throw new PolarConfigError(
+      [POLAR_WEBHOOK_SECRET_VAR],
+      [`${POLAR_WEBHOOK_SECRET_VAR} est obligatoire en production (npm run polar:webhook create)`]
+    );
+  }
+  return value;
 }
 
 let cached: PolarConfig | null = null;

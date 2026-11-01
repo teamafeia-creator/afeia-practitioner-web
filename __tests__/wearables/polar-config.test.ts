@@ -19,6 +19,7 @@ describe('parsePolarConfig', () => {
       clientSecret: 'client-secret-test',
       redirectUri: 'http://localhost:3000/api/wearables/polar/callback',
       stateSecret: 'state-secret-for-tests-0123456789abcdef',
+      webhookSecret: null,
     });
   });
 
@@ -56,6 +57,18 @@ describe('parsePolarConfig', () => {
       expect(error).toBeInstanceOf(PolarConfigError);
       expect((error as PolarConfigError).variables).toEqual([...POLAR_ENV_VARS]);
     }
+  });
+
+  it('POLAR_WEBHOOK_SECRET : facultatif hors production, lu quand présent', () => {
+    expect(parsePolarConfig({ ...validEnv, VERCEL_ENV: 'preview' }).webhookSecret).toBeNull();
+    expect(parsePolarConfig({ ...validEnv, POLAR_WEBHOOK_SECRET: 'whsec' }).webhookSecret).toBe('whsec');
+  });
+
+  it('POLAR_WEBHOOK_SECRET : obligatoire en production Vercel, erreur qui le nomme', () => {
+    expect(() => parsePolarConfig({ ...validEnv, VERCEL_ENV: 'production' })).toThrow('POLAR_WEBHOOK_SECRET');
+    expect(() =>
+      parsePolarConfig({ ...validEnv, VERCEL_ENV: 'production', POLAR_WEBHOOK_SECRET: 'whsec' })
+    ).not.toThrow();
   });
 
   it('refuse un POLAR_STATE_SECRET trop court', () => {
