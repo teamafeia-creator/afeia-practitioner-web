@@ -14,14 +14,16 @@ export const POLAR_CONNECT_REASONS = [
 
 export type PolarConnectReason = (typeof POLAR_CONNECT_REASONS)[number];
 
+// Vocabulaire patient : « objet connecté », jamais la marque (sauf l'adresse du compte
+// Polar, nécessaire pour accepter les consentements).
 export const POLAR_CONNECT_MESSAGES: Record<PolarConnectReason | 'connected', string> = {
-  connected: "Votre Polar est connecté. Vos données apparaîtront après la prochaine synchronisation de votre Polar avec l'app Polar Flow.",
-  access_denied: "Vous avez refusé l'accès sur Polar. Aucune donnée n'a été partagée ; vous pouvez réessayer quand vous voulez.",
-  polar_error: 'Polar a interrompu la connexion. Réessayez dans quelques minutes.',
+  connected: 'Votre objet connecté est relié à Afeia.',
+  access_denied: "Vous avez refusé l'accès. Aucune donnée n'a été partagée ; vous pouvez réessayer quand vous voulez.",
+  polar_error: "La connexion de votre objet connecté a été interrompue. Réessayez dans quelques minutes.",
   polar_consents_missing:
-    "Polar demande d'accepter ses consentements obligatoires avant de partager vos données. Acceptez-les sur account.polar.com, puis reconnectez votre Polar.",
-  token_exchange_failed: 'La connexion avec Polar a échoué. Réessayez.',
-  register_failed: 'Polar a refusé la connexion. Réessayez dans quelques minutes.',
+    "Votre compte doit d'abord accepter les consentements obligatoires sur account.polar.com. Acceptez-les, puis reconnectez votre objet connecté.",
+  token_exchange_failed: 'La connexion de votre objet connecté a échoué. Réessayez.',
+  register_failed: 'La connexion a été refusée. Réessayez dans quelques minutes.',
   save_failed: "La connexion n'a pas pu être enregistrée. Réessayez.",
   server_error: 'Un problème technique a empêché la connexion. Réessayez dans quelques minutes.',
 };
