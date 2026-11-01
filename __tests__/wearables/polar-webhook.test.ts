@@ -286,12 +286,13 @@ describe('POST /api/webhooks/polar : file et traitement', () => {
     expect(ingest).not.toHaveBeenCalled();
   });
 
-  it('échec HTTP Polar → failed avec erreur, attempts 1', async () => {
-    polarResponses[SLEEP_URL] = () => new Response('oops', { status: 500 });
+  it('échec HTTP Polar → failed avec erreur, attempts 1 (4xx : pas de nouvelle tentative)', async () => {
+    polarResponses[SLEEP_URL] = () => new Response('oops', { status: 400 });
     await POST(signed(sleepBody()));
     await drainBackground();
     expect(events[0]).toMatchObject({ status: 'failed', attempts: 1 });
-    expect(events[0].last_error).toContain('HTTP 500');
+    expect(events[0].last_error).toContain('HTTP 400');
+    expect(fetchMock.mock.calls.filter(([u]) => String(u) === SLEEP_URL)).toHaveLength(1);
     expect(markSynced).not.toHaveBeenCalled();
     expect(markError).not.toHaveBeenCalled();
   });

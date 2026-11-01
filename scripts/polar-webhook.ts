@@ -20,8 +20,9 @@
 import { existsSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs } from 'node:util';
+import { polarRequest } from '../lib/wearables/polar/client';
 
-const API = 'https://www.polaraccesslink.com/v3/webhooks';
+const WEBHOOKS_PATH = '/v3/webhooks';
 const DEFAULT_URL = 'https://afeia.fr/api/webhooks/polar';
 /** Événements du périmètre MVP (fiche §3). Il n'existe pas d'événement Nightly Recharge. */
 const MVP_EVENTS = ['SLEEP', 'CONTINUOUS_HEART_RATE', 'ACTIVITY_SUMMARY'] as const;
@@ -71,7 +72,7 @@ if (!clientId || !clientSecret) {
   console.error('POLAR_CLIENT_ID et POLAR_CLIENT_SECRET sont requis (voir .env.example).');
   process.exit(2);
 }
-const basicAuth = 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+const basic = { clientId, clientSecret };
 
 function parseEvents(raw: string | undefined): string[] | undefined {
   if (raw === undefined) return undefined;
@@ -92,24 +93,16 @@ function parseUrl(raw: string | undefined): string | undefined {
 // ---------------------------------------------------------------------------
 // HTTP
 // ---------------------------------------------------------------------------
-async function call(method: string, path = '', body?: unknown): Promise<{ status: number; json: unknown }> {
-  const res = await fetch(`${API}${path}`, {
+/** Appel AccessLink via le client commun (quotas, nouvelles tentatives) ; statuts métier remontés tels quels. */
+async function call(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path = '', body?: unknown): Promise<{ status: number; json: unknown }> {
+  const { status, data } = await polarRequest(`${WEBHOOKS_PATH}${path}`, {
+    basic,
     method,
-    headers: {
-      Authorization: basicAuth,
-      Accept: 'application/json',
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
+    body,
+    passthroughStatuses: [400, 404, 409],
+    emptyStatuses: [204],
   });
-  const text = await res.text();
-  let json: unknown = null;
-  try {
-    json = text ? JSON.parse(text) : null;
-  } catch {
-    json = text;
-  }
-  return { status: res.status, json };
+  return { status, json: data };
 }
 
 function polarError(json: unknown): string {

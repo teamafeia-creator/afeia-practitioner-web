@@ -359,6 +359,43 @@ Chaque ligne porte `consultant_id`, `provider` et `source_raw_id` (clé étrang�
   Il vide les 4 tables (`wearable_truncate_normalized()`), relit `wearable_raw` par pages de
   500 et réapplique les mappers. On peut le relancer sans risque.
 
+### 6.7 Import de l'historique à la connexion (POL-14)
+
+- **Déclenchement** : juste après `saveConnection`, le callback OAuth lance `runBackfill` en
+  arrière-plan (`waitUntil`) ; la redirection ne l'attend pas. `wearable_save_connection` remet
+  `backfill_status` à `pending` et efface le curseur, aussi à chaque reconnexion.
+- **Période** : `backfill_days` (90 jours par défaut, 365 au plus) jusqu'à aujourd'hui. Elle est
+  parcourue **du plus récent au plus ancien, par tranches de 28 jours au plus**
+  (`lib/wearables/polar/backfill.ts`). Chaque type est borné par l'historique disponible chez Polar :
+
+  | Type | Profondeur | Requêtes |
+  |---|---|---|
+  | activité | 365 j | `GET /v3/users/activities?from=&to=`, une par tranche |
+  | sommeil | 28 j | `GET /v3/users/sleep` (liste des 28 derniers jours), une fois |
+  | Nightly Recharge | 28 j | `GET /v3/users/nightly-recharge`, une fois |
+  | FC continue | 28 j (**à vérifier**, non documentée) | `GET /v3/users/continuous-heart-rate/{date}`, une par jour : la forme de la réponse sur une plage n'est pas documentée |
+
+  Pour 90 jours, cela représente environ 34 requêtes, bien en dessous des quotas.
+- **Avancement** (`wearable_connections`) :
+  - `backfill_status` vaut `pending`, `running`, `done` ou `failed` ;
+  - `backfill_cursor` est la date la plus ancienne importée, enregistrée après **chaque tranche** ;
+  - `backfill_updated_at` sert à repérer un import bloqué.
+
+  La prise en charge est atomique (`wearable_claim_backfill`) : le callback et le cron ne lancent
+  jamais deux fois le même import. Un `running` resté sans progrès pendant plus de 10 min est repris.
+- **Interruptions** :
+  - durée dépassée (arrêt avant `maxDurationMs`), quota Polar ou erreur passagère → `pending`,
+    avec le curseur conservé. Le cron reprend l'import à la tranche suivante. Une tranche
+    interrompue en cours de route est refaite, ce qui est sans effet grâce à l'upsert ;
+  - `401` ou `403` → `failed`, et la connexion passe en `error`.
+- **Cron** : avant le rattrapage quotidien, `polar-sync` reprend les imports `pending` ou `running`
+  des connexions actives, sur la moitié de son budget de temps au plus.
+- **Interface** : la vue `wearable_connection_overview` expose `backfill_status` et
+  `backfill_cursor`. `WearableConnectionCard` affiche « Import de l'historique en cours » tant
+  que l'import n'est pas terminé, et l'état est rafraîchi toutes les 15 s pendant ce temps.
+- **Pas de doublon** : relancer l'import, par exemple après une reconnexion, refait les mêmes
+  upserts sur `wearable_raw` et sur les tables normalisées.
+
 ## 7. Limites de débit
 
 Source : [AccessLink §Rate limiting](https://www.polar.com/accesslink-api/).

@@ -6,13 +6,13 @@
 //  3. état du webhook ; alerte à l'équipe s'il est absent ou inactif.
 // Traitement par lots, avec un budget de temps pour rester sous maxDuration.
 import 'server-only';
-import { getAccessToken, listActiveConnections, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
+import { getAccessToken, listActiveConnections, listBackfillsToResume, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
 import { requeueDueEvents } from '@/lib/wearables/events';
 import { alertWebhookDown } from './alerts';
-import { fetchPolar, getWebhookStatus, isAccessRevoked } from './api';
+import { runBackfill, type BackfillOutcome } from './backfill';
+import { PolarRateLimitError, getWebhookStatus, isAccessRevoked, polarFetch } from './api';
 import { ingestPolarResource, type WearableDataType } from '@/lib/wearables/ingest';
 import { processPolarEvent, REVOKED_MESSAGE } from './process-event';
-import { POLAR_API_ORIGIN } from './webhook';
 
 const LOG = '[cron/polar-sync]';
 export const BACKFILL_DAYS = 3;
@@ -40,6 +40,10 @@ export type SyncSummary = {
   resources: { ingested: number; empty: number };
   replay: { due: number; done: number; failed: number; ignored: number; skipped: number };
   webhook: { checked: boolean; active: boolean | null; alerted: boolean };
+  /** Imports d'historique repris (POL-14), par résultat. */
+  backfill: Record<BackfillOutcome, number>;
+  /** Quota Polar presque épuisé : arrêt anticipé, reprise au prochain passage. */
+  rateLimited: { at: string; retryAt: string | null } | null;
   errors: string[];
   durationMs: number;
 };
@@ -55,14 +59,14 @@ async function backfillConnection(
   try {
     for (const date of dates) {
       for (const r of DAILY_RESOURCES) {
-        const fetched = await fetchPolar(`${POLAR_API_ORIGIN}${r.path(date)}`, token);
-        if (fetched.status === 'empty') {
+        const fetched = await polarFetch(r.path(date), { token });
+        if (fetched === null) {
           summary.resources.empty += 1;
           continue;
         }
         // Pas de `+= await` : les connexions d'un lot tournent en parallèle, et `x += await y`
         // lirait x avant l'attente (incréments perdus).
-        const ingested = await ingestPolarResource(r.dataType, fetched.json, c.consultantId, {
+        const ingested = await ingestPolarResource(r.dataType, fetched, c.consultantId, {
           providerUserId: c.providerUserId,
           date,
           sourceEventId: null,
@@ -73,6 +77,8 @@ async function backfillConnection(
     await markSynced(c.consultantId, 'polar');
     summary.connections.processed += 1;
   } catch (error) {
+    // Quota Polar épuisé : on arrête le rattrapage (remonté à runPolarSync).
+    if (error instanceof PolarRateLimitError) throw error;
     if (isAccessRevoked(error)) {
       await markError(c.consultantId, 'polar', REVOKED_MESSAGE);
       summary.connections.revoked += 1;
@@ -93,6 +99,8 @@ export async function runPolarSync(opts: { budgetMs?: number; now?: Date } = {})
     resources: { ingested: 0, empty: 0 },
     replay: { due: 0, done: 0, failed: 0, ignored: 0, skipped: 0 },
     webhook: { checked: false, active: null, alerted: false },
+    backfill: { done: 0, paused: 0, rate_limited: 0, failed: 0, skipped: 0, error: 0 },
+    rateLimited: null,
     errors: [],
     durationMs: 0,
   };
@@ -109,20 +117,47 @@ export async function runPolarSync(opts: { budgetMs?: number; now?: Date } = {})
     summary.errors.push(`webhook : ${sanitizeErrorMessage((error as Error).message ?? 'erreur')}`);
   }
 
+  // 1 bis. Imports d'historique non terminés (connexion récente interrompue, quota, échec passager).
+  //        La moitié du budget au plus, pour garder du temps pour le rattrapage quotidien.
+  const backfillDeadline = started + budgetMs / 2;
+  for (const connectionId of await listBackfillsToResume('polar')) {
+    const remaining = backfillDeadline - Date.now();
+    if (remaining <= 0) break;
+    const result = await runBackfill(connectionId, { maxDurationMs: remaining, today: opts.now?.toISOString().slice(0, 10) });
+    summary.backfill[result.outcome] += 1;
+    if (result.outcome === 'rate_limited') {
+      summary.rateLimited = { at: 'import historique', retryAt: null };
+      break;
+    }
+  }
+
   // 2. Rattrapage des connexions actives, par lots, les moins récemment synchronisées d'abord.
   const dates = lastDays(BACKFILL_DAYS, opts.now);
-  const connections = await listActiveConnections('polar');
+  const connections = summary.rateLimited ? [] : await listActiveConnections('polar');
   summary.connections.total = connections.length;
   for (let i = 0; i < connections.length; i += BATCH_SIZE) {
     if (outOfTime()) {
       summary.connections.deferred = connections.length - i;
       break;
     }
-    await Promise.all(connections.slice(i, i + BATCH_SIZE).map((c) => backfillConnection(c, dates, summary)));
+    const batch = connections.slice(i, i + BATCH_SIZE);
+    const results = await Promise.allSettled(batch.map((c) => backfillConnection(c, dates, summary)));
+    const limited = results.find(
+      (r): r is PromiseRejectedResult => r.status === 'rejected' && r.reason instanceof PolarRateLimitError
+    );
+    if (limited) {
+      const err = limited.reason as PolarRateLimitError;
+      summary.rateLimited = { at: 'rattrapage', retryAt: err.retryAt?.toISOString() ?? null };
+      summary.connections.deferred = connections.length - i - results.filter((r) => r.status === 'fulfilled').length;
+      break;
+    }
+    for (const r of results) {
+      if (r.status === 'rejected') throw r.reason; // erreur inattendue (base) : remontée telle quelle
+    }
   }
 
-  // 3. Rejeu des événements.
-  if (!outOfTime()) {
+  // 3. Rejeu des événements (pas de rejeu si le quota Polar est atteint).
+  if (!outOfTime() && !summary.rateLimited) {
     const due = await requeueDueEvents({ maxAttempts: MAX_ATTEMPTS });
     summary.replay.due = due.length;
     for (const event of due) {
@@ -143,6 +178,8 @@ export async function runPolarSync(opts: { budgetMs?: number; now?: Date } = {})
     ressources: summary.resources,
     rejeu: summary.replay,
     webhook: summary.webhook,
+    import_historique: summary.backfill,
+    quota: summary.rateLimited,
     erreurs: summary.errors.length,
     durée_ms: summary.durationMs,
   });

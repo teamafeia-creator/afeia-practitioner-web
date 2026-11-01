@@ -5,7 +5,9 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 export const SIGNATURE_HEADER = 'polar-webhook-signature';
 export const EVENT_HEADER = 'polar-webhook-event';
-export const POLAR_API_ORIGIN = 'https://www.polaraccesslink.com';
+import { POLAR_API_ORIGIN } from './client';
+
+export { POLAR_API_ORIGIN };
 
 /** HMAC-SHA256 (hex) du corps BRUT, comparé en temps constant. */
 export function verifyPolarSignature(rawBody: string, signature: string | null, secret: string): boolean {

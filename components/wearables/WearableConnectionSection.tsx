@@ -4,9 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { showToast } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import type { WearableConnectionOverview } from '@/lib/wearables/display';
+import { isBackfillInProgress, type WearableConnectionOverview } from '@/lib/wearables/display';
 import { polarConnectMessage } from '@/lib/wearables/polar/messages';
 import { WearableConnectionCard } from './WearableConnectionCard';
+
+export const BACKFILL_POLL_MS = 15_000;
 
 async function authHeader(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession();
@@ -44,6 +46,14 @@ export function WearableConnectionSection() {
   useEffect(() => {
     loadStatus();
   }, [loadStatus]);
+
+  // Import d'historique en cours : on rafraîchit l'état jusqu'à la fin de l'import.
+  const backfilling = isBackfillInProgress(connection);
+  useEffect(() => {
+    if (!backfilling) return;
+    const timer = setInterval(loadStatus, BACKFILL_POLL_MS);
+    return () => clearInterval(timer);
+  }, [backfilling, loadStatus]);
 
   // Retour du flux OAuth : toast, puis retrait de wearable/reason de l'URL.
   useEffect(() => {
