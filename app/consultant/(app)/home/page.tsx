@@ -101,6 +101,23 @@ export default function ConsultantHomePage() {
         }
       }
 
+      // Dernier recours côté serveur : retrouve la fiche (et crée le lien
+      // consultant_memberships s'il manque, cas d'un consultant activé sur le web).
+      if (!consultantData) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const accessToken = sessionData.session?.access_token
+        if (accessToken) {
+          const res = await fetch('/api/consultant/me', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            cache: 'no-store'
+          })
+          if (res.ok) {
+            const body = await res.json()
+            consultantData = body.consultant ?? null
+          }
+        }
+      }
+
       if (!consultantData) {
         console.error('Consultant non trouvé')
         setLoading(false)
