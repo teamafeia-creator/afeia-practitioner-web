@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabaseConsultant as supabase } from '@/lib/supabase-consultant'
 import { Lock, CheckCircle } from 'lucide-react'
 
 function RegisterForm() {

@@ -68,13 +68,22 @@ export async function GET(request: NextRequest) {
   if (consultant.practitioner_id) {
     const { data, error: practitionerError } = await supabase
       .from('practitioners')
-      .select('name, full_name, phone, email')
+      .select('full_name, first_name, last_name, professional_phone, booking_phone, email')
       .eq('id', consultant.practitioner_id)
       .maybeSingle();
     if (practitionerError) {
       console.warn('[consultant/me] praticien illisible', { consultantId, code: practitionerError.code });
     }
-    practitioner = data ?? null;
+    if (data) {
+      // Même forme que l'ancienne jointure `practitioners(name, full_name, phone, email)` attendue par l'accueil.
+      const fullName = data.full_name || [data.first_name, data.last_name].filter(Boolean).join(' ') || null;
+      practitioner = {
+        name: fullName,
+        full_name: fullName,
+        phone: data.professional_phone || data.booking_phone || null,
+        email: data.email ?? null,
+      };
+    }
   }
 
   return NextResponse.json(

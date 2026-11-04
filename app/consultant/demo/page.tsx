@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { supabaseConsultant as supabase } from '@/lib/supabase-consultant'
 import { ClipboardList, Pill, User, Pencil, MessageSquare } from 'lucide-react'
 
 export default function ConsultantDemoPage() {

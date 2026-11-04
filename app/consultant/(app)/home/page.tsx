@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabaseConsultant as supabase } from '@/lib/supabase-consultant'
 import { useRouter } from 'next/navigation'
 import { Toaster } from '@/components/ui'
 import { WearableConnectionSection } from '@/components/wearables/WearableConnectionSection'

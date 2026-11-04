@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { supabase } from '../../../lib/supabase';
+import { supabaseConsultant as supabase } from '@/lib/supabase-consultant';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Textarea } from '../../../components/ui/Textarea';
