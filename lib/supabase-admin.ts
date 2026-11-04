@@ -15,7 +15,10 @@ export function getSupabaseAdmin(): SupabaseClient {
       throw new Error('Missing Supabase environment variables');
     }
 
-    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // fetch sans cache : voir noStoreFetch dans lib/server/supabaseAdmin.ts.
+    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
+    });
   }
 
   return supabaseAdmin;
