@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabaseConsultant as supabase } from '@/lib/supabase-consultant'
 
 export default function ConsultantLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()

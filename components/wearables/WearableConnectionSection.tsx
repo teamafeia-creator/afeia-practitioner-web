@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { showToast } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
+import { supabaseConsultant as supabase } from '@/lib/supabase-consultant';
 import { isBackfillInProgress, type WearableConnectionOverview } from '@/lib/wearables/display';
 import { polarConnectMessage } from '@/lib/wearables/polar/messages';
 import { WEARABLES_CONSENT_VERSION } from '@/lib/wearables/consent-text';
