@@ -54,38 +54,51 @@ export async function resolveConsultantId(
       return null;
     }
 
-    // Look up membership
-    const { data: membership } = await supabase
+    // Look up membership (limit(1) : une ligne en double ne doit pas tout bloquer)
+    const { data: memberships, error: membershipError } = await supabase
       .from('consultant_memberships')
       .select('consultant_id')
       .eq('consultant_user_id', user.id)
-      .maybeSingle();
+      .limit(1);
 
-    if (membership?.consultant_id) {
-      return membership.consultant_id;
+    if (membershipError) {
+      console.warn('[mobile-auth] lecture membership impossible', { userId: user.id, code: membershipError.code });
+    }
+    if (memberships?.[0]?.consultant_id) {
+      return memberships[0].consultant_id as string;
     }
 
     // Auto-fix: create membership when a consultant with matching email exists
     if (user.email) {
-      const { data: consultantByEmail } = await supabase
+      const { data: consultantsByEmail, error: emailError } = await supabase
         .from('consultants')
         .select('id')
-        .eq('email', user.email)
-        .maybeSingle();
+        .eq('email', user.email.trim().toLowerCase())
+        .limit(2);
 
-      if (consultantByEmail) {
+      if (emailError) {
+        console.warn('[mobile-auth] recherche par e-mail impossible', { userId: user.id, code: emailError.code });
+      } else if ((consultantsByEmail?.length ?? 0) > 1) {
+        // Plusieurs fiches pour le même e-mail : on ne devine pas laquelle relier.
+        console.warn('[mobile-auth] plusieurs fiches consultant pour cet e-mail', { userId: user.id });
+      } else if (consultantsByEmail?.[0]) {
+        const consultantId = consultantsByEmail[0].id as string;
         const { error: createError } = await supabase
           .from('consultant_memberships')
-          .insert({ consultant_id: consultantByEmail.id, consultant_user_id: user.id });
+          .insert({ consultant_id: consultantId, consultant_user_id: user.id });
 
         if (!createError) {
-          return consultantByEmail.id;
+          return consultantId;
         }
+        console.warn('[mobile-auth] création membership impossible', { userId: user.id, consultantId, code: createError.code });
+      } else {
+        console.warn('[mobile-auth] aucune fiche consultant pour cet utilisateur', { userId: user.id });
       }
     }
 
     return null;
-  } catch {
+  } catch (error) {
+    console.warn('[mobile-auth] résolution du consultant impossible', { message: (error as Error).message });
     return null;
   }
 }
