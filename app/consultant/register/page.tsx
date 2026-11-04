@@ -268,6 +268,21 @@ function RegisterForm() {
         }
       }
 
+      // 8. Lier le compte auth à la fiche consultant (consultant_memberships), côté serveur.
+      // Indispensable quand la fiche a été créée par le praticien : son ID diffère de l'ID auth.
+      try {
+        const { data: linkedSession } = await supabase.auth.getSession()
+        const accessToken = linkedSession.session?.access_token
+        if (accessToken) {
+          await fetch('/api/consultant/me', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            cache: 'no-store'
+          })
+        }
+      } catch (linkError) {
+        console.warn('Liaison du compte consultant différée:', linkError)
+      }
+
       console.log('═══════════════════════════════════════')
       console.log('ACTIVATION RÉUSSIE')
       console.log('Email:', normalizedEmail)
