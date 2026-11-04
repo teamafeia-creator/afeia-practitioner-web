@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'server_error' }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
   }
   if (!consultant) {
+    console.warn('[consultant/me] fiche introuvable', { consultantId });
     return NextResponse.json({ error: 'not_found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   }
 
