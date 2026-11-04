@@ -6,8 +6,6 @@ import { ArrowLeft, Download, MessageSquare, MoreHorizontal, Pencil, Trash2, Cal
 import { cn } from '@/lib/cn';
 import { Button } from '@/components/ui/Button';
 
-const SINCE_FORMATTER = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
-
 function getInitials(name?: string | null) {
   if (!name) return '?';
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -17,6 +15,7 @@ function getInitials(name?: string | null) {
 
 export interface DossierHeaderProps {
   name?: string | null;
+  /** Conservés pour compatibilité : l'en-tête n'affiche plus que le nom (canvas du 4 nov.). */
   age?: number | null;
   city?: string | null;
   /** Date de début du suivi (création ou activation du dossier). */
@@ -37,12 +36,6 @@ export interface DossierHeaderProps {
 
 export function DossierHeader({
   name,
-  age,
-  city,
-  followedSince,
-  isPremium,
-  cycleTracking,
-  extraBadges,
   extraActions,
   onMessage,
   onPlanSession,
@@ -69,12 +62,6 @@ export function DossierHeader({
       document.removeEventListener('keydown', handleKey);
     };
   }, [menuOpen]);
-
-  const meta = [
-    age ? `${age} ans` : null,
-    city || null,
-    followedSince ? `Suivi depuis ${SINCE_FORMATTER.format(new Date(followedSince))}` : null,
-  ].filter(Boolean);
 
   const menuItems = [
     onEdit ? { label: 'Modifier', icon: Pencil, onClick: onEdit, danger: false } : null,
@@ -104,25 +91,6 @@ export function DossierHeader({
             <h1 className="truncate font-serif text-[30px] font-medium leading-tight text-charcoal">
               {name || 'Consultant sans nom'}
             </h1>
-            {meta.length > 0 ? (
-              <p className="mt-1 text-sm text-stone">{meta.join(' · ')}</p>
-            ) : null}
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span
-                className={cn(
-                  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                  isPremium ? 'bg-terracotta-light text-terracotta' : 'bg-surface-raised text-stone'
-                )}
-              >
-                {isPremium ? 'Premium' : 'Standard'}
-              </span>
-              {cycleTracking ? (
-                <span className="inline-flex items-center rounded-full bg-sky/15 px-2.5 py-0.5 text-xs font-medium text-sky">
-                  Cycle suivi
-                </span>
-              ) : null}
-              {extraBadges}
-            </div>
           </div>
         </div>
 

@@ -142,6 +142,7 @@ import { IrisViewer } from '../terrain/IrisViewer';
 import { IrisComparison } from '../terrain/IrisComparison';
 import { IrisUploader } from '../terrain/IrisUploader';
 import { SynthesisPanel, type RecordTarget } from './record/SynthesisPanel';
+import { HealthRecordPanel } from './record/HealthRecordPanel';
 import { AnamnesisPanel } from './record/AnamnesisPanel';
 import { TerrainSummary } from './record/TerrainSummary';
 import { ConnectedObjectPanel } from './record/ConnectedObjectPanel';
@@ -267,6 +268,8 @@ const LEGACY_TAB_ALIASES: Record<string, Tab> = {
   'Bague connectée': T.tabBagueConnectee,
   notes: T.tabNotesSeance,
   anamnese: T.tabAnamnese,
+  synthese: T.tabProfil,
+  dossier: T.tabDossierMedical,
   messages: T.tabMessages,
   conseillancier: T.tabConseillancier,
 };
@@ -276,7 +279,7 @@ const SIDEBAR_GROUPS = [
     label: 'Identité',
     items: [
       { tab: T.tabProfil as Tab, label: 'Synthèse', icon: User },
-      { tab: T.tabDossierMedical as Tab, label: 'Dossier de santé', icon: Heart },
+      { tab: T.tabDossierMedical as Tab, label: 'Dossier', icon: Heart },
       { tab: T.tabAnamnese as Tab, label: 'Anamnèse', icon: ClipboardList },
       { tab: T.tabBilanTerrain as Tab, label: 'Bilan de terrain', icon: Leaf },
     ],
@@ -638,6 +641,7 @@ export function ConsultantTabs({
   const [allergiesStructured, setAllergiesStructured] = useState<AllergyEntry[]>(consultant.allergies_structured ?? []);
   const [currentTreatments, setCurrentTreatments] = useState<CurrentTreatmentEntry[]>(consultant.current_treatments ?? []);
   const [relationships, setRelationships] = useState<ConsultantRelationship[]>(consultant.relationships ?? []);
+  const [medicalSource, setMedicalSource] = useState<'practitioner' | 'anamnese'>('practitioner');
 
   const [medicalHistoryModal, setMedicalHistoryModal] = useState<{ open: boolean; editingEntry: MedicalHistoryEntry | null }>({ open: false, editingEntry: null });
   const [allergyModal, setAllergyModal] = useState<{ open: boolean; editingEntry: AllergyEntry | null }>({ open: false, editingEntry: null });
@@ -2161,196 +2165,100 @@ export function ConsultantTabs({
 
       {/* ═══════════════ DOSSIER DE SANTÉ TAB ═══════════════ */}
       {tab === T.tabDossierMedical && (
-        <div className="space-y-4">
-          {/* ─── Antécédents ───── */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <h3 className="text-sm font-semibold">{T.labelAntecedents}</h3>
-                  <p className="text-xs text-stone">Antécédents personnels, familiaux et chirurgicaux.</p>
-                </div>
-                <Button variant="secondary" onClick={() => {
-                  setHistoryForm({ category: 'personal', description: '', year_onset: '', is_active: true, notes: '' });
-                  setMedicalHistoryModal({ open: true, editingEntry: null });
-                }}>
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {medicalHistory.length === 0 ? (
-                <EmptyState icon="clipboard" title="Aucun antécédent" description="Ajoutez les antécédents du consultant." />
-              ) : (
-                <div className="space-y-2">
-                  {(['personal', 'family', 'surgical'] as const).map((cat) => {
-                    const items = medicalHistory.filter((h) => h.category === cat);
-                    if (items.length === 0) return null;
-                    const catLabels: Record<string, string> = { personal: 'Personnel', family: 'Familial', surgical: 'Chirurgical' };
-                    const catVariants: Record<string, 'info' | 'success' | 'warning'> = { personal: 'info', family: 'success', surgical: 'warning' };
-                    return (
-                      <div key={cat}>
-                        <p className="text-xs font-medium text-stone uppercase tracking-wide mb-1">{catLabels[cat]}</p>
-                        {items.map((entry) => (
-                          <div
-                            key={entry.id}
-                            className="flex items-center justify-between rounded-lg bg-surface/60 p-3 border border-divider mb-1 cursor-pointer hover:bg-cream/50"
-                            onClick={() => {
-                              setHistoryForm({
-                                category: entry.category,
-                                description: entry.description,
-                                year_onset: entry.year_onset ? String(entry.year_onset) : '',
-                                is_active: entry.is_active,
-                                notes: entry.notes ?? '',
-                              });
-                              setMedicalHistoryModal({ open: true, editingEntry: entry });
-                            }}
-                          >
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <Badge variant={catVariants[cat]}>{catLabels[cat]}</Badge>
-                              <span className="text-sm text-charcoal truncate">{entry.description}</span>
-                              {entry.year_onset ? <span className="text-xs text-stone">({entry.year_onset})</span> : null}
-                              <Badge variant={entry.is_active ? 'attention' : 'success'}>{entry.is_active ? 'Actif' : 'Résolu'}</Badge>
-                            </div>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteId({ type: 'history', id: entry.id }); }}
-                              className="p-1 rounded text-stone hover:text-rose hover:bg-rose/10 transition-colors"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* ─── Allergies et intolérances ───── */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <h3 className="text-sm font-semibold">{T.labelAllergies}</h3>
-                  <p className="text-xs text-stone">Allergies, intolérances et sensibilités.</p>
-                </div>
-                <Button variant="secondary" onClick={() => {
-                  setAllergyForm({ type: 'allergy', substance: '', severity: '', reaction: '', diagnosed: false, notes: '' });
-                  setAllergyModal({ open: true, editingEntry: null });
-                }}>
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {allergiesStructured.length === 0 ? (
-                <EmptyState icon="alert" title="Aucune allergie" description="Ajoutez les allergies et intolérances du consultant." />
-              ) : (
-                <div className="space-y-2">
-                  {allergiesStructured.map((entry) => {
-                    const typeLabels: Record<string, string> = { allergy: 'Allergie', intolerance: 'Intolérance', sensitivity: 'Sensibilité' };
-                    const typeVariants: Record<string, 'urgent' | 'warning' | 'attention'> = { allergy: 'urgent', intolerance: 'warning', sensitivity: 'attention' };
-                    const sevLabels: Record<string, string> = { mild: 'Légère', moderate: 'Modérée', severe: 'Sévère' };
-                    const sevVariants: Record<string, 'attention' | 'warning' | 'urgent'> = { mild: 'attention', moderate: 'warning', severe: 'urgent' };
-                    return (
-                      <div
-                        key={entry.id}
-                        className="flex items-center justify-between rounded-lg bg-surface/60 p-3 border border-divider cursor-pointer hover:bg-cream/50"
-                        onClick={() => {
-                          setAllergyForm({
-                            type: entry.type,
-                            substance: entry.substance,
-                            severity: entry.severity ?? '',
-                            reaction: entry.reaction ?? '',
-                            diagnosed: entry.diagnosed,
-                            notes: entry.notes ?? '',
-                          });
-                          setAllergyModal({ open: true, editingEntry: entry });
-                        }}
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
-                          <Badge variant={typeVariants[entry.type]}>{typeLabels[entry.type]}</Badge>
-                          <span className="text-sm font-medium text-charcoal">{entry.substance}</span>
-                          {entry.severity ? <Badge variant={sevVariants[entry.severity]}>{sevLabels[entry.severity]}</Badge> : null}
-                          {entry.diagnosed ? <Badge variant="info">Diagnostiquée</Badge> : null}
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteId({ type: 'allergy', id: entry.id }); }}
-                          className="p-1 rounded text-stone hover:text-rose hover:bg-rose/10 transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {allergiesStructured.length > 0 ? (
-                <div className="mt-3 rounded-lg border border-sage/20 bg-sage-light/30 px-3 py-2 text-xs text-sage">
-                  Les allergies de ce consultant sont prises en compte dans les alertes de contre-indication du conseillancier.
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          {/* ─── Traitements en cours ───── */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <h3 className="text-sm font-semibold">{T.labelTraitements}</h3>
-                  <p className="text-xs text-stone">Accompagnements et traitements actuels.</p>
-                </div>
-                <Button variant="secondary" onClick={() => {
-                  setTreatmentForm({ name: '', dosage: '', prescriber: '', start_date: '', is_active: true, notes: '' });
-                  setTreatmentModal({ open: true, editingEntry: null });
-                }}>
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {currentTreatments.length === 0 ? (
-                <EmptyState icon="clipboard" title="Aucun traitement" description="Ajoutez les traitements en cours du consultant." />
-              ) : (
-                <div className="space-y-2">
-                  {currentTreatments.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-center justify-between rounded-lg bg-surface/60 p-3 border border-divider cursor-pointer hover:bg-cream/50"
-                      onClick={() => {
-                        setTreatmentForm({
-                          name: entry.name,
-                          dosage: entry.dosage ?? '',
-                          prescriber: entry.prescriber ?? '',
-                          start_date: entry.start_date ?? '',
-                          is_active: entry.is_active,
-                          notes: entry.notes ?? '',
-                        });
-                        setTreatmentModal({ open: true, editingEntry: entry });
-                      }}
-                    >
-                      <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
-                        <span className="text-sm font-medium text-charcoal">{entry.name}</span>
-                        {entry.dosage ? <span className="text-xs text-stone">{entry.dosage}</span> : null}
-                        {entry.prescriber ? <span className="text-xs text-stone">— {entry.prescriber}</span> : null}
-                        <Badge variant={entry.is_active ? 'info' : 'archived'}>{entry.is_active ? 'En cours' : 'Arrêté'}</Badge>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId({ type: 'treatment', id: entry.id }); }}
-                        className="p-1 rounded text-stone hover:text-rose hover:bg-rose/10 transition-colors"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <HealthRecordPanel
+          firstName={recordFirstName}
+          contacts={{
+            referring_doctor_name: consultantState.referring_doctor_name ?? '',
+            referring_doctor_phone: consultantState.referring_doctor_phone ?? '',
+            emergency_contact_name: consultantState.emergency_contact_name ?? '',
+            emergency_contact_phone: consultantState.emergency_contact_phone ?? '',
+            emergency_contact_relation: consultantState.emergency_contact_relation ?? '',
+          }}
+          answers={anamnesisAnswers}
+          anamnesisDate={(consultantState.consultant_anamnesis as { created_at?: string } | null | undefined)?.created_at ?? null}
+          medicalHistory={medicalHistory}
+          allergies={allergiesStructured}
+          treatments={currentTreatments}
+          plans={plans}
+          onSaveContacts={async (fields) => {
+            const trimmed = Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, v.trim() || null]));
+            const updated = await updateConsultant(consultant.id, trimmed);
+            setConsultantState((prev) => ({ ...prev, ...updated }));
+            setToast({ title: 'Contacts mis à jour', variant: 'success' });
+          }}
+          onAddHistory={(category, prefill, source) => {
+            setMedicalSource(source ?? 'practitioner');
+            setHistoryForm({ category, description: prefill ?? '', year_onset: '', is_active: true, notes: '' });
+            setMedicalHistoryModal({ open: true, editingEntry: null });
+          }}
+          onEditHistory={(entry) => {
+            setHistoryForm({
+              category: entry.category,
+              description: entry.description,
+              year_onset: entry.year_onset ? String(entry.year_onset) : '',
+              is_active: entry.is_active,
+              notes: entry.notes ?? '',
+            });
+            setMedicalHistoryModal({ open: true, editingEntry: entry });
+          }}
+          onDeleteHistory={(id) => setConfirmDeleteId({ type: 'history', id })}
+          onAddAllergy={(prefill, source) => {
+            setMedicalSource(source ?? 'practitioner');
+            setAllergyForm({ type: prefill ? 'intolerance' : 'allergy', substance: prefill ?? '', severity: '', reaction: '', diagnosed: false, notes: '' });
+            setAllergyModal({ open: true, editingEntry: null });
+          }}
+          onEditAllergy={(entry) => {
+            setAllergyForm({
+              type: entry.type,
+              substance: entry.substance,
+              severity: entry.severity ?? '',
+              reaction: entry.reaction ?? '',
+              diagnosed: entry.diagnosed,
+              notes: entry.notes ?? '',
+            });
+            setAllergyModal({ open: true, editingEntry: entry });
+          }}
+          onDeleteAllergy={(id) => setConfirmDeleteId({ type: 'allergy', id })}
+          onAddTreatment={(prefill, source) => {
+            setMedicalSource(source ?? 'practitioner');
+            setTreatmentForm({ name: prefill ?? '', dosage: '', prescriber: '', start_date: '', is_active: true, notes: '' });
+            setTreatmentModal({ open: true, editingEntry: null });
+          }}
+          onEditTreatment={(entry) => {
+            setTreatmentForm({
+              name: entry.name,
+              dosage: entry.dosage ?? '',
+              prescriber: entry.prescriber ?? '',
+              start_date: entry.start_date ?? '',
+              is_active: entry.is_active,
+              notes: entry.notes ?? '',
+            });
+            setTreatmentModal({ open: true, editingEntry: entry });
+          }}
+          onDeleteTreatment={(id) => setConfirmDeleteId({ type: 'treatment', id })}
+          onStopTreatment={async (entry, reason) => {
+            try {
+              const updated = await updateTreatment(entry.id, {
+                is_active: false,
+                stopped_at: new Date().toISOString().slice(0, 10),
+                stop_reason: reason || null,
+              });
+              setCurrentTreatments((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+              setToast({ title: `${entry.name} : arrêt enregistré`, variant: 'success' });
+            } catch (err) {
+              setToast({ title: 'Erreur', description: err instanceof Error ? err.message : 'Impossible d\'enregistrer.', variant: 'error' });
+            }
+          }}
+          onResumeTreatment={async (entry) => {
+            try {
+              const updated = await updateTreatment(entry.id, { is_active: true, stopped_at: null, stop_reason: null });
+              setCurrentTreatments((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+            } catch (err) {
+              setToast({ title: 'Erreur', description: err instanceof Error ? err.message : 'Impossible d\'enregistrer.', variant: 'error' });
+            }
+          }}
+          onOpenPlan={() => setTab(T.tabConseillancier as Tab)}
+        />
       )}
 
       {tab === 'Rendez-vous' && (
@@ -2486,6 +2394,8 @@ export function ConsultantTabs({
 
       {tab === 'Anamnèse' && (
         <AnamnesisPanel
+          consultantId={consultant.id}
+          firstName={recordFirstName}
           answers={anamnesisAnswers}
           setAnswers={setAnamnesisAnswers}
           editing={anamnesisEditing}
@@ -4415,6 +4325,7 @@ export function ConsultantTabs({
                 year_onset: historyForm.year_onset ? Number(historyForm.year_onset) : null,
                 is_active: historyForm.is_active,
                 notes: historyForm.notes.trim() || null,
+                source: medicalSource,
               };
               if (medicalHistoryModal.editingEntry) {
                 const updated = await updateMedicalHistoryEntry(medicalHistoryModal.editingEntry.id, {
@@ -4483,6 +4394,7 @@ export function ConsultantTabs({
                 reaction: allergyForm.reaction.trim() || null,
                 diagnosed: allergyForm.diagnosed,
                 notes: allergyForm.notes.trim() || null,
+                source: medicalSource,
               };
               if (allergyModal.editingEntry) {
                 const updated = await updateAllergy(allergyModal.editingEntry.id, {
@@ -4543,6 +4455,7 @@ export function ConsultantTabs({
                 start_date: treatmentForm.start_date || null,
                 is_active: treatmentForm.is_active,
                 notes: treatmentForm.notes.trim() || null,
+                source: medicalSource,
               };
               if (treatmentModal.editingEntry) {
                 const updated = await updateTreatment(treatmentModal.editingEntry.id, {

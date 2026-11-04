@@ -1,15 +1,26 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Spinner } from '@/components/ui/Spinner';
+import { Toaster } from '@/components/ui/Toaster';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { usePractitionerStats } from '@/hooks/usePractitionerStats';
+import { useConsultantActivity } from '@/hooks/useConsultantActivity';
+import { ConsultantActivityView, type ActivityTab } from '@/components/statistics/ConsultantActivityView';
 import { supabase } from '@/lib/supabase';
 import { eur, urssafQuarter } from '@/lib/invoicing/display';
 import type { ConsultationInvoice } from '@/lib/invoicing/types';
 
-type Period = 'mois' | 'trimestre' | 'annee' | 'douze';
+type Period = 'semaine' | 'mois' | 'trimestre' | 'annee';
+const PERIODS: [Period, string][] = [
+  ['semaine', 'Cette semaine'],
+  ['mois', 'Ce mois'],
+  ['trimestre', 'Trimestre'],
+  ['annee', 'Année'],
+];
+const dm = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' });
 const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const MON = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 const MOTIF_COLORS = ['#E8A87C', '#7B93DB', '#E8C46B', '#A9B8EC', '#E8A5C6', '#F0B8A0'];
@@ -18,6 +29,15 @@ function ranges(p: Period, now: Date) {
   const y = now.getFullYear();
   const m = now.getMonth();
   switch (p) {
+    case 'semaine': {
+      const start = startOfWeek(now);
+      const end = new Date(start.getTime() + 6 * 86400000);
+      return {
+        cur: { start, end: now },
+        prev: { start: new Date(start.getTime() - 7 * 86400000), end: new Date(start.getTime() - 1) },
+        sentence: `Semaine du ${dm.format(start)} au ${dm.format(end)}, comparée à la semaine précédente.`,
+      };
+    }
     case 'mois':
       return {
         cur: { start: new Date(y, m, 1), end: now },
@@ -32,17 +52,11 @@ function ranges(p: Period, now: Date) {
         sentence: `Depuis le 1er ${MONTHS[q * 3]}, comparé au trimestre précédent.`,
       };
     }
-    case 'annee':
+    default:
       return {
         cur: { start: new Date(y, 0, 1), end: now },
         prev: { start: new Date(y - 1, 0, 1), end: new Date(y - 1, 11, 31, 23, 59, 59) },
         sentence: `Depuis le 1er janvier, comparé à ${y - 1}.`,
-      };
-    default:
-      return {
-        cur: { start: new Date(y - 1, m, now.getDate()), end: now },
-        prev: { start: new Date(y - 2, m, now.getDate()), end: new Date(y - 1, m, now.getDate()) },
-        sentence: 'Les 12 derniers mois glissants.',
       };
   }
 }
@@ -67,13 +81,23 @@ function isoWeek(d: Date) {
   return Math.ceil(((t.getTime() - y0.getTime()) / 86400000 + 1) / 7);
 }
 
-export default function StatisticsPage() {
+function StatisticsInner() {
   const { user, loading: authLoading, isAuthenticated } = useRequireAuth('/login');
+  const router = useRouter();
+  const params = useSearchParams();
   const [period, setPeriod] = useState<Period>('mois');
   const now = useMemo(() => new Date(), []);
   const r = useMemo(() => ranges(period, now), [period, now]);
   const { stats, loading } = usePractitionerStats(r.cur);
   const { stats: prev } = usePractitionerStats(r.prev);
+
+  // Vue « Activité des consultants » (?vue=actifs|inactifs), pour que « retour » fonctionne.
+  const vue = params.get('vue');
+  const drill: ActivityTab | null = vue === 'actifs' || vue === 'inactifs' ? vue : null;
+  const openDrill = (t: ActivityTab | null) => router.push(t ? `/statistics?vue=${t}` : '/statistics', { scroll: true });
+  const activity = useConsultantActivity(r.cur, !!drill);
+  const [origin, setOrigin] = useState('');
+  useEffect(() => setOrigin(window.location.origin), []);
 
   const [weeks, setWeeks] = useState<{ v: number; l: string }[]>([]);
   const [invoices, setInvoices] = useState<ConsultationInvoice[]>([]);
@@ -133,11 +157,55 @@ export default function StatisticsPage() {
     );
   }
 
-  const activity = [
-    { l: 'Séances réalisées', v: String(stats.sessionsCount), s: 'Hors séances annulées', ...delta(stats.sessionsCount, prev.sessionsCount) },
-    { l: 'Nouveaux consultants', v: String(stats.newConsultants), s: 'Arrivés sur la période', ...delta(stats.newConsultants, prev.newConsultants) },
-    { l: 'Consultants actifs', v: String(stats.activeConsultants), s: 'Séance, message ou journal sur la période', ...delta(stats.activeConsultants, prev.activeConsultants) },
-    { l: 'Fidélisation', v: stats.totalConsultants ? `${Math.round(stats.retentionRate)} %` : '—', s: 'Consultants venus au moins deux fois', ...delta(stats.retentionRate, prev.retentionRate, 'pts') },
+  const periodPicker = (
+    <div role="group" aria-label="Période" className="flex gap-1 rounded-xl border border-divider bg-surface p-1">
+      {PERIODS.map(([k, l]) => (
+        <button key={k} type="button" aria-pressed={period === k} onClick={() => setPeriod(k)} className={`h-9 rounded-[9px] px-3.5 text-sm font-medium ${period === k ? 'bg-sage-light text-sage' : 'text-[#B8C1CF]'}`}>
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (drill) {
+    const first = (activity.practitioner?.name ?? '').split(' ')[0];
+    return (
+      <div className="flex max-w-[1180px] flex-col gap-6 pb-10">
+        <Toaster />
+        <ConsultantActivityView
+          result={activity.result}
+          loading={activity.loading}
+          error={activity.error}
+          sentence={r.sentence}
+          periods={periodPicker}
+          tab={drill}
+          onTab={(t) => router.replace(`/statistics?vue=${t}`, { scroll: false })}
+          onBack={() => openDrill(null)}
+          onChanged={() => void activity.reload()}
+          signature={first}
+          bookingUrl={activity.practitioner?.slug && origin ? `${origin}/rdv/${activity.practitioner.slug}` : null}
+        />
+      </div>
+    );
+  }
+
+  const activityCards = [
+    { l: 'Séances réalisées', v: String(stats.sessionsCount), s: 'Hors séances annulées', ...delta(stats.sessionsCount, prev.sessionsCount), link: null as null | { l: string; t: ActivityTab } },
+    { l: 'Nouveaux consultants', v: String(stats.newConsultants), s: 'Arrivés sur la période', ...delta(stats.newConsultants, prev.newConsultants), link: null },
+    {
+      l: 'Consultants actifs',
+      v: String(stats.activeConsultants),
+      s: 'Séance, message ou journal sur la période',
+      ...delta(stats.activeConsultants, prev.activeConsultants),
+      link: { l: 'Qui est actif, qui décroche', t: 'actifs' as ActivityTab },
+    },
+    {
+      l: 'Fidélisation',
+      v: stats.totalConsultants ? `${Math.round(stats.retentionRate)} %` : '—',
+      s: 'Consultants venus au moins deux fois',
+      ...delta(stats.retentionRate, prev.retentionRate, 'pts'),
+      link: { l: 'Quand et pourquoi ils arrêtent', t: 'inactifs' as ActivityTab },
+    },
   ];
 
   // Séances par semaine
@@ -174,19 +242,13 @@ export default function StatisticsPage() {
           <h1 className="font-serif text-[36px] font-medium text-charcoal">Statistiques</h1>
           <p className="text-[15px] text-stone">{r.sentence}</p>
         </div>
-        <div role="group" aria-label="Période" className="flex gap-1 rounded-xl border border-divider bg-surface p-1">
-          {([['mois', 'Ce mois'], ['trimestre', 'Trimestre'], ['annee', 'Année'], ['douze', '12 mois']] as const).map(([k, l]) => (
-            <button key={k} type="button" aria-pressed={period === k} onClick={() => setPeriod(k)} className={`h-9 rounded-[9px] px-3.5 text-sm font-medium ${period === k ? 'bg-sage-light text-sage' : 'text-[#B8C1CF]'}`}>
-              {l}
-            </button>
-          ))}
-        </div>
+        {periodPicker}
       </section>
 
       <section className="flex flex-col gap-3">
         <h2 className={h2}>Activité</h2>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
-          {activity.map((k) => (
+          {activityCards.map((k) => (
             <div key={k.l} className={`flex flex-col gap-2 p-[18px] ${card}`}>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[13px] text-stone">{k.l}</span>
@@ -194,8 +256,19 @@ export default function StatisticsPage() {
                   {k.d}
                 </span>
               </div>
-              <span className="font-serif text-[34px] tabular-nums text-charcoal">{k.v}</span>
+              {k.link ? (
+                <button type="button" onClick={() => openDrill(k.link!.t)} className="self-start text-left font-serif text-[34px] tabular-nums text-charcoal hover:text-sage" aria-label={`${k.l} : ${k.v}. ${k.link.l}`}>
+                  {k.v}
+                </button>
+              ) : (
+                <span className="font-serif text-[34px] tabular-nums text-charcoal">{k.v}</span>
+              )}
               <span className="text-xs text-stone">{k.s}</span>
+              {k.link && (
+                <button type="button" onClick={() => openDrill(k.link!.t)} className="h-7 self-start text-[13px] font-medium text-sage hover:text-sage-dark">
+                  {k.link.l} →
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -294,7 +367,15 @@ export default function StatisticsPage() {
         </div>
       </section>
 
-      <p className="text-xs text-mist">Indicateurs d’activité et de suivi, non médicaux.</p>
+      <p className="text-xs text-mist">Indicateurs d’activité et de suivi, non médicaux. Les consultants actifs sont ceux qui ont eu une séance, un message ou une saisie de journal sur la période.</p>
     </div>
+  );
+}
+
+export default function StatisticsPage() {
+  return (
+    <Suspense fallback={null}>
+      <StatisticsInner />
+    </Suspense>
   );
 }

@@ -577,6 +577,7 @@ export type MedicalHistoryEntry = {
   year_onset: number | null;
   is_active: boolean;
   notes: string | null;
+  source?: 'practitioner' | 'anamnese';
   created_at: string;
   updated_at: string;
 };
@@ -591,6 +592,7 @@ export type AllergyEntry = {
   reaction: string | null;
   diagnosed: boolean;
   notes: string | null;
+  source?: 'practitioner' | 'anamnese';
   created_at: string;
   updated_at: string;
 };
@@ -605,6 +607,34 @@ export type CurrentTreatmentEntry = {
   start_date: string | null;
   is_active: boolean;
   notes: string | null;
+  stopped_at?: string | null;
+  stop_reason?: string | null;
+  source?: 'practitioner' | 'anamnese';
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConsultantGoal = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  label: string;
+  baseline: string | null;
+  progress: string | null;
+  status: 'in_progress' | 'progressing' | 'reached';
+  set_on: string;
+  position: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AnamnesisNote = {
+  id: string;
+  consultant_id: string;
+  practitioner_id: string;
+  /** Rubrique de l'anamnèse, ou 'first_note' pour « Ma première note ». */
+  section_id: string;
+  content: string;
   created_at: string;
   updated_at: string;
 };
