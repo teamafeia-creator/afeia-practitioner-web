@@ -7,8 +7,12 @@ import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { supabase } from '@/lib/supabase';
+import { EmailPreviewBox } from '@/components/invoicing/NewInvoiceModal';
+import { RemindModal } from '@/components/invoicing/RemindModal';
 import { MANUAL_METHODS, METHOD_LABELS, REFUND_REASONS, STATUS_UI, consultantName, dateShort, eur } from '@/lib/invoicing/display';
-import type { ConsultationInvoice, InvoiceHistory, PaymentMethod } from '@/lib/invoicing/types';
+import { buildInvoiceEmailText } from '@/lib/invoicing/email-templates';
+import { defaultReminderText } from '@/lib/invoicing/manual-reminder';
+import type { ConsultationInvoice, InvoiceDocumentType, InvoiceHistory, PaymentMethod } from '@/lib/invoicing/types';
 
 const HISTORY: Record<string, { l: string; c: string }> = {
   created: { l: 'Facture créée', c: '#8B95A5' },
@@ -19,6 +23,7 @@ const HISTORY: Record<string, { l: string; c: string }> = {
   cancelled: { l: 'Facture annulée', c: '#E57B7B' },
   updated: { l: 'Facture modifiée', c: '#8B95A5' },
   payment_link_created: { l: 'Lien de paiement créé', c: '#7B93DB' },
+  reminder_sent: { l: 'Relance envoyée par e-mail', c: '#D9B8E8' },
 };
 const longFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
@@ -36,15 +41,26 @@ export default function InvoicePage() {
   const [reason, setReason] = useState<string>('consultation_annulee');
   const [reasonDetail, setReasonDetail] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
+  // Validation du praticien avant tout envoi au consultant
+  const [mailConfirm, setMailConfirm] = useState(false);
+  const [remindOpen, setRemindOpen] = useState(false);
+  const [docType, setDocType] = useState<InvoiceDocumentType>('facture');
+  const [savedReminder, setSavedReminder] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
     const t = data.session?.access_token ?? '';
     setToken(t);
-    const [res, st] = await Promise.all([
+    const [res, st, set] = await Promise.all([
       fetch(`/api/invoicing/${id}`, { headers: { Authorization: `Bearer ${t}` } }),
       fetch('/api/stripe/connect/account-status', { headers: { Authorization: `Bearer ${t}` } }).catch(() => null),
+      fetch('/api/invoicing/settings', { headers: { Authorization: `Bearer ${t}` } }).catch(() => null),
     ]);
+    if (set?.ok) {
+      const body = await set.json().catch(() => ({}));
+      if (body.settings?.libelle_document) setDocType(body.settings.libelle_document);
+      setSavedReminder(body.settings?.relance_manuelle_template ?? null);
+    }
     if (!res.ok) {
       setInvoice(null);
       return;
@@ -100,6 +116,9 @@ export default function InvoicePage() {
   const canPay = invoice.status === 'issued' || invoice.status === 'draft';
   const amount = Number(invoice.montant);
   const docTitle = invoice.is_avoir ? 'AVOIR' : invoice.status === 'refunded' ? 'FACTURE (remboursée)' : 'FACTURE';
+  const lastReminder = [...history].filter((h) => h.action === 'reminder_sent').sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.created_at;
+  const signature = [p?.prenom, p?.nom].filter(Boolean).join(' ');
+  const mailPreview = buildInvoiceEmailText(invoice.date_emission ? invoice : { ...invoice, date_emission: new Date().toISOString() }, docType);
 
   async function downloadPdf() {
     if (!invoice) return;
@@ -268,7 +287,7 @@ export default function InvoicePage() {
               Télécharger le PDF
             </button>
             {invoice.status !== 'cancelled' && (
-              <button type="button" disabled={busy === 'mail'} onClick={() => void sendMail()} className={outline}>
+              <button type="button" disabled={busy === 'mail'} onClick={() => setMailConfirm(true)} className={outline}>
                 {busy === 'mail' && <Spinner size="sm" />}
                 {invoice.status === 'draft' ? 'Émettre et envoyer par e-mail' : 'Renvoyer par e-mail'}
               </button>
@@ -276,6 +295,11 @@ export default function InvoicePage() {
             {invoice.status === 'paid' && !invoice.is_avoir && (
               <button type="button" onClick={() => setAct('refund')} className="h-[42px] rounded-[10px] border border-[#4A2F2F] text-sm text-[#E57B7B]">
                 Rembourser
+              </button>
+            )}
+            {invoice.status === 'issued' && !invoice.is_avoir && (
+              <button type="button" onClick={() => setRemindOpen(true)} aria-haspopup="dialog" className="h-[42px] rounded-[10px] border border-[#4E3A55] text-sm text-[#D9B8E8]">
+                {lastReminder ? `Relancer (dernière relance : ${dateShort(lastReminder)})` : 'Relancer le paiement'}
               </button>
             )}
             {canPay && (
@@ -304,6 +328,47 @@ export default function InvoicePage() {
           </div>
         </aside>
       </div>
+
+      <Modal isOpen={mailConfirm} onClose={() => setMailConfirm(false)} title="Vérifier l’e-mail avant l’envoi" size="lg">
+        <div className="flex flex-col gap-3.5">
+          <p className="text-sm leading-[1.55] text-[#B8C1CF]">
+            {invoice.status === 'draft' ? 'La facture sera émise puis envoyée' : 'La facture sera renvoyée'} en PDF à {invoice.consultant_snapshot?.email || 'ce consultant (adresse e-mail manquante)'}. Rien n’est envoyé avant votre validation.
+          </p>
+          <EmailPreviewBox subject={mailPreview.subject} text={mailPreview.text} label={`Aperçu pour ${first}`} />
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setMailConfirm(false)} className="h-11 rounded-[10px] border border-divider px-4 text-sm text-charcoal">Annuler</button>
+            <button
+              type="button"
+              disabled={busy === 'mail' || !invoice.consultant_snapshot?.email}
+              onClick={async () => {
+                await sendMail();
+                setMailConfirm(false);
+              }}
+              className="flex h-11 items-center gap-2 rounded-[10px] bg-sage px-[18px] text-sm font-semibold text-ink disabled:opacity-60"
+            >
+              {busy === 'mail' && <Spinner size="sm" />}
+              Valider et envoyer
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {invoice.status === 'issued' && (
+        <RemindModal
+          open={remindOpen}
+          onClose={() => setRemindOpen(false)}
+          unpaid={[invoice]}
+          initialIds={[invoice.id]}
+          lastReminded={lastReminder ? { [invoice.id]: lastReminder } : {}}
+          authToken={token}
+          savedText={savedReminder || defaultReminderText(signature)}
+          defaultText={defaultReminderText(signature)}
+          onSent={(text, saved) => {
+            if (saved) setSavedReminder(text);
+            void load();
+          }}
+        />
+      )}
 
       <Modal isOpen={!!act} onClose={() => setAct(null)} title={act ? actConf[act].t : ''}>
         {act && (

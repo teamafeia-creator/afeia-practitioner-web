@@ -5,43 +5,56 @@ import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { showToast } from '@/components/ui/Toaster';
 import { supabase } from '@/lib/supabase';
-import { MANUAL_METHODS, METHOD_LABELS, eur } from '@/lib/invoicing/display';
-import type { ConsultationInvoice, PaymentMethod } from '@/lib/invoicing/types';
+import { MANUAL_METHODS, METHOD_LABELS, eur, invoiceEmailPreview, type PractitionerName } from '@/lib/invoicing/display';
+import type { ConsultationInvoice, InvoiceDocumentType, PaymentMethod } from '@/lib/invoicing/types';
 
 export type ToBill = {
   appointmentId: string;
   consultantId: string;
   who: string;
+  email: string | null;
   what: string;
   date: string;
+  startsAt: string;
   amount: number | null;
 };
 
 const dayFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
 const field = 'rounded-[10px] border border-divider bg-cream px-3 text-sm text-charcoal outline-none placeholder:text-mist focus:border-sage';
 
-/** Séances terminées (30 derniers jours) qui n'ont pas encore de facture. */
+const APT_SELECT = 'id, consultant_id, starts_at, consultation_type:consultation_types(name, price_cents), patient:consultants(name, first_name, last_name, email)';
+
+/**
+ * Séances terminées (30 derniers jours) qui n'ont pas encore de facture Afeia
+ * ni été marquées « facturée » dans l'outil externe du praticien.
+ */
 export async function loadToBill(practitionerId: string): Promise<ToBill[]> {
   const since = new Date();
   since.setDate(since.getDate() - 30);
-  const [{ data: apts }, { data: billed }] = await Promise.all([
-    supabase
+  const query = (withExternal: boolean) => {
+    const q = supabase
       .from('appointments')
-      .select('id, consultant_id, starts_at, consultation_type:consultation_types(name, price_cents), patient:consultants(name, first_name, last_name)')
+      .select(withExternal ? `${APT_SELECT}, invoiced_externally_at` : APT_SELECT)
       .eq('practitioner_id', practitionerId)
       .eq('status', 'completed')
       .not('consultant_id', 'is', null)
       .gte('starts_at', since.toISOString())
-      .order('starts_at', { ascending: false }),
+      .order('starts_at', { ascending: false });
+    return withExternal ? q.is('invoiced_externally_at', null) : q;
+  };
+  const [aptRes, { data: billed }] = await Promise.all([
+    query(true),
     supabase.from('consultation_invoices').select('appointment_id').eq('practitioner_id', practitionerId).not('appointment_id', 'is', null).neq('status', 'cancelled'),
   ]);
+  // Migration 20261104 pas encore appliquée : on relit sans la colonne invoiced_externally_at.
+  const apts = aptRes.error ? (await query(false)).data : aptRes.data;
   const done = new Set(((billed ?? []) as { appointment_id: string }[]).map((b) => b.appointment_id));
   type Raw = {
     id: string;
     consultant_id: string;
     starts_at: string;
     consultation_type: { name: string; price_cents: number | null } | null;
-    patient: { name: string | null; first_name: string | null; last_name: string | null } | null;
+    patient: { name: string | null; first_name: string | null; last_name: string | null; email: string | null } | null;
   };
   return ((apts ?? []) as unknown as Raw[])
     .filter((a) => !done.has(a.id))
@@ -49,8 +62,10 @@ export async function loadToBill(practitionerId: string): Promise<ToBill[]> {
       appointmentId: a.id,
       consultantId: a.consultant_id,
       who: a.patient?.name || [a.patient?.first_name, a.patient?.last_name].filter(Boolean).join(' ') || 'Consultant',
+      email: a.patient?.email ?? null,
       what: a.consultation_type?.name ?? 'Séance',
       date: dayFmt.format(new Date(a.starts_at)),
+      startsAt: a.starts_at,
       amount: a.consultation_type?.price_cents != null ? a.consultation_type.price_cents / 100 : null,
     }));
 }
@@ -63,6 +78,8 @@ export function NewInvoiceModal({
   toBill,
   initialPick,
   onCreated,
+  practitionerName,
+  documentType = 'facture',
 }: {
   open: boolean;
   onClose: () => void;
@@ -71,6 +88,8 @@ export function NewInvoiceModal({
   toBill: ToBill[];
   initialPick?: string | null;
   onCreated: (inv: ConsultationInvoice) => void;
+  practitionerName?: PractitionerName;
+  documentType?: InvoiceDocumentType;
 }) {
   const [pick, setPick] = useState<string | null>(null);
   const [consultantId, setConsultantId] = useState('');
@@ -80,6 +99,8 @@ export function NewInvoiceModal({
   const [method, setMethod] = useState<PaymentMethod | 'none'>('none');
   const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState<null | 'draft' | 'issue'>(null);
+  // Tout message envoyé au consultant est d'abord montré au praticien pour validation.
+  const [confirming, setConfirming] = useState(false);
 
   const choose = (t: ToBill | null) => {
     setPick(t?.appointmentId ?? null);
@@ -94,6 +115,7 @@ export function NewInvoiceModal({
     choose(first);
     setMethod('none');
     setTried(false);
+    setConfirming(false);
     supabase
       .from('consultants')
       .select('id, name, first_name, last_name')
@@ -118,9 +140,13 @@ export function NewInvoiceModal({
     return e;
   }, [consultantId, what, value]);
 
-  async function submit(kind: 'draft' | 'issue') {
+  async function submit(kind: 'draft' | 'issue', validated = false) {
     if (errors.length) {
       setTried(true);
+      return;
+    }
+    if (kind === 'issue' && method === 'none' && !validated) {
+      setConfirming(true);
       return;
     }
     setBusy(kind);
@@ -163,6 +189,30 @@ export function NewInvoiceModal({
   }
 
   const pill = (on: boolean) => ({ borderColor: on ? '#6DD4B8' : '#3A4252', background: on ? '#6DD4B8' : 'transparent', color: on ? '#0A0E14' : '#E8EDF4' });
+  const chosen = toBill.find((t) => t.appointmentId === pick);
+  const consultant = chosen ? { name: chosen.who, email: chosen.email } : consultants.find((c) => c.id === consultantId);
+
+  if (confirming) {
+    const mail = invoiceEmailPreview((consultant?.name ?? '').split(' ')[0], practitionerName, documentType);
+    return (
+      <Modal isOpen={open} onClose={onClose} title="Vérifier l’e-mail avant l’envoi" size="lg">
+        <div className="flex flex-col gap-3.5">
+          <p className="text-sm leading-[1.55] text-[#B8C1CF]">
+            La facture de {eur(Number.isFinite(value) ? value : 0)} sera émise et envoyée en PDF à {consultant?.name ?? 'ce consultant'}
+            {consultant && 'email' in consultant && consultant.email ? ` (${consultant.email})` : ''}. Rien n’est envoyé avant votre validation.
+          </p>
+          <EmailPreviewBox subject={mail.subject} text={mail.text} />
+          <div className="flex flex-wrap justify-end gap-2">
+            <button type="button" onClick={() => setConfirming(false)} className="h-11 rounded-[10px] border border-divider px-4 text-sm text-charcoal">Modifier</button>
+            <button type="button" onClick={() => void submit('issue', true)} disabled={!!busy} className="flex h-11 items-center gap-2 rounded-[10px] bg-sage px-[18px] text-sm font-semibold text-ink disabled:opacity-60">
+              {busy === 'issue' && <Spinner size="sm" />}
+              Valider et envoyer
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal isOpen={open} onClose={onClose} title="Nouvelle facture" size="lg">
@@ -238,10 +288,20 @@ export function NewInvoiceModal({
           </button>
           <button type="button" onClick={() => void submit('issue')} disabled={!!busy} className="flex h-11 items-center gap-2 rounded-[10px] bg-sage px-[18px] text-sm font-semibold text-ink disabled:opacity-60">
             {busy === 'issue' && <Spinner size="sm" />}
-            {method === 'none' ? 'Émettre et envoyer' : 'Émettre comme payée'}
+            {method === 'none' ? 'Émettre et envoyer…' : 'Émettre comme payée'}
           </button>
         </div>
       </div>
     </Modal>
+  );
+}
+
+/** Aperçu d'un e-mail tel que le consultant le recevra. */
+export function EmailPreviewBox({ subject, text, label }: { subject: string; text: string; label?: string }) {
+  return (
+    <div className="flex flex-col gap-1.5 rounded-xl border border-divider bg-surface-raised p-3.5">
+      <span className="text-xs font-semibold text-stone">{label ?? 'Aperçu de l’e-mail'} · Objet : {subject}</span>
+      <span className="whitespace-pre-line text-[13px] leading-[1.6] text-[#C9CFDA]">{text}</span>
+    </div>
   );
 }

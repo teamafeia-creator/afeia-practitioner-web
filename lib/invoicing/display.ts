@@ -1,6 +1,7 @@
 // Libellés et calculs d'affichage de la facturation (écran Facturation).
 
-import type { ConsultationInvoice, InvoiceStatus, PaymentMethod } from './types';
+import { buildInvoiceEmailText } from './email-templates';
+import type { ConsultationInvoice, InvoiceDocumentType, InvoiceStatus, PaymentMethod } from './types';
 
 export const STATUS_UI: Record<InvoiceStatus, { l: string; bg: string; fg: string }> = {
   draft: { l: 'Brouillon', bg: '#2A3140', fg: '#C9CFDA' },
@@ -55,3 +56,34 @@ export function urssafQuarter(invoices: ConsultationInvoice[], now = new Date())
   const startLabel = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(start).replace(/^1 /, '1er ');
   return { label: `${ordinal} trimestre`, total: Math.max(0, total + refunds), since: startLabel, deadline: deadlines[q] };
 }
+
+export type PractitionerName = { prenom: string; nom: string };
+
+/** Même découpage que /api/invoicing/create pour le nom du praticien (signature des e-mails). */
+export function practitionerNameParts(name: string | null | undefined): PractitionerName {
+  const parts = (name ?? '').trim().split(' ');
+  return { prenom: parts[0] ?? '', nom: parts.slice(1).join(' ') };
+}
+
+/** Aperçu de l'e-mail d'envoi d'une facture (même gabarit que /api/invoicing/send-email). */
+export function invoiceEmailPreview(
+  consultantFirst: string,
+  practitioner: PractitionerName | undefined,
+  documentType: InvoiceDocumentType = 'facture',
+  dateEmission: string | null = null
+) {
+  return buildInvoiceEmailText(
+    {
+      consultant_snapshot: { prenom: consultantFirst, nom: '', email: '' },
+      practitioner_snapshot: { prenom: practitioner?.prenom ?? '', nom: practitioner?.nom ?? '' },
+      date_emission: dateEmission,
+    } as unknown as ConsultationInvoice,
+    documentType
+  );
+}
+
+/** Type de séance déduit de la désignation (filtre « Type de séance »). */
+export type SessionKind = 'premiere' | 'suivi' | 'atelier' | 'autre';
+export const KIND_LABELS: Record<SessionKind, string> = { premiere: 'Première consultation', suivi: 'Suivi', atelier: 'Atelier', autre: 'Autre' };
+export const kindOf = (description: string): SessionKind =>
+  /premi/i.test(description) ? 'premiere' : /suivi/i.test(description) ? 'suivi' : /atelier/i.test(description) ? 'atelier' : 'autre';
