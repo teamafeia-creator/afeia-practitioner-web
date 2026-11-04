@@ -90,7 +90,7 @@ export const T = {
 
   // ─── Dossier de santé (onglet enrichi) ─────────
   tabDossierMedical: 'Dossier de santé',
-  descDossierMedical: 'Antécédents, allergies et intolérances, traitements en cours.',
+  descDossierMedical: 'Contacts, antécédents et allergies, traitements et conseils.',
   labelAntecedents: 'Antécédents',
   labelAllergies: 'Allergies et intolérances',
   labelTraitements: 'Traitements en cours',
