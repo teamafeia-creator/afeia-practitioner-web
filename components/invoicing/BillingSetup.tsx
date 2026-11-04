@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Spinner } from '@/components/ui/Spinner';
-import { EXTERNAL_TOOLS, TOOL_KEYS, type BillingTool, type ExternalTool } from '@/lib/invoicing/billing-tools';
+import { EXTERNAL_TOOLS, INTEGRATIONS, TOOL_KEYS, canConnect, type BillingTool, type ExternalTool } from '@/lib/invoicing/billing-tools';
 
 /** Écran par défaut de la facturation : garder son outil actuel, ou découvrir la facturation Afeia. */
 export function BillingSetup({
@@ -25,10 +25,13 @@ export function BillingSetup({
     }
   };
 
+  const connectable = pick ? canConnect(pick) : false;
+  const manualReason = pick && !connectable ? (INTEGRATIONS[pick] as { reason: string }).reason : '';
   const points = picked
     ? [
+        ...(connectable ? [`crée en un clic le brouillon de facture dans ${picked.name}, client compris`] : []),
         'vous rappelle chaque séance terminée à facturer',
-        'vous laisse cocher « facturée » une fois faite dans votre outil',
+        ...(connectable ? [] : ['vous laisse cocher « facturée » une fois faite dans votre outil']),
         ...(picked.url ? [`ouvre ${picked.name} en un clic depuis la facturation`] : []),
         'exporte les séances du mois en CSV pour votre comptabilité',
       ]
@@ -58,11 +61,12 @@ export function BillingSetup({
                 className="flex min-h-[76px] flex-col items-start gap-1 rounded-xl border p-3 text-left text-charcoal"
                 style={{ borderColor: on ? '#6DD4B8' : '#2A3140', background: on ? '#23383B' : 'transparent' }}
               >
-                <span className="flex items-center gap-2 text-sm font-semibold">
+                <span className="flex w-full items-center gap-2 text-sm font-semibold">
                   <span aria-hidden="true" className="flex h-[26px] w-[26px] items-center justify-center rounded-lg text-xs font-bold text-ink" style={{ background: t.color }}>
                     {t.name.slice(0, 1)}
                   </span>
                   {t.name}
+                  {canConnect(k) && <span className="ml-auto rounded-full bg-[#1F3A33] px-2 py-0.5 text-[10px] font-semibold text-sage">Connexion</span>}
                 </span>
                 <span className="text-xs leading-[1.4] text-stone">{t.desc}</span>
               </button>
@@ -79,7 +83,11 @@ export function BillingSetup({
                   {pt}
                 </span>
               ))}
-              <span className="text-xs text-stone">Afeia ne se connecte pas à votre outil : vos factures restent dans {picked.url ? picked.name : 'votre outil'}.</span>
+              <span className="text-xs text-stone">
+                {connectable
+                  ? `Connexion par clé API ${picked.name}, à l’étape suivante. Vous validez et envoyez chaque facture dans ${picked.name}.`
+                  : `${manualReason ? `${manualReason} ` : ''}Vos factures restent dans ${picked.url ? picked.name : 'votre outil'}.`}
+              </span>
             </span>
             <button type="button" disabled={!!busy} onClick={() => void choose(pick)} className="flex h-11 items-center gap-2 rounded-[10px] bg-sage px-[18px] text-sm font-semibold text-ink disabled:opacity-60">
               {busy === pick && <Spinner size="sm" />}

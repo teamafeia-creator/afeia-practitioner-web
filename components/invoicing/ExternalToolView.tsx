@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Spinner } from '@/components/ui/Spinner';
 import { showToast } from '@/components/ui/Toaster';
 import { supabase } from '@/lib/supabase';
-import { EXTERNAL_TOOLS, toolPhrase, type ExternalTool } from '@/lib/invoicing/billing-tools';
+import { EXTERNAL_TOOLS, INTEGRATIONS, canConnect, toolPhrase, type ExternalTool } from '@/lib/invoicing/billing-tools';
+import { ToolConnectionCard, authedFetch, type ConnectionState } from './ToolConnectionCard';
 import { eur } from '@/lib/invoicing/display';
 import { FACE_COLORS, initialsOf } from '@/lib/morning-review/queue';
 import type { ToBill } from './NewInvoiceModal';
@@ -76,6 +77,45 @@ export function ExternalToolView({
   const t = EXTERNAL_TOOLS[tool];
   const name = toolPhrase(tool);
   const [busy, setBusy] = useState<string | null>(null);
+  const connectable = canConnect(tool);
+  const [connection, setConnection] = useState<ConnectionState | null>(null);
+  const [connLoaded, setConnLoaded] = useState(!connectable);
+  const live = connectable && connection?.status === 'active';
+
+  const loadConnection = useCallback(async () => {
+    if (!canConnect(tool)) return;
+    try {
+      const res = await authedFetch('/api/invoicing/connections');
+      const body = (await res.json()) as { connections?: ConnectionState[] };
+      setConnection(body.connections?.find((c) => c.provider === tool) ?? null);
+    } catch {
+      setConnection(null);
+    } finally {
+      setConnLoaded(true);
+    }
+  }, [tool]);
+
+  useEffect(() => {
+    void loadConnection();
+  }, [loadConnection]);
+
+  async function push(row: ToBill) {
+    setBusy(row.appointmentId);
+    const res = await authedFetch(`/api/invoicing/connections/${tool}/push`, { method: 'POST', body: JSON.stringify({ appointmentId: row.appointmentId }) });
+    const body = (await res.json().catch(() => ({}))) as { message?: string; url?: string | null };
+    setBusy(null);
+    if (res.status === 409 && body.message?.includes('déjà')) {
+      showToast.success(body.message);
+      return onMarked(row.appointmentId);
+    }
+    if (!res.ok) {
+      showToast.error(body.message ?? 'Le brouillon n’a pas pu être créé.');
+      if (res.status === 502 || res.status === 409) void loadConnection();
+      return;
+    }
+    showToast.success(`Brouillon créé dans ${t.name} pour ${row.who.split(' ')[0]} : relisez-le puis envoyez-le depuis ${t.name}.`);
+    onMarked(row.appointmentId);
+  }
 
   async function mark(row: ToBill) {
     setBusy(row.appointmentId);
@@ -109,7 +149,11 @@ export function ExternalToolView({
           <h1 className="font-serif text-[36px] font-medium text-charcoal">Facturation</h1>
           <p className="flex flex-wrap items-center gap-2 text-[15px] text-stone">
             Vous facturez avec {name}.
-            <span className="inline-flex h-6 items-center rounded-full bg-[#2A3140] px-2.5 text-xs font-semibold text-[#C9CFDA]">Suivi manuel</span>
+            {live ? (
+              <span className="inline-flex h-6 items-center rounded-full bg-[#1F3A33] px-2.5 text-xs font-semibold text-sage">Connecté</span>
+            ) : (
+              <span className="inline-flex h-6 items-center rounded-full bg-[#2A3140] px-2.5 text-xs font-semibold text-[#C9CFDA]">Suivi manuel</span>
+            )}
           </p>
         </div>
         <button type="button" onClick={onChangeMode} className="h-11 rounded-[10px] border border-divider px-3.5 text-sm text-[#B8C1CF] hover:border-sage">Changer de mode</button>
@@ -120,12 +164,21 @@ export function ExternalToolView({
         )}
       </section>
 
+      {connectable && connLoaded && (
+        <ToolConnectionCard key={connection?.status ?? 'none'} provider={tool as 'pennylane' | 'abby'} connection={connection} onChange={() => void loadConnection()} />
+      )}
+      {!connectable && (INTEGRATIONS[tool] as { reason: string }).reason && (
+        <p className="text-[13px] text-stone">{(INTEGRATIONS[tool] as { reason: string }).reason} Afeia vous aide donc à ne rien oublier : séances à facturer, lien direct et export CSV.</p>
+      )}
+
       <section className="flex flex-col gap-3 rounded-2xl border border-divider bg-surface p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-base font-semibold text-charcoal">
             {toBill.length ? `${toBill.length} séance${toBill.length > 1 ? 's' : ''} terminée${toBill.length > 1 ? 's' : ''} à facturer` : 'Séances à facturer'}
           </h2>
-          <span className="text-[13px] text-stone">30 derniers jours · cochez quand la facture est faite dans {name}</span>
+          <span className="text-[13px] text-stone">
+            {live ? `30 derniers jours · Afeia crée le brouillon dans ${name}` : `30 derniers jours · cochez quand la facture est faite dans ${name}`}
+          </span>
         </div>
         {toBill.map((r) => (
           <div key={r.appointmentId} className="flex flex-wrap items-center gap-3 rounded-xl border border-divider bg-surface-raised px-3.5 py-3">
@@ -135,15 +188,38 @@ export function ExternalToolView({
               <span className="text-xs text-stone">{r.what} · {r.date}</span>
             </span>
             <span className="font-medium tabular-nums text-charcoal">{r.amount != null ? eur(r.amount) : '—'}</span>
-            <button
-              type="button"
-              disabled={busy === r.appointmentId}
-              onClick={() => void mark(r)}
-              className="flex h-[38px] items-center gap-2 rounded-[10px] bg-sage px-3.5 text-[13px] font-semibold text-ink disabled:opacity-60"
-            >
-              {busy === r.appointmentId && <Spinner size="sm" />}
-              Marquer comme facturée
-            </button>
+            {live ? (
+              <>
+                <button
+                  type="button"
+                  disabled={busy === r.appointmentId || r.amount == null}
+                  title={r.amount == null ? 'Ajoutez un tarif à ce type de consultation pour créer la facture.' : undefined}
+                  onClick={() => void push(r)}
+                  className="flex h-[38px] items-center gap-2 rounded-[10px] bg-sage px-3.5 text-[13px] font-semibold text-ink disabled:opacity-60"
+                >
+                  {busy === r.appointmentId && <Spinner size="sm" />}
+                  Créer le brouillon dans {t.name}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy === r.appointmentId}
+                  onClick={() => void mark(r)}
+                  className="h-[38px] rounded-[10px] px-2.5 text-[13px] text-stone hover:text-charcoal disabled:opacity-60"
+                >
+                  Déjà facturée
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                disabled={busy === r.appointmentId}
+                onClick={() => void mark(r)}
+                className="flex h-[38px] items-center gap-2 rounded-[10px] bg-sage px-3.5 text-[13px] font-semibold text-ink disabled:opacity-60"
+              >
+                {busy === r.appointmentId && <Spinner size="sm" />}
+                Marquer comme facturée
+              </button>
+            )}
           </div>
         ))}
         {toBill.length === 0 && <p className="text-sm text-sage">✓ Toutes vos séances terminées sont facturées.</p>}
