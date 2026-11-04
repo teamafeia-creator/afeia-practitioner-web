@@ -38,6 +38,32 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'not_found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   }
 
+  // Auto-correction : un consultant qui se connecte à son espace est activé par définition.
+  // Si l'activation web n'a pas basculé le drapeau (ancien flux), on le fait ici et on
+  // clôt l'invitation en attente, sinon le praticien voit encore « En attente d'activation ».
+  if (consultant.activated !== true) {
+    const now = new Date().toISOString();
+    const { error: activateError } = await supabase
+      .from('consultants')
+      .update({ activated: true, activated_at: consultant.activated_at ?? now })
+      .eq('id', consultantId);
+    if (activateError) {
+      console.warn('[consultant/me] activation impossible', { consultantId, code: activateError.code });
+    } else {
+      consultant.activated = true;
+      consultant.activated_at = consultant.activated_at ?? now;
+      const { error: inviteError } = await supabase
+        .from('consultant_invitations')
+        .update({ status: 'accepted', accepted_at: now })
+        .eq('consultant_id', consultantId)
+        .eq('status', 'pending');
+      if (inviteError) {
+        console.warn('[consultant/me] clôture invitation impossible', { consultantId, code: inviteError.code });
+      }
+      console.info('[consultant/me] consultant activé à la connexion', { consultantId });
+    }
+  }
+
   let practitioner = null;
   if (consultant.practitioner_id) {
     const { data, error: practitionerError } = await supabase
