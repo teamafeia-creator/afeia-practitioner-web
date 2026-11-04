@@ -19,9 +19,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'not_found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   }
 
-  const { data: consultant, error } = await getSupabaseAdmin()
+  const supabase = getSupabaseAdmin();
+
+  // Pas de jointure embarquée `practitioners(...)` : `consultants` a plusieurs clés
+  // étrangères vers `practitioners`, PostgREST la refuse (PGRST201, relation ambiguë).
+  const { data: consultant, error } = await supabase
     .from('consultants')
-    .select('*, practitioners(name, full_name, phone, email)')
+    .select('*')
     .eq('id', consultantId)
     .maybeSingle();
 
@@ -33,5 +37,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'not_found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   }
 
-  return NextResponse.json({ consultant }, { headers: { 'Cache-Control': 'no-store' } });
+  let practitioner = null;
+  if (consultant.practitioner_id) {
+    const { data, error: practitionerError } = await supabase
+      .from('practitioners')
+      .select('name, full_name, phone, email')
+      .eq('id', consultant.practitioner_id)
+      .maybeSingle();
+    if (practitionerError) {
+      console.warn('[consultant/me] praticien illisible', { consultantId, code: practitionerError.code });
+    }
+    practitioner = data ?? null;
+  }
+
+  return NextResponse.json(
+    { consultant: { ...consultant, practitioners: practitioner } },
+    { headers: { 'Cache-Control': 'no-store' } }
+  );
 }
