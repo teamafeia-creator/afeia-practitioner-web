@@ -17,12 +17,17 @@ export function SectionSuggestButton({
 }: SectionSuggestButtonProps) {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSuggest() {
     setIsSuggesting(true);
+    setError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
+      if (!session?.access_token) {
+        setError('Session expirée. Reconnectez-vous puis réessayez.');
+        return;
+      }
 
       const res = await fetch('/api/ai/suggest-section', {
         method: 'POST',
@@ -33,12 +38,17 @@ export function SectionSuggestButton({
         body: JSON.stringify({ consultantId, fieldKey }),
       });
 
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => null);
+      if (data?.success && data.text) {
         setSuggestion(data.text);
+      } else if (data?.success) {
+        setError('L’IA n’a rien proposé pour cette rubrique. Réessayez.');
+      } else {
+        setError(data?.error || 'La suggestion n’a pas pu être générée. Réessayez.');
       }
     } catch (err) {
       console.error('Suggestion error:', err);
+      setError('La suggestion n’a pas pu être générée. Vérifiez votre connexion et réessayez.');
     } finally {
       setIsSuggesting(false);
     }
@@ -94,6 +104,7 @@ export function SectionSuggestButton({
   }
 
   return (
+    <>
     <button
       onClick={handleSuggest}
       disabled={isSuggesting}
@@ -107,5 +118,11 @@ export function SectionSuggestButton({
       )}
       Suggérer
     </button>
+    {error ? (
+      <p role="alert" className="basis-full text-xs text-rose">
+        {error}
+      </p>
+    ) : null}
+    </>
   );
 }
