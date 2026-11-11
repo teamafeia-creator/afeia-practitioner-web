@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Lock, Pencil, Plus, Video } from 'lucide-react';
 import { Modal, ModalFooter } from '@/components/ui/Modal';
+import { JoinVisioButton } from '@/components/video/JoinVisioButton';
 import { Button } from '@/components/ui/Button';
 import {
   createConsultantGoal,
@@ -330,43 +331,48 @@ export function SynthesisPanel({ consultant, answers, appointments, plans, weara
           )}
         </section>
 
-        <button
-          type="button"
-          onClick={() => onOpen(next ? 'notes' : 'rdv')}
-          aria-label={next ? `Prochain rendez-vous : ${whenLabel(next.starts_at)}. Préparer la séance` : 'Aucun rendez-vous prévu. Planifier une séance'}
-          className={`${card} flex-[0_0_200px] justify-center gap-3 p-4 text-left hover:border-sage/50`}
-        >
-          <span className="text-xs font-medium text-stone">Prochain rendez-vous</span>
-          {next && nextDate ? (
-            <>
-              <span className="flex items-center gap-3">
-                <span className="flex w-12 flex-none flex-col items-center rounded-[10px] bg-sage-light px-0 pb-[7px] pt-1.5 leading-none text-sage">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em]">{monShortFmt.format(nextDate)}</span>
-                  <span className="mt-[3px] font-serif text-2xl font-semibold">{nextDate.getDate()}</span>
-                </span>
-                <span className="flex min-w-0 flex-col gap-[3px]">
-                  <span className="text-[15px] font-semibold">
-                    {weekday.charAt(0).toUpperCase() + weekday.slice(1)}, {timeFmt.format(nextDate).replace(':', ' h ')}
+        <div className="flex flex-[0_0_200px] flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => onOpen(next ? 'notes' : 'rdv')}
+            aria-label={next ? `Prochain rendez-vous : ${whenLabel(next.starts_at)}. Préparer la séance` : 'Aucun rendez-vous prévu. Planifier une séance'}
+            className={`${card} flex-1 justify-center gap-3 p-4 text-left hover:border-sage/50`}
+          >
+            <span className="text-xs font-medium text-stone">Prochain rendez-vous</span>
+            {next && nextDate ? (
+              <>
+                <span className="flex items-center gap-3">
+                  <span className="flex w-12 flex-none flex-col items-center rounded-[10px] bg-sage-light px-0 pb-[7px] pt-1.5 leading-none text-sage">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em]">{monShortFmt.format(nextDate)}</span>
+                    <span className="mt-[3px] font-serif text-2xl font-semibold">{nextDate.getDate()}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-xs text-stone">
-                    {next.location_type === 'video' ? <Video className="h-3 w-3" aria-hidden="true" /> : null}
-                    {[LOCATION[next.location_type] ?? null, `${nextMinutes} min`].filter(Boolean).join(' · ')}
+                  <span className="flex min-w-0 flex-col gap-[3px]">
+                    <span className="text-[15px] font-semibold">
+                      {weekday.charAt(0).toUpperCase() + weekday.slice(1)}, {timeFmt.format(nextDate).replace(':', ' h ')}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-stone">
+                      {next.location_type === 'video' ? <Video className="h-3 w-3" aria-hidden="true" /> : null}
+                      {[LOCATION[next.location_type] ?? null, `${nextMinutes} min`].filter(Boolean).join(' · ')}
+                    </span>
                   </span>
                 </span>
-              </span>
-              <span className="flex items-center justify-between border-t border-divider pt-2.5 text-[13px] font-semibold text-sage">
-                Préparer la séance <span aria-hidden="true">→</span>
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-sm">Aucun rendez-vous prévu.</span>
-              <span className="flex items-center justify-between border-t border-divider pt-2.5 text-[13px] font-semibold text-sage">
-                Planifier <span aria-hidden="true">→</span>
-              </span>
-            </>
+                <span className="flex items-center justify-between border-t border-divider pt-2.5 text-[13px] font-semibold text-sage">
+                  Préparer la séance <span aria-hidden="true">→</span>
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-sm">Aucun rendez-vous prévu.</span>
+                <span className="flex items-center justify-between border-t border-divider pt-2.5 text-[13px] font-semibold text-sage">
+                  Planifier <span aria-hidden="true">→</span>
+                </span>
+              </>
+            )}
+          </button>
+          {next && next.location_type === 'video' && next.video_room_name && (
+            <JoinVisioButton appointmentId={next.id} startsAt={next.starts_at} endsAt={next.ends_at} label="Rejoindre la visio" className="w-full" />
           )}
-        </button>
+        </div>
       </div>
 
       {/* Objectifs */}

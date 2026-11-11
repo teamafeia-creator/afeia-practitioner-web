@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { releasePendingAppointment, verifyDepositSession } from '@/lib/server/booking';
+import { consultantJoinUrl } from '@/lib/server/daily';
 
 /**
  * GET  /api/booking/[slug]/deposit?session_id=… : retour de Stripe, confirme la séance si l'acompte est payé
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     const supabase = createAdminClient();
     const { data } = await supabase
       .from('appointments')
-      .select('id, starts_at, ends_at, location_type, video_link, booking_email, deposit_cents, deposit_status, consultation_type:consultation_types(name, duration_minutes, price_cents), practitioner:practitioners(full_name, booking_address)')
+      .select('id, starts_at, ends_at, location_type, video_link, video_room_name, video_join_token, booking_email, deposit_cents, deposit_status, consultation_type:consultation_types(name, duration_minutes, price_cents), practitioner:practitioners(full_name, booking_address)')
       .eq('id', r.appointmentId)
       .maybeSingle();
     type Row = {
@@ -24,6 +25,8 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       ends_at: string;
       location_type: string;
       video_link: string | null;
+      video_room_name: string | null;
+      video_join_token: string | null;
       booking_email: string | null;
       deposit_cents: number | null;
       deposit_status: string;
@@ -43,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       practitioner_name: a.practitioner?.full_name ?? '',
       practitioner_address: a.practitioner?.booking_address ?? null,
       location_type: a.location_type,
-      video_link: a.video_link,
+      video_link: a.video_room_name && a.video_join_token ? consultantJoinUrl(a.id, a.video_join_token) : a.video_link,
       email: a.booking_email,
       deposit_cents: a.deposit_cents ?? 0,
       ics_download_url: `/api/booking/${params.slug}/ics?appointment_id=${a.id}`,

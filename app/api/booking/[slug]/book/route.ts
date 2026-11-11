@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPractitionerBySlug } from '@/lib/queries/booking';
-import { createDailyRoom, generateRoomName } from '@/lib/server/daily';
+import { consultantJoinUrl, ensureVideoRoom } from '@/lib/server/daily';
 import { createDepositCheckout, getDepositConfig, notifyBooking } from '@/lib/server/booking';
 
 export async function POST(
@@ -117,16 +117,8 @@ export async function POST(
         .single();
 
       if (practitionerSettings?.video_provider === 'daily') {
-        const roomName = generateRoomName(appointmentId as string);
-        const roomExpiresAt = new Date(endsAtDate.getTime() + 30 * 60 * 1000);
-        const room = await createDailyRoom({ name: roomName, expiresAt: roomExpiresAt });
-        if (room) {
-          videoLink = room.url;
-          await supabase
-            .from('appointments')
-            .update({ video_link: room.url, video_room_name: room.name, updated_at: new Date().toISOString() })
-            .eq('id', appointmentId);
-        }
+        const room = await ensureVideoRoom(appointmentId as string);
+        if (room) videoLink = consultantJoinUrl(appointmentId as string, room.joinToken);
       }
     }
 

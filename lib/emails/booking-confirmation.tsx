@@ -16,6 +16,8 @@ interface BookingEmailData {
   cancellationPolicyText: string | null;
   reason: string | null;
   videoLink?: string | null;
+  /** Salle de visio AFEIA (Daily) créée automatiquement, par opposition à un lien externe. */
+  isDailyRoom?: boolean;
   /** Acompte payé (en euros) et solde restant, si un acompte a été demandé. */
   depositEuros?: number | null;
   balanceEuros?: number | null;
@@ -166,7 +168,7 @@ export function buildPractitionerNotificationEmail(data: BookingEmailData & {
 
       ${consultantStatus}
 
-      ${data.videoLink ? '<p style="margin:8px 0;font-size:13px;color:#2B5651;">&#128249; Une salle de visioconference a ete creee automatiquement pour ce rendez-vous.</p>' : ''}
+      ${data.isDailyRoom ? '<p style="margin:8px 0;font-size:13px;color:#2B5651;">&#128249; Une salle de visioconference a ete creee automatiquement pour ce rendez-vous.</p>' : ''}
 
       <div style="text-align:center;margin-top:20px;">
         <a href="${escapeHtml(data.agendaUrl)}" style="display:inline-block;background:#2B5651;color:white;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;">Voir dans l'agenda</a>

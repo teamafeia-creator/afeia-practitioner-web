@@ -227,6 +227,8 @@ function AgendaPageInner() {
         priceCents: selectedApt.consultation_type?.price_cents ?? null,
         visio: selectedApt.location_type === 'video',
         videoLink: selectedApt.video_link,
+        videoRoomName: selectedApt.video_room_name,
+        videoJoinToken: selectedApt.video_join_token,
         consultantId: selectedApt.consultant_id,
       }
     : selectedGroup
@@ -241,6 +243,8 @@ function AgendaPageInner() {
           priceCents: null,
           visio: selectedGroup.location_type === 'video',
           videoLink: null,
+          videoRoomName: null,
+          videoJoinToken: null,
           consultantId: null,
         }
       : null;
@@ -549,6 +553,7 @@ function AgendaPageInner() {
                 setFormOpen(true);
               }}
               onDetails={() => (selectedApt ? setDetailOpen(true) : setGroupDetailOpen(true))}
+              onVideoChanged={refresh}
               onCancel={async () => {
                 if (!selectedApt) return;
                 try {

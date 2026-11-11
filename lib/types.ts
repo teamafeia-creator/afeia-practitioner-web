@@ -251,6 +251,8 @@ export type Appointment = {
   booking_email: string | null;
   booking_phone: string | null;
   video_room_name: string | null;
+  /** Secret du lien consultant (/consultation/video/{id}?token=…). */
+  video_join_token: string | null;
   google_event_id: string | null;
   created_at: string;
   updated_at: string;

@@ -3,16 +3,18 @@
 import { useDaily, useLocalParticipant } from '@daily-co/daily-react';
 import {
   Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff,
-  MessageSquare, PhoneOff,
+  MessageSquare, PhoneOff, Link2,
 } from 'lucide-react';
 import { useState } from 'react';
 
 interface VideoControlsProps {
   onLeave: () => void;
   onToggleChat: () => void;
+  /** Hôte : copie le lien à transmettre au consultant. */
+  onCopyConsultantLink?: () => void;
 }
 
-export function VideoControls({ onLeave, onToggleChat }: VideoControlsProps) {
+export function VideoControls({ onLeave, onToggleChat, onCopyConsultantLink }: VideoControlsProps) {
   const daily = useDaily();
   const localParticipant = useLocalParticipant();
   const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -83,6 +85,17 @@ export function VideoControls({ onLeave, onToggleChat }: VideoControlsProps) {
       >
         <MessageSquare className="h-5 w-5" />
       </button>
+
+      {onCopyConsultantLink && (
+        <button
+          onClick={onCopyConsultantLink}
+          className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 text-white hover:bg-white/20 transition-colors"
+          title="Copier le lien du consultant"
+          aria-label="Copier le lien du consultant"
+        >
+          <Link2 className="h-5 w-5" />
+        </button>
+      )}
 
       <button
         onClick={onLeave}

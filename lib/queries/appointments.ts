@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { findAppointmentConflicts } from './appointment-conflicts';
 import type {
   Appointment,
   AppointmentStatus,
@@ -297,6 +298,7 @@ export async function updateNativeAppointment(
     location_type?: LocationType;
     video_link?: string | null;
     video_room_name?: string | null;
+    video_join_token?: string | null;
     notes_internal?: string | null;
     status?: AppointmentStatus;
   }
@@ -401,20 +403,8 @@ export async function checkAppointmentConflict(
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return false;
 
-  let query = supabase
-    .from('appointments')
-    .select('id')
-    .eq('practitioner_id', userData.user.id)
-    .not('status', 'in', '("cancelled","rescheduled")')
-    .lt('starts_at', endsAt)
-    .gt('ends_at', startsAt);
-
-  if (excludeId) {
-    query = query.neq('id', excludeId);
-  }
-
-  const { data } = await query;
-  return (data?.length ?? 0) > 0;
+  const conflicts = await findAppointmentConflicts(supabase, userData.user.id, startsAt, endsAt, excludeId);
+  return conflicts.length > 0;
 }
 
 /**
