@@ -73,18 +73,18 @@ describe('points à aborder', () => {
   it('n’affiche rien sous les seuils', () => {
     const days = makeDays(70, (i, date) => ({ sleepMin: 400 + wobble(i, 12) + (date > session ? 10 : 0) }));
     const r = pointsToDiscuss(input(days, { lastSessionDate: session }), new Series(days, TODAY));
-    expect(r.status === 'ok' && r.candidates).toEqual([]);
+    expect(r).toMatchObject({ status: 'none', title: 'Rien de marquant depuis la séance.' });
   });
   it('demande 7 nuits mesurées depuis la séance', () => {
     const days = makeDays(40, () => ({}));
     const r = pointsToDiscuss(input(days, { lastSessionDate: '2026-11-08' }), new Series(days, TODAY));
-    expect(r).toMatchObject({ status: 'not_enough', nights: 3, needed: 7 });
+    expect(r).toMatchObject({ status: 'not_enough', title: 'Pas encore assez de recul.', text: '3 nuits mesurées depuis la séance du 8 nov. : il en faut 7 pour proposer un point. Les premiers apparaîtront vers le 16 nov.' });
   });
   it('signale l’objet non porté 3 nuits ou plus', () => {
     const off = new Set(['2026-11-01', '2026-11-03', '2026-11-05']);
     const days = makeDays(70, (_i, date) => (off.has(date) ? { sleepMin: null, hrvMs: null, nightHrBpm: null } : {}));
     const r = pointsToDiscuss(input(days, { lastSessionDate: session }), new Series(days, TODAY));
-    expect(r.status === 'ok' && r.points.map((p) => p.id)).toContain('wear');
+    expect(r.status === 'ok' && r.points.find((p) => p.id === 'wear')?.text).toBe('Objet non porté 3 nuits depuis la séance : 1 nov., 3 nov. et 5 nov.');
   });
   it('garde 3 points au maximum, un par mesure, favorable puis attention puis données', () => {
     const p = (id: string, metric: Point['metric'], kind: Point['kind'], score: number): Point => ({ id, metric, kind, score, text: id, how: '' });
@@ -97,7 +97,7 @@ describe('avant / après le conseillancier', () => {
   it('compare deux périodes de même durée et applique le double seuil', () => {
     const share = '2026-10-29';
     const days = makeDays(60, (i, date) => ({ hrvMs: 38 + wobble(i, 1) + (date > share ? 5 : 0), steps: 6000 + wobble(i, 300) + (date > share ? 400 : 0) }));
-    const r = beforeAfter(input(days, { planShares: ['2026-09-01', share] }), new Series(days, TODAY));
+    const r = beforeAfter(input(days, { planShares: [{ date: '2026-09-01', version: 1 }, { date: share, version: 2 }] }), new Series(days, TODAY));
     expect(r.status).toBe('ok');
     if (r.status !== 'ok') return;
     expect(r.shareDate).toBe(share);
@@ -134,9 +134,11 @@ describe('conseils suivis × mesures', () => {
     expect(r.counted).toBe(14);
     const t = r.rows.find((x) => x.itemId === 'tisane')!;
     expect(t.metric).toBe('hrv');
-    expect(t.effect).toBe('VFC plus haute la nuit qui suit (+6 ms).');
+    expect(t.effect).toBe('Sa VFC est plus haute la nuit qui suit (+6 ms).');
+    expect(t.doneLabel).toBe('7 jours sur 14');
     expect(r.rows.find((x) => x.itemId === 'eau')!.effect).toBe('Fait tous les jours : rien à comparer.');
-    expect(r.rows.find((x) => x.itemId === 'cure')!.eligible).toBe(false);
+    // « 1× / mois » : exclu de la comparaison.
+    expect(r.rows.find((x) => x.itemId === 'cure')).toBeUndefined();
   });
   it('exige 4 jours de chaque côté', () => {
     const window = dayRange(addDays(TODAY, -14), addDays(TODAY, -1));
@@ -154,17 +156,19 @@ describe('récap', () => {
     const r = computeRecap({ days, today: TODAY, items: [], logs: [] }, '1w');
     expect(r.status).toBe('ok');
     expect(r.options.filter((o) => o.checked)).toHaveLength(3);
-    expect(r.options.map((o) => o.id).sort()).toEqual(['hr', 'hrv', 'move', 'sleepLong']);
+    expect(r.options.map((o) => o.id).sort()).toEqual(['calm', 'heart', 'move', 'sleepLong']);
     const { text } = buildRecapText({ firstName: 'Amina', practitionerFirstName: 'Claire', frequency: '1w', points: r.options.filter((o) => o.checked).map((o) => o.id) });
     expect(text.startsWith('Bonjour Amina,')).toBe(true);
-    expect(text).toMatch(/Belle semaine,\nClaire$/);
+    expect(text).toMatch(/\n\nBelle semaine,\nClaire$/);
+    expect(text).toContain('Votre corps récupère mieux la nuit : vos rituels du soir portent leurs fruits.');
     expect(text).not.toMatch(/\d/);
   });
   it('moins de 60 % de nuits mesurées : seulement le rappel de porter l’objet', () => {
     const days = makeDays(40, (i) => (i >= 40 - 8 && i % 2 === 0 ? { sleepMin: null, hrvMs: null, nightHrBpm: null } : {}));
     const r = computeRecap({ days, today: TODAY, items: [], logs: [] }, '1w');
     expect(r.status).toBe('not_enough');
-    expect(r.options.map((o) => o.id)).toEqual(['wear']);
+    expect(r.options).toMatchObject([{ id: 'wear', checked: false }]);
+    expect(r.noneText).toBe('Pas assez de nuits mesurées pour un récap (3 sur 7). Un rappel de porter l’objet vous est proposé.');
   });
   it('propose le rappel décoché à partir de 30 % de nuits manquantes', () => {
     const miss = new Set([1, 3, 5, 7, 9].map((n) => addDays(TODAY, -n)));
@@ -182,7 +186,7 @@ describe('récap', () => {
     const a = buildRecapText({ firstName: 'A', practitionerFirstName: 'C', frequency: '1d', points: ['move'] });
     const b = buildRecapText({ firstName: 'A', practitionerFirstName: 'C', frequency: '1d', points: ['move'], lastVariants: a.variants });
     expect(a.text).not.toBe(b.text);
-    expect(a.text).toMatch(/hier/);
+    expect(a.text).toContain('Vous avez bougé davantage aujourd’hui, bravo.');
   });
 });
 

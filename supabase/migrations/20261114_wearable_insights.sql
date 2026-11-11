@@ -1,14 +1,14 @@
 -- Objet connecté, phase 2 : récap planifié, coches par l'objet, points épinglés, objectifs reliés à une mesure.
 -- Règles : lib/wearables/insights (validées sur la maquette du 11 novembre 2026).
 
--- 1. Réglage du récap, par consultant (« Me le proposer régulièrement »).
---    frequency : 1d chaque jour · 1w chaque semaine · 2w toutes les 2 semaines · 1m chaque mois
---    weekdays  : jours ISO cochés (1 = lundi … 7 = dimanche). En « 1m » : le premier de ces jours du mois.
---    anchor    : semaine de référence pour « toutes les 2 semaines ».
+-- 1. Réglage du récap, par consultant (« Me le proposer régulièrement (je valide avant l’envoi) », désactivé par défaut).
+--    frequency : 1d tous les jours · 1w chaque [jours cochés] · 2w une semaine sur deux · 1m la première semaine du mois
+--    weekdays  : jours ISO cochés (1 = lundi … 7 = dimanche), lundi par défaut ; ignorés en « 1d ».
+--    anchor    : semaine de référence pour « une semaine sur deux ».
 CREATE TABLE IF NOT EXISTS public.wearable_recap_settings (
   consultant_id   UUID PRIMARY KEY REFERENCES public.consultants(id) ON DELETE CASCADE,
   practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
-  enabled         BOOLEAN NOT NULL DEFAULT TRUE,
+  enabled         BOOLEAN NOT NULL DEFAULT FALSE,
   frequency       TEXT NOT NULL DEFAULT '1w' CHECK (frequency IN ('1d', '1w', '2w', '1m')),
   weekdays        SMALLINT[] NOT NULL DEFAULT '{1}' CHECK (cardinality(weekdays) BETWEEN 1 AND 7 AND weekdays <@ ARRAY[1,2,3,4,5,6,7]::SMALLINT[]),
   anchor          DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -88,9 +88,33 @@ CREATE POLICY consultant_session_topics_own ON public.consultant_session_topics
   USING (practitioner_id = auth.uid())
   WITH CHECK (practitioner_id = auth.uid() AND consultant_id IN (SELECT public.auth_practitioner_consultant_ids()));
 
--- 5. Objectifs reliés à une mesure de l'objet.
+-- 5. Objectifs reliés à une mesure de l'objet, avec une cible libre (« ex. 7 h par nuit »).
 ALTER TABLE public.consultant_goals ADD COLUMN IF NOT EXISTS metric TEXT;
+ALTER TABLE public.consultant_goals ADD COLUMN IF NOT EXISTS metric_target TEXT CHECK (metric_target IS NULL OR char_length(metric_target) <= 120);
 DO $$ BEGIN
   ALTER TABLE public.consultant_goals ADD CONSTRAINT consultant_goals_metric_check CHECK (metric IS NULL OR metric IN ('sleep', 'hrv', 'hr', 'steps'));
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+
+-- 6. Accord de partage : le praticien voit la date de l'accord de ses consultants
+--    (« Accord de partage donné par Amina le 2 oct. »).
+DROP POLICY IF EXISTS wearable_consents_practitioner_select ON public.wearable_consents;
+CREATE POLICY wearable_consents_practitioner_select ON public.wearable_consents
+  FOR SELECT TO authenticated
+  USING (consultant_id IN (SELECT public.auth_practitioner_consultant_ids()));
+
+-- 7. Page « Objets connectés » : signaux traités (« Vu, rien à faire » ou message envoyé), par semaine.
+CREATE TABLE IF NOT EXISTS public.wearable_signal_reviews (
+  consultant_id   UUID NOT NULL REFERENCES public.consultants(id) ON DELETE CASCADE,
+  practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
+  signal_key      TEXT NOT NULL CHECK (char_length(signal_key) BETWEEN 1 AND 120),
+  status          TEXT NOT NULL CHECK (status IN ('seen', 'sent')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (consultant_id, signal_key)
+);
+ALTER TABLE public.wearable_signal_reviews ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS wearable_signal_reviews_own ON public.wearable_signal_reviews;
+CREATE POLICY wearable_signal_reviews_own ON public.wearable_signal_reviews
+  FOR ALL TO authenticated
+  USING (practitioner_id = auth.uid())
+  WITH CHECK (practitioner_id = auth.uid() AND consultant_id IN (SELECT public.auth_practitioner_consultant_ids()));

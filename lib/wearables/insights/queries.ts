@@ -128,7 +128,7 @@ export async function skipRecap(db: SupabaseClient, recapId: string): Promise<vo
   if (error) fail('Impossible d’écarter le récap', error);
 }
 
-export type PendingRecap = RecapRow & { consultantName: string };
+export type PendingRecap = RecapRow & { consultantName: string; consultantFullName: string };
 
 /** Récaps à valider pour la Revue du matin. */
 export async function listPendingRecaps(db: SupabaseClient): Promise<PendingRecap[]> {
@@ -141,7 +141,8 @@ export async function listPendingRecaps(db: SupabaseClient): Promise<PendingReca
   if (error) return [];
   return ((data ?? []) as (RecapRow & { consultants?: { name?: string | null; first_name?: string | null } | null })[]).map((r) => ({
     ...r,
-    consultantName: r.consultants?.first_name || r.consultants?.name || 'Consultant',
+    consultantName: r.consultants?.first_name || (r.consultants?.name ?? '').split(' ')[0] || 'Consultant',
+    consultantFullName: r.consultants?.name || r.consultants?.first_name || 'Consultant',
   }));
 }
 
@@ -164,13 +165,20 @@ export async function getLogSources(db: SupabaseClient, consultantId: string, fr
   return out;
 }
 
-// ─── Points épinglés (« À aborder ») ─────────────────
+// ─── Points à aborder (onglet Rendez-vous) ─────────────────
 
-export type SessionTopic = { id: string; text: string; detail: string | null; source: 'wearable' | 'practitioner'; source_key: string | null; created_at: string };
+export type SessionTopic = { id: string; text: string; detail: string | null; source: 'wearable' | 'practitioner'; source_key: string | null; done_at: string | null; created_at: string };
+
+/** Points ouverts, et points abordés depuis `since` (dernière séance). */
+export async function listTopics(db: SupabaseClient, consultantId: string, since?: string | null): Promise<SessionTopic[]> {
+  let q = db.from('consultant_session_topics').select('*').eq('consultant_id', consultantId).order('created_at');
+  q = since ? q.or(`done_at.is.null,done_at.gte.${since}`) : q.is('done_at', null);
+  const { data } = await q;
+  return (data ?? []) as SessionTopic[];
+}
 
 export async function listOpenTopics(db: SupabaseClient, consultantId: string): Promise<SessionTopic[]> {
-  const { data } = await db.from('consultant_session_topics').select('*').eq('consultant_id', consultantId).is('done_at', null).order('created_at');
-  return (data ?? []) as SessionTopic[];
+  return listTopics(db, consultantId, null);
 }
 
 export async function pinTopic(db: SupabaseClient, consultantId: string, t: { text: string; detail?: string | null; key: string }): Promise<void> {
@@ -183,14 +191,47 @@ export async function unpinTopic(db: SupabaseClient, consultantId: string, key: 
   if (error) fail('Point non retiré', error);
 }
 
-export async function markTopicDone(db: SupabaseClient, id: string): Promise<void> {
-  const { error } = await db.from('consultant_session_topics').update({ done_at: new Date().toISOString() }).eq('id', id);
+/** « Ajouter un point à aborder… » */
+export async function addTopic(db: SupabaseClient, consultantId: string, text: string): Promise<SessionTopic> {
+  const { data, error } = await db.from('consultant_session_topics').insert({ consultant_id: consultantId, practitioner_id: await me(db), text, source: 'practitioner' }).select().single();
+  if (error || !data) fail('Point non ajouté', error);
+  return data as SessionTopic;
+}
+
+/** Case « abordé ». */
+export async function setTopicDone(db: SupabaseClient, id: string, done: boolean): Promise<void> {
+  const { error } = await db.from('consultant_session_topics').update({ done_at: done ? new Date().toISOString() : null }).eq('id', id);
   if (error) fail('Point non mis à jour', error);
+}
+
+export async function deleteTopic(db: SupabaseClient, id: string): Promise<void> {
+  const { error } = await db.from('consultant_session_topics').delete().eq('id', id);
+  if (error) fail('Point non retiré', error);
 }
 
 // ─── Objectifs reliés à une mesure ─────────────────
 
-export async function setGoalMetric(db: SupabaseClient, goalId: string, metric: Metric | null): Promise<void> {
-  const { error } = await db.from('consultant_goals').update({ metric, updated_at: new Date().toISOString() }).eq('id', goalId);
-  if (error) fail('Objectif non relié', error);
+export async function setGoalMetric(db: SupabaseClient, goalId: string, metric: Metric | null, target: string | null): Promise<void> {
+  const { error } = await db.from('consultant_goals').update({ metric, metric_target: metric ? target || null : null, updated_at: new Date().toISOString() }).eq('id', goalId);
+  if (error) fail('Objectif non enregistré', error);
+}
+
+// ─── Page « Objets connectés » ─────────────────
+
+export async function listSignalReviews(db: SupabaseClient): Promise<Record<string, 'seen' | 'sent'>> {
+  const { data } = await db.from('wearable_signal_reviews').select('consultant_id, signal_key, status');
+  const out: Record<string, 'seen' | 'sent'> = {};
+  for (const r of (data ?? []) as { consultant_id: string; signal_key: string; status: 'seen' | 'sent' }[]) out[`${r.consultant_id}|${r.signal_key}`] = r.status;
+  return out;
+}
+
+export async function reviewSignal(db: SupabaseClient, consultantId: string, key: string, status: 'seen' | 'sent'): Promise<void> {
+  const { error } = await db.from('wearable_signal_reviews').upsert({ consultant_id: consultantId, practitioner_id: await me(db), signal_key: key, status }, { onConflict: 'consultant_id,signal_key' });
+  if (error) fail('Action non enregistrée', error);
+}
+
+export async function sendPractitionerMessage(db: SupabaseClient, consultantId: string, text: string): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await db.from('messages').insert({ consultant_id: consultantId, text, body: text, sender: 'praticien', sender_role: 'practitioner', sent_at: now, created_at: now });
+  if (error) fail('Message non envoyé', error);
 }
