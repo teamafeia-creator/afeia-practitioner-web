@@ -152,6 +152,7 @@ import { TerrainSummary } from './record/TerrainSummary';
 import { ConnectedObjectPanel } from './record/ConnectedObjectPanel';
 import { ConnectedObjectLocked } from './record/ConnectedObjectLocked';
 import { PatientWearableSection } from '@/components/wearables/practitioner/PatientWearableSection';
+import { WearableInsightsPanel } from '@/components/wearables/practitioner/WearableInsightsPanel';
 import { PlanBlocks, PhonePreviewModal } from './record/PlanBlocks';
 import { MOOD_OPTIONS, normalizeMood, EXERCISE_INTENSITIES } from '../../lib/journal-constants';
 import { BristolScale } from '../journal/BristolScale';
@@ -3344,6 +3345,8 @@ export function ConsultantTabs({
             <>
               {/* POL-16 : données de l'objet connecté (Polar), via getWearableSummary. */}
               <PatientWearableSection consultantId={consultant.id} />
+              {/* Règles validées : points à aborder, avant / après, conseils × mesures, récap. */}
+              <WearableInsightsPanel consultantId={consultant.id} firstName={recordFirstName} />
               {wearableSummaries.length > 0 ? (
             <>
               <ConnectedObjectPanel
