@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAuthClient, createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
 import { timingSafeEqual } from 'crypto';
 import { z } from 'zod';
-import { createMeetingToken } from '@/lib/server/daily';
+import { createMeetingToken, dailyRoomUrl } from '@/lib/server/daily';
 
 /**
  * GET /api/video/[appointmentId]/token
@@ -66,11 +66,10 @@ export async function GET(
       return NextResponse.json({ error: 'Impossible de générer le token de visio.' }, { status: 502 });
     }
 
-    const domain = process.env.DAILY_DOMAIN || 'afeia.daily.co';
 
     return NextResponse.json({
       token: meetingToken.token,
-      roomUrl: `https://${domain}/${appointment.video_room_name}`,
+      roomUrl: dailyRoomUrl(appointment.video_room_name, appointment.video_link),
     });
   } catch (error) {
     console.error('Error in GET vidéo token:', error);
@@ -119,7 +118,7 @@ export async function POST(
     const { data: appointment, error: aptError } = await supabase
       .from('appointments')
       .select(`
-        id, practitioner_id, video_room_name, video_join_token, starts_at, ends_at, status, booking_name,
+        id, practitioner_id, video_room_name, video_join_token, video_link, starts_at, ends_at, status, booking_name,
         patient:consultants(name, first_name, last_name),
         consultation_type:consultation_types(name)
       `)
@@ -191,12 +190,11 @@ export async function POST(
       return NextResponse.json({ error: 'Impossible de générer le token de visio.' }, { status: 502 });
     }
 
-    const domain = process.env.DAILY_DOMAIN || 'afeia.daily.co';
     const ct = appointment.consultation_type as unknown as { name: string } | null;
 
     return NextResponse.json({
       token: meetingToken.token,
-      roomUrl: `https://${domain}/${appointment.video_room_name}`,
+      roomUrl: dailyRoomUrl(appointment.video_room_name, appointment.video_link),
       consultantName,
       practitionerName: practitioner?.full_name || 'Votre praticien',
       consultationType: ct?.name || 'Consultation',
