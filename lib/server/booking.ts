@@ -6,6 +6,7 @@ import { createAdminClient } from '../supabase/admin';
 import { sendEmail } from './email';
 import { buildConfirmationEmail, buildPractitionerNotificationEmail } from '../emails/booking-confirmation';
 import { markAsFulfilled } from '../queries/waitlist';
+import { consultantJoinUrl } from './daily';
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'AFEIA <contact@afeia.fr>';
 export const appUrl = () => process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://app.afeia.fr';
@@ -87,6 +88,8 @@ type ApptRow = {
   status: string;
   location_type: string;
   video_link: string | null;
+  video_room_name: string | null;
+  video_join_token: string | null;
   booking_name: string | null;
   booking_email: string | null;
   booking_phone: string | null;
@@ -121,6 +124,7 @@ async function bookingEmailData(a: ApptRow, name: string, email: string, reason:
   const first = name.split(' ')[0] ?? '';
   const deposit = a.deposit_status === 'paid' && a.deposit_cents ? a.deposit_cents / 100 : null;
   const balance = deposit != null && t?.price_cents ? Math.max(0, t.price_cents / 100 - deposit) : null;
+  const isDailyRoom = !!(a.video_room_name && a.video_join_token);
   const data = {
     consultantFirstName: first,
     consultantName: name,
@@ -134,7 +138,10 @@ async function bookingEmailData(a: ApptRow, name: string, email: string, reason:
     cancellationPolicyHours: p?.cancellation_policy_hours ?? 24,
     cancellationPolicyText: p?.cancellation_policy_text ?? null,
     reason,
-    videoLink: a.video_link,
+    // Salle Daily : lien de la page AFEIA (salle d'attente, contrôle horaire), jamais l'adresse Daily brute.
+    // Lien externe (Zoom, Meet…) saisi par le praticien : envoyé tel quel.
+    videoLink: isDailyRoom ? consultantJoinUrl(a.id, a.video_join_token as string) : a.video_link,
+    isDailyRoom,
     depositEuros: deposit,
     balanceEuros: balance,
     cancelUrl: `${appUrl()}/rdv/annuler/${a.cancel_token}`,

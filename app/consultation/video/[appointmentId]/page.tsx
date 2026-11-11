@@ -3,7 +3,8 @@
 import dynamic from 'next/dynamic';
 import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { AlertCircle, Video, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { AlertCircle, Clock, Video, ArrowLeft, RotateCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 const VideoRoom = dynamic(
@@ -29,7 +30,7 @@ interface PractitionerInfo {
 
 type PageState =
   | { type: 'loading' }
-  | { type: 'error'; message: string }
+  | { type: 'error'; message: string; opensAt?: string; showLogin?: boolean }
   | { type: 'ready'; roomUrl: string; token: string; userName: string; isOwner: boolean; details: {
       practitionerName: string;
       consultantName: string;
@@ -37,36 +38,49 @@ type PageState =
       startsAt: string;
     }};
 
+const openingHour = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
+const openingDay = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+/** « à 14 h 05 », ou « le mardi 12 novembre à 14 h 05 » si ce n'est pas aujourd'hui. */
+function openingLabel(date: Date): string {
+  const hour = openingHour.format(date).replace(':', ' h ');
+  return date.toDateString() === new Date().toDateString() ? `à ${hour}` : `le ${openingDay.format(date)} à ${hour}`;
+}
+
 export default function VideoConsultationPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
   const appointmentId = params.appointmentId as string;
   const consultantToken = searchParams.get('token');
-  const consultantName = searchParams.get('name') || 'Consultant';
 
   const [state, setState] = useState<PageState>({ type: 'loading' });
   const [hasLeft, setHasLeft] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     async function init() {
       try {
         if (consultantToken) {
-          // Consultant mode: use token from query params
-          // Fetch minimal appointment info via public API
+          // Consultant : le secret du lien reçu par e-mail est vérifié par le serveur
           const res = await fetch(`/api/video/${appointmentId}/token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ consultantName }),
+            body: JSON.stringify({ token: consultantToken }),
           });
 
           if (!res.ok) {
-            const data = await res.json();
-            setState({ type: 'error', message: data.error || 'Impossible d\'accéder à la consultation.' });
+            const data = await res.json().catch(() => ({}));
+            setState({
+              type: 'error',
+              message: data.error || 'Impossible d\'accéder à la consultation.',
+              opensAt: data.code === 'NOT_YET_OPEN' ? data.opensAt : undefined,
+            });
             return;
           }
 
           const data = await res.json();
+          const consultantName = data.consultantName || 'Consultant';
           setState({
             type: 'ready',
             roomUrl: data.roomUrl,
@@ -84,7 +98,8 @@ export default function VideoConsultationPage() {
           // Practitioner mode: verify auth
           const { data: userData, error: authError } = await supabase.auth.getUser();
           if (authError || !userData.user) {
-            setState({ type: 'error', message: 'Veuillez vous connecter pour accéder à la consultation.' });
+            // Sans secret ni session : lien incomplet (le praticien, lui, doit se connecter)
+            setState({ type: 'error', message: 'Ce lien de consultation n\'est pas valide.', showLogin: true });
             return;
           }
 
@@ -165,8 +180,9 @@ export default function VideoConsultationPage() {
       }
     }
 
+    setState({ type: 'loading' });
     init();
-  }, [appointmentId, consultantToken, consultantName]);
+  }, [appointmentId, consultantToken, attempt]);
 
   if (hasLeft) {
     return (
@@ -210,13 +226,43 @@ export default function VideoConsultationPage() {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center p-4">
         <div className="bg-surface rounded-2xl shadow-lg max-w-md w-full p-8 text-center space-y-6">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-          </div>
+          {state.opensAt ? (
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sage/10">
+              <Clock className="h-8 w-8 text-sage" />
+            </div>
+          ) : (
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+            </div>
+          )}
           <h1 className="text-xl font-semibold text-charcoal">
-            Accès impossible
+            {state.opensAt ? 'Un peu de patience' : 'Accès impossible'}
           </h1>
-          <p className="text-sm text-[#8B95A5]">{state.message}</p>
+          {state.opensAt ? (
+            <div className="space-y-4">
+              <p className="text-sm text-[#8B95A5]">
+                La consultation n&apos;est pas encore accessible. Elle ouvrira {openingLabel(new Date(state.opensAt))}, 15 minutes avant le début de la séance.
+              </p>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setAttempt((n) => n + 1)}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#6DD4B8] text-ink rounded-lg hover:bg-sage-deep transition-colors text-sm font-medium"
+                >
+                  <RotateCw className="h-4 w-4" aria-hidden="true" />
+                  Réessayer
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-[#8B95A5]">{state.message}</p>
+          )}
+          {state.showLogin && (
+            <p className="text-sm text-[#8B95A5]">
+              Vous êtes le praticien de cette séance ?{' '}
+              <Link href="/login" className="text-sage hover:text-sage-dark">Connectez-vous</Link>.
+            </p>
+          )}
         </div>
       </div>
     );
