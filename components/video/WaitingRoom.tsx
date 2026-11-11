@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocalParticipant, useDaily, DailyVideo } from '@daily-co/daily-react';
-import { Video, VideoOff, Mic, MicOff, User, Clock } from 'lucide-react';
+import { Video, VideoOff, Mic, MicOff, User, Clock, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 interface WaitingRoomProps {
@@ -11,6 +11,8 @@ interface WaitingRoomProps {
   startsAt: string;
   isOwner: boolean;
   onJoin: () => void;
+  /** Hôte : copie le lien à transmettre au consultant. */
+  onCopyConsultantLink?: () => void;
 }
 
 const timeFormatter = new Intl.DateTimeFormat('fr-FR', {
@@ -31,6 +33,7 @@ export function WaitingRoom({
   startsAt,
   isOwner,
   onJoin,
+  onCopyConsultantLink,
 }: WaitingRoomProps) {
   const daily = useDaily();
   const localParticipant = useLocalParticipant();
@@ -133,6 +136,17 @@ export function WaitingRoom({
         >
           Rejoindre la consultation
         </button>
+
+        {isOwner && onCopyConsultantLink && (
+          <button
+            type="button"
+            onClick={onCopyConsultantLink}
+            className="w-full py-2.5 px-6 rounded-xl border border-divider text-charcoal text-sm font-medium hover:border-sage transition-colors inline-flex items-center justify-center gap-2"
+          >
+            <Copy className="h-4 w-4" aria-hidden="true" />
+            Copier le lien du consultant
+          </button>
+        )}
       </div>
     </div>
   );

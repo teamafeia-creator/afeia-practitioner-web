@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, Clock, Video, ArrowLeft, RotateCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { Toaster } from '@/components/ui/Toaster';
+import { copyConsultantLink } from '@/lib/video/consultantLink';
 
 const VideoRoom = dynamic(
   () => import('@/components/video/VideoRoom').then((mod) => mod.VideoRoom),
@@ -19,6 +21,7 @@ interface AppointmentInfo {
   ends_at: string;
   video_link: string;
   video_room_name: string;
+  video_join_token: string | null;
   consultation_type?: { name: string } | null;
   patient?: { name?: string; first_name?: string; last_name?: string } | null;
   booking_name?: string | null;
@@ -31,7 +34,7 @@ interface PractitionerInfo {
 type PageState =
   | { type: 'loading' }
   | { type: 'error'; message: string; opensAt?: string; showLogin?: boolean }
-  | { type: 'ready'; roomUrl: string; token: string; userName: string; isOwner: boolean; details: {
+  | { type: 'ready'; roomUrl: string; token: string; userName: string; isOwner: boolean; joinToken?: string | null; details: {
       practitionerName: string;
       consultantName: string;
       consultationType: string;
@@ -107,7 +110,7 @@ export default function VideoConsultationPage() {
           const { data: appointment, error: aptError } = await supabase
             .from('appointments')
             .select(`
-              id, practitioner_id, starts_at, ends_at, video_link, video_room_name,
+              id, practitioner_id, starts_at, ends_at, video_link, video_room_name, video_join_token,
               booking_name,
               patient:consultants(name, first_name, last_name),
               consultation_type:consultation_types(name)
@@ -166,6 +169,7 @@ export default function VideoConsultationPage() {
             token: tokenData.token,
             userName: practitioner?.full_name || 'Praticien',
             isOwner: true,
+            joinToken: apt.video_join_token,
             details: {
               practitionerName: practitioner?.full_name || 'Praticien',
               consultantName: patientName || 'Consultant',
@@ -268,14 +272,20 @@ export default function VideoConsultationPage() {
     );
   }
 
+  const joinToken = state.joinToken;
+
   return (
-    <VideoRoom
-      roomUrl={state.roomUrl}
-      token={state.token}
-      userName={state.userName}
-      isOwner={state.isOwner}
-      appointmentDetails={state.details}
-      onLeave={() => setHasLeft(true)}
-    />
+    <>
+      <Toaster />
+      <VideoRoom
+        roomUrl={state.roomUrl}
+        token={state.token}
+        userName={state.userName}
+        isOwner={state.isOwner}
+        appointmentDetails={state.details}
+        onLeave={() => setHasLeft(true)}
+        onCopyConsultantLink={state.isOwner && joinToken ? () => void copyConsultantLink(appointmentId, joinToken) : undefined}
+      />
+    </>
   );
 }
