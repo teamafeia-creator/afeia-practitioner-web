@@ -1,5 +1,14 @@
 import { supabase } from '../supabase';
 import type { ObservanceItem, ObservanceLog, ObservanceSummary, ObservanceCategoryRate, ObservanceCategory, ObservanceFrequency } from '../types';
+import {
+  categoryForField,
+  frequencyFromDb,
+  frequencyToDb,
+  normalizeTrackedItems,
+  plannedDays,
+  type TrackFrequency,
+  type TrackedItem,
+} from '../observance-tracking';
 
 type SupabaseErrorLike = {
   message?: string;
@@ -341,4 +350,181 @@ export async function getObservanceRatesForDashboard(
     avgRate,
     consultants: results.sort((a, b) => a.rate - b.rate),
   };
+}
+
+// ─── Checklist reliée au conseillancier ─────────────────────────
+
+export type ObservanceItemStat = {
+  item: ObservanceItem;
+  freq: TrackFrequency;
+  /** Jours cochés sur la période. */
+  done: number;
+  /** Jours attendus sur la période (depuis la création de l'item). */
+  planned: number;
+  /** Item créé depuis moins d'un jour : pas encore de données. */
+  isNew: boolean;
+};
+
+/** Taux de suivi de chaque item actif sur les `days` derniers jours. */
+export async function getObservanceItemStats(consultantId: string, days = 14): Promise<ObservanceItemStat[]> {
+  const items = await getObservanceItems(consultantId);
+  if (items.length === 0) return [];
+
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - (days - 1));
+  const startStr = start.toISOString().slice(0, 10);
+
+  const { data: logs } = await supabase
+    .from('plan_observance_logs')
+    .select('observance_item_id, date')
+    .in('observance_item_id', items.map((i) => i.id))
+    .gte('date', startStr)
+    .lte('date', end.toISOString().slice(0, 10))
+    .eq('done', true);
+
+  const done = new Map<string, number>();
+  (logs || []).forEach((l: { observance_item_id: string }) => {
+    done.set(l.observance_item_id, (done.get(l.observance_item_id) ?? 0) + 1);
+  });
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  return items
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((item) => {
+      const freq = frequencyFromDb(item);
+      const age = Math.floor((end.getTime() - new Date(item.created_at).getTime()) / dayMs) + 1;
+      const window = Math.max(1, Math.min(days, age));
+      return { item, freq, done: done.get(item.id) ?? 0, planned: plannedDays(freq, window), isNew: age <= 1 };
+    });
+}
+
+/**
+ * Au partage d'une version : la checklist du consultant reprend les conseils suivis de cette version.
+ * Un item déjà suivi (même rubrique et même ligne, ou même libellé) est conservé avec son historique ;
+ * les items issus d'une version précédente qui ne sont plus suivis sont désactivés.
+ * Les items ajoutés depuis le journal (sans rubrique d'origine) ne sont pas touchés.
+ */
+export async function syncObservanceFromPlan(params: {
+  planId: string;
+  consultantId: string;
+  practitionerId: string;
+  tracked: TrackedItem[];
+}): Promise<void> {
+  const { planId, consultantId, practitionerId, tracked } = params;
+  const existing = (await getObservanceItems(consultantId)).filter((i) => i.source_key);
+  const used = new Set<string>();
+
+  for (const [n, t] of tracked.entries()) {
+    const match =
+      existing.find((i) => !used.has(i.id) && i.source_key === t.field_key && i.source_line === t.line) ??
+      existing.find((i) => !used.has(i.id) && i.source_key === t.field_key && i.label === t.label);
+    const values = {
+      consultant_plan_id: planId,
+      label: t.label.trim() || t.line,
+      source_key: t.field_key,
+      source_line: t.line,
+      sort_order: n,
+      ...frequencyToDb(t.freq),
+    };
+    if (match) {
+      used.add(match.id);
+      await updateObservanceItem(match.id, values);
+    } else {
+      await createObservanceItem({
+        ...values,
+        consultant_id: consultantId,
+        practitioner_id: practitionerId,
+        category: categoryForField(t.field_key),
+        is_active: true,
+      });
+    }
+  }
+
+  const stale = existing.filter((i) => !used.has(i.id)).map((i) => i.id);
+  if (stale.length) {
+    const { error } = await supabase.from('plan_observance_items').update({ is_active: false }).in('id', stale);
+    if (error) throw new Error(describeError(error));
+  }
+}
+
+export type ChecklistEdit = {
+  /** Item existant, ou absent pour un nouvel item. */
+  id?: string;
+  label: string;
+  freq: TrackFrequency;
+};
+
+/**
+ * Modification de la checklist depuis l'onglet Journal.
+ * Les items retirés sont désactivés (leur historique est gardé). Les changements des items
+ * issus du conseillancier sont reportés dans les versions qui les suivent, pour que l'éditeur reste synchronisé.
+ */
+export async function saveChecklistFromJournal(params: {
+  consultantId: string;
+  practitionerId: string;
+  planId: string;
+  edits: ChecklistEdit[];
+}): Promise<void> {
+  const { consultantId, practitionerId, planId, edits } = params;
+  const current = await getObservanceItems(consultantId);
+  const kept = new Set(edits.filter((e) => e.id).map((e) => e.id));
+
+  for (const [n, e] of edits.entries()) {
+    const label = e.label.trim();
+    if (!label) continue;
+    if (e.id) {
+      await updateObservanceItem(e.id, { label, sort_order: n, ...frequencyToDb(e.freq) });
+    } else {
+      await createObservanceItem({
+        consultant_plan_id: planId,
+        consultant_id: consultantId,
+        practitioner_id: practitionerId,
+        label,
+        category: 'autre',
+        source_key: null,
+        source_line: null,
+        sort_order: n,
+        is_active: true,
+        ...frequencyToDb(e.freq),
+      });
+    }
+  }
+
+  const removed = current.filter((i) => !kept.has(i.id));
+  if (removed.length) {
+    const { error } = await supabase
+      .from('plan_observance_items')
+      .update({ is_active: false })
+      .in('id', removed.map((i) => i.id));
+    if (error) throw new Error(describeError(error));
+  }
+
+  // Report dans le conseillancier (versions qui suivent ces lignes)
+  const sourced = current.filter((i) => i.source_key && i.source_line);
+  if (!sourced.length) return;
+  const { data: plans } = await supabase
+    .from('consultant_plans')
+    .select('id, tracked_items')
+    .eq('consultant_id', consultantId);
+  for (const plan of plans || []) {
+    const items = normalizeTrackedItems((plan as { tracked_items: unknown }).tracked_items);
+    if (!items.length) continue;
+    let changed = false;
+    const next: TrackedItem[] = [];
+    for (const t of items) {
+      const src = sourced.find((i) => i.source_key === t.field_key && i.source_line === t.line);
+      if (!src) {
+        next.push(t);
+        continue;
+      }
+      const edit = edits.find((e) => e.id === src.id);
+      changed = true;
+      if (edit && edit.label.trim()) next.push({ ...t, label: edit.label.trim(), freq: edit.freq });
+    }
+    if (changed) {
+      const { error } = await supabase.from('consultant_plans').update({ tracked_items: next }).eq('id', (plan as { id: string }).id);
+      if (error) throw new Error(describeError(error));
+    }
+  }
 }

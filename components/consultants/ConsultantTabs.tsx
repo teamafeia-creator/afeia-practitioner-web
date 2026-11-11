@@ -17,6 +17,7 @@ import {
   deleteConsultant,
   markMessagesAsRead,
   sendMessage,
+  getConsultantPlans,
   shareConsultantPlanVersion,
   updateConsultant,
   updateConsultantPlanContent,
@@ -76,6 +77,7 @@ import {
   Settings,
   Dumbbell,
   Moon,
+  Smartphone,
 } from 'lucide-react';
 import type {
   AnamnesisAnswers,
@@ -150,14 +152,13 @@ import { TerrainSummary } from './record/TerrainSummary';
 import { ConnectedObjectPanel } from './record/ConnectedObjectPanel';
 import { ConnectedObjectLocked } from './record/ConnectedObjectLocked';
 import { PatientWearableSection } from '@/components/wearables/practitioner/PatientWearableSection';
-import { PlanBlocks, PhonePreview } from './record/PlanBlocks';
+import { PlanBlocks, PhonePreviewModal } from './record/PlanBlocks';
 import { MOOD_OPTIONS, normalizeMood, EXERCISE_INTENSITIES } from '../../lib/journal-constants';
 import { BristolScale } from '../journal/BristolScale';
 import { IndicatorDisplay } from '../journal/IndicatorDisplay';
 import { IndicatorForm } from '../journal/IndicatorForm';
-import { ObservanceChart } from '../journal/ObservanceChart';
 import { TransitTimeline } from '../journal/TransitTimeline';
-import { ObservanceGeneratorModal } from '../journal/ObservanceGeneratorModal';
+import { ObservanceChecklistCard, JournalInsightsCard, computeJournalInsights } from '../journal/ObservanceChecklistCard';
 import { upsertJournalEntryV2, getTransitHistory } from '../../lib/queries/journal';
 import {
   createJournalIndicator,
@@ -165,10 +166,14 @@ import {
   deleteJournalIndicator,
 } from '../../lib/queries/journal';
 import {
-  bulkCreateObservanceItems,
-  deleteObservanceItem,
   calculateObservanceRates,
+  getObservanceItemStats,
+  saveChecklistFromJournal,
+  syncObservanceFromPlan,
+  type ChecklistEdit,
+  type ObservanceItemStat,
 } from '../../lib/queries/observance';
+import { normalizeTrackedItems, resolveTrackedItems, type TrackedItem } from '../../lib/observance-tracking';
 import {
   createMedicalHistoryEntry,
   updateMedicalHistoryEntry,
@@ -593,10 +598,9 @@ export function ConsultantTabs({
   const [observanceSummary, setObservanceSummary] = useState<ObservanceSummary | null>(null);
   const [showIndicatorForm, setShowIndicatorForm] = useState(false);
   const [editingIndicator, setEditingIndicator] = useState<JournalIndicator | null>(null);
-  const [showObservanceGenerator, setShowObservanceGenerator] = useState(false);
+  const [observanceStats, setObservanceStats] = useState<ObservanceItemStat[]>([]);
   const [transitHistory, setTransitHistory] = useState<Array<{ date: string; bristol_type: number }>>([]);
   const [indicatorSaving, setIndicatorSaving] = useState(false);
-  const [observanceGenerating, setObservanceGenerating] = useState(false);
   const [noteEditing, setNoteEditing] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteContent, setNoteContent] = useState(consultant.practitioner_note?.content ?? '');
@@ -605,6 +609,9 @@ export function ConsultantTabs({
     consultant.consultant_plans?.[0]?.id ?? null
   );
   const [planForm, setPlanForm] = useState<ConseillancierContent>(buildPlanContent(null));
+  // Conseils cochés « Suivre dans le journal » du brouillon actif
+  const [planTracked, setPlanTracked] = useState<TrackedItem[]>([]);
+  const [phonePreviewOpen, setPhonePreviewOpen] = useState(false);
   const [pdfDownloading, setPdfDownloading] = useState(false);
   const [planSaving, setPlanSaving] = useState(false);
   const [planSharing, setPlanSharing] = useState(false);
@@ -848,6 +855,36 @@ export function ConsultantTabs({
     [consultantState.journal_entries]
   );
   const initialJournal = useMemo(() => buildJournalForm(journalEntries[0]), [journalEntries]);
+  // Jours sans saisie sur les 14 derniers jours (aujourd'hui compris)
+  const journalDaysWithoutEntry = useMemo(() => {
+    const filled = new Set(journalEntries.map((e) => e.date.slice(0, 10)));
+    const out: string[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      if (!filled.has(key)) out.push(key);
+    }
+    return out;
+  }, [journalEntries]);
+  const journalInsights = useMemo(
+    () =>
+      computeJournalInsights({
+        entries: journalEntries.filter((e) => new Date(e.date).getTime() >= Date.now() - 14 * 86400000),
+        stats: observanceStats,
+        daysWithoutEntry: journalDaysWithoutEntry,
+        phaseOf:
+          cycleIsTracking && cycleProfile && cycleStarts.length > 0
+            ? (date: string) => {
+                const t = new Date(date).getTime();
+                const start = [...cycleStarts].reverse().find((d) => d.getTime() <= t);
+                if (!start) return null;
+                return getCyclePhaseForDay(getCycleDayUtil(date, start), cycleProfile.average_cycle_length, cycleProfile.average_period_length);
+              }
+            : undefined,
+      }),
+    [journalEntries, journalDaysWithoutEntry, observanceStats, cycleIsTracking, cycleProfile, cycleStarts]
+  );
   const initialAnamnesis = useMemo(
     () => flattenAnamnesisAnswers(consultantState.consultant_anamnesis?.answers),
     [consultantState.consultant_anamnesis]
@@ -868,6 +905,7 @@ export function ConsultantTabs({
     () => deriveSelectedSections(buildPlanContent(activePlan?.content ?? null), activePlan?.selected_sections),
     [activePlan]
   );
+  const initialPlanTracked = useMemo(() => normalizeTrackedItems(activePlan?.tracked_items), [activePlan]);
 
   const initialProfile = useMemo(
     () => ({
@@ -914,9 +952,10 @@ export function ConsultantTabs({
   const isPlanDirty = useMemo(() => {
     return (
       !areRecordsEqual(planForm, initialPlanContent) ||
-      planSections.join(',') !== initialPlanSections.join(',')
+      planSections.join(',') !== initialPlanSections.join(',') ||
+      JSON.stringify(planTracked) !== JSON.stringify(initialPlanTracked)
     );
-  }, [planForm, initialPlanContent, planSections, initialPlanSections]);
+  }, [planForm, initialPlanContent, planSections, initialPlanSections, planTracked, initialPlanTracked]);
 
   const canEditPlan = activePlan?.status === 'draft';
   const selectedPlanSections = useMemo(
@@ -1006,14 +1045,17 @@ export function ConsultantTabs({
   useEffect(() => {
     if (!consultant.id) return;
     getTransitHistory(consultant.id, 30).then(setTransitHistory).catch(() => {});
-    if ((consultant.observance_items ?? []).length > 0) {
-      calculateObservanceRates(consultant.id, 7).then(setObservanceSummary).catch(() => {});
-    }
+    void refreshObservance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultant.id, consultant.observance_items]);
 
   useEffect(() => {
     setPlanForm(initialPlanContent);
   }, [initialPlanContent]);
+
+  useEffect(() => {
+    setPlanTracked(initialPlanTracked);
+  }, [initialPlanTracked]);
 
   useEffect(() => {
     const pending = pendingPlanSections.current;
@@ -1409,21 +1451,54 @@ export function ConsultantTabs({
     }
   }
 
-  async function handleGenerateObservance(items: Array<Omit<ObservanceItem, 'id' | 'created_at'>>) {
-    setObservanceGenerating(true);
-    try {
-      const created = await bulkCreateObservanceItems(items);
-      setObservanceItems((prev) => [...prev, ...created]);
-      setShowObservanceGenerator(false);
-      if (created.length > 0) {
-        calculateObservanceRates(consultant.id, 7).then(setObservanceSummary).catch(() => {});
-      }
-      setToast({ title: `${created.length} items d'observance créés`, variant: 'success' });
-    } catch {
-      setToast({ title: 'Erreur', description: 'Impossible de générer la checklist.', variant: 'error' });
-    } finally {
-      setObservanceGenerating(false);
+  /** Recharge la checklist d'observance (items, taux sur 14 jours, résumé). */
+  async function refreshObservance() {
+    const stats = await getObservanceItemStats(consultant.id, 14).catch(() => [] as ObservanceItemStat[]);
+    setObservanceStats(stats);
+    setObservanceItems(stats.map((x) => x.item));
+    if (stats.length) {
+      calculateObservanceRates(consultant.id, 7).then(setObservanceSummary).catch(() => {});
+    } else {
+      setObservanceSummary(null);
     }
+  }
+
+  async function handleSaveChecklist(edits: ChecklistEdit[]) {
+    const sharedPlan = plans.find((p) => p.status === 'shared');
+    if (!sharedPlan) return;
+    try {
+      await saveChecklistFromJournal({
+        consultantId: consultant.id,
+        practitionerId: consultant.practitioner_id,
+        planId: sharedPlan.id,
+        edits,
+      });
+      // Les versions qui suivent ces conseils ont pu changer : on les relit
+      setPlans(await getConsultantPlans(consultant.id));
+      await refreshObservance();
+      setToast({
+        title: 'Checklist mise à jour',
+        description: `${recordFirstName} la voit dès maintenant, et le conseillancier est synchronisé.`,
+        variant: 'success',
+      });
+    } catch (error) {
+      setToast({
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Impossible de mettre à jour la checklist.',
+        variant: 'error',
+      });
+      throw error;
+    }
+  }
+
+  async function handleSendReminder(text: string) {
+    const created = await sendMessage(consultant.id, text, 'praticien');
+    if (!created) {
+      setToast({ title: 'Erreur', description: 'Le message n’a pas pu être envoyé.', variant: 'error' });
+      throw new Error('send failed');
+    }
+    setMessages((prev) => [...prev, created]);
+    setToast({ title: 'Rappel envoyé', description: `${recordFirstName} le retrouve dans sa messagerie.`, variant: 'success' });
   }
 
   async function handleSaveNote() {
@@ -1468,7 +1543,9 @@ export function ConsultantTabs({
         consultantId: consultant.id,
         version: nextVersion,
         content,
-        selectedSections
+        selectedSections,
+        // Les conseils suivis de la version de base restent suivis s'ils sont toujours là
+        trackedItems: resolveTrackedItems(content, normalizeTrackedItems(basePlan?.tracked_items))
       });
       setPlans((prev) => [created, ...prev]);
       setActivePlanId(created.id);
@@ -1581,7 +1658,8 @@ export function ConsultantTabs({
       const updated = await updateConsultantPlanContent({
         planId: activePlan.id,
         content: planForm,
-        selectedSections: planSections
+        selectedSections: planSections,
+        trackedItems: resolveTrackedItems(planForm, planTracked)
       });
       setPlans((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       setToast({
@@ -1627,6 +1705,14 @@ export function ConsultantTabs({
       }
       const shared = await shareConsultantPlanVersion(activePlan.id);
       setPlans((prev) => prev.map((item) => (item.id === shared.id ? shared : item)));
+      // La checklist d'observance du consultant reprend les conseils suivis de cette version
+      await syncObservanceFromPlan({
+        planId: shared.id,
+        consultantId: consultant.id,
+        practitionerId: consultant.practitioner_id,
+        tracked: resolveTrackedItems(buildPlanContent(shared.content ?? null), normalizeTrackedItems(shared.tracked_items))
+      });
+      await refreshObservance();
       setToast({
         title: 'Plan partagé',
         description: 'Le consultant peut désormais consulter cette version.',
@@ -3607,28 +3693,19 @@ export function ConsultantTabs({
             </CardContent>
           </Card>
 
-          {/* ─── Section 3: Observance du conseillancier ───── */}
-          {observanceItems.length > 0 && observanceSummary ? (
-            <Card>
-              <CardHeader>
-                <h3 className="text-sm font-semibold">Observance du programme</h3>
-              </CardHeader>
-              <CardContent>
-                <ObservanceChart summary={observanceSummary} />
-              </CardContent>
-            </Card>
-          ) : (
-            plans.some((p) => p.status === 'shared') && (
-              <Card>
-                <CardContent className="text-center py-6">
-                  <p className="text-sm text-stone mb-3">Générez la checklist d&apos;observance depuis le conseillancier partagé.</p>
-                  <Button variant="secondary" onClick={() => setShowObservanceGenerator(true)}>
-                    Générer la checklist d&apos;observance
-                  </Button>
-                </CardContent>
-              </Card>
-            )
-          )}
+          {/* ─── Section 3: Checklist d'observance, reliée au conseillancier ───── */}
+          <ObservanceChecklistCard
+            firstName={recordFirstName}
+            stats={observanceStats}
+            hasSharedPlan={plans.some((p) => p.status === 'shared')}
+            daysWithoutEntry={journalDaysWithoutEntry}
+            onSave={handleSaveChecklist}
+            onSendReminder={handleSendReminder}
+            onOpenConseillancier={() => setTab(T.tabConseillancier as Tab)}
+          />
+
+          {/* ─── Section 4: Ce qui ressort ───── */}
+          <JournalInsightsCard insights={journalInsights} />
 
           {/* ─── Section 5: Historique ───── */}
           <Card>
@@ -3714,20 +3791,6 @@ export function ConsultantTabs({
               saving={indicatorSaving}
             />
           )}
-          {showObservanceGenerator && (() => {
-            const sharedPlan = plans.find((p) => p.status === 'shared');
-            return sharedPlan ? (
-              <ObservanceGeneratorModal
-                plan={sharedPlan}
-                consultantId={consultant.id}
-                practitionerId={consultant.practitioner_id}
-                existingItems={observanceItems}
-                onGenerate={handleGenerateObservance}
-                onClose={() => setShowObservanceGenerator(false)}
-                saving={observanceGenerating}
-              />
-            ) : null;
-          })()}
         </div>
       )}
 
@@ -3829,9 +3892,6 @@ export function ConsultantTabs({
                   <div className="flex gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setTab('Journal' as Tab)}>
                       Voir le détail
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={() => setShowObservanceGenerator(true)}>
-                      Gérer la checklist
                     </Button>
                   </div>
                 </div>
@@ -3941,6 +4001,13 @@ export function ConsultantTabs({
                     </Button>
                     <Button
                       variant="outline"
+                      onClick={() => setPhonePreviewOpen(true)}
+                      icon={<Smartphone className="h-4 w-4" aria-hidden="true" />}
+                    >
+                      Voir dans l&apos;app de {recordFirstName}
+                    </Button>
+                    <Button
+                      variant="outline"
                       onClick={handleDownloadPdf}
                       loading={pdfDownloading}
                       disabled={pdfDownloading}
@@ -3980,6 +4047,13 @@ export function ConsultantTabs({
                     </Button>
                     <Button
                       variant="outline"
+                      onClick={() => setPhonePreviewOpen(true)}
+                      icon={<Smartphone className="h-4 w-4" aria-hidden="true" />}
+                    >
+                      Voir dans l&apos;app de {recordFirstName}
+                    </Button>
+                    <Button
+                      variant="outline"
                       onClick={handleDownloadPdf}
                       loading={pdfDownloading}
                       disabled={pdfDownloading}
@@ -3993,10 +4067,18 @@ export function ConsultantTabs({
                 <PlanBlocks content={planForm} firstName={recordFirstName} logs={observanceLogsRecent} />
               </CardContent>
             </Card>
-            <aside className="sticky top-5 min-w-0 flex-[1_1_280px] lg:max-w-[320px]">
-              <PhonePreview content={planForm} firstName={recordFirstName} />
-            </aside>
             </div>
+          ) : null}
+
+          {activePlan ? (
+            <PhonePreviewModal
+              isOpen={phonePreviewOpen}
+              onClose={() => setPhonePreviewOpen(false)}
+              content={planForm}
+              firstName={recordFirstName}
+              version={activePlan.version}
+              tracked={planTracked}
+            />
           ) : null}
 
           {/* Modales du conseillancier (dans le plein écran quand il est ouvert) */}
@@ -4611,6 +4693,8 @@ export function ConsultantTabs({
           onIndexChange={setPlanFocusIndex}
           content={planForm}
           onFieldChange={handlePlanFieldChange}
+          tracked={planTracked}
+          onTrackedChange={setPlanTracked}
           treatmentsReminder={activeTreatmentsReminder}
           alerts={
             <>
@@ -4620,7 +4704,7 @@ export function ConsultantTabs({
               {medicalAlerts.length > 0 ? <MedicalAlertBanner alerts={medicalAlerts} /> : null}
               {shareBlocked ? (
                 <p role="status" className="rounded-xl border border-[#6B3438] bg-[#3A2224] px-3.5 py-2.5 text-sm text-[#F2A3A3]">
-                  Le partage est bloqué tant que la contre-indication n&apos;est pas traitée : retirez le conseil concerné ou confirmez que vous le maintenez en connaissance de cause.
+                  Une contre-indication est à traiter : retirez le conseil concerné, ou cliquez sur « Partager » pour la valider en connaissance de cause.
                 </p>
               ) : null}
               {contraindicationAlerts.length > 0 ? (
@@ -4652,10 +4736,10 @@ export function ConsultantTabs({
           saveDisabled={!isPlanDirty || planSaving}
           onShare={handleSharePlanClick}
           sharing={planSharing}
-          shareDisabled={planSharing || planSaving || isPlanDirty || shareBlocked}
+          shareDisabled={planSharing || planSaving || isPlanDirty}
           shareTitle={
             shareBlocked
-              ? 'Le partage est bloqué tant que la contre-indication n’est pas traitée.'
+              ? 'Une contre-indication est à vérifier : vous la validerez avant le partage.'
               : isPlanDirty
                 ? 'Enregistrez vos modifications avant de partager.'
                 : undefined

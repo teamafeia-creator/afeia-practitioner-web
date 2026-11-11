@@ -17,6 +17,8 @@ import {
   type ConseillancierSection,
 } from '../../../lib/conseillancier';
 import type { BlockSection } from '../../../lib/blocks-types';
+import type { TrackedItem } from '../../../lib/observance-tracking';
+import { TrackPanel, trackedByLine } from './TrackPanel';
 
 type FieldUpdate = string | ((previous: string) => string);
 
@@ -33,6 +35,9 @@ interface ConseillancierFocusEditorProps {
   onIndexChange: (index: number) => void;
   content: ConseillancierContent;
   onFieldChange: (key: ConseillancierKey, update: FieldUpdate) => void;
+  /** Conseils cochés « Suivre dans le journal ». */
+  tracked: TrackedItem[];
+  onTrackedChange: (next: TrackedItem[]) => void;
   /** Rappel discret des traitements en cours (catégorie Phytothérapie). */
   treatmentsReminder?: string | null;
   /** Bandeaux existants : IA, alerte médicale, contre-indications. */
@@ -73,6 +78,8 @@ export function ConseillancierFocusEditor({
   onIndexChange,
   content,
   onFieldChange,
+  tracked,
+  onTrackedChange,
   treatmentsReminder,
   alerts,
   overlays,
@@ -248,6 +255,7 @@ export function ConseillancierFocusEditor({
                   const filled = Boolean(value.trim());
                   const open = Boolean(openFields[field.key]);
                   const panelId = `conseil-field-${field.key}`;
+                  const trackedCount = filled ? trackedByLine(field.key, value, tracked).map.size : 0;
                   return (
                     <div
                       key={field.key}
@@ -270,7 +278,9 @@ export function ConseillancierFocusEditor({
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <span className="text-sm font-semibold">{field.label}</span>
                           <span className="truncate text-xs text-stone">
-                            {filled ? value.trim().split('\n')[0] : 'Facultatif · vide'}
+                            {filled
+                              ? `${trackedCount ? `${trackedCount} ${plural(trackedCount, 'suivi')} dans le journal · ` : ''}${value.trim().split('\n')[0]}`
+                              : 'Facultatif · vide'}
                           </span>
                         </span>
                         <ChevronDown
@@ -308,6 +318,13 @@ export function ConseillancierFocusEditor({
                             onChange={(event) => onFieldChange(field.key, event.target.value)}
                             placeholder={field.placeholder}
                             rows={field.multiline ? 4 : 2}
+                          />
+                          <TrackPanel
+                            fieldKey={field.key}
+                            value={value}
+                            firstName={firstName}
+                            tracked={tracked}
+                            onChange={onTrackedChange}
                           />
                           <div>
                             <SaveAsBlockButton selectedText={value} section={section.id as BlockSection} />
@@ -359,7 +376,7 @@ export function ConseillancierFocusEditor({
 
         {showPreview ? (
           <aside aria-label={`Aperçu côté ${firstName}`} className="w-full max-w-[300px] shrink-0 md:sticky md:top-24">
-            <PhonePreview content={content} firstName={firstName} />
+            <PhonePreview content={content} firstName={firstName} tracked={tracked} />
           </aside>
         ) : null}
       </main>
