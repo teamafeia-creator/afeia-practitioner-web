@@ -6,7 +6,7 @@
 //  3. état du webhook ; alerte à l'équipe s'il est absent ou inactif.
 // Traitement par lots, avec un budget de temps pour rester sous maxDuration.
 import 'server-only';
-import { getAccessToken, listActiveConnections, listBackfillsToResume, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
+import { getAccessToken, getConnection, listActiveConnections, listBackfillsToResume, markError, markSynced, sanitizeErrorMessage } from '@/lib/wearables/connections';
 import { isDemoProviderUserId } from '@/lib/wearables/demo';
 import { requeueDueEvents } from '@/lib/wearables/events';
 import { alertWebhookDown } from './alerts';
@@ -89,6 +89,67 @@ async function backfillConnection(
     }
     summary.connections.errors += 1;
     summary.errors.push(`connexion ${c.consultantId} : ${sanitizeErrorMessage((error as Error).message ?? 'erreur')}`);
+  }
+}
+
+export type ManualSyncResult =
+  | { outcome: 'synced'; ingested: number; empty: number; days: number }
+  | { outcome: 'no_connection' | 'demo' | 'revoked' | 'rate_limited' | 'error'; message: string };
+
+/**
+ * Synchronisation à la demande d'un seul consultant (bouton « Synchroniser »).
+ * Même traitement que le rattrapage quotidien, limité à cette connexion : les `days`
+ * derniers jours (hier compris) des ressources MVP, ingérés de façon idempotente.
+ */
+export async function syncConsultantConnection(
+  consultantId: string,
+  opts: { days?: number; now?: Date } = {}
+): Promise<ManualSyncResult> {
+  const connection = await getConnection(consultantId, 'polar');
+  if (!connection || connection.status !== 'active') {
+    return { outcome: 'no_connection', message: "Aucun objet connecté actif pour ce consultant." };
+  }
+  if (isDemoProviderUserId(connection.providerUserId)) {
+    return { outcome: 'demo', message: 'Connexion de démonstration : rien à synchroniser.' };
+  }
+  const token = await getAccessToken(consultantId, 'polar');
+  if (!token) {
+    return { outcome: 'no_connection', message: "Jeton Polar indisponible : reconnectez l'objet." };
+  }
+
+  const days = Math.min(Math.max(opts.days ?? BACKFILL_DAYS, 1), 7);
+  const dates = lastDays(days, opts.now);
+  let ingested = 0;
+  let empty = 0;
+  try {
+    for (const date of dates) {
+      for (const r of DAILY_RESOURCES) {
+        const fetched = await polarFetch(r.path(date), { token });
+        if (fetched === null) {
+          empty += 1;
+          continue;
+        }
+        ingested += await ingestPolarResource(r.dataType, fetched, consultantId, {
+          providerUserId: connection.providerUserId,
+          date,
+          sourceEventId: null,
+        });
+      }
+    }
+    await markSynced(consultantId, 'polar');
+    console.info('[wearables/sync]', 'synchronisation manuelle', { consultantId, days, ingested, empty });
+    return { outcome: 'synced', ingested, empty, days };
+  } catch (error) {
+    if (error instanceof PolarRateLimitError) {
+      return { outcome: 'rate_limited', message: 'Quota Polar atteint : réessayez dans quelques minutes.' };
+    }
+    if (isAccessRevoked(error)) {
+      await markError(consultantId, 'polar', REVOKED_MESSAGE);
+      return { outcome: 'revoked', message: "Accès révoqué côté Polar : reconnectez l'objet." };
+    }
+    const message = sanitizeErrorMessage((error as Error).message ?? 'erreur');
+    console.warn('[wearables/sync]', 'échec synchronisation manuelle', { consultantId, message });
+    return { outcome: 'error', message: 'Synchronisation impossible pour le moment.' };
   }
 }
 

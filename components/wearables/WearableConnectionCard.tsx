@@ -25,6 +25,9 @@ type Props = {
   /** Déconnexion demandée par le patient (deleteData : supprimer aussi les données importées). */
   onDisconnect?: (deleteData: boolean) => Promise<void> | void;
   disconnecting?: boolean;
+  /** Synchronisation à la demande (récupère les derniers jours chez Polar). */
+  onSync?: () => Promise<void> | void;
+  syncing?: boolean;
   /** Injectable pour les tests. */
   now?: Date;
 };
@@ -43,6 +46,8 @@ export function WearableConnectionCard({
   showSetupHelp = false,
   onDisconnect,
   disconnecting = false,
+  onSync,
+  syncing = false,
   now,
 }: Props) {
   const state = !connection || connection.status === 'revoked' ? 'disconnected' : connection.status;
@@ -111,10 +116,19 @@ export function WearableConnectionCard({
           </p>
         )}
 
-        {onDisconnect && state !== 'disconnected' ? (
-          <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(true)} disabled={disconnecting}>
-            Déconnecter mon objet connecté
-          </Button>
+        {state !== 'disconnected' && (onSync || onDisconnect) ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {onSync && state === 'active' ? (
+              <Button variant="secondary" size="sm" onClick={() => void onSync()} loading={syncing} data-testid="wearable-sync">
+                Synchroniser maintenant
+              </Button>
+            ) : null}
+            {onDisconnect ? (
+              <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(true)} disabled={disconnecting || syncing}>
+                Déconnecter mon objet connecté
+              </Button>
+            ) : null}
+          </div>
         ) : null}
 
         <p className="text-xs text-stone">Compatible : Polar</p>
