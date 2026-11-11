@@ -139,6 +139,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('Section suggestion error:', error);
-    return NextResponse.json({ error: 'Erreur de génération.' }, { status: 500 });
+    // Clé API absente ou invalide : message explicite plutôt qu'une erreur générique
+    const status = (error as { status?: number })?.status;
+    if (status === 401 || (error instanceof Error && error.message.includes('ANTHROPIC_API_KEY'))) {
+      return NextResponse.json(
+        { error: 'Le service d’IA n’est pas configuré correctement (clé API). Contactez l’équipe AFEIA.' },
+        { status: 503 }
+      );
+    }
+    return NextResponse.json({ error: 'Erreur de génération. Réessayez.' }, { status: 500 });
   }
 }
