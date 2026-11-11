@@ -18,6 +18,7 @@ import { fetchDashboardExtraStats, type DashboardExtraStats } from '@/lib/dashbo
 import { FACE_COLORS, displayName, getReviewQueue, initialsOf, reviewMinutes, reviewSentence } from '@/lib/morning-review/queue';
 import { StatsCarousel, ICONS, type StatCategory, type PeriodOption } from '@/components/dashboard/StatsCarousel';
 import type { Appointment } from '@/lib/types';
+import { JoinVisioButton } from '@/components/video/JoinVisioButton';
 
 type ConsultantRow = { id: string; activated?: boolean | null };
 
@@ -342,27 +343,33 @@ export default function DashboardPage() {
               const visio = a.location_type === 'video';
               const href = a.consultant_id ? `/consultants/${a.consultant_id}` : '/agenda';
               return (
-                <Link
+                <div
                   key={a.id}
-                  href={href}
-                  className={`flex items-center gap-4 px-5 py-4 hover:bg-surface-raised ${i > 0 ? 'border-t border-divider' : ''}`}
+                  className={`flex items-center gap-3 pr-5 hover:bg-surface-raised ${i > 0 ? 'border-t border-divider' : ''}`}
                 >
-                  <div className="flex w-14 flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold tabular-nums text-charcoal">{timeFmt.format(new Date(a.starts_at))}</span>
-                    <span className="text-xs text-stone">{durationLabel(a)}</span>
+                  <Link href={href} className="flex min-w-0 flex-1 items-center gap-4 py-4 pl-5">
+                    <div className="flex w-14 flex-col gap-0.5">
+                      <span className="text-[15px] font-semibold tabular-nums text-charcoal">{timeFmt.format(new Date(a.starts_at))}</span>
+                      <span className="text-xs text-stone">{durationLabel(a)}</span>
+                    </div>
+                    <div className="w-[3px] self-stretch rounded-sm" style={{ background: a.consultation_type?.color || '#6DD4B8' }} />
+                    <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                      <span className="truncate text-[15px] font-medium text-charcoal">{appointmentName(a)}</span>
+                      <span className="truncate text-[13px] text-stone">{a.consultation_type?.name ?? 'Séance'}</span>
+                    </div>
+                  </Link>
+                  <div className="flex flex-none items-center gap-2">
+                    <span
+                      className="rounded-full px-2.5 py-1 text-xs font-medium"
+                      style={visio ? { background: '#1F2640', color: '#A9B8EC' } : { background: '#23383B', color: '#6DD4B8' }}
+                    >
+                      {visio ? 'Visio' : 'Cabinet'}
+                    </span>
+                    {visio && a.video_room_name && (
+                      <JoinVisioButton appointmentId={a.id} startsAt={a.starts_at} endsAt={a.ends_at} />
+                    )}
                   </div>
-                  <div className="w-[3px] self-stretch rounded-sm" style={{ background: a.consultation_type?.color || '#6DD4B8' }} />
-                  <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-                    <span className="truncate text-[15px] font-medium text-charcoal">{appointmentName(a)}</span>
-                    <span className="truncate text-[13px] text-stone">{a.consultation_type?.name ?? 'Séance'}</span>
-                  </div>
-                  <span
-                    className="rounded-full px-2.5 py-1 text-xs font-medium"
-                    style={visio ? { background: '#1F2640', color: '#A9B8EC' } : { background: '#23383B', color: '#6DD4B8' }}
-                  >
-                    {visio ? 'Visio' : 'Cabinet'}
-                  </span>
-                </Link>
+                </div>
               );
             })}
           </div>
