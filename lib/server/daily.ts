@@ -43,10 +43,11 @@ export async function createDailyRoom({
       },
       body: JSON.stringify({
         name,
+        // Salle privée : entrée avec un jeton de réunion, ou sur demande acceptée par l'hôte.
+        // Champ de premier niveau de l'API Daily, pas une propriété de salle.
+        privacy: 'private',
         properties: {
           exp: Math.floor(expiresAt.getTime() / 1000),
-          // Salle privée : entrée avec un jeton de réunion, ou sur demande acceptée par l'hôte
-          privacy: 'private',
           max_participants: maxParticipants,
           enable_chat: true,
           enable_screenshare: true,
