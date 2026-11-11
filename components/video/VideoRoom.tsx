@@ -9,6 +9,7 @@ import {
   useMeetingState,
   useDaily,
   useDailyEvent,
+  useDailyError,
 } from '@daily-co/daily-react';
 import type { DailyEventObjectAccessState } from '@daily-co/daily-js';
 import { useState, useCallback, useEffect } from 'react';
@@ -46,6 +47,7 @@ function VideoCallUI({
   const daily = useDaily();
   const localParticipant = useLocalParticipant();
   const remoteParticipantIds = useParticipantIds({ filter: 'remote' });
+  const { meetingError } = useDailyError();
   const [hasJoined, setHasJoined] = useState(false);
   const [showChat, setShowChat] = useState(false);
   // Consultant placé en salle d'attente Daily (salle privée) : l'hôte doit le faire entrer
@@ -121,6 +123,9 @@ function VideoCallUI({
           <p className="text-white/60 text-sm">
             Impossible de se connecter à la visioconférence. Vérifiez votre connexion internet et réessayez.
           </p>
+          {meetingError?.errorMsg && (
+            <p className="text-white/40 text-xs break-words">Détail : {meetingError.errorMsg}</p>
+          )}
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-2 bg-[#6DD4B8] text-ink rounded-lg hover:bg-sage-deep transition-colors"

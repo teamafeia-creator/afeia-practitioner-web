@@ -15,7 +15,20 @@ function getDailyApiKey(): string {
 }
 
 function getDailyDomain(): string {
-  return process.env.DAILY_DOMAIN || 'afeia.daily.co';
+  // Tolère « https://xxx.daily.co/ » aussi bien que « xxx.daily.co »
+  const raw = (process.env.DAILY_DOMAIN || 'afeia.daily.co').trim();
+  return raw.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+}
+
+/**
+ * Adresse de la salle pour l'appli (jamais envoyée au consultant) : celle renvoyée par Daily
+ * à la création (video_link) si elle correspond à la salle, sinon construite avec DAILY_DOMAIN.
+ */
+export function dailyRoomUrl(roomName: string, storedLink?: string | null): string {
+  if (storedLink && /^https:\/\/[^/]+\.daily\.co\//.test(storedLink) && storedLink.endsWith(`/${roomName}`)) {
+    return storedLink;
+  }
+  return `https://${getDailyDomain()}/${roomName}`;
 }
 
 export function generateRoomName(appointmentId: string): string {
@@ -149,7 +162,11 @@ export async function ensureVideoRoom(
     return { roomName: appointment.video_room_name, joinToken };
   }
 
-  const expiresAt = new Date(new Date(appointment.ends_at).getTime() + 30 * 60 * 1000); // +30 min
+  // Fin de séance + 30 min ; au moins 1 h à partir de maintenant (séance qui déborde ou déjà finie),
+  // Daily refusant une expiration passée
+  const expiresAt = new Date(
+    Math.max(new Date(appointment.ends_at).getTime() + 30 * 60 * 1000, Date.now() + 60 * 60 * 1000)
+  );
   const room = await createDailyRoom({ name: generateRoomName(appointmentId), expiresAt });
   if (!room) return null;
 
