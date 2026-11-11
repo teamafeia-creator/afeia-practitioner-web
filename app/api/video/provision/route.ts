@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAuthClient, createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
-import { createDailyRoom, deleteDailyRoom, generateRoomName } from '@/lib/server/daily';
+import { deleteDailyRoom, ensureVideoRoom } from '@/lib/server/daily';
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,19 +68,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Le rendez-vous n\'est pas en visio.' }, { status: 400 });
     }
 
-    // If room already exists, return existing
-    if (appointment.video_room_name && appointment.video_link) {
-      return NextResponse.json({
-        video_link: appointment.video_link,
-        video_room_name: appointment.video_room_name,
-      });
-    }
-
-    const roomName = generateRoomName(appointment_id);
-    const endsAt = new Date(appointment.ends_at);
-    const expiresAt = new Date(endsAt.getTime() + 30 * 60 * 1000); // +30 min buffer
-
-    const room = await createDailyRoom({ name: roomName, expiresAt });
+    // Salle existante renvoyée telle quelle, sinon créée
+    const room = await ensureVideoRoom(appointment_id);
     if (!room) {
       return NextResponse.json(
         { error: 'La salle de visio n\'a pas pu être créée.' },
@@ -88,19 +77,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update appointment with room info
-    await supabase
+    const { data: updated } = await supabase
       .from('appointments')
-      .update({
-        video_link: room.url,
-        video_room_name: room.name,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', appointment_id);
+      .select('video_link')
+      .eq('id', appointment_id)
+      .single();
 
     return NextResponse.json({
-      video_link: room.url,
-      video_room_name: room.name,
+      video_link: updated?.video_link ?? null,
+      video_room_name: room.roomName,
+      video_join_token: room.joinToken,
     });
   } catch (error) {
     console.error('Error in vidéo provision API:', error);

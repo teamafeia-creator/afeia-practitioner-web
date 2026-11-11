@@ -63,7 +63,7 @@ export default function BookingSettingsPage() {
     booking_phone: '',
     cancellation_policy_hours: 24,
     cancellation_policy_text: '',
-    video_provider: 'external' as 'external' | 'daily',
+    video_provider: 'daily' as 'external' | 'daily',
   });
 
   const loadConfig = useCallback(async () => {
