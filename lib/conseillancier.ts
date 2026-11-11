@@ -558,3 +558,55 @@ export function sectionHasContent(
 ): boolean {
   return section.fields.some((field) => content[field.key]?.trim());
 }
+
+// ─── Catégories choisies (éditeur guidé) ───────────
+// Le praticien choisit les grandes catégories à remplir ; la sélection est
+// stockée par version dans consultant_plans.selected_sections.
+
+/** Catégories toujours proposées (cochées par défaut à la création). */
+export const ALWAYS_SELECTED_SECTIONS = ['en_tete', 'cloture'];
+
+/** Ne garde que les identifiants connus, dans l'ordre du document. */
+export function normalizeSelectedSections(ids: readonly string[] | null | undefined): string[] {
+  const set = new Set(ids ?? []);
+  return CONSEILLANCIER_SECTIONS.filter((s) => set.has(s.id)).map((s) => s.id);
+}
+
+/** Catégories dont au moins un champ est rempli. */
+export function sectionsWithContent(content: Record<string, string> | null | undefined): string[] {
+  if (!content) return [];
+  return CONSEILLANCIER_SECTIONS.filter((s) => s.fields.some((f) => content[f.key]?.trim())).map((s) => s.id);
+}
+
+/** Catégories qui contiennent au moins une des clés données (ex. clés d'un modèle). */
+export function sectionsForKeys(keys: readonly string[]): string[] {
+  const set = new Set(keys);
+  return CONSEILLANCIER_SECTIONS.filter((s) => s.fields.some((f) => set.has(f.key))).map((s) => s.id);
+}
+
+/**
+ * Catégories d'une version : la sélection enregistrée si elle existe,
+ * sinon (anciens plans, selected_sections NULL) les catégories remplies
+ * plus le message d'accueil et le message de clôture.
+ */
+export function deriveSelectedSections(
+  content: Record<string, string> | null | undefined,
+  stored?: readonly string[] | null
+): string[] {
+  if (stored && stored.length > 0) return normalizeSelectedSections(stored);
+  return normalizeSelectedSections([...sectionsWithContent(content), ...ALWAYS_SELECTED_SECTIONS]);
+}
+
+/** Vide les champs des catégories qui ne sont pas choisies. */
+export function keepOnlySelectedSections(
+  content: ConseillancierContent,
+  selected: readonly string[]
+): ConseillancierContent {
+  const keep = new Set(selected);
+  const result = { ...content };
+  for (const section of CONSEILLANCIER_SECTIONS) {
+    if (keep.has(section.id)) continue;
+    for (const field of section.fields) result[field.key] = '';
+  }
+  return result;
+}

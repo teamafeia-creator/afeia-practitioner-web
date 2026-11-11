@@ -10,9 +10,18 @@ import type { Template } from '../../lib/blocks-types';
 
 interface TemplateSelectorProps {
   onApplyTemplate: (sections: Record<string, string>) => void;
+  /** Texte de confirmation (le titre du modèle est ajouté en tête). */
+  confirmMessage?: string;
 }
 
-export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
+const DEFAULT_CONFIRM =
+  'Cela pré-remplira les sections du conseillancier avec le contenu du modèle. Les champs déjà remplis seront remplacés.';
+
+/**
+ * « Partir d'un modèle » : liste dépliable affichée dans la modale de choix
+ * des catégories du conseillancier.
+ */
+export function TemplateSelector({ onApplyTemplate, confirmMessage = DEFAULT_CONFIRM }: TemplateSelectorProps) {
   const [open, setOpen] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,7 +55,7 @@ export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
 
   const handleSelectTemplate = async (template: Template) => {
     const confirmed = window.confirm(
-      `Appliquer le modèle "${template.title}" ?\n\nCela pré-remplira les sections du conseillancier avec le contenu du modèle. Les champs déjà remplis seront remplacés.`
+      `Appliquer le modèle "${template.title}" ?\n\n${confirmMessage}`
     );
     if (!confirmed) return;
 
@@ -77,76 +86,52 @@ export function TemplateSelector({ onApplyTemplate }: TemplateSelectorProps) {
     }
   };
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('[data-template-selector]')) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
-  }, [open]);
-
   return (
-    <div className="relative" data-template-selector>
+    <div className="rounded-xl border border-divider">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-2 rounded-lg border border-sage/20 bg-surface px-3 py-2 text-sm font-medium text-sage transition-colors hover:border-sage/40 hover:bg-sage-light/50"
+        aria-expanded={open}
+        className="flex min-h-[44px] w-full items-center gap-2 px-3 text-left text-sm font-medium text-sage"
       >
-        <FileText className="h-4 w-4" />
-        Partir d&apos;un modèle de conseillancier
-        <ChevronDown className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} />
+        <FileText className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <span className="flex-1">
+          Partir d&apos;un modèle{' '}
+          <span className="font-normal text-stone">(facultatif : coche et pré-remplit ses catégories)</span>
+        </span>
+        <ChevronDown className={cn('h-4 w-4 shrink-0 text-stone transition-transform', open && 'rotate-180')} aria-hidden="true" />
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-40 mt-1 w-96 rounded-xl border border-divider bg-surface shadow-lg">
-          <div className="p-3 border-b border-neutral-100">
-            <p className="text-xs font-medium text-charcoal">Modèles disponibles</p>
-            <p className="text-[10px] text-stone">
-              Sélectionnez un modèle pour pré-remplir le conseillancier.
-            </p>
-          </div>
-
-          <div className="max-h-64 overflow-y-auto p-2">
-            {loading ? (
-              <div className="flex items-center justify-center py-6">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-sage border-t-transparent" />
-              </div>
-            ) : templates.length === 0 ? (
-              <p className="py-6 text-center text-xs text-stone">
-                Aucun modèle disponible.
-              </p>
-            ) : (
-              templates.map((template) => (
-                <button
-                  key={template.id}
-                  type="button"
-                  onClick={() => handleSelectTemplate(template)}
-                  className="w-full rounded-lg p-3 text-left transition-colors hover:bg-cream-light"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-charcoal truncate">
-                        {template.title}
-                      </p>
-                      {template.description && (
-                        <p className="mt-0.5 text-xs text-stone line-clamp-2">
-                          {template.description}
-                        </p>
-                      )}
-                    </div>
-                    <Badge variant="info" className="shrink-0 text-[9px]">
-                      {MOTIF_LABELS[template.primary_motif as ConsultationMotif] ?? template.primary_motif}
-                    </Badge>
+        <div className="max-h-64 overflow-y-auto px-2 pb-2">
+          {loading ? (
+            <div className="flex items-center justify-center py-6">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-sage border-t-transparent" />
+            </div>
+          ) : templates.length === 0 ? (
+            <p className="py-6 text-center text-xs text-stone">Aucun modèle disponible.</p>
+          ) : (
+            templates.map((template) => (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => handleSelectTemplate(template)}
+                className="w-full rounded-lg p-3 text-left transition-colors hover:bg-surface-raised"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-charcoal">{template.title}</p>
+                    {template.description && (
+                      <p className="mt-0.5 line-clamp-2 text-xs text-stone">{template.description}</p>
+                    )}
                   </div>
-                </button>
-              ))
-            )}
-          </div>
+                  <Badge variant="info" className="shrink-0 text-[9px]">
+                    {MOTIF_LABELS[template.primary_motif as ConsultationMotif] ?? template.primary_motif}
+                  </Badge>
+                </div>
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>

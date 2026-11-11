@@ -349,6 +349,8 @@ export type ConsultantPlan = {
   version: number;
   status: 'draft' | 'shared';
   content: Record<string, string> | null;
+  /** Catégories choisies dans l'éditeur guidé (NULL = déduites du contenu). */
+  selected_sections?: string[] | null;
   shared_at?: string | null;
   ai_generated?: boolean;
   ai_model?: string | null;

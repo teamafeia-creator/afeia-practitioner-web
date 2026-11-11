@@ -136,13 +136,24 @@ export function BlockLibrarySidebar({
             <h3 className="text-sm font-semibold text-charcoal">Insérer un bloc</h3>
             <p className="text-xs text-stone">{sectionLabel}</p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-stone hover:bg-neutral-100 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href="/bibliotheque?onglet=blocs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="whitespace-nowrap text-xs font-medium text-sage hover:underline"
+            >
+              Ouvrir la bibliothèque ↗
+            </a>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fermer"
+              className="rounded-lg p-1.5 text-stone hover:bg-neutral-100 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* Search */}

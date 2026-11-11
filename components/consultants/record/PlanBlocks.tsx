@@ -4,7 +4,7 @@ import { MessageCircle } from 'lucide-react';
 import { CONSEILLANCIER_SECTIONS } from '@/lib/conseillancier';
 import type { ObservanceCategory, ObservanceLog } from '@/lib/types';
 
-const TINT: Record<string, { c: string; tint: string }> = {
+export const SECTION_TINT: Record<string, { c: string; tint: string }> = {
   objectifs: { c: '#6DD4B8', tint: '#23383B' },
   alimentation: { c: '#D4A574', tint: '#373131' },
   phytotherapie: { c: '#B89FD9', tint: '#2E2738' },
@@ -19,7 +19,7 @@ const TINT: Record<string, { c: string; tint: string }> = {
   environnement: { c: '#8B95A5', tint: '#1C2230' },
   suivi: { c: '#8B95A5', tint: '#1C2230' },
 };
-const DEFAULT_TINT = { c: '#8B95A5', tint: '#1C2230' };
+export const DEFAULT_SECTION_TINT = { c: '#8B95A5', tint: '#1C2230' };
 
 /** Rubrique du conseillancier → catégorie d'observance du journal (avis du consultant). */
 const OBSERVANCE_OF: Record<string, ObservanceCategory> = {
@@ -45,7 +45,7 @@ export function planBlocks(content: Record<string, string>): PlanBlock[] {
     for (const f of s.fields) {
       const body = (content[f.key] ?? '').trim();
       if (!body) continue;
-      const t = TINT[s.id] ?? DEFAULT_TINT;
+      const t = SECTION_TINT[s.id] ?? DEFAULT_SECTION_TINT;
       out.push({ id: f.key, section: s.id, cat: s.title, title: f.label, body, ...t });
     }
   }

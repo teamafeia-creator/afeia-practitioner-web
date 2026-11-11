@@ -50,11 +50,14 @@ export function ResourceInsertButton({
   consultantPlanId,
   sectionKey,
   onInsert,
+  label = 'Fiche',
 }: {
   consultantId: string;
   consultantPlanId?: string;
   sectionKey: string;
   onInsert: (text: string) => void;
+  /** Libellé du bouton (« Fiche » par défaut). */
+  label?: string;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const filterCategory = SECTION_TO_CATEGORY_MAP[sectionKey];
@@ -79,7 +82,7 @@ export function ResourceInsertButton({
         className="inline-flex items-center gap-1 rounded-md border border-dashed border-terracotta/30 px-2 py-1 text-[11px] font-medium text-terracotta transition-colors hover:border-terracotta/50 hover:bg-terracotta/5"
       >
         <Paperclip className="h-3 w-3" />
-        Fiche
+        {label}
       </button>
 
       {pickerOpen && (
