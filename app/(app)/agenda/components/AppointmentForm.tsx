@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Search, Video } from 'lucide-react';
+import { Video } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal, ModalFooter } from '@/components/ui/Modal';
 import { ConsultationTypeForm, durationLabel, priceLabel } from '@/components/agenda/ConsultationTypeForm';
 import { showToast } from '@/components/ui/Toaster';
+import { ConsultantSearch, getConsultantDisplayName, type ConsultantOption } from '@/components/consultants/ConsultantSearch';
 import { supabase } from '@/lib/supabase';
 import {
   getConsultationTypes,
@@ -14,20 +15,6 @@ import {
   checkAppointmentConflict,
 } from '@/lib/queries/appointments';
 import type { Appointment, ConsultationType, LocationType } from '@/lib/types';
-
-type ConsultantOption = {
-  id: string;
-  name?: string | null;
-  first_name?: string | null;
-  last_name?: string | null;
-  email?: string | null;
-};
-
-function getConsultantDisplayName(c: ConsultantOption): string {
-  if (c.name) return c.name;
-  const parts = [c.first_name, c.last_name].filter(Boolean);
-  return parts.length > 0 ? parts.join(' ') : 'Consultant';
-}
 
 interface AppointmentFormProps {
   isOpen: boolean;
@@ -97,7 +84,6 @@ export function AppointmentForm({
   const [addingType, setAddingType] = useState(false);
   const [consultants, setConsultants] = useState<ConsultantOption[]>([]);
   const [consultationTypes, setConsultationTypes] = useState<ConsultationType[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [saving, setSaving] = useState(false);
   const [conflictWarning, setConflictWarning] = useState(false);
@@ -215,14 +201,6 @@ export function AppointmentForm({
   useEffect(() => {
     if (isOpen) checkConflict();
   }, [checkConflict, isOpen]);
-
-  const filteredConsultants = searchQuery
-    ? consultants.filter(
-        (c) =>
-          getConsultantDisplayName(c).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.email?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : consultants;
 
   const selectedConsultant = consultants.find((c) => c.id === form.consultant_id);
 
@@ -379,44 +357,13 @@ export function AppointmentForm({
             </div>
           ) : null}
           {(!form.consultant_id && (!proposal || showSearch)) && (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone" aria-hidden="true" />
-              <input
-                type="text"
-                aria-label="Rechercher un consultant"
-                placeholder="Rechercher un consultant…"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSearch(true);
-                }}
-                onFocus={() => setShowSearch(true)}
-                className={`${fieldCls} pl-10`}
-              />
-              {showSearch && (
-                <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-[10px] border border-divider bg-surface shadow-lg">
-                  {filteredConsultants.length === 0 ? (
-                    <div className="p-3 text-sm text-stone">Aucun consultant trouvé</div>
-                  ) : (
-                    filteredConsultants.slice(0, 20).map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => {
-                          setForm((f) => ({ ...f, consultant_id: c.id }));
-                          setSearchQuery('');
-                          setShowSearch(false);
-                        }}
-                        className="w-full px-3 py-2 text-left hover:bg-surface-raised"
-                      >
-                        <div className="text-sm font-medium text-charcoal">{getConsultantDisplayName(c)}</div>
-                        {c.email && <div className="text-xs text-stone">{c.email}</div>}
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
+            <ConsultantSearch
+              consultants={consultants}
+              open={showSearch}
+              onOpenChange={setShowSearch}
+              onSelect={(c) => setForm((f) => ({ ...f, consultant_id: c.id }))}
+              inputClassName={fieldCls}
+            />
           )}
         </div>
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Calendar, Plus } from 'lucide-react';
+import { ArrowRight, Calendar, Plus, Video } from 'lucide-react';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { SkeletonDashboard } from '@/components/ui/Skeleton';
 import { getTodayAppointments } from '@/lib/queries/appointments';
@@ -19,6 +19,7 @@ import { FACE_COLORS, displayName, getReviewQueue, initialsOf, reviewMinutes, re
 import { StatsCarousel, ICONS, type StatCategory, type PeriodOption } from '@/components/dashboard/StatsCarousel';
 import type { Appointment } from '@/lib/types';
 import { JoinVisioButton } from '@/components/video/JoinVisioButton';
+import { InstantVisioModal } from '@/components/video/InstantVisioModal';
 
 type ConsultantRow = { id: string; activated?: boolean | null };
 
@@ -76,6 +77,7 @@ export default function DashboardPage() {
   const [draftPlansCount, setDraftPlansCount] = useState(0);
   const [extra, setExtra] = useState<DashboardExtraStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [instantOpen, setInstantOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (authLoading || !isAuthenticated || !user) return;
@@ -283,6 +285,14 @@ export default function DashboardPage() {
             <Calendar className="h-4 w-4" aria-hidden="true" />
             Nouvelle séance
           </Link>
+          <button
+            type="button"
+            onClick={() => setInstantOpen(true)}
+            className="inline-flex h-11 items-center gap-2 rounded-[10px] border border-divider px-[18px] text-sm font-medium text-charcoal hover:border-sage"
+          >
+            <Video className="h-4 w-4" aria-hidden="true" />
+            Visio immédiate
+          </button>
           <Link
             href="/consultants/new"
             className="inline-flex h-11 items-center gap-2 rounded-[10px] bg-sage px-[18px] text-sm font-semibold text-ink hover:bg-sage-deep"
@@ -404,6 +414,8 @@ export default function DashboardPage() {
       </div>
 
       <StatsCarousel categories={categories} periods={PERIODS} period={period} onPeriod={setPeriod} loading={statsLoading} />
+
+      <InstantVisioModal isOpen={instantOpen} onClose={() => setInstantOpen(false)} />
     </div>
   );
 }
