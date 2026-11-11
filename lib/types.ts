@@ -353,6 +353,8 @@ export type ConsultantPlan = {
   content: Record<string, string> | null;
   /** Catégories choisies dans l'éditeur guidé (NULL = déduites du contenu). */
   selected_sections?: string[] | null;
+  /** Conseils cochés « Suivre dans le journal » (checklist d'observance). */
+  tracked_items?: import('./observance-tracking').TrackedItem[] | null;
   shared_at?: string | null;
   ai_generated?: boolean;
   ai_model?: string | null;
@@ -402,6 +404,13 @@ export type ObservanceItem = {
   category: ObservanceCategory;
   frequency: ObservanceFrequency;
   weekly_target?: number | null;
+  /** Rubrique du conseillancier d'où vient l'item (NULL = ajouté depuis le journal). */
+  source_key?: string | null;
+  /** Ligne du conseillancier d'où vient l'item. */
+  source_line?: string | null;
+  /** Fréquence libre : period_count fois par period_unit. */
+  period_count?: number | null;
+  period_unit?: 'day' | 'week' | 'month' | 'year' | null;
   sort_order: number;
   is_active: boolean;
   created_at: string;

@@ -18,6 +18,7 @@ import type {
   ConsultantWithDetails,
   ConsultantWithUnreadCounts
 } from './types';
+import type { TrackedItem } from './observance-tracking';
 
 type SupabaseErrorLike = {
   message?: string;
@@ -767,12 +768,14 @@ export async function createConsultantPlanVersion({
   consultantId,
   version,
   content,
-  selectedSections
+  selectedSections,
+  trackedItems
 }: {
   consultantId: string;
   version: number;
   content: Record<string, string>;
   selectedSections?: string[];
+  trackedItems?: TrackedItem[];
 }): Promise<ConsultantPlan> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
@@ -787,7 +790,8 @@ export async function createConsultantPlanVersion({
       version,
       status: 'draft',
       content,
-      ...(selectedSections ? { selected_sections: selectedSections } : {})
+      ...(selectedSections ? { selected_sections: selectedSections } : {}),
+      ...(trackedItems ? { tracked_items: trackedItems } : {})
     })
     .select()
     .single();
@@ -803,17 +807,20 @@ export async function createConsultantPlanVersion({
 export async function updateConsultantPlanContent({
   planId,
   content,
-  selectedSections
+  selectedSections,
+  trackedItems
 }: {
   planId: string;
   content: Record<string, string>;
   selectedSections?: string[];
+  trackedItems?: TrackedItem[];
 }): Promise<ConsultantPlan> {
   const { data, error } = await supabase
     .from('consultant_plans')
     .update({
       content,
       ...(selectedSections ? { selected_sections: selectedSections } : {}),
+      ...(trackedItems ? { tracked_items: trackedItems } : {}),
       updated_at: new Date().toISOString()
     })
     .eq('id', planId)
