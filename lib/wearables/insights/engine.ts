@@ -36,6 +36,8 @@ export type InsightItem = {
   label: string;
   category: string;
   freq: TrackFrequency;
+  /** Coché automatiquement par l'objet (activé par le praticien). */
+  autoCheck?: boolean;
 };
 
 export type InsightLog = { itemId: string; date: string; done: boolean };

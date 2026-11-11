@@ -153,6 +153,7 @@ import { ConnectedObjectPanel } from './record/ConnectedObjectPanel';
 import { ConnectedObjectLocked } from './record/ConnectedObjectLocked';
 import { PatientWearableSection } from '@/components/wearables/practitioner/PatientWearableSection';
 import { WearableInsightsPanel } from '@/components/wearables/practitioner/WearableInsightsPanel';
+import { SessionTopicsCard } from '@/components/wearables/practitioner/SessionTopicsCard';
 import { PlanBlocks, PhonePreviewModal } from './record/PlanBlocks';
 import { MOOD_OPTIONS, normalizeMood, EXERCISE_INTENSITIES } from '../../lib/journal-constants';
 import { BristolScale } from '../journal/BristolScale';
@@ -2524,6 +2525,8 @@ export function ConsultantTabs({
 
       {tab === 'Rendez-vous' && (
         <div className="space-y-4">
+          {/* Points épinglés depuis l'onglet Objet connecté. */}
+          <SessionTopicsCard consultantId={consultant.id} />
           <div className="flex justify-end">
             <Button
               variant="primary"
