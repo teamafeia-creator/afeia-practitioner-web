@@ -27,26 +27,29 @@ import {
 import { ANAMNESIS_SECTIONS } from '../../lib/anamnesis';
 import { T } from '../../lib/terminology';
 import {
+  ALWAYS_SELECTED_SECTIONS,
   CONSEILLANCIER_SECTIONS,
   DEFAULT_CONSEILLANCIER_CONTENT,
+  deriveSelectedSections,
+  keepOnlySelectedSections,
   migrateOldPlanContent,
+  normalizeSelectedSections,
   sectionHasContent,
+  sectionsForKeys,
+  sectionsWithContent,
   type ConseillancierContent,
+  type ConseillancierKey,
 } from '../../lib/conseillancier';
 import { supabase } from '../../lib/supabase';
-import { BlockInsertButton } from '../blocks/BlockInsertButton';
-import { SaveAsBlockButton } from '../blocks/SaveAsBlockButton';
-import { TemplateSelector } from '../blocks/TemplateSelector';
-import { ResourceInsertButton } from '../resources/ResourceInsertButton';
 import { ResourcePicker } from '../resources/ResourcePicker';
 import { assignResourceToConsultant } from '../../lib/queries/resources';
 import { GenerateButton } from '../ai/GenerateButton';
-import { SectionSuggestButton } from '../ai/SectionSuggestButton';
 import { MedicalAlertBanner } from '../ai/MedicalAlertBanner';
 import { AIStatusBar } from '../ai/AIStatusBar';
 import { DossierHeader } from './DossierHeader';
 import { DossierNav, type DossierNavBadge, type DossierNavGroup } from './DossierNav';
-import type { BlockSection } from '../../lib/blocks-types';
+import { CategoryPickerModal, type CategoryPickerMode } from './conseillancier/CategoryPickerModal';
+import { ConseillancierFocusEditor } from './conseillancier/ConseillancierFocusEditor';
 import {
   User,
   ClipboardList,
@@ -131,7 +134,6 @@ import {
   EMUNCTORY_STATUS_POUMONS_MAP,
   EMUNCTORIES,
   VITALITY_LEVELS,
-  VITALITY_LEVEL_MAP,
   EYE_LABELS,
   getEmunctoryHexColor,
 } from '../../lib/terrain-constants';
@@ -607,6 +609,19 @@ export function ConsultantTabs({
   const [planSaving, setPlanSaving] = useState(false);
   const [planSharing, setPlanSharing] = useState(false);
   const [planCreating, setPlanCreating] = useState(false);
+  // ─── Éditeur guidé du conseillancier ─────────────
+  // Catégories choisies du brouillon actif, modale de choix, plein écran
+  const [planSections, setPlanSections] = useState<string[]>(ALWAYS_SELECTED_SECTIONS);
+  const [categoryPicker, setCategoryPicker] = useState<{
+    mode: CategoryPickerMode;
+    cta: 'Commencer' | 'Mettre à jour';
+    initial: string[];
+    base: ConsultantPlan | null;
+  } | null>(null);
+  const [planFocusOpen, setPlanFocusOpen] = useState(false);
+  const [planFocusIndex, setPlanFocusIndex] = useState(0);
+  // Sélection à appliquer quand la version active change (ex. après une génération IA)
+  const pendingPlanSections = useRef<{ planId: string; sections: string[] } | null>(null);
   const [medicalAlerts, setMedicalAlerts] = useState<string[]>([]);
   const [aiQuotaUsed, setAiQuotaUsed] = useState(0);
   const [aiQuotaMax, setAiQuotaMax] = useState(30);
@@ -849,6 +864,10 @@ export function ConsultantTabs({
     () => buildPlanContent(activePlan?.content ?? null),
     [activePlan]
   );
+  const initialPlanSections = useMemo(
+    () => deriveSelectedSections(buildPlanContent(activePlan?.content ?? null), activePlan?.selected_sections),
+    [activePlan]
+  );
 
   const initialProfile = useMemo(
     () => ({
@@ -893,10 +912,27 @@ export function ConsultantTabs({
   }, [noteContent, initialNote]);
 
   const isPlanDirty = useMemo(() => {
-    return !areRecordsEqual(planForm, initialPlanContent);
-  }, [planForm, initialPlanContent]);
+    return (
+      !areRecordsEqual(planForm, initialPlanContent) ||
+      planSections.join(',') !== initialPlanSections.join(',')
+    );
+  }, [planForm, initialPlanContent, planSections, initialPlanSections]);
 
   const canEditPlan = activePlan?.status === 'draft';
+  const selectedPlanSections = useMemo(
+    () => CONSEILLANCIER_SECTIONS.filter((section) => planSections.includes(section.id)),
+    [planSections]
+  );
+  const filledPlanSectionsCount = selectedPlanSections.filter((section) => sectionHasContent(section, planForm)).length;
+  // Rappel discret des traitements en cours (catégorie Phytothérapie de l'éditeur guidé)
+  const activeTreatmentsReminder = useMemo(() => {
+    const list = currentTreatments
+      .filter((treatment) => treatment.is_active && treatment.name?.trim())
+      .map((treatment) =>
+        treatment.dosage?.trim() ? `${treatment.name.trim()} (${treatment.dosage.trim()})` : treatment.name.trim()
+      );
+    return list.length > 0 ? `Rappel · ${recordFirstName} prend : ${list.join(', ')}.` : null;
+  }, [currentTreatments, recordFirstName]);
 
   const sortedAppointments = useMemo(() => {
     return [...appointments].sort(
@@ -978,6 +1014,12 @@ export function ConsultantTabs({
   useEffect(() => {
     setPlanForm(initialPlanContent);
   }, [initialPlanContent]);
+
+  useEffect(() => {
+    const pending = pendingPlanSections.current;
+    pendingPlanSections.current = null;
+    setPlanSections(pending && pending.planId === activePlan?.id ? pending.sections : initialPlanSections);
+  }, [initialPlanSections, activePlan?.id]);
 
   useEffect(() => {
     setTab(initialTab);
@@ -1409,19 +1451,33 @@ export function ConsultantTabs({
     }
   }
 
-  async function handleCreatePlan(basePlan?: ConsultantPlan | null) {
+  async function handleCreatePlan(
+    basePlan: ConsultantPlan | null,
+    options: { sections: string[]; templateSections?: Record<string, string> }
+  ) {
     setPlanCreating(true);
     try {
       const nextVersion = Math.max(0, ...plans.map((planItem) => planItem.version)) + 1;
-      const content = buildPlanContent(basePlan?.content ?? null);
+      const selectedSections = normalizeSelectedSections(options.sections);
+      // Contenu repris de la version de base, limité aux catégories choisies, puis modèle éventuel
+      let content = keepOnlySelectedSections(buildPlanContent(basePlan?.content ?? null), selectedSections);
+      if (options.templateSections) {
+        content = buildPlanContent({ ...content, ...options.templateSections });
+      }
       const created = await createConsultantPlanVersion({
         consultantId: consultant.id,
         version: nextVersion,
-        content
+        content,
+        selectedSections
       });
       setPlans((prev) => [created, ...prev]);
       setActivePlanId(created.id);
       setPlanForm(buildPlanContent(created.content ?? null));
+      pendingPlanSections.current = { planId: created.id, sections: selectedSections };
+      setPlanSections(selectedSections);
+      setCategoryPicker(null);
+      setPlanFocusIndex(0);
+      setPlanFocusOpen(true);
       setToast({
         title: 'Plan créé',
         description: `Version v${created.version} prête à être complétée.`,
@@ -1438,6 +1494,78 @@ export function ConsultantTabs({
     }
   }
 
+  // ─── Éditeur guidé : modale des catégories et plein écran ─────
+  function openCreatePlanPicker(basePlan: ConsultantPlan | null) {
+    const initial = basePlan
+      ? deriveSelectedSections(buildPlanContent(basePlan.content ?? null), basePlan.selected_sections)
+      : ALWAYS_SELECTED_SECTIONS;
+    setCategoryPicker({ mode: 'create', cta: 'Commencer', initial, base: basePlan });
+  }
+
+  function openEditPlanPicker() {
+    setCategoryPicker({ mode: 'edit', cta: 'Mettre à jour', initial: planSections, base: null });
+  }
+
+  function openPlanFocus() {
+    setTab(T.tabConseillancier as Tab);
+    setPlanFocusIndex(0);
+    setPlanFocusOpen(true);
+  }
+
+  function handleCategoryPickerConfirm(selected: string[]) {
+    const picker = categoryPicker;
+    if (!picker) return;
+    if (picker.mode === 'create') {
+      void handleCreatePlan(picker.base, { sections: selected });
+      return;
+    }
+    const next = normalizeSelectedSections(selected);
+    const currentId = selectedPlanSections[planFocusIndex]?.id;
+    // Catégories retirées (confirmé dans la modale) : leur texte est effacé du brouillon
+    setPlanForm((prev) => keepOnlySelectedSections(prev, next));
+    setPlanSections(next);
+    const kept = currentId ? next.indexOf(currentId) : -1;
+    setPlanFocusIndex(picker.cta === 'Commencer' ? 0 : kept >= 0 ? kept : Math.min(planFocusIndex, Math.max(next.length - 1, 0)));
+    setCategoryPicker(null);
+    setTab(T.tabConseillancier as Tab);
+    setPlanFocusOpen(true);
+  }
+
+  function handleCategoryPickerTemplate(templateSections: Record<string, string>) {
+    const picker = categoryPicker;
+    if (!picker) return;
+    const templateKeys = Object.entries(templateSections)
+      .filter(([, value]) => value?.trim())
+      .map(([key]) => key);
+    const templateCategories = normalizeSelectedSections([...sectionsForKeys(templateKeys), ...ALWAYS_SELECTED_SECTIONS]);
+    if (picker.mode === 'create') {
+      void handleCreatePlan(picker.base, { sections: templateCategories, templateSections });
+      return;
+    }
+    // Brouillon existant : contenu du modèle appliqué comme avant, ses catégories ajoutées à la sélection
+    setPlanForm((prev) => {
+      const updated = { ...prev };
+      for (const [key, value] of Object.entries(templateSections)) {
+        if (key in updated) {
+          (updated as Record<string, string>)[key] = value;
+        }
+      }
+      return updated;
+    });
+    setPlanSections((prev) => normalizeSelectedSections([...prev, ...templateCategories]));
+    setCategoryPicker(null);
+    setPlanFocusIndex(0);
+    setTab(T.tabConseillancier as Tab);
+    setPlanFocusOpen(true);
+  }
+
+  function handlePlanFieldChange(key: ConseillancierKey, update: string | ((previous: string) => string)) {
+    setPlanForm((prev) => ({
+      ...prev,
+      [key]: typeof update === 'function' ? update(prev[key] ?? '') : update,
+    }));
+  }
+
   async function handleSavePlan() {
     if (!activePlan) return;
     if (!canEditPlan) {
@@ -1452,7 +1580,8 @@ export function ConsultantTabs({
     try {
       const updated = await updateConsultantPlanContent({
         planId: activePlan.id,
-        content: planForm
+        content: planForm,
+        selectedSections: planSections
       });
       setPlans((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
       setToast({
@@ -1569,9 +1698,14 @@ export function ConsultantTabs({
     const merged = buildPlanContent({ ...planForm, ...content });
     setPlanForm(merged);
 
+    // Catégories remplies par l'IA : jamais masquées dans l'éditeur guidé
+    const aiSections = normalizeSelectedSections([...sectionsWithContent(content), ...ALWAYS_SELECTED_SECTIONS]);
+    let isNewDraft = false;
+
     // If a new plan was created by the API, add it to the plans list
     if (plan && plan.id) {
       const newPlan = plan as unknown as ConsultantPlan;
+      isNewDraft = !plans.some((p) => p.id === newPlan.id);
       setPlans((prev) => {
         const exists = prev.some((p) => p.id === newPlan.id);
         if (exists) {
@@ -1580,6 +1714,19 @@ export function ConsultantTabs({
         return [newPlan, ...prev];
       });
       setActivePlanId(newPlan.id);
+      const sections = isNewDraft ? aiSections : normalizeSelectedSections([...planSections, ...aiSections]);
+      pendingPlanSections.current = { planId: newPlan.id, sections };
+      setPlanSections(sections);
+    } else {
+      setPlanSections((prev) => normalizeSelectedSections([...prev, ...aiSections]));
+    }
+
+    if (isNewDraft) {
+      // Nouveau brouillon : le praticien confirme les catégories avant la saisie
+      setCategoryPicker({ mode: 'edit', cta: 'Commencer', initial: aiSections, base: null });
+    } else {
+      setPlanFocusIndex(0);
+      setPlanFocusOpen(true);
     }
 
     setToast({
@@ -1747,6 +1894,33 @@ export function ConsultantTabs({
       setToast({ title: 'Erreur lors de l\'export PDF', variant: 'error' });
     }
   }
+
+  // ─── Conseillancier : plein écran de saisie et modales partagées ─────
+  const planFocusVisible = planFocusOpen && Boolean(activePlan) && canEditPlan;
+  const planModals = (
+    <>
+      <CategoryPickerModal
+        isOpen={categoryPicker !== null}
+        mode={categoryPicker?.mode ?? 'create'}
+        ctaLabel={categoryPicker?.cta ?? 'Commencer'}
+        initialSelection={categoryPicker?.initial ?? ALWAYS_SELECTED_SECTIONS}
+        content={categoryPicker?.mode === 'edit' ? planForm : undefined}
+        baseVersion={categoryPicker?.mode === 'create' ? categoryPicker.base?.version ?? null : null}
+        loading={planCreating}
+        onClose={() => setCategoryPicker(null)}
+        onConfirm={handleCategoryPickerConfirm}
+        onApplyTemplate={handleCategoryPickerTemplate}
+      />
+      {/* Contraindication Validation Modal */}
+      <ContraindicationValidationModal
+        open={showContraindicationModal}
+        onClose={() => setShowContraindicationModal(false)}
+        onConfirm={handleSharePlan}
+        alerts={contraindicationAlerts}
+        loading={planSharing}
+      />
+    </>
+  );
 
   return (
     <div className="space-y-4">
@@ -3626,54 +3800,6 @@ export function ConsultantTabs({
 
       {tab === T.tabConseillancier && (
         <div className="space-y-4">
-          {/* Terrain summary banner */}
-          {consultantState.terrain && (consultantState.terrain.constitution || consultantState.terrain.diathese_menetrier || consultantState.terrain.force_vitale) && (
-            <div className="bg-sage/5 border border-sage/20 rounded-xl p-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-charcoal flex items-center gap-1.5">
-                  <Leaf className="h-3.5 w-3.5 text-sage" />
-                  Terrain du consultant
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setTab(T.tabBilanTerrain as Tab)}
-                  className="text-xs text-sage font-medium hover:underline"
-                >
-                  Voir le bilan complet →
-                </button>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {consultantState.terrain.constitution && (
-                  <span className={cn('inline-flex items-center rounded-2xl px-2.5 py-0.5 text-[11px] font-medium border', CONSTITUTION_MAP[consultantState.terrain.constitution]?.color)}>
-                    {CONSTITUTION_MAP[consultantState.terrain.constitution]?.label}
-                  </span>
-                )}
-                {consultantState.terrain.diathese_menetrier && (
-                  <Badge variant="default">
-                    {DIATHESE_MAP[consultantState.terrain.diathese_menetrier]?.label}
-                  </Badge>
-                )}
-                {consultantState.terrain.force_vitale && (
-                  <span className={cn('inline-flex items-center rounded-2xl px-2.5 py-0.5 text-[11px] font-medium', VITALITY_LEVEL_MAP[consultantState.terrain.force_vitale]?.color)}>
-                    FV: {VITALITY_LEVEL_MAP[consultantState.terrain.force_vitale]?.label}
-                  </span>
-                )}
-                {/* Critical emunctories */}
-                {EMUNCTORIES.filter((em) => {
-                  const val = (consultantState.terrain as Record<string, any>)?.[em.fieldStatus];
-                  return val === 'surcharge' || val === 'bloque';
-                }).map((em) => {
-                  const val = (consultantState.terrain as Record<string, any>)?.[em.fieldStatus];
-                  return (
-                    <Badge key={em.key} variant={val === 'bloque' ? 'urgent' : 'warning'}>
-                      {em.label}: {val === 'bloque' ? 'Bloqué' : 'Surchargé'}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Observance summary card at top of Conseillancier tab */}
           {observanceItems.length > 0 && observanceSummary && (
             <Card>
@@ -3740,7 +3866,7 @@ export function ConsultantTabs({
                   />
                   <Button
                     variant="primary"
-                    onClick={() => handleCreatePlan(activePlan)}
+                    onClick={() => openCreatePlanPicker(activePlan)}
                     loading={planCreating}
                   >
                     {T.conseillancierCreer}
@@ -3791,26 +3917,7 @@ export function ConsultantTabs({
           </Card>
 
           {activePlan && canEditPlan ? (
-            <div className="flex items-center gap-3">
-              <TemplateSelector
-                onApplyTemplate={(sections) => {
-                  setPlanForm((prev) => {
-                    const updated = { ...prev };
-                    for (const [key, value] of Object.entries(sections)) {
-                      if (key in updated) {
-                        (updated as Record<string, string>)[key] = value;
-                      }
-                    }
-                    return updated;
-                  });
-                }}
-              />
-            </div>
-          ) : null}
-
-          {activePlan ? (
-            <div className="flex flex-wrap items-start gap-5">
-            <Card className={cn('min-w-0 flex-[999_1_520px]', canEditPlan ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
+            <Card className="ring-2 ring-sage/20">
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -3818,40 +3925,59 @@ export function ConsultantTabs({
                       {T.conseillancier} v{activePlan.version}
                     </h3>
                     <p className="text-xs text-stone">
-                      {canEditPlan
-                        ? 'Version brouillon (modifiable).'
-                        : 'Version partagée (lecture seule).'}
+                      Brouillon · {filledPlanSectionsCount} sur {selectedPlanSections.length}{' '}
+                      {selectedPlanSections.length > 1 ? 'catégories' : 'catégorie'}{' '}
+                      {filledPlanSectionsCount > 1 ? 'remplies' : 'remplie'}
+                      {isPlanDirty ? ' · modifications non enregistrées' : ''}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="secondary"
-                      onClick={() => handleCreatePlan(activePlan)}
+                      onClick={() => openCreatePlanPicker(activePlan)}
                       disabled={planCreating}
                     >
                       Dupliquer
                     </Button>
-                    {canEditPlan ? (
-                      <Button
-                        variant="secondary"
-                        onClick={handleSavePlan}
-                        loading={planSaving}
-                        disabled={!isPlanDirty || planSaving}
-                      >
-                        Enregistrer
-                      </Button>
-                    ) : null}
-                    {canEditPlan ? (
-                      <Button
-                        variant="primary"
-                        onClick={handleSharePlanClick}
-                        loading={planSharing}
-                        disabled={planSharing || planSaving || isPlanDirty || shareBlocked}
-                        title={shareBlocked ? 'Le partage est bloqué tant que la contre-indication n’est pas traitée.' : undefined}
-                      >
-                        {T.partagerConsultant}
-                      </Button>
-                    ) : null}
+                    <Button
+                      variant="outline"
+                      onClick={handleDownloadPdf}
+                      loading={pdfDownloading}
+                      disabled={pdfDownloading}
+                    >
+                      {T.conseillancierExporter}
+                    </Button>
+                    <Button variant="primary" onClick={openPlanFocus}>
+                      Reprendre la saisie
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <PlanBlocks content={planForm} firstName={recordFirstName} logs={observanceLogsRecent} />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {activePlan && !canEditPlan ? (
+            <div className="flex flex-wrap items-start gap-5">
+            <Card className="min-w-0 flex-[999_1_520px]">
+              <CardHeader>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold">
+                      {T.conseillancier} v{activePlan.version}
+                    </h3>
+                    <p className="text-xs text-stone">Version partagée (lecture seule).</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => openCreatePlanPicker(activePlan)}
+                      disabled={planCreating}
+                    >
+                      Dupliquer
+                    </Button>
                     <Button
                       variant="outline"
                       onClick={handleDownloadPdf}
@@ -3862,150 +3988,9 @@ export function ConsultantTabs({
                     </Button>
                   </div>
                 </div>
-                {canEditPlan ? (
-                  <EditBanner label="Complétez le conseillancier avant de le partager." />
-                ) : null}
-                {canEditPlan && shareBlocked ? (
-                  <p role="status" className="mt-3 rounded-xl border border-[#6B3438] bg-[#3A2224] px-3.5 py-2.5 text-sm text-[#F2A3A3]">
-                    Le partage est bloqué tant que la contre-indication n&apos;est pas traitée : retirez le conseil concerné ou confirmez que vous le maintenez en connaissance de cause.
-                  </p>
-                ) : null}
-                {canEditPlan && contraindicationAlerts.length > 0 && (
-                  <div className="mt-3">
-                    <ContraindicationBanner
-                      alerts={contraindicationAlerts}
-                      onAcknowledge={acknowledgeContraindication}
-                      criticalCount={contraindicationCriticalCount}
-                      warningCount={contraindicationWarningCount}
-                      infoCount={contraindicationInfoCount}
-                    />
-                  </div>
-                )}
               </CardHeader>
               <CardContent className="space-y-6">
-                {!canEditPlan ? (
-                  <PlanBlocks content={planForm} firstName={recordFirstName} logs={observanceLogsRecent} />
-                ) : null}
-                {canEditPlan && CONSEILLANCIER_SECTIONS.map((section) => {
-                  // In read-only mode, skip sections with no content
-                  if (!canEditPlan && !sectionHasContent(section, planForm)) return null;
-                  return (
-                    <div key={section.id} className="space-y-3">
-                      <div>
-                        <h3 className="text-sm font-semibold text-charcoal">
-                          {section.icon ? `${section.icon} ` : ''}{section.title}
-                          {section.optional ? (
-                            <span className="ml-2 text-xs font-normal text-stone">(optionnel)</span>
-                          ) : null}
-                        </h3>
-                        {section.description ? (
-                          <p className="text-xs text-stone">{section.description}</p>
-                        ) : null}
-                      </div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {section.fields.map((field) => {
-                          // In read-only mode, skip empty fields
-                          if (!canEditPlan && !planForm[field.key]?.trim()) return null;
-                          return (
-                            <div
-                              key={field.key}
-                              className="rounded-lg bg-surface/60 p-4 border border-divider"
-                            >
-                              <div className="flex items-center justify-between">
-                                <p className="text-xs uppercase tracking-wide text-stone">{field.label}</p>
-                                {canEditPlan && (
-                                  <div className="flex items-center gap-1">
-                                    <SectionSuggestButton
-                                      consultantId={consultant.id}
-                                      fieldKey={field.key}
-                                      onAccept={(text) =>
-                                        setPlanForm((prev) => ({
-                                          ...prev,
-                                          [field.key]: text,
-                                        }))
-                                      }
-                                    />
-                                    <BlockInsertButton
-                                      section={section.id as BlockSection}
-                                      sectionLabel={`${section.title} — ${field.label}`}
-                                      consultationMotif={consultantState.consultation_reason}
-                                      onInsert={(content) => {
-                                        setPlanForm((prev) => ({
-                                          ...prev,
-                                          [field.key]: prev[field.key]
-                                            ? prev[field.key] + '\n\n' + content
-                                            : content,
-                                        }));
-                                      }}
-                                    />
-                                    <ResourceInsertButton
-                                      consultantId={consultant.id}
-                                      consultantPlanId={activePlan?.id}
-                                      sectionKey={field.key}
-                                      onInsert={(text) => {
-                                        setPlanForm((prev) => ({
-                                          ...prev,
-                                          [field.key]: prev[field.key]
-                                            ? prev[field.key] + '\n' + text
-                                            : text,
-                                        }));
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                              {canEditPlan ? (
-                                <>
-                                  <Textarea
-                                    className="mt-2"
-                                    value={planForm[field.key]}
-                                    onChange={(event) =>
-                                      setPlanForm((prev) => ({
-                                        ...prev,
-                                        [field.key]: event.target.value
-                                      }))
-                                    }
-                                    placeholder={field.placeholder}
-                                    rows={field.multiline ? 4 : 2}
-                                  />
-                                  <div className="mt-1">
-                                    <SaveAsBlockButton
-                                      selectedText={planForm[field.key]}
-                                      section={section.id as BlockSection}
-                                    />
-                                  </div>
-                                </>
-                              ) : (
-                                <p className="mt-2 text-sm text-charcoal whitespace-pre-line break-words">
-                                  {renderAnswer(planForm[field.key])}
-                                </p>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-                {canEditPlan ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="primary"
-                      onClick={handleSavePlan}
-                      loading={planSaving}
-                      disabled={!isPlanDirty || planSaving}
-                    >
-                      Enregistrer
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setPlanForm(initialPlanContent)}
-                      disabled={planSaving}
-                    >
-                      Annuler
-                    </Button>
-                  </div>
-                ) : null}
+                <PlanBlocks content={planForm} firstName={recordFirstName} logs={observanceLogsRecent} />
               </CardContent>
             </Card>
             <aside className="sticky top-5 min-w-0 flex-[1_1_280px] lg:max-w-[320px]">
@@ -4014,14 +3999,8 @@ export function ConsultantTabs({
             </div>
           ) : null}
 
-          {/* Contraindication Validation Modal */}
-          <ContraindicationValidationModal
-            open={showContraindicationModal}
-            onClose={() => setShowContraindicationModal(false)}
-            onConfirm={handleSharePlan}
-            alerts={contraindicationAlerts}
-            loading={planSharing}
-          />
+          {/* Modales du conseillancier (dans le plein écran quand il est ouvert) */}
+          {planFocusVisible ? null : planModals}
         </div>
       )}
 
@@ -4619,7 +4598,79 @@ export function ConsultantTabs({
         </Modal>
       ) : null}
 
-      {toast ? (
+      {planFocusVisible && activePlan ? (
+        <ConseillancierFocusEditor
+          consultantId={consultant.id}
+          planId={activePlan.id}
+          version={activePlan.version}
+          consultantFullName={consultantState.name}
+          firstName={recordFirstName}
+          consultationMotif={consultantState.consultation_reason}
+          sections={selectedPlanSections}
+          index={planFocusIndex}
+          onIndexChange={setPlanFocusIndex}
+          content={planForm}
+          onFieldChange={handlePlanFieldChange}
+          treatmentsReminder={activeTreatmentsReminder}
+          alerts={
+            <>
+              {activePlan.ai_generated === true ? (
+                <AIStatusBar aiGenerated quotaUsed={aiQuotaUsed} quotaMax={aiQuotaMax} />
+              ) : null}
+              {medicalAlerts.length > 0 ? <MedicalAlertBanner alerts={medicalAlerts} /> : null}
+              {shareBlocked ? (
+                <p role="status" className="rounded-xl border border-[#6B3438] bg-[#3A2224] px-3.5 py-2.5 text-sm text-[#F2A3A3]">
+                  Le partage est bloqué tant que la contre-indication n&apos;est pas traitée : retirez le conseil concerné ou confirmez que vous le maintenez en connaissance de cause.
+                </p>
+              ) : null}
+              {contraindicationAlerts.length > 0 ? (
+                <ContraindicationBanner
+                  alerts={contraindicationAlerts}
+                  onAcknowledge={acknowledgeContraindication}
+                  criticalCount={contraindicationCriticalCount}
+                  warningCount={contraindicationWarningCount}
+                  infoCount={contraindicationInfoCount}
+                />
+              ) : null}
+            </>
+          }
+          overlays={planModals}
+          toast={
+            toast ? (
+              <Toast
+                title={toast.title}
+                description={toast.description}
+                variant={toast.variant}
+                onClose={() => setToast(null)}
+              />
+            ) : null
+          }
+          onBack={() => setPlanFocusOpen(false)}
+          onOpenPicker={openEditPlanPicker}
+          onSave={handleSavePlan}
+          saving={planSaving}
+          saveDisabled={!isPlanDirty || planSaving}
+          onShare={handleSharePlanClick}
+          sharing={planSharing}
+          shareDisabled={planSharing || planSaving || isPlanDirty || shareBlocked}
+          shareTitle={
+            shareBlocked
+              ? 'Le partage est bloqué tant que la contre-indication n’est pas traitée.'
+              : isPlanDirty
+                ? 'Enregistrez vos modifications avant de partager.'
+                : undefined
+          }
+          onReviewEnd={() =>
+            setToast({
+              title: 'Toutes les catégories choisies sont passées',
+              description: `Relisez l’aperçu, puis partagez à ${recordFirstName}.`,
+              variant: 'info',
+            })
+          }
+        />
+      ) : null}
+
+      {toast && !planFocusVisible ? (
         <Toast
           title={toast.title}
           description={toast.description}
