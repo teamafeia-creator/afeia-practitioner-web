@@ -144,6 +144,31 @@ export function WearableConnectionSection() {
     }
   }, [startConnect]);
 
+  const [syncing, setSyncing] = useState(false);
+  const onSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch('/api/wearables/sync', {
+        method: 'POST',
+        headers: await authHeader(),
+        cache: 'no-store',
+      });
+      const body = (await res.json().catch(() => ({}))) as { ok?: boolean; ingested?: number; error?: string };
+      if (!res.ok) {
+        showToast.error(body.error ?? 'La synchronisation a échoué. Réessayez.');
+        return;
+      }
+      showToast.success(
+        body.ingested ? `Synchronisation terminée : ${body.ingested} enregistrement(s) importé(s).` : 'Synchronisation terminée : rien de nouveau chez Polar.'
+      );
+      await loadStatus();
+    } catch {
+      showToast.error('La synchronisation a échoué. Réessayez.');
+    } finally {
+      setSyncing(false);
+    }
+  }, [loadStatus]);
+
   const onDisconnect = useCallback(
     async (deleteData: boolean) => {
       setDisconnecting(true);
@@ -184,6 +209,8 @@ export function WearableConnectionSection() {
       showSetupHelp={justConnected}
       onDisconnect={onDisconnect}
       disconnecting={disconnecting}
+      onSync={onSync}
+      syncing={syncing}
     />
     <WearableConsentDialog
       isOpen={consentOpen}

@@ -9,8 +9,8 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/consultant/home',
   useSearchParams: () => new URLSearchParams(search),
 }));
-vi.mock('@/lib/supabase', () => ({
-  supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 'session-jwt' } } }) } },
+vi.mock('@/lib/supabase-consultant', () => ({
+  supabaseConsultant: { auth: { getSession: async () => ({ data: { session: { access_token: 'session-jwt' } } }) } },
 }));
 const success = vi.fn();
 const error = vi.fn();

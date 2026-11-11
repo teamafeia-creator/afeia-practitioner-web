@@ -3,7 +3,7 @@
 import { Component, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Watch } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, Skeleton, Spinner, TabsPills } from '@/components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Skeleton, Spinner, TabsPills, showToast } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatDay, formatRelative, isBackfillInProgress, type WearableConnectionOverview } from '@/lib/wearables/display';
 import { getWearableSummary, type WearableSummary } from '@/lib/wearables/summary';
@@ -26,6 +26,9 @@ type ViewProps = {
   loading?: boolean;
   /** Lecture impossible (erreur réseau, base, config) : la section s'affiche « indisponible ». */
   unavailable?: boolean;
+  /** Synchronisation à la demande (récupère les derniers jours chez Polar). */
+  onSync?: () => Promise<void> | void;
+  syncing?: boolean;
   now?: Date;
 };
 
@@ -52,7 +55,7 @@ export function PatientWearableSectionUnavailable() {
  * Section « Objet connecté » de la fiche patient (vue praticien). Présentation seule.
  * Aucune interprétation ni couleur de jugement : des valeurs, des moyennes et des écarts.
  */
-export function PatientWearableSectionView({ connection, summary, period, onPeriodChange, loading = false, unavailable = false, now }: ViewProps) {
+export function PatientWearableSectionView({ connection, summary, period, onPeriodChange, loading = false, unavailable = false, onSync, syncing = false, now }: ViewProps) {
   if (unavailable) return <PatientWearableSectionUnavailable />;
   // Une connexion existe (active, en erreur ou révoquée) : les données déjà reçues restent affichées.
   const connected = connection !== null;
@@ -76,11 +79,18 @@ export function PatientWearableSectionView({ connection, summary, period, onPeri
           </div>
         </div>
         {connected ? (
-          <TabsPills
-            tabs={[PERIOD_LABELS[7], PERIOD_LABELS[30]] as const}
-            active={PERIOD_LABELS[period]}
-            onChange={(label) => onPeriodChange(LABEL_TO_PERIOD[label])}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            {onSync && connection.status === 'active' ? (
+              <Button variant="secondary" size="sm" onClick={() => void onSync()} loading={syncing} data-testid="patient-wearable-sync">
+                Synchroniser
+              </Button>
+            ) : null}
+            <TabsPills
+              tabs={[PERIOD_LABELS[7], PERIOD_LABELS[30]] as const}
+              active={PERIOD_LABELS[period]}
+              onChange={(label) => onPeriodChange(LABEL_TO_PERIOD[label])}
+            />
+          </div>
         ) : null}
       </CardHeader>
 
@@ -145,6 +155,9 @@ function ConnectedPatientWearableSection({ consultantId }: { consultantId: strin
   const [summary, setSummary] = useState<WearableSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  // Incrémenté après une synchro manuelle pour relire connexion et résumé.
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -166,7 +179,7 @@ function ConnectedPatientWearableSection({ consultantId }: { consultantId: strin
     return () => {
       cancelled = true;
     };
-  }, [consultantId]);
+  }, [consultantId, reloadKey]);
 
   const connected = connection !== null;
   useEffect(() => {
@@ -184,7 +197,38 @@ function ConnectedPatientWearableSection({ consultantId }: { consultantId: strin
     return () => {
       cancelled = true;
     };
-  }, [consultantId, period, connected]);
+  }, [consultantId, period, connected, reloadKey]);
+
+  const onSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        showToast.error('Session expirée : reconnectez-vous.');
+        return;
+      }
+      const res = await fetch('/api/wearables/sync', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consultantId }),
+        cache: 'no-store',
+      });
+      const body = (await res.json().catch(() => ({}))) as { ok?: boolean; ingested?: number; error?: string };
+      if (!res.ok) {
+        showToast.error(body.error ?? 'La synchronisation a échoué. Réessayez.');
+        return;
+      }
+      showToast.success(
+        body.ingested ? `Synchronisation terminée : ${body.ingested} enregistrement(s) importé(s).` : 'Synchronisation terminée : rien de nouveau chez Polar.'
+      );
+      setReloadKey((k) => k + 1);
+    } catch {
+      showToast.error('La synchronisation a échoué. Réessayez.');
+    } finally {
+      setSyncing(false);
+    }
+  }, [consultantId]);
 
   const onPeriodChange = useCallback(
     (p: WearablePeriod) => {
@@ -204,6 +248,8 @@ function ConnectedPatientWearableSection({ consultantId }: { consultantId: strin
       onPeriodChange={onPeriodChange}
       loading={loading}
       unavailable={unavailable}
+      onSync={onSync}
+      syncing={syncing}
     />
   );
 }
