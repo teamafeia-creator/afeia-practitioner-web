@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, Copy, Video, X } from 'lucide-react';
 import type { ConsultationType, WaitlistEntry } from '@/lib/types';
+import { supabase } from '@/lib/supabase';
+import { showToast } from '@/components/ui/Toaster';
+import { copyConsultantLink } from '@/lib/video/consultantLink';
 import { durationLabel, priceLabel } from '@/components/agenda/ConsultationTypeForm';
 import { hm } from './AgendaGrid';
 
@@ -22,6 +25,9 @@ export interface SelectedInfo {
   priceCents: number | null;
   visio: boolean;
   videoLink: string | null;
+  /** Salle Daily (visio intégrée) et secret du lien consultant. */
+  videoRoomName: string | null;
+  videoJoinToken: string | null;
   consultantId: string | null;
 }
 
@@ -31,15 +37,42 @@ export function SelectedCard({
   onReschedule,
   onDetails,
   onCancel,
+  onVideoChanged,
 }: {
   sel: SelectedInfo;
   onClose: () => void;
   onReschedule: () => void;
   onDetails: () => void;
   onCancel: () => Promise<void>;
+  /** Salle de visio créée : recharger la séance. */
+  onVideoChanged: () => void;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [creatingRoom, setCreatingRoom] = useState(false);
+
+  async function createRoom() {
+    setCreatingRoom(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const res = await fetch('/api/video/provision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sess.session?.access_token ?? ''}` },
+        body: JSON.stringify({ appointment_id: sel.id }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        showToast.error(body?.error ?? 'La salle de visio n’a pas pu être créée.');
+        return;
+      }
+      showToast.success('Salle de visio créée');
+      onVideoChanged();
+    } catch {
+      showToast.error('La salle de visio n’a pas pu être créée.');
+    } finally {
+      setCreatingRoom(false);
+    }
+  }
   const when = `${dateFmt.format(sel.start)} · ${hm(sel.start)} – ${hm(sel.end)}${sel.priceCents !== null ? ` · ${priceLabel(sel.priceCents)}` : ''}`;
   const btn = 'flex h-10 items-center justify-center rounded-[10px] border border-divider text-[13px] text-charcoal hover:border-sage';
 
@@ -67,10 +100,33 @@ export function SelectedCard({
             Ouvrir le dossier
           </Link>
         )}
-        {sel.visio && sel.videoLink && (
-          <a href={sel.videoLink} target="_blank" rel="noreferrer" className={btn + ' text-sm'}>
-            Lancer la visio
-          </a>
+        {sel.kind === 'appointment' && sel.visio && (
+          sel.videoRoomName ? (
+            <>
+              <Link
+                href={`/consultation/video/${sel.id}`}
+                className="flex h-10 items-center justify-center gap-2 rounded-[10px] bg-sage text-sm font-semibold text-ink hover:bg-sage-deep"
+              >
+                <Video className="h-4 w-4" aria-hidden="true" />
+                Rejoindre la visio
+              </Link>
+              {sel.videoJoinToken && (
+                <button type="button" onClick={() => void copyConsultantLink(sel.id, sel.videoJoinToken as string)} className={btn + ' gap-2'}>
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                  Copier le lien du consultant
+                </button>
+              )}
+            </>
+          ) : sel.videoLink ? (
+            <a href={sel.videoLink} target="_blank" rel="noreferrer" className={btn + ' text-sm'}>
+              Ouvrir le lien de visio
+            </a>
+          ) : (
+            <button type="button" onClick={() => void createRoom()} disabled={creatingRoom} className={btn + ' gap-2 text-sm disabled:opacity-60'}>
+              <Video className="h-4 w-4" aria-hidden="true" />
+              {creatingRoom ? 'Création de la salle…' : 'Créer la salle de visio'}
+            </button>
+          )
         )}
         {sel.kind === 'appointment' ? (
           confirming ? (
