@@ -1,42 +1,44 @@
 // lib/wearables/insights/schedule.ts
-// Quand préparer le récap : « Chaque [jour | semaine | 2 semaines | mois] le [jours cochés] ».
-// Le brouillon est préparé à 7 h (Europe/Paris) les jours prévus et reste valable jusqu'au
-// prochain jour prévu (exclu), où il est remplacé.
+// « Chaque [jour | semaine | 2 semaines | mois] le [jours cochés] » (fenêtre du récap de la maquette).
+// - jour : tous les jours (pas de jours à cocher) ;
+// - semaine : chaque jour coché ;
+// - 2 semaines : une semaine sur deux, les jours cochés ;
+// - mois : une fois par mois, la première semaine, les jours cochés.
+// Le brouillon est préparé à 7 h les jours prévus et reste valable jusqu'au prochain jour prévu.
 import type { RecapFrequency } from './recap';
-import { addDays, diffDays } from './series';
+import { addDays, diffDays, listFr } from './series';
 
 export type RecapSettings = {
+  /** « Me le proposer régulièrement (je valide avant l’envoi) » : désactivé par défaut. */
   enabled: boolean;
   frequency: RecapFrequency;
-  /** Jours ISO : 1 = lundi … 7 = dimanche. */
+  /** Jours ISO : 1 = lundi … 7 = dimanche. Par défaut le lundi. */
   weekdays: number[];
-  /** Semaine de référence pour « toutes les 2 semaines ». */
+  /** Semaine de référence pour « une semaine sur deux ». */
   anchor: string;
 };
 
-export const DEFAULT_RECAP_SETTINGS: RecapSettings = { enabled: true, frequency: '1w', weekdays: [1], anchor: '2026-01-05' };
+export const DEFAULT_RECAP_SETTINGS: RecapSettings = { enabled: false, frequency: '1w', weekdays: [1], anchor: '2026-01-05' };
 
-export const WEEKDAY_LABEL = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+export const WEEKDAY_NAMES = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+export const WEEKDAY_LABEL = WEEKDAY_NAMES.map((d) => `${d.slice(0, 3)}.`);
 
 export function isoWeekday(day: string): number {
   const d = new Date(`${day}T00:00:00Z`).getUTCDay();
   return d === 0 ? 7 : d;
 }
 
-/** Lundi de la semaine du jour. */
 function monday(day: string): string {
   return addDays(day, 1 - isoWeekday(day));
 }
 
 export function isRecapDay(s: RecapSettings, day: string): boolean {
-  if (!s.enabled || !s.weekdays.includes(isoWeekday(day))) return false;
-  if (s.frequency === '1d' || s.frequency === '1w') return true;
-  if (s.frequency === '2w') return (Math.round(diffDays(monday(day), monday(s.anchor)) / 7) % 2 + 2) % 2 === 0;
-  // « Chaque mois » : le premier des jours cochés dans le mois.
-  const dom = Number(day.slice(8, 10));
-  const first = addDays(day, -(dom - 1));
-  for (let d = first; d < day; d = addDays(d, 1)) if (s.weekdays.includes(isoWeekday(d))) return false;
-  return true;
+  if (!s.enabled) return false;
+  if (s.frequency === '1d') return true;
+  if (!s.weekdays.includes(isoWeekday(day))) return false;
+  if (s.frequency === '1w') return true;
+  if (s.frequency === '2w') return ((Math.round(diffDays(monday(day), monday(s.anchor)) / 7) % 2) + 2) % 2 === 0;
+  return Number(day.slice(8, 10)) <= 7;
 }
 
 /** Prochain jour prévu strictement après `day` (dans les 70 jours), ou null. */
@@ -54,9 +56,16 @@ export function validUntil(s: RecapSettings, day: string): string {
   return next ? addDays(next, -1) : addDays(day, 6);
 }
 
-/** « Chaque semaine le lun. », « Chaque jour le lun., mar., mer. »… */
+/** Phrase de la maquette (rcSched). */
 export function describeSchedule(s: RecapSettings): string {
-  const head = { '1d': 'Chaque jour', '1w': 'Chaque semaine', '2w': 'Toutes les 2 semaines', '1m': 'Chaque mois' }[s.frequency];
-  const days = [...s.weekdays].sort().map((d) => WEEKDAY_LABEL[d - 1]).join(', ');
-  return s.frequency === '1m' ? `${head}, le premier ${days}` : `${head} le ${days}`;
+  const names = listFr([...s.weekdays].sort().map((d) => WEEKDAY_NAMES[d - 1]));
+  const when =
+    s.frequency === '1d' ? 'tous les jours' : s.frequency === '1w' ? `chaque ${names}` : s.frequency === '2w' ? `une semaine sur deux, le ${names}` : `une fois par mois, la première semaine, le ${names}`;
+  return `Un brouillon vous sera proposé dans votre Revue du matin ${when}. Rien ne part sans votre validation.`;
+}
+
+/** « chaque lundi et jeudi » (contexte de la carte de la Revue du matin). */
+export function scheduleShort(s: RecapSettings): string {
+  const names = listFr([...s.weekdays].sort().map((d) => WEEKDAY_NAMES[d - 1]));
+  return s.frequency === '1d' ? 'chaque jour' : s.frequency === '1w' ? `chaque ${names}` : s.frequency === '2w' ? `une semaine sur deux, le ${names}` : `une fois par mois, le ${names}`;
 }

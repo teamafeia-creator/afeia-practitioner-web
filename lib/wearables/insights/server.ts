@@ -134,7 +134,8 @@ export async function prepareRecap(db: SupabaseClient, s: SettingsRow, today: st
     db.from('wearable_recaps').select('variants').eq('consultant_id', s.consultant_id).eq('status', 'sent').order('sent_at', { ascending: false }).limit(1),
   ]);
   const recap = computeRecap({ days, today, items: list.items, logs: list.logs }, s.frequency);
-  const points = recap.options.filter((o) => o.checked).map((o) => o.id as RecapPointId);
+  // Pas assez de nuits : le brouillon proposé est le seul rappel de porter l'objet, à valider (règle 3).
+  const points = recap.status === 'not_enough' ? (['wear'] as RecapPointId[]) : recap.options.filter((o) => o.checked).map((o) => o.id as RecapPointId);
   const lastVariants = ((last.data ?? [])[0]?.variants ?? {}) as Partial<Record<RecapPointId, 0 | 1>>;
   const built = points.length
     ? buildRecapText({ firstName: firstName(consultant.data), practitionerFirstName: firstName(practitioner.data), frequency: s.frequency, points, lastVariants })

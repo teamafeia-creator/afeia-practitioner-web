@@ -33,17 +33,21 @@ describe('planification du récap', () => {
     expect(isRecapDay(s, '2026-11-16')).toBe(true);
     expect(nextRecapDay(s, '2026-11-02')).toBe('2026-11-16');
   });
-  it('chaque mois : le premier jour coché du mois', () => {
+  it('chaque mois : les jours cochés de la première semaine', () => {
     const s = { ...base, frequency: '1m' as const, weekdays: [5] };
     expect(isRecapDay(s, '2026-11-06')).toBe(true); // premier vendredi
     expect(isRecapDay(s, '2026-11-13')).toBe(false);
     expect(nextRecapDay(s, '2026-11-06')).toBe('2026-12-04');
   });
-  it('chaque jour, sur les jours cochés', () => {
-    const s = { ...base, frequency: '1d' as const, weekdays: [1, 2, 3, 4, 5] };
-    expect(isRecapDay(s, '2026-11-14')).toBe(false); // samedi
-    expect(validUntil(s, '2026-11-13')).toBe('2026-11-15'); // vendredi → valable jusqu'à dimanche
-    expect(describeSchedule(s)).toBe('Chaque jour le lun., mar., mer., jeu., ven.');
+  it('chaque jour : tous les jours, sans jours à cocher', () => {
+    const s = { ...base, frequency: '1d' as const, weekdays: [1] };
+    expect(isRecapDay(s, '2026-11-14')).toBe(true); // samedi
+    expect(validUntil(s, '2026-11-13')).toBe('2026-11-13');
+    expect(describeSchedule(s)).toBe('Un brouillon vous sera proposé dans votre Revue du matin tous les jours. Rien ne part sans votre validation.');
+  });
+  it('phrases de planification de la maquette', () => {
+    expect(describeSchedule({ ...base, weekdays: [1, 4] })).toBe('Un brouillon vous sera proposé dans votre Revue du matin chaque lundi et jeudi. Rien ne part sans votre validation.');
+    expect(describeSchedule({ ...base, frequency: '1m' })).toBe('Un brouillon vous sera proposé dans votre Revue du matin une fois par mois, la première semaine, le lundi. Rien ne part sans votre validation.');
   });
 });
 
@@ -79,12 +83,12 @@ describe('objectifs reliés à une mesure', () => {
     expect(suggestMetric('Retrouver une énergie stable le matin')).toBe('hrv');
     expect(suggestMetric('Espacer les migraines')).toBeNull();
   });
-  it('compare les 14 nuits avant l’objectif aux 14 dernières', () => {
-    const days = Array.from({ length: 40 }, (_, i) => {
-      const d = new Date(Date.UTC(2026, 9, 3 + i)).toISOString().slice(0, 10);
-      return { date: d, sleepMin: null, hrvMs: i < 20 ? 38 : 44, nightHrBpm: null, steps: null };
+  it('affiche la moyenne avant → depuis le dernier conseillancier', () => {
+    const days = Array.from({ length: 60 }, (_, i) => {
+      const d = new Date(Date.UTC(2026, 8, 13 + i)).toISOString().slice(0, 10);
+      return { date: d, sleepMin: 420, hrvMs: d > '2026-10-28' ? 44 : 38, nightHrBpm: 60, steps: 6000 };
     });
-    const t = goalTrend(new Series(days, '2026-11-11'), 'hrv', '2026-10-23');
-    expect(t).toMatchObject({ start: '38 ms', now: '44 ms' });
+    const input = { days, today: '2026-11-11', firstName: 'Amina', lastSessionDate: '2026-10-28', planShares: [{ date: '2026-10-28', version: 2 }], items: [], logs: [] };
+    expect(goalTrend(input, new Series(days, '2026-11-11'), 'hrv').value).toBe('38 ms → 44 ms');
   });
 });

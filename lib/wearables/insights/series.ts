@@ -21,6 +21,7 @@ export const THRESHOLDS: Record<Metric, number> = { sleep: 20, hrv: 3, hr: 3, st
 /** Sens favorable : +1 = plus haut c'est mieux, −1 = plus bas c'est mieux (FC de la nuit). */
 export const BETTER: Record<Metric, 1 | -1> = { sleep: 1, hrv: 1, hr: -1, steps: 1 };
 
+/** Libellés des 4 tuiles « Cette semaine, comparée à d'habitude ». */
 export const METRIC_LABEL: Record<Metric, string> = {
   sleep: 'Sommeil par nuit',
   hrv: 'Récupération la nuit (VFC)',
@@ -28,7 +29,16 @@ export const METRIC_LABEL: Record<Metric, string> = {
   steps: 'Pas par jour',
 };
 
-export const METRIC_SHORT: Record<Metric, string> = { sleep: 'Sommeil', hrv: 'VFC', hr: 'FC de la nuit', steps: 'Pas' };
+/** Libellé court de la maquette (M[k].l). */
+export const METRIC_SHORT: Record<Metric, string> = { sleep: 'Sommeil', hrv: 'VFC nocturne', hr: 'FC de la nuit', steps: 'Pas' };
+
+/** Titre du graphique (M[k].title). */
+export const METRIC_TITLE: Record<Metric, string> = {
+  sleep: 'Durée de sommeil',
+  hrv: 'Variabilité cardiaque de la nuit',
+  hr: 'Fréquence cardiaque moyenne de la nuit',
+  steps: 'Pas par jour',
+};
 
 // ─── Dates (jours civils, sans fuseau) ─────────────────
 
@@ -56,6 +66,19 @@ export function parisDay(instant: string | Date, timeZone = 'Europe/Paris'): str
 }
 
 const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MONTHS_LONG = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+/** « 19 octobre » */
+export function longDate(day: string): string {
+  const [, m, d] = day.split('-').map(Number);
+  return `${d} ${MONTHS_LONG[m - 1]}`;
+}
+
+const WEEKDAYS_SHORT = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+/** « lun. 20 oct. » */
+export function dayDate(day: string): string {
+  return `${WEEKDAYS_SHORT[new Date(`${day}T00:00:00Z`).getUTCDay()]} ${shortDate(day)}`;
+}
+
 /** « 19 oct. » */
 export function shortDate(day: string): string {
   const [, m, d] = day.split('-').map(Number);
@@ -113,40 +136,53 @@ export function mean(xs: number[]): number | null {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
 }
 
-/** Écart-type (population). 0 pour une seule valeur. */
+/** Écart-type d'échantillon (n − 1), comme la maquette. 0 pour une seule valeur. */
 export function sd(xs: number[]): number | null {
   const m = mean(xs);
   if (m === null) return null;
-  return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length);
+  return xs.length > 1 ? Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1)) : 0;
 }
 
-// ─── Formats ─────────────────
+// ─── Formats (identiques à la maquette) ─────────────────
 
+/** « 6 h 18 » (toujours en heures et minutes). */
 export function fmtDuration(min: number): string {
-  const total = Math.round(Math.abs(min));
-  if (total < 60) return `${total} min`;
+  const total = Math.round(min);
   return `${Math.floor(total / 60)} h ${String(total % 60).padStart(2, '0')}`;
 }
 
-export function fmtSteps(n: number): string {
-  return `${Math.round(Math.abs(n) / 10) * 10}`.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+/** « 7 967 » : nombre entier, espaces entre milliers. */
+export function fmtInt(n: number): string {
+  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-/** Valeur affichée : « 7 h 09 », « 46 ms », « 59 bpm », « 7 970 pas ». */
+/** Valeur affichée : « 7 h 09 », « 46 ms », « 59 bpm », « 7 967 pas ». */
 export function fmtValue(metric: Metric, v: number): string {
   if (metric === 'sleep') return fmtDuration(v);
-  if (metric === 'steps') return `${fmtSteps(v)} pas`;
+  if (metric === 'steps') return `${fmtInt(v)} pas`;
   return `${Math.round(v)} ${metric === 'hrv' ? 'ms' : 'bpm'}`;
 }
 
-/** Écart sans signe : « 45 min », « 4 ms », « 3 bpm », « 1 020 pas ». */
-export function fmtGap(metric: Metric, d: number): string {
-  return fmtValue(metric, Math.abs(d));
+/** Écart signé (M[k].delta) : « +45 min », « +4 ms », « −3 bpm », « +1 020 pas ». Le sommeil est toujours en minutes. */
+export function fmtSigned(metric: Metric, d: number): string {
+  const r = Math.round(d);
+  const sign = r > 0 ? '+' : r < 0 ? '−' : '';
+  if (metric === 'sleep') return `${sign}${Math.abs(r)} min`;
+  if (metric === 'steps') return `${sign}${fmtInt(Math.abs(d))} pas`;
+  return `${sign}${Math.abs(r)} ${metric === 'hrv' ? 'ms' : 'bpm'}`;
 }
 
-/** Écart signé : « +4 ms », « −3 bpm ». */
-export function fmtSigned(metric: Metric, d: number): string {
-  const rounded = metric === 'sleep' ? Math.round(d) : metric === 'steps' ? Math.round(d / 10) * 10 : Math.round(d);
-  if (rounded === 0) return `0 ${metric === 'sleep' ? 'min' : metric === 'steps' ? 'pas' : metric === 'hrv' ? 'ms' : 'bpm'}`;
-  return `${rounded > 0 ? '+' : '−'}${fmtGap(metric, d)}`;
+/** Écart sans signe : « 45 min », « 4 ms », « 1 020 pas ». */
+export function fmtGap(metric: Metric, d: number): string {
+  return fmtSigned(metric, d).replace(/^[+−]/, '');
+}
+
+/** « a, b et c » */
+export function listFr(a: string[]): string {
+  return a.length <= 1 ? a.join('') : `${a.slice(0, -1).join(', ')} et ${a[a.length - 1]}`;
+}
+
+/** « 3 nuits », « 1 nuit » */
+export function plural(n: number, one: string, many?: string): string {
+  return `${n} ${n > 1 ? many ?? `${one}s` : one}`;
 }

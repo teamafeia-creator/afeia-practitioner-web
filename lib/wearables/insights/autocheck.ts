@@ -33,12 +33,13 @@ export function autoRuleFor(item: { label: string; category: string }): AutoRule
   return null;
 }
 
-export function describeAutoRule(rule: AutoRule): string {
-  if (rule.kind === 'activity') return `Coché si l’objet mesure au moins ${rule.minutes} min de temps actif dans la journée.`;
+/** Texte de la maquette, au survol de l'interrupteur. `subj` : « elle », « il » ou le prénom. */
+export function describeAutoRule(rule: AutoRule, subj: string): string {
+  if (rule.kind === 'activity') return `Coché si l’objet mesure au moins ${rule.minutes} min de temps actif dans la journée`;
   const limit = rule.minutes + 60;
   const hh = Math.floor(limit / 60) % 24;
   const mm = limit % 60;
-  return `Coché si l’endormissement mesuré a lieu avant ${hh} h${mm ? ` ${String(mm).padStart(2, '0')}` : ''}.`;
+  return `Coché si ${subj} s’endort au plus tard 1 h après l’heure écrite (avant ${hh} h${mm ? ` ${String(mm).padStart(2, '0')}` : ''})`;
 }
 
 /**
