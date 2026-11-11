@@ -2,8 +2,8 @@
 //   1. coches de la checklist par l'objet (items activés par le praticien) ;
 //   2. brouillons de récap des consultants dont c'est le jour prévu.
 // Rien n'est envoyé : le praticien valide chaque récap (dossier ou Revue du matin).
-// Vercel Cron est en UTC : la route est appelée à 5 h et 6 h UTC et ne travaille qu'à 7 h à Paris
-// (été comme hiver). ?force=1 permet de la lancer à la main.
+// Vercel Cron est en UTC et le plan Hobby n'autorise qu'un passage par jour : 6 h UTC, soit 7 h à Paris
+// en hiver et 8 h en été. (Avec le plan Pro : planifier à 5 h et 6 h UTC et ne garder que 7 h à Paris.)
 // Protégé par `Authorization: Bearer ${CRON_SECRET}`, comme /api/cron/polar-sync.
 import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,10 +23,6 @@ function authorized(header: string | null, secret: string): boolean {
   return received.length === expected.length && timingSafeEqual(received, expected);
 }
 
-function parisHour(now: Date): number {
-  return Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Paris', hour: '2-digit', hourCycle: 'h23' }).format(now));
-}
-
 export async function GET(request: NextRequest) {
   const secret = readPolarConfig('cron', getCronSecret);
   if (!secret.ok) return secret.response;
@@ -34,9 +30,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
   const now = new Date();
-  if (request.nextUrl.searchParams.get('force') !== '1' && parisHour(now) !== 7) {
-    return NextResponse.json({ ok: true, skipped: 'pas 7 h à Paris' });
-  }
   try {
     const summary = await runDailyWearableJobs(getSupabaseAdmin(), now);
     return NextResponse.json({ ok: true, summary });
