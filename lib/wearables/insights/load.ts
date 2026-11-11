@@ -55,6 +55,7 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
     label: it.label,
     category: it.category,
     freq: frequencyFromDb(it),
+    autoCheck: Boolean(it.auto_check),
   }));
   const insightLogs: InsightLog[] = ((logs.data ?? []) as { observance_item_id: string; date: string; done: boolean }[]).map((l) => ({
     itemId: l.observance_item_id,

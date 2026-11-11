@@ -4,7 +4,9 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": ".next",
-  "regions": ["cdg1"],
+  "regions": [
+    "cdg1"
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -49,6 +51,10 @@
     {
       "path": "/api/cron/polar-sync",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/wearable-recaps",
+      "schedule": "0 5,6 * * *"
     }
   ],
   "rewrites": [

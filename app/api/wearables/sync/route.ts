@@ -12,6 +12,8 @@ import { createSupabaseAdminClient, createSupabaseAuthClient } from '@/lib/serve
 import { syncConsultantConnection } from '@/lib/wearables/polar/sync';
 import { readPolarConfig } from '@/lib/wearables/polar/unavailable';
 import { getPolarApiCredentials } from '@/lib/wearables/polar/config';
+import { applyAutoChecks } from '@/lib/wearables/insights/server';
+import { parisDay } from '@/lib/wearables/insights/series';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -74,7 +76,14 @@ export async function POST(request: NextRequest) {
 
   const result = await syncConsultantConnection(consultantId);
   if (result.outcome === 'synced') {
-    return json({ ok: true, ...result });
+    // Coches par l'objet : « à la synchronisation suivante ». Un échec ici ne fait pas échouer la synchro.
+    let autoChecks = 0;
+    try {
+      autoChecks = await applyAutoChecks(createSupabaseAdminClient(), consultantId, parisDay(new Date()));
+    } catch (error) {
+      console.error('[wearables/sync] coches par l’objet', { message: (error as Error).message });
+    }
+    return json({ ok: true, ...result, autoChecks });
   }
   // Erreurs « attendues » : on libère l'anti-rafale pour permettre un nouvel essai après correction.
   if (result.outcome !== 'rate_limited') lastRun.delete(consultantId);

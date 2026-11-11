@@ -30,6 +30,7 @@ import {
 } from '@/lib/morning-review/queue';
 import { contextFor, sparkFor } from '@/lib/morning-review/presentation';
 import type { ConsultantSummary } from '@/lib/morning-review/types';
+import { PendingRecapsCard } from '@/components/wearables/practitioner/PendingRecapsCard';
 
 const FIRST_SEEN_KEY = 'afeia.review.firstSeen';
 
@@ -224,6 +225,8 @@ export default function MorningReviewPage() {
 
       <div className="flex flex-wrap items-start gap-6">
         <section aria-label="File d'attention" className="flex min-w-0 flex-[2_1_560px] flex-col gap-3.5">
+          {/* Récaps objet connecté préparés à 7 h, à valider avant envoi. */}
+          <PendingRecapsCard />
           {(allDone || total === 0) && (
             <div className="flex flex-col items-center gap-3.5 rounded-2xl border border-divider bg-surface px-8 py-14 text-center">
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-sage-light text-sage">
