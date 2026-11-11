@@ -413,6 +413,8 @@ export type ObservanceItem = {
   period_unit?: 'day' | 'week' | 'month' | 'year' | null;
   sort_order: number;
   is_active: boolean;
+  /** Coché automatiquement par l'objet connecté (activé par le praticien). */
+  auto_check?: boolean;
   created_at: string;
 };
 
@@ -637,6 +639,8 @@ export type ConsultantGoal = {
   status: 'in_progress' | 'progressing' | 'reached';
   set_on: string;
   position: number;
+  /** Mesure de l'objet connecté reliée à l'objectif. */
+  metric?: 'sleep' | 'hrv' | 'hr' | 'steps' | null;
   created_at: string;
   updated_at: string;
 };

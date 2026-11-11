@@ -28,11 +28,13 @@ import {
   Library,
   Leaf,
   Sun,
-  Watch
+  Watch,
+  Activity
 } from 'lucide-react';
 import { useMessageNotifications } from '@/hooks/useMessageNotifications';
 import { useReviewActivity } from '@/hooks/useReviewActivity';
 import { getReviewQueue } from '@/lib/morning-review/queue';
+import { useWearableSignals } from '@/hooks/useWearableSignals';
 import { useMorningReview } from '@/hooks/useMorningReview';
 
 const NAV_GROUPS = [
@@ -42,6 +44,7 @@ const NAV_GROUPS = [
       { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
       { href: '/morning-review', label: 'Revue du matin', icon: Sun, showReviewBadge: true },
       { href: '/consultants', label: 'Consultants', icon: Users },
+      { href: '/objets-connectes', label: 'Objets connectés', icon: Activity, showWearableBadge: true },
       { href: '/agenda', label: 'Agenda', icon: Calendar, showWaitlistBadge: true },
     ]
   },
@@ -97,6 +100,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: morningReview } = useMorningReview();
   // Même seuil que la file d'attention de la revue du matin
   const { data: reviewActivity } = useReviewActivity();
+  // Pastille « Objets connectés » : consultants à regarder (écart durable ou objet non porté), non traités.
+  const { data: wearableSignals } = useWearableSignals();
+  const wearableCount = useMemo(
+    () => (wearableSignals ?? []).filter((r) => (r.signal.kind === 'gap' || r.signal.kind === 'wear') && !r.status).length,
+    [wearableSignals]
+  );
   const reviewCount = useMemo(
     () =>
       getReviewQueue(
@@ -300,12 +309,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean; showWaitlistBadge?: boolean; showReviewBadge?: boolean; showQuestionnaireBadge?: boolean; children?: { href: string; label: string }[] }, onClick?: () => void) => {
+  const renderNavItem = (item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; showBadge?: boolean; showWaitlistBadge?: boolean; showReviewBadge?: boolean; showQuestionnaireBadge?: boolean; showWearableBadge?: boolean; children?: { href: string; label: string }[] }, onClick?: () => void) => {
     const Icon = item.icon;
     const showBadge = item.showBadge && unreadMessages > 0;
     const showWaitlist = item.showWaitlistBadge && waitlistCount > 0;
     const showReview = item.showReviewBadge && reviewCount > 0;
     const showQuestionnaires = item.showQuestionnaireBadge && questionnaireCount > 0;
+    const showWearable = item.showWearableBadge && wearableCount > 0;
     const hasChildren = item.children && item.children.length > 0;
 
     if (hasChildren) {
@@ -428,6 +438,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               aria-label={`${reviewCount} cas en attente`}
             >
               {reviewCount}
+            </span>
+          )}
+          {showWearable && (
+            <span
+              className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-terracotta-light px-1.5 text-[10px] font-semibold tabular-nums text-terracotta"
+              aria-label={`${wearableCount} consultant${wearableCount > 1 ? 's' : ''} à regarder`}
+            >
+              {wearableCount}
             </span>
           )}
           {showQuestionnaires && (

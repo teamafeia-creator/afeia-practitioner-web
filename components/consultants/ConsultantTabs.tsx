@@ -153,6 +153,8 @@ import { ConnectedObjectPanel } from './record/ConnectedObjectPanel';
 import { ConnectedObjectLocked } from './record/ConnectedObjectLocked';
 import { PatientWearableSection } from '@/components/wearables/practitioner/PatientWearableSection';
 import { WearableInsightsPanel } from '@/components/wearables/practitioner/WearableInsightsPanel';
+import { SessionTopicsCard, DiscussedTopics } from '@/components/wearables/practitioner/SessionTopicsCard';
+import { parisDay } from '@/lib/wearables/insights/series';
 import { PlanBlocks, PhonePreviewModal } from './record/PlanBlocks';
 import { MOOD_OPTIONS, normalizeMood, EXERCISE_INTENSITIES } from '../../lib/journal-constants';
 import { BristolScale } from '../journal/BristolScale';
@@ -2524,6 +2526,21 @@ export function ConsultantTabs({
 
       {tab === 'Rendez-vous' && (
         <div className="space-y-4">
+          {/* « À aborder » : points épinglés depuis l'objet connecté et points ajoutés à la main. */}
+          {(() => {
+            const now = new Date();
+            const live = (a: (typeof sortedAppointments)[number]) => !['cancelled', 'rescheduled'].includes(a.status);
+            const next = [...sortedAppointments].filter((a) => live(a) && new Date(a.starts_at) > now).sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
+            const last = [...sortedAppointments].filter((a) => live(a) && new Date(a.starts_at) <= now).sort((a, b) => b.starts_at.localeCompare(a.starts_at))[0];
+            return (
+              <SessionTopicsCard
+                consultantId={consultant.id}
+                nextSessionDate={next ? parisDay(next.starts_at) : null}
+                lastSessionAt={last?.starts_at ?? null}
+                onOpenWearable={() => setTab(T.tabBagueConnectee as Tab)}
+              />
+            );
+          })()}
           <div className="flex justify-end">
             <Button
               variant="primary"
@@ -3343,10 +3360,14 @@ export function ConsultantTabs({
             />
           ) : (
             <>
-              {/* POL-16 : données de l'objet connecté (Polar), via getWearableSummary. */}
-              <PatientWearableSection consultantId={consultant.id} />
-              {/* Règles validées : points à aborder, avant / après, conseils × mesures, récap. */}
-              <WearableInsightsPanel consultantId={consultant.id} firstName={recordFirstName} />
+              {/* Maquette 19b : récap, points à aborder, semaine, avant / après, conseils × mesures, ressenti & cycle.
+                  Tant qu'aucune mesure n'est reçue : section POL-16 (connexion, import en cours). */}
+              <WearableInsightsPanel
+                consultantId={consultant.id}
+                openRecapOnLoad={searchParams.get('recap') === '1'}
+                links={{ openTab: (t) => setTab((t === 'Rendez-vous' ? T.tabRendezVous : t === 'Conseillancier' ? T.tabConseillancier : t === 'Cycle' ? T.tabCycle : T.tabProfil) as Tab) }}
+                fallback={<PatientWearableSection consultantId={consultant.id} />}
+              />
               {wearableSummaries.length > 0 ? (
             <>
               <ConnectedObjectPanel
@@ -3797,6 +3818,12 @@ export function ConsultantTabs({
         </div>
       )}
 
+      {tab === T.tabNotesSeance && (
+        <DiscussedTopics
+          consultantId={consultant.id}
+          since={[...sortedAppointments].filter((a) => !['cancelled', 'rescheduled'].includes(a.status) && new Date(a.starts_at) <= new Date()).sort((a, b) => b.starts_at.localeCompare(a.starts_at))[0]?.starts_at ?? null}
+        />
+      )}
       {tab === T.tabNotesSeance && (
         <Card className={cn(noteEditing ? 'ring-2 ring-sage/20 bg-sage-light/50' : '')}>
           <CardHeader>
