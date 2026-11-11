@@ -766,11 +766,13 @@ export async function getConsultantPlans(consultantId: string): Promise<Consulta
 export async function createConsultantPlanVersion({
   consultantId,
   version,
-  content
+  content,
+  selectedSections
 }: {
   consultantId: string;
   version: number;
   content: Record<string, string>;
+  selectedSections?: string[];
 }): Promise<ConsultantPlan> {
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) {
@@ -784,7 +786,8 @@ export async function createConsultantPlanVersion({
       practitioner_id: userData.user.id,
       version,
       status: 'draft',
-      content
+      content,
+      ...(selectedSections ? { selected_sections: selectedSections } : {})
     })
     .select()
     .single();
@@ -799,14 +802,20 @@ export async function createConsultantPlanVersion({
 
 export async function updateConsultantPlanContent({
   planId,
-  content
+  content,
+  selectedSections
 }: {
   planId: string;
   content: Record<string, string>;
+  selectedSections?: string[];
 }): Promise<ConsultantPlan> {
   const { data, error } = await supabase
     .from('consultant_plans')
-    .update({ content, updated_at: new Date().toISOString() })
+    .update({
+      content,
+      ...(selectedSections ? { selected_sections: selectedSections } : {}),
+      updated_at: new Date().toISOString()
+    })
     .eq('id', planId)
     .select()
     .single();
