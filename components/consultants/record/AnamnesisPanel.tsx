@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 
+const FN_OPEN_KEY = 'afeia:anamnese:premiere-note-ouverte';
+
 type Props = {
   consultantId: string;
   firstName: string;
@@ -42,6 +44,23 @@ export function AnamnesisPanel({ consultantId, firstName, answers, setAnswers, e
   const [notes, setNotes] = useState<AnamnesisNote[]>([]);
   const [fnEditing, setFnEditing] = useState(false);
   const [fnDraft, setFnDraft] = useState('');
+  // Carte « Ma première note » repliable ; dernier choix mémorisé dans le navigateur (replié par défaut).
+  const [fnOpen, setFnOpen] = useState(false);
+  useEffect(() => {
+    try {
+      setFnOpen(window.localStorage.getItem(FN_OPEN_KEY) === '1');
+    } catch {
+      /* stockage indisponible : replié */
+    }
+  }, []);
+  function toggleFnOpen(next = !fnOpen) {
+    setFnOpen(next);
+    try {
+      window.localStorage.setItem(FN_OPEN_KEY, next ? '1' : '0');
+    } catch {
+      /* ignoré */
+    }
+  }
   const [noteBox, setNoteBox] = useState(false);
   const [noteDraft, setNoteDraft] = useState('');
   const [noteBusy, setNoteBusy] = useState(false);
@@ -186,9 +205,18 @@ export function AnamnesisPanel({ consultantId, firstName, answers, setAnswers, e
       {!editing ? (
         <section aria-labelledby="fn-t" className="flex flex-col gap-3 rounded-2xl border border-divider bg-surface px-[22px] py-5">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <h3 id="fn-t" className="text-base font-semibold">
-              Ma première note
-            </h3>
+            <button
+              type="button"
+              onClick={() => toggleFnOpen()}
+              aria-expanded={fnOpen}
+              aria-controls="fn-body"
+              className="inline-flex items-center gap-2 text-left"
+            >
+              <ChevronDown className={`h-4 w-4 flex-none text-stone transition-transform ${fnOpen ? '' : '-rotate-90'}`} aria-hidden />
+              <h3 id="fn-t" className="text-base font-semibold">
+                Ma première note
+              </h3>
+            </button>
             <span className="flex-1 text-xs text-stone">
               {firstNote
                 ? `Écrite le ${dateFmt.format(new Date(firstNote.created_at))} · invisible pour ${firstName}`
@@ -200,6 +228,7 @@ export function AnamnesisPanel({ consultantId, firstName, answers, setAnswers, e
                 onClick={() => {
                   setFnDraft(firstNote.content);
                   setFnEditing(true);
+                  toggleFnOpen(true);
                 }}
                 className="text-sm text-sage hover:text-[#A8E6CF]"
               >
@@ -207,7 +236,7 @@ export function AnamnesisPanel({ consultantId, firstName, answers, setAnswers, e
               </button>
             ) : null}
           </div>
-          {showFirstEditor ? (
+          {!fnOpen ? null : showFirstEditor ? (
             <>
               <label className="flex flex-col gap-1.5 text-[13px] text-stone">
                 {firstNote ? 'Modifier ma première note' : 'Écrire ma première note'}
@@ -231,9 +260,9 @@ export function AnamnesisPanel({ consultantId, firstName, answers, setAnswers, e
               </div>
             </>
           ) : (
-            <p className="whitespace-pre-line border-l-[3px] border-sage pl-3.5 font-serif text-[17px] leading-relaxed">{firstNote?.content}</p>
+            <p id="fn-body" className="whitespace-pre-line border-l-[3px] border-sage pl-3.5 font-serif text-[17px] leading-relaxed">{firstNote?.content}</p>
           )}
-          {noteError && !noteBox ? <p className="text-sm text-rose">{noteError}</p> : null}
+          {fnOpen && noteError && !noteBox ? <p className="text-sm text-rose">{noteError}</p> : null}
         </section>
       ) : null}
 
