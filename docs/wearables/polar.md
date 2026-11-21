@@ -602,3 +602,10 @@ Tous les endpoints à « transactions » sont dépréciés : **n'en utiliser auc
 8. Si la Loop alimente la température cutanée, la température corporelle, les contacts peau et Cardio load dans AccessLink.
 9. Le sens du code `204` sur `POST /v3/users`.
 10. Le mode d'authentification réel de `/v3/exercises` (Bearer ou Basic).
+
+## Données factices pour les fiches de test
+
+`supabase/seed-wearables-fake.sql` alimente des consultants de test (liste d'e-mails en tête du fichier) avec
+60 jours de sommeil, récupération nocturne, activité et 7 jours de FC continue, via une connexion de
+démonstration (`provider_user_id` en `seed-…`, jamais d'appel Polar). Rejouable sans doublon ; bloc de
+nettoyage en bas du fichier. À exécuter dans le SQL Editor Supabase.
