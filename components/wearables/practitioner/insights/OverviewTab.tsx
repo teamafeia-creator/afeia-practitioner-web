@@ -229,7 +229,6 @@ function LastNightBlock({ night, sleep, who }: { night: LastNight; sleep: LastSl
   if (detail?.remMin !== null && detail?.remMin !== undefined) parts.push(`paradoxal ${fmtDuration(detail.remMin)}`);
   if (detail?.interruptionMin) parts.push(`éveillé ${detail.interruptionMin} min`);
   if (detail?.score !== null && detail?.score !== undefined) parts.push(`score Polar ${detail.score}/100`);
-  if (night.stepsBefore) parts.push(`la veille : ${night.stepsBefore}`);
 
   return (
     <section aria-labelledby="night-t" className="flex flex-col gap-3" data-testid="last-night">
@@ -239,7 +238,7 @@ function LastNightBlock({ night, sleep, who }: { night: LastNight; sleep: LastSl
           {night.ageNights <= 1 ? `Réveil du ${longDate(night.day)}` : `Il y a ${night.ageNights} nuits`}
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {night.tiles.map((k) => (
           <div key={k.metric} className="flex flex-col gap-1.5 rounded-[14px] border border-divider bg-surface px-4 py-3.5" data-testid={`last-night-${k.metric}`}>
             <span className="text-[13px] text-stone">{k.label}</span>

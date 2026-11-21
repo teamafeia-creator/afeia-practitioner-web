@@ -207,6 +207,17 @@ describe('dernière nuit', () => {
     expect(sleep.tone).toBe('watch');
     expect(n.tiles.find((t) => t.metric === 'hrv')!.tone).toBe('flat');
     expect(n.stepsBefore).toBe('6 000 pas');
+    const steps = n.tiles.find((t) => t.metric === 'steps')!;
+    expect(steps.label).toBe('Pas la veille');
+    expect(steps.value).toBe('6 000 pas');
+  });
+
+  it('habituel : repli sur les 28 dernières nuits quand la séance de référence précède les données', () => {
+    const days = makeDays(40, () => ({}));
+    const n = lastNight(new Series(days, TODAY), addDays(TODAY, -400));
+    expect(n.status).toBe('ok');
+    if (n.status !== 'ok') return;
+    expect(n.tiles.find((t) => t.metric === 'sleep')!.usual).toBe('6 h 40');
   });
 
   it('remonte à la nuit mesurée la plus récente, et ignore une nuit trop courte', () => {

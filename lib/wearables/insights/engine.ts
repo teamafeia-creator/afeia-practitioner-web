@@ -113,7 +113,14 @@ export function referenceDay(input: Pick<InsightsInput, 'lastSessionDate' | 'tod
  * (la nuit est rattachée au réveil, donc avant la séance).
  */
 export function baseline(series: Series, metric: Metric, refDay: string): Stat | null {
-  return statOf(series.values(metric, dayRange(addDays(refDay, -(BASELINE_DAYS - 1)), refDay)));
+  const frozen = statOf(series.values(metric, dayRange(addDays(refDay, -(BASELINE_DAYS - 1)), refDay)));
+  if (frozen && frozen.n >= MIN_NIGHTS) return frozen;
+  // Repli : la séance de référence est antérieure aux données (ou trop peu de nuits autour) :
+  // on prend les 28 nuits qui se terminent hier, pour ne pas laisser « D'habitude : — ».
+  const y = yesterdayOf(series.today);
+  const fallback = statOf(series.values(metric, dayRange(addDays(y, -(BASELINE_DAYS - 1)), y)));
+  if (fallback && fallback.n >= MIN_NIGHTS) return fallback;
+  return frozen ?? fallback;
 }
 
 const yesterdayOf = (today: string) => addDays(today, -1);
@@ -143,17 +150,19 @@ export function lastNight(series: Series, refDay: string): LastNight {
   const candidates = dayRange(addDays(series.today, -7), series.today).reverse();
   const day = candidates.find((d) => series.nightValid(d));
   if (!day) return { status: 'none' };
-  const tiles: LastNightTile[] = NIGHT_METRICS.map((metric) => {
-    const v = series.value(metric, day);
+  // Sommeil, VFC, FC de la nuit, puis les pas de la journée qui précède ce réveil (journée complète).
+  const stepsDay = addDays(day, -1);
+  const tiles: LastNightTile[] = [...NIGHT_METRICS, 'steps' as const].map((metric) => {
+    const v = series.value(metric, metric === 'steps' ? stepsDay : day);
     const base = baseline(series, metric, refDay);
     if (v === null || !base) {
-      return { metric, label: METRIC_SHORT[metric], value: v === null ? '—' : fmtValue(metric, v), usual: base ? fmtValue(metric, base.mean) : '—', delta: '', tone: 'flat' };
+      return { metric, label: metric === 'steps' ? 'Pas la veille' : METRIC_SHORT[metric], value: v === null ? '—' : fmtValue(metric, v), usual: base ? fmtValue(metric, base.mean) : '—', delta: '', tone: 'flat' };
     }
     const d = v - base.mean;
     const same = Math.abs(d) < Math.max(base.sd * 0.5, THRESHOLDS[metric]);
     return {
       metric,
-      label: METRIC_SHORT[metric],
+      label: metric === 'steps' ? 'Pas la veille' : METRIC_SHORT[metric],
       value: fmtValue(metric, v),
       usual: fmtValue(metric, base.mean),
       delta: same ? '= Comme d’habitude' : `${d > 0 ? '▲' : '▼'} ${fmtGap(metric, d)} ${d > 0 ? 'de plus' : 'de moins'}`,
