@@ -60,7 +60,15 @@ SELECT
   consultant_id, date, sleep_duration, sleep_score, hrv_avg, activity_level, completeness, created_at
 FROM polar
 UNION ALL
-SELECT l.id, l.consultant_id, l.date, l.sleep_duration, l.sleep_score, l.hrv_avg, l.activity_level, l.completeness, l.created_at
+-- Lignes historiques : les seeds de démo ont écrit des minutes, des pourcentages et des pas bruts.
+-- On ramène tout aux unités attendues par les écrans : heures, score /100, niveau /100, complétude 0–1.
+SELECT l.id, l.consultant_id, l.date,
+       CASE WHEN l.sleep_duration > 24 THEN round(l.sleep_duration / 60.0, 2) ELSE l.sleep_duration END AS sleep_duration,
+       l.sleep_score,
+       l.hrv_avg,
+       CASE WHEN l.activity_level > 100 THEN least(100, round(l.activity_level / 100.0)) ELSE l.activity_level END AS activity_level,
+       CASE WHEN l.completeness > 1 THEN round(l.completeness / 100.0, 2) ELSE l.completeness END AS completeness,
+       l.created_at
 FROM public.wearable_summaries_legacy l
 WHERE NOT EXISTS (SELECT 1 FROM polar p WHERE p.consultant_id = l.consultant_id);
 
