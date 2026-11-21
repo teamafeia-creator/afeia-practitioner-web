@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { showToast } from '@/components/ui';
 import { supabaseConsultant as supabase } from '@/lib/supabase-consultant';
-import { isBackfillInProgress, type WearableConnectionOverview } from '@/lib/wearables/display';
+import { isBackfillInProgress, type WearNights, type WearableConnectionOverview } from '@/lib/wearables/display';
 import { polarConnectMessage } from '@/lib/wearables/polar/messages';
 import { WEARABLES_CONSENT_VERSION } from '@/lib/wearables/consent-text';
 import { WearableConnectionCard } from './WearableConnectionCard';
@@ -29,6 +29,7 @@ export function WearableConnectionSection() {
   const searchParams = useSearchParams();
 
   const [connection, setConnection] = useState<WearableConnectionOverview | null>(null);
+  const [nights, setNights] = useState<WearNights | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [justConnected, setJustConnected] = useState(false);
@@ -48,7 +49,9 @@ export function WearableConnectionSection() {
         enabled?: boolean;
         consent?: { accepted?: boolean };
         connections: WearableConnectionOverview[];
+        nights?: WearNights | null;
       };
+      setNights(body.nights ?? null);
       setEnabled(body.enabled === true);
       setConsentAccepted(body.consent?.accepted === true);
       setConnection(body.connections.find((c) => c.provider === 'polar') ?? null);
@@ -211,6 +214,7 @@ export function WearableConnectionSection() {
       disconnecting={disconnecting}
       onSync={onSync}
       syncing={syncing}
+      nights={nights}
     />
     <WearableConsentDialog
       isOpen={consentOpen}

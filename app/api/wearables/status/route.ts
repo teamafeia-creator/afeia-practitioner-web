@@ -6,6 +6,8 @@ import { resolveConsultantId } from '@/lib/mobile-auth';
 import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin';
 import { WEARABLES_CONSENT_VERSION } from '@/lib/wearables/consent-text';
 import { consultantCanUseWearables, getActiveConsent } from '@/lib/wearables/consents';
+import { parisDay } from '@/lib/wearables/insights/series';
+import { CALIBRATION_WINDOW_DAYS, type WearNights } from '@/lib/wearables/display';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,10 +27,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "État de l'objet connecté indisponible." }, { status: 500 });
   }
 
-  const [enabled, consent] = await Promise.all([
+  const today = parisDay(new Date());
+  const from = new Date(Date.parse(`${today}T00:00:00Z`) - (CALIBRATION_WINDOW_DAYS - 1) * 86_400_000).toISOString().slice(0, 10);
+  const [enabled, consent, nightsRes] = await Promise.all([
     consultantCanUseWearables(consultantId),
     getActiveConsent(consultantId, WEARABLES_CONSENT_VERSION),
+    // Nuits mesurées sur la fenêtre d'habituel : sommeil ≥ 3 h, ou récupération nocturne présente.
+    createSupabaseAdminClient().rpc('wearable_daily_summary', { p_consultant_id: consultantId, p_days: CALIBRATION_WINDOW_DAYS, p_today: today }),
   ]);
+  const nights = summarizeNights((nightsRes.data ?? []) as { day: string; sleep_min: number | null; hrv_ms: number | null; night_hr_bpm: number | null }[], today, from);
 
   return NextResponse.json(
     {
@@ -36,7 +43,19 @@ export async function GET(request: NextRequest) {
       enabled,
       consent: { version: WEARABLES_CONSENT_VERSION, accepted: consent !== null, acceptedAt: consent?.acceptedAt ?? null },
       connections: data ?? [],
+      nights,
     },
     { headers: { 'Cache-Control': 'no-store' } }
   );
+}
+
+function summarizeNights(
+  rows: { day: string; sleep_min: number | null; hrv_ms: number | null; night_hr_bpm: number | null }[],
+  today: string,
+  from: string
+): WearNights {
+  const valid = rows.filter((r) => r.day >= from && r.day <= today && ((r.sleep_min !== null && r.sleep_min >= 180) || r.hrv_ms !== null || r.night_hr_bpm !== null));
+  const last = valid.map((r) => r.day).sort().pop() ?? null;
+  const daysSinceLast = last ? Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${last}T00:00:00Z`)) / 86_400_000) : null;
+  return { validInWindow: valid.length, windowDays: CALIBRATION_WINDOW_DAYS, lastNight: last, daysSinceLast };
 }

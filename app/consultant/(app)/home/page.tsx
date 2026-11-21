@@ -5,6 +5,7 @@ import { supabaseConsultant as supabase } from '@/lib/supabase-consultant'
 import { useRouter } from 'next/navigation'
 import { Toaster } from '@/components/ui'
 import { WearableConnectionSection } from '@/components/wearables/WearableConnectionSection'
+import { SleepFeelingCard } from '@/components/consultant/SleepFeelingCard'
 
 type ConsultantData = {
   id: string
@@ -285,6 +286,9 @@ export default function ConsultantHomePage() {
             </div>
           </div>
         </div>
+
+        {/* Question du matin */}
+        <SleepFeelingCard />
 
         {/* Objet connecté */}
         <Suspense fallback={null}>
