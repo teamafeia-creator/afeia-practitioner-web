@@ -33,9 +33,9 @@ const TABLES_TO_CLEAR = [
   'payment_methods',
   'subscriptions',
   'stripe_subscriptions',
-  // Wearable data
-  'wearable_insights',
-  'wearable_summaries',
+  // Wearable data (wearable_insights / wearable_summaries sont des vues depuis 20261121)
+  'wearable_insights_legacy',
+  'wearable_summaries_legacy',
   // Contraindication logs
   'contraindication_logs',
   // AI

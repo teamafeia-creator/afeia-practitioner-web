@@ -609,3 +609,10 @@ Tous les endpoints à « transactions » sont dépréciés : **n'en utiliser auc
 60 jours de sommeil, récupération nocturne, activité et 7 jours de FC continue, via une connexion de
 démonstration (`provider_user_id` en `seed-…`, jamais d'appel Polar). Rejouable sans doublon ; bloc de
 nettoyage en bas du fichier. À exécuter dans le SQL Editor Supabase.
+
+## Écrans historiques (Revue du matin, synthèse, bilan visuel, dashboard)
+
+Depuis la migration `20261121_wearable_legacy_views.sql`, `wearable_summaries` et `wearable_insights` sont des
+**vues** calculées sur `sleep_sessions` / `hrv_nightly` / `daily_activity` (une ligne par consultant et par jour ;
+signaux « 4 des 7 dernières nuits hors de l'habituel »). Les anciennes tables sont conservées en `*_legacy` et
+servent de repli pour les consultants sans donnée Polar. Ces vues sont en lecture seule.
