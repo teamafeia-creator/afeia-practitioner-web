@@ -56,7 +56,7 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
   const from = addDays(today, -HISTORY_DAYS);
   const nowIso = now.toISOString();
 
-  const [summary, consultant, past, next, plans, items, logs, consent, conn, journal, cycleProfile, cycleEntries, lastSleepRow] = await Promise.all([
+  const [summary, consultant, past, next, plans, items, logs, consent, conn, journal, cycleProfile, cycleEntries, lastSleepRow, nightRows] = await Promise.all([
     client.rpc('wearable_daily_summary', { p_consultant_id: consultantId, p_days: HISTORY_DAYS, p_today: today }),
     client.from('consultants').select('*').eq('id', consultantId).maybeSingle(),
     // Dernière séance = rendez-vous passé non annulé le plus récent.
@@ -67,7 +67,7 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
     client.from('plan_observance_logs').select('observance_item_id, date, done').eq('consultant_id', consultantId).gte('date', from).lte('date', today),
     client.from('wearable_consents').select('accepted_at').eq('consultant_id', consultantId).is('withdrawn_at', null).order('accepted_at', { ascending: true }).limit(1),
     client.from('wearable_connection_overview').select('last_sync_at').eq('consultant_id', consultantId).eq('provider', 'polar').maybeSingle(),
-    client.from('journal_entries').select('date, energy_level, text').eq('consultant_id', consultantId).gte('date', from).lte('date', today).order('date'),
+    client.from('journal_entries').select('date, energy_level, sleep_quality, stress_level, text').eq('consultant_id', consultantId).gte('date', from).lte('date', today).order('date'),
     client.from('cycle_profiles').select('*').eq('consultant_id', consultantId).maybeSingle(),
     client.from('cycle_entries').select('*').eq('consultant_id', consultantId).order('date', { ascending: false }).limit(180),
     client
@@ -79,6 +79,7 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
       .order('night_date', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    client.from('sleep_sessions').select('night_date, sleep_score, interruption_s').eq('consultant_id', consultantId).eq('provider', 'polar').gte('night_date', from).lte('night_date', today),
   ]);
 
   if (summary.error) throw new InsightsLoadError('mesures', summary.error);
@@ -112,11 +113,17 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
     date: l.date.slice(0, 10),
     done: l.done,
   }));
-  const journalRows = ((journal.data ?? []) as { date: string; energy_level: number | null; text: string | null }[]).map((j) => ({
+  const journalRows = ((journal.data ?? []) as { date: string; energy_level: number | null; sleep_quality: number | null; stress_level: number | null; text: string | null }[]).map((j) => ({
     date: j.date.slice(0, 10),
     energy: j.energy_level ?? null,
+    quality: j.sleep_quality ?? null,
+    stress: j.stress_level ?? null,
     note: j.text ?? null,
   }));
+  const nights: Record<string, { score: number | null; interruptionMin: number | null }> = {};
+  for (const n of (nightRows.data ?? []) as { night_date: string; sleep_score: number | null; interruption_s: number | null }[]) {
+    nights[n.night_date.slice(0, 10)] = { score: n.sleep_score, interruptionMin: toMin(n.interruption_s) };
+  }
 
   let phases: Record<string, Phase> | undefined;
   const profile = cycleProfile.data as CycleProfile | null;
@@ -144,6 +151,7 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
     items: insightItems,
     logs: insightLogs,
     journal: journalRows,
+    nights,
     phases,
     lastSyncAt: (conn.data as { last_sync_at?: string | null } | null)?.last_sync_at ?? null,
     lastJournalDate: journalRows.length ? journalRows[journalRows.length - 1].date : null,

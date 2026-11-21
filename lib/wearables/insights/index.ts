@@ -1,7 +1,7 @@
 // lib/wearables/insights/index.ts
 // Point d'entrée : calcule tout l'écran « Objet connecté » à partir des données chargées.
 import { Series } from './series';
-import { beforeAfter, feelAndCycle, habitsVsMeasures, lastNight, overviewChart, pointsToDiscuss, referenceDay, weekTiles, wornNights, type InsightsInput } from './engine';
+import { beforeAfter, feelAndCycle, habitsVsMeasures, journalVsMeasures, lastNight, overviewChart, pointsToDiscuss, referenceDay, weekTiles, wornNights, type InsightsInput } from './engine';
 import { computeRecap, type RecapFrequency } from './recap';
 import type { Metric } from './series';
 
@@ -26,6 +26,7 @@ export function computeInsights(input: InsightsInput, opts: { recapFrequency?: R
     beforeAfter: ba,
     habits: habitsVsMeasures(input, series),
     feel: feelAndCycle(input, series),
+    journal: journalVsMeasures(input, series),
     recap: computeRecap(input, opts.recapFrequency ?? '1w'),
   };
 }

@@ -126,8 +126,8 @@ export function WearableInsightsPanel({
   return (
     <div className="flex flex-col gap-5" data-testid="wearable-insights">
       <div className="flex flex-wrap items-start justify-between gap-3">
+        {/* Pas de titre ici : l'en-tête de l'onglet (ConsultantTabs) affiche déjà « Objet connecté ». */}
         <div className="flex flex-col gap-1">
-          <h2 className="font-serif text-[26px] font-medium">Objet connecté</h2>
           <span className="inline-flex items-center gap-1.5 text-[13px] text-stone">
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-sage" />
             {syncLabel} · porté {insights.worn} nuits sur 28
