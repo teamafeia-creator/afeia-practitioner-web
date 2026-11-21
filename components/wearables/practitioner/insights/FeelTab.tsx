@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { ENERGY_MAX, addDays, chartData, dayDate, dayRange, shortDate, type Insights, type Phase, type Who } from '@/lib/wearables/insights';
+import { ENERGY_MAX, addDays, chartData, dayDate, dayRange, shortDate, type GroupCompare, type Insights, type Phase, type Who } from '@/lib/wearables/insights';
 import type { LoadedInsights } from '@/lib/wearables/insights/load';
 import { BarChart } from './BarChart';
 
@@ -10,6 +10,14 @@ const PHASE_COLOR: Record<Phase, string> = { m: '#E57B7B', f: '#6DD4B8', o: '#D4
 /** Onglet « Ressenti & cycle » (maquette 19e). */
 export function FeelTab({ input, insights, who, onOpenCycle }: { input: LoadedInsights; insights: Insights; who: Who; onOpenCycle: () => void }) {
   const f = insights.feel;
+  const jv = insights.journal;
+  // Décalages jour par jour : énergie / VFC (existant) + sommeil ressenti / mesuré (règle A), par date décroissante.
+  const gaps = useMemo(() => {
+    const a = jv.quality.gaps.map((g) => ({ day: g.day, date: g.date, text: g.text, sub: g.sub }));
+    const b = f.gaps.filter((g) => g.date !== '—').map((g) => ({ day: g.date, date: g.date, text: g.text, sub: g.sub }));
+    const all = [...a, ...b];
+    return all.length ? all : f.gaps;
+  }, [f.gaps, jv.quality.gaps]);
   const y = addDays(input.today, -1);
   const hrv = useMemo(() => chartData(input, insights.series, 'hrv', dayRange(addDays(y, -13), y)), [input, insights.series, y]);
   const step = 856 / 14;
@@ -74,10 +82,21 @@ export function FeelTab({ input, insights, who, onOpenCycle }: { input: LoadedIn
         </div>
       </section>
 
+      <section className="flex flex-col gap-3" data-testid="journal-vs-measures">
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-base font-semibold">Ce que les notes disent des nuits</h3>
+          <span className="text-xs text-stone">Journal et mesures sur 28 jours · des moyennes par groupe de jours, pas des causes</span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <CompareCard c={jv.stress} />
+          <CompareCard c={jv.shortNights} />
+        </div>
+      </section>
+
       <div className="flex flex-wrap items-start gap-4">
         <section className="flex min-w-0 flex-[1_1_380px] flex-col gap-2.5 rounded-2xl border border-divider bg-surface p-5">
           <h3 className="text-base font-semibold">Décalages à explorer en séance</h3>
-          {f.gaps.map((g, i) => (
+          {gaps.map((g, i) => (
             <div key={i} className="flex gap-2.5 border-t border-[#1F2633] py-2.5">
               <span className="w-[62px] flex-none text-[13px] font-semibold">{g.date}</span>
               <span className="flex flex-col gap-0.5">
@@ -135,5 +154,42 @@ export function FeelTab({ input, insights, who, onOpenCycle }: { input: LoadedIn
         ) : null}
       </div>
     </>
+  );
+}
+
+/** Carte d'une comparaison par groupes (règles B et C). */
+function CompareCard({ c }: { c: GroupCompare }) {
+  return (
+    <section
+      className={`flex flex-col gap-2.5 rounded-2xl border p-5 ${c.strong ? 'border-[#E8A87C]/60 bg-[#2A2320]' : 'border-divider bg-surface'}`}
+      data-testid={`compare-${c.id}`}
+    >
+      <div className="flex flex-col gap-0.5">
+        <h4 className="text-[15px] font-semibold">{c.title}</h4>
+        <span className="text-xs text-stone">{c.question}</span>
+      </div>
+      {c.status === 'not_enough' ? (
+        <p className="text-sm text-stone">Pas assez de données : {c.reason}</p>
+      ) : (
+        <>
+          <p className="text-sm leading-snug">{c.text}</p>
+          <div className="grid grid-cols-2 gap-3">
+            {c.groups!.map((g) => (
+              <div key={g.label} className="flex flex-col gap-1 rounded-xl border border-divider bg-ink/40 px-3 py-2.5">
+                <span className="text-xs text-stone">
+                  {g.label} · {g.n} {g.n > 1 ? 'jours' : 'jour'}
+                </span>
+                {g.values.map((v) => (
+                  <span key={v.metric} className="text-[13px] tabular-nums">
+                    <span className="text-stone">{v.label} : </span>
+                    <span className="font-semibold">{v.value}</span>
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
   );
 }

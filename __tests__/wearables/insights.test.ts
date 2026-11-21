@@ -9,6 +9,7 @@ import {
   computeRecap,
   dayRange,
   habitsVsMeasures,
+  journalVsMeasures,
   lastNight,
   pickPoints,
   pointsToDiscuss,
@@ -207,6 +208,17 @@ describe('dernière nuit', () => {
     expect(sleep.tone).toBe('watch');
     expect(n.tiles.find((t) => t.metric === 'hrv')!.tone).toBe('flat');
     expect(n.stepsBefore).toBe('6 000 pas');
+    const steps = n.tiles.find((t) => t.metric === 'steps')!;
+    expect(steps.label).toBe('Pas la veille');
+    expect(steps.value).toBe('6 000 pas');
+  });
+
+  it('habituel : repli sur les 28 dernières nuits quand la séance de référence précède les données', () => {
+    const days = makeDays(40, () => ({}));
+    const n = lastNight(new Series(days, TODAY), addDays(TODAY, -400));
+    expect(n.status).toBe('ok');
+    if (n.status !== 'ok') return;
+    expect(n.tiles.find((t) => t.metric === 'sleep')!.usual).toBe('6 h 40');
   });
 
   it('remonte à la nuit mesurée la plus récente, et ignore une nuit trop courte', () => {
@@ -225,6 +237,56 @@ describe('dernière nuit', () => {
   it('rien au-delà de 7 nuits sans mesure', () => {
     const days = makeDays(40, (_i, date) => (date > addDays(TODAY, -9) ? { sleepMin: null, hrvMs: null, nightHrBpm: null } : {}));
     expect(lastNight(new Series(days, TODAY), ref).status).toBe('none');
+  });
+});
+
+describe('journal × objet connecté', () => {
+  // 40 nuits stables (400 min, VFC 40) ; le jour J+1 d'un jour « stressé » a une VFC basse.
+  const stressDays = new Set([-20, -17, -14, -11, -8].map((k) => addDays(TODAY, k)));
+  const calmDays = new Set([-22, -19, -16, -13, -10].map((k) => addDays(TODAY, k)));
+  const nightAfterStress = new Set([...stressDays].map((d) => addDays(d, 1)));
+  const shortNights = new Set([-3, -5, -7, -9].map((k) => addDays(TODAY, k)));
+  const days = makeDays(40, (_i, date) => ({ hrvMs: nightAfterStress.has(date) ? 30 : 40, sleepMin: shortNights.has(date) ? 300 : 400 }));
+  const journal = dayRange(addDays(TODAY, -27), addDays(TODAY, -1)).map((date) => ({
+    date,
+    energy: shortNights.has(date) ? 3 : 7,
+    quality: date === addDays(TODAY, -2) || date === addDays(TODAY, -4) || date === addDays(TODAY, -6) ? 3 : 7,
+    stress: stressDays.has(date) ? 8 : calmDays.has(date) ? 2 : 5,
+    note: date === addDays(TODAY, -2) ? 'Réveillée plusieurs fois' : null,
+  }));
+  const inp = input(days, { journal });
+  const jv = journalVsMeasures(inp, new Series(days, TODAY));
+
+  it('A : signale « mal dormi » alors que la nuit mesurée est dans l’habituel, et le répète en point à aborder', () => {
+    expect(jv.quality.gaps.map((g) => g.kind)).toEqual(['tired_good_night', 'tired_good_night', 'tired_good_night']);
+    expect(jv.quality.gaps.find((g) => g.day === addDays(TODAY, -2))!.sub).toContain('Réveillée');
+    expect(jv.quality.repeated).toBe('tired_good_night');
+    const pts = pointsToDiscuss({ ...inp, lastSessionDate: addDays(TODAY, -14) }, new Series(days, TODAY));
+    expect(pts.status).toBe('ok');
+    if (pts.status === 'ok') expect(pts.candidates.some((c) => c.id === 'journal-quality')).toBe(true);
+  });
+
+  it('B : VFC moyenne après un jour de stress élevé vs après un jour calme, écart signalé', () => {
+    expect(jv.stress.status).toBe('ok');
+    expect(jv.stress.strong).toBe(true);
+    expect(jv.stress.text).toBe('Les nuits qui suivent un jour de stress élevé : VFC 30 ms, contre 40 ms après un jour calme.');
+    expect(jv.stress.groups![0].n).toBe(5);
+  });
+
+  it('C : énergie après une nuit courte vs normale, écart signalé', () => {
+    expect(jv.shortNights.status).toBe('ok');
+    expect(jv.shortNights.strong).toBe(true);
+    expect(jv.shortNights.text).toContain('3 / 10 après une nuit courte, contre 7 / 10');
+  });
+
+  it('pas assez de jours dans un groupe : rien d’affiché, motif explicite', () => {
+    const j2 = journal.map((j) => ({ ...j, stress: 5, energy: 7 }));
+    const r = journalVsMeasures(input(days, { journal: j2 }), new Series(days, TODAY));
+    expect(r.stress.status).toBe('not_enough');
+    expect(r.stress.reason).toMatch(/0 jour de stress élevé noté/);
+    // Énergie identique partout : comparaison possible, mais aucun écart signalé.
+    expect(r.shortNights.status).toBe('ok');
+    expect(r.shortNights.strong).toBe(false);
   });
 });
 

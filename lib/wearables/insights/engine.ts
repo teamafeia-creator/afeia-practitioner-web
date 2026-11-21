@@ -70,8 +70,10 @@ export type InsightsInput = {
   consentDate?: string | null;
   items: InsightItem[];
   logs: InsightLog[];
-  /** Journal : énergie notée (1 à 10) et note libre, par jour. */
-  journal?: { date: string; energy: number | null; note: string | null }[];
+  /** Journal : énergie, qualité du sommeil ressentie et stress notés (1 à 10), note libre, par jour. */
+  journal?: { date: string; energy: number | null; quality?: number | null; stress?: number | null; note: string | null }[];
+  /** Détail des nuits (jour du réveil) : score Polar et temps éveillé, pour la règle A. */
+  nights?: Record<string, { score: number | null; interruptionMin: number | null }>;
   /** Phase du cycle par jour (si le cycle est suivi). */
   phases?: Record<string, Phase>;
 };
@@ -113,7 +115,14 @@ export function referenceDay(input: Pick<InsightsInput, 'lastSessionDate' | 'tod
  * (la nuit est rattachée au réveil, donc avant la séance).
  */
 export function baseline(series: Series, metric: Metric, refDay: string): Stat | null {
-  return statOf(series.values(metric, dayRange(addDays(refDay, -(BASELINE_DAYS - 1)), refDay)));
+  const frozen = statOf(series.values(metric, dayRange(addDays(refDay, -(BASELINE_DAYS - 1)), refDay)));
+  if (frozen && frozen.n >= MIN_NIGHTS) return frozen;
+  // Repli : la séance de référence est antérieure aux données (ou trop peu de nuits autour) :
+  // on prend les 28 nuits qui se terminent hier, pour ne pas laisser « D'habitude : — ».
+  const y = yesterdayOf(series.today);
+  const fallback = statOf(series.values(metric, dayRange(addDays(y, -(BASELINE_DAYS - 1)), y)));
+  if (fallback && fallback.n >= MIN_NIGHTS) return fallback;
+  return frozen ?? fallback;
 }
 
 const yesterdayOf = (today: string) => addDays(today, -1);
@@ -143,17 +152,19 @@ export function lastNight(series: Series, refDay: string): LastNight {
   const candidates = dayRange(addDays(series.today, -7), series.today).reverse();
   const day = candidates.find((d) => series.nightValid(d));
   if (!day) return { status: 'none' };
-  const tiles: LastNightTile[] = NIGHT_METRICS.map((metric) => {
-    const v = series.value(metric, day);
+  // Sommeil, VFC, FC de la nuit, puis les pas de la journée qui précède ce réveil (journée complète).
+  const stepsDay = addDays(day, -1);
+  const tiles: LastNightTile[] = [...NIGHT_METRICS, 'steps' as const].map((metric) => {
+    const v = series.value(metric, metric === 'steps' ? stepsDay : day);
     const base = baseline(series, metric, refDay);
     if (v === null || !base) {
-      return { metric, label: METRIC_SHORT[metric], value: v === null ? '—' : fmtValue(metric, v), usual: base ? fmtValue(metric, base.mean) : '—', delta: '', tone: 'flat' };
+      return { metric, label: metric === 'steps' ? 'Pas la veille' : METRIC_SHORT[metric], value: v === null ? '—' : fmtValue(metric, v), usual: base ? fmtValue(metric, base.mean) : '—', delta: '', tone: 'flat' };
     }
     const d = v - base.mean;
     const same = Math.abs(d) < Math.max(base.sd * 0.5, THRESHOLDS[metric]);
     return {
       metric,
-      label: METRIC_SHORT[metric],
+      label: metric === 'steps' ? 'Pas la veille' : METRIC_SHORT[metric],
       value: fmtValue(metric, v),
       usual: fmtValue(metric, base.mean),
       delta: same ? '= Comme d’habitude' : `${d > 0 ? '▲' : '▼'} ${fmtGap(metric, d)} ${d > 0 ? 'de plus' : 'de moins'}`,
@@ -376,6 +387,32 @@ export function pointsToDiscuss(input: InsightsInput, series: Series): PointsRes
     });
   }
 
+  // g. Journal × objet : écart répété « sommeil ressenti vs mesuré » (A) et stress → nuit suivante (B).
+  const jv = journalVsMeasures(input, series);
+  if (jv.quality.repeated) {
+    const tired = jv.quality.repeated === 'tired_good_night';
+    cand.push({
+      id: 'journal-quality',
+      metric: 'sleep',
+      kind: 'att',
+      score: 0.6,
+      text: tired
+        ? `${w.Subj} note un mauvais sommeil alors que les nuits mesurées sont dans son habituel (${plural(jv.quality.gaps.filter((g) => g.kind === 'tired_good_night').length, 'fois')} sur 14 jours).`
+        : `${w.Subj} note un bon sommeil après des nuits mesurées courtes (${plural(jv.quality.gaps.filter((g) => g.kind === 'rested_short_night').length, 'fois')} sur 14 jours).`,
+      how: 'Qualité du sommeil notée dans le journal, comparée à la durée et au score de la nuit. Détail dans l’onglet Ressenti.',
+    });
+  }
+  if (jv.stress.status === 'ok' && jv.stress.strong && jv.stress.text) {
+    cand.push({
+      id: 'journal-stress',
+      metric: 'hrv',
+      kind: 'att',
+      score: 0.7,
+      text: jv.stress.text,
+      how: `Sur 28 jours : ${jv.stress.groups!.map((g) => `${g.n} ${g.label.toLowerCase()}`).join(', ')}. Détail dans l’onglet Ressenti.`,
+    });
+  }
+
   const points = pickPoints(cand);
   if (!points.length) {
     return {
@@ -565,6 +602,162 @@ export function habitsVsMeasures(input: InsightsInput, series: Series): { counte
 }
 
 // ─── Ressenti & cycle ─────────────────
+
+// ─── Journal × objet connecté (règles A, B, C — Notion « Règles — Journal × objet connecté ») ─────────────────
+
+/** Qualité du sommeil ressentie (1 à 10) : « basse » ≤ 4, « haute » ≥ 8. */
+export const QUALITY_LOW = 4;
+export const QUALITY_HIGH = 8;
+/** Stress noté (1 à 10) : « calme » ≤ 3, « élevé » ≥ 7. */
+export const STRESS_LOW = 3;
+export const STRESS_HIGH = 7;
+/** Jours minimum dans chaque groupe pour afficher une comparaison. */
+export const MIN_GROUP_DAYS = 4;
+/** Nuit « courte » : au moins 60 min sous l'habituel. */
+export const SHORT_NIGHT_MIN = 60;
+/** Score Polar à partir duquel une nuit est « bonne » (règle A). */
+export const GOOD_SCORE = 70;
+/** Écart d'énergie moyenne (sur 10) à partir duquel la règle C est signalée. */
+export const ENERGY_GAP = 1.5;
+/** Nombre d'écarts du même sens sur 14 jours pour proposer un point « À aborder » (règle A). */
+export const QUALITY_GAP_REPEAT = 3;
+
+export type JournalGapA = { day: string; date: string; kind: 'tired_good_night' | 'rested_short_night'; text: string; sub: string };
+
+export type GroupCompare = {
+  /** Règle (B, C). */
+  id: 'stress' | 'short_nights';
+  title: string;
+  question: string;
+  status: 'ok' | 'not_enough';
+  /** Motif quand status = not_enough. */
+  reason?: string;
+  /** Texte principal quand status = ok. */
+  text?: string;
+  groups?: { label: string; n: number; values: { metric: Metric | 'energy'; label: string; value: string }[] }[];
+  /** Écart signalé (mis en avant). */
+  strong?: boolean;
+};
+
+export type JournalVsMeasures = {
+  /** Règle A : écarts jour par jour sur 14 jours. */
+  quality: { gaps: JournalGapA[]; repeated: 'tired_good_night' | 'rested_short_night' | null };
+  /** Règle B. */
+  stress: GroupCompare;
+  /** Règle C. */
+  shortNights: GroupCompare;
+};
+
+export function journalVsMeasures(input: InsightsInput, series: Series): JournalVsMeasures {
+  const y = yesterdayOf(input.today);
+  const ref = referenceDay(input);
+  const journal = new Map((input.journal ?? []).map((j) => [j.date, j]));
+  const sleepBase = baseline(series, 'sleep', ref);
+  const days14 = dayRange(addDays(y, -13), y);
+  const days28 = dayRange(addDays(y, -27), y);
+
+  // ── A. Sommeil ressenti vs mesuré (même nuit) ──
+  const gaps: JournalGapA[] = [];
+  if (sleepBase) {
+    for (const day of days14) {
+      const q = journal.get(day)?.quality ?? null;
+      const sl = series.value('sleep', day);
+      if (q === null || q === undefined || sl === null) continue;
+      const score = input.nights?.[day]?.score ?? null;
+      const note = journal.get(day)?.note?.trim();
+      const sub = note ? `Sa note : « ${note} »` : 'Pas de note ce jour-là.';
+      const goodNight = sl >= sleepBase.mean - THRESHOLDS.sleep && (score === null || score >= GOOD_SCORE);
+      const shortNight = sl <= sleepBase.mean - SHORT_NIGHT_MIN;
+      if (q <= QUALITY_LOW && goodNight) {
+        gaps.push({ day, date: shortDate(day), kind: 'tired_good_night', sub,
+          text: `Sommeil noté ${q} / 10, alors que la nuit mesurée est dans son habituel (${fmtDuration(sl)}${score !== null ? `, score ${score}` : ''}).` });
+      } else if (q >= QUALITY_HIGH && shortNight) {
+        gaps.push({ day, date: shortDate(day), kind: 'rested_short_night', sub,
+          text: `Sommeil noté ${q} / 10, alors que la nuit mesurée est courte (${fmtDuration(sl)}, habituel ${fmtDuration(sleepBase.mean)}).` });
+      }
+    }
+  }
+  const nTired = gaps.filter((g) => g.kind === 'tired_good_night').length;
+  const nRested = gaps.filter((g) => g.kind === 'rested_short_night').length;
+  const repeated = nTired >= QUALITY_GAP_REPEAT ? 'tired_good_night' : nRested >= QUALITY_GAP_REPEAT ? 'rested_short_night' : null;
+
+  // ── B. Stress du jour J vs nuit J+1 ──
+  const hi: string[] = [];
+  const lo: string[] = [];
+  for (const day of days28) {
+    const st = journal.get(day)?.stress ?? null;
+    if (st === null || st === undefined) continue;
+    const night = addDays(day, 1);
+    if (!series.nightValid(night) || series.value('hrv', night) === null) continue;
+    if (st >= STRESS_HIGH) hi.push(night);
+    else if (st <= STRESS_LOW) lo.push(night);
+  }
+  let stress: GroupCompare;
+  const stressTitle = 'Stress déclaré et nuit suivante';
+  const stressQ = 'Le stress de la journée se voit-il la nuit ?';
+  if (hi.length < MIN_GROUP_DAYS || lo.length < MIN_GROUP_DAYS) {
+    const short = hi.length < MIN_GROUP_DAYS ? `${plural(hi.length, 'jour de stress élevé noté', 'jours de stress élevé notés')}` : `${plural(lo.length, 'jour calme noté', 'jours calmes notés')}`;
+    stress = { id: 'stress', title: stressTitle, question: stressQ, status: 'not_enough', reason: `${short} sur 28 jours, il en faut ${MIN_GROUP_DAYS} de chaque côté.` };
+  } else {
+    const hrvHi = mean(series.values('hrv', hi))!;
+    const hrvLo = mean(series.values('hrv', lo))!;
+    const hrHi = mean(series.values('hr', hi));
+    const hrLo = mean(series.values('hr', lo));
+    const strong = Math.abs(hrvHi - hrvLo) >= THRESHOLDS.hrv || (hrHi !== null && hrLo !== null && Math.abs(hrHi - hrLo) >= THRESHOLDS.hr);
+    const text = strong
+      ? `Les nuits qui suivent un jour de stress élevé : VFC ${fmtValue('hrv', hrvHi)}, contre ${fmtValue('hrv', hrvLo)} après un jour calme.`
+      : `VFC comparable après un jour de stress élevé (${fmtValue('hrv', hrvHi)}) et après un jour calme (${fmtValue('hrv', hrvLo)}).`;
+    const vals = (hrv: number, hr: number | null) => [
+      { metric: 'hrv' as const, label: 'VFC', value: fmtValue('hrv', hrv) },
+      { metric: 'hr' as const, label: 'FC de nuit', value: hr === null ? '—' : fmtValue('hr', hr) },
+    ];
+    stress = {
+      id: 'stress', title: stressTitle, question: stressQ, status: 'ok', text, strong,
+      groups: [
+        { label: 'Après un jour de stress élevé', n: hi.length, values: vals(hrvHi, hrHi) },
+        { label: 'Après un jour calme', n: lo.length, values: vals(hrvLo, hrLo) },
+      ],
+    };
+  }
+
+  // ── C. Nuit J (courte ou normale) vs énergie J ──
+  const shortE: number[] = [];
+  const normalE: number[] = [];
+  if (sleepBase) {
+    for (const day of days28) {
+      const e = journal.get(day)?.energy ?? null;
+      const sl = series.value('sleep', day);
+      if (e === null || e === undefined || sl === null) continue;
+      (sl <= sleepBase.mean - SHORT_NIGHT_MIN ? shortE : normalE).push(e);
+    }
+  }
+  let shortNights: GroupCompare;
+  const shortTitle = 'Nuits courtes et énergie du lendemain';
+  const shortQ = `Une nuit courte se paie-t-elle le lendemain ?`;
+  if (!sleepBase) {
+    shortNights = { id: 'short_nights', title: shortTitle, question: shortQ, status: 'not_enough', reason: 'Pas encore d’habituel de sommeil (28 nuits mesurées nécessaires).' };
+  } else if (shortE.length < MIN_GROUP_DAYS || normalE.length < MIN_GROUP_DAYS) {
+    const short = shortE.length < MIN_GROUP_DAYS ? `${plural(shortE.length, 'nuit courte avec une énergie notée', 'nuits courtes avec une énergie notée')}` : `${plural(normalE.length, 'nuit normale avec une énergie notée', 'nuits normales avec une énergie notée')}`;
+    shortNights = { id: 'short_nights', title: shortTitle, question: shortQ, status: 'not_enough', reason: `${short} sur 28 jours, il en faut ${MIN_GROUP_DAYS} de chaque côté.` };
+  } else {
+    const eS = mean(shortE)!;
+    const eN = mean(normalE)!;
+    const strong = Math.abs(eN - eS) >= ENERGY_GAP;
+    const fmtE = (v: number) => `${(Math.round(v * 10) / 10).toString().replace('.', ',')} / 10`;
+    const text = strong
+      ? `Énergie notée ${fmtE(eS)} après une nuit courte, contre ${fmtE(eN)} après une nuit normale.`
+      : `Énergie notée comparable après une nuit courte (${fmtE(eS)}) et après une nuit normale (${fmtE(eN)}).`;
+    shortNights = {
+      id: 'short_nights', title: shortTitle, question: shortQ, status: 'ok', text, strong,
+      groups: [
+        { label: `Après une nuit courte (≤ ${fmtDuration(sleepBase.mean - SHORT_NIGHT_MIN)})`, n: shortE.length, values: [{ metric: 'energy', label: 'Énergie', value: fmtE(eS) }] },
+        { label: 'Après une nuit normale', n: normalE.length, values: [{ metric: 'energy', label: 'Énergie', value: fmtE(eN) }] },
+      ],
+    };
+  }
+
+  return { quality: { gaps, repeated }, stress, shortNights };
+}
 
 /** Énergie notée sur 1 à 10 dans le journal : « basse » ≤ 4, « haute » ≥ 8 (2 et 4 sur 5 dans la maquette). */
 export const ENERGY_LOW = 4;
