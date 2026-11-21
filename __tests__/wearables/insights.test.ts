@@ -9,6 +9,7 @@ import {
   computeRecap,
   dayRange,
   habitsVsMeasures,
+  lastNight,
   pickPoints,
   pointsToDiscuss,
   sinceWindow,
@@ -187,6 +188,43 @@ describe('récap', () => {
     const b = buildRecapText({ firstName: 'A', practitionerFirstName: 'C', frequency: '1d', points: ['move'], lastVariants: a.variants });
     expect(a.text).not.toBe(b.text);
     expect(a.text).toContain('Vous avez bougé davantage aujourd’hui, bravo.');
+  });
+});
+
+describe('dernière nuit', () => {
+  const ref = addDays(TODAY, -7);
+
+  it('prend la nuit rattachée à aujourd’hui quand elle est mesurée, comparée à l’habituel', () => {
+    const days = makeDays(40, (i, date) => ({ sleepMin: date === TODAY ? 300 : 420 + wobble(i, 10), hrvMs: date === TODAY ? 41 : 40 + wobble(i, 2) }));
+    const n = lastNight(new Series(days, TODAY), ref);
+    expect(n.status).toBe('ok');
+    if (n.status !== 'ok') return;
+    expect(n.day).toBe(TODAY);
+    expect(n.ageNights).toBe(0);
+    const sleep = n.tiles.find((t) => t.metric === 'sleep')!;
+    expect(sleep.value).toBe('5 h 00');
+    expect(sleep.delta).toMatch(/▼ .* de moins/);
+    expect(sleep.tone).toBe('watch');
+    expect(n.tiles.find((t) => t.metric === 'hrv')!.tone).toBe('flat');
+    expect(n.stepsBefore).toBe('6 000 pas');
+  });
+
+  it('remonte à la nuit mesurée la plus récente, et ignore une nuit trop courte', () => {
+    const days = makeDays(40, (_i, date) => {
+      if (date === TODAY) return { sleepMin: null, hrvMs: null, nightHrBpm: null }; // pas encore arrivée
+      if (date === addDays(TODAY, -1)) return { sleepMin: 90 }; // sieste, pas une nuit
+      return {};
+    });
+    const n = lastNight(new Series(days, TODAY), ref);
+    expect(n.status).toBe('ok');
+    if (n.status !== 'ok') return;
+    expect(n.day).toBe(addDays(TODAY, -2));
+    expect(n.ageNights).toBe(2);
+  });
+
+  it('rien au-delà de 7 nuits sans mesure', () => {
+    const days = makeDays(40, (_i, date) => (date > addDays(TODAY, -9) ? { sleepMin: null, hrvMs: null, nightHrBpm: null } : {}));
+    expect(lastNight(new Series(days, TODAY), ref).status).toBe('none');
   });
 });
 

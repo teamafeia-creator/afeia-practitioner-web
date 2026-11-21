@@ -5,14 +5,17 @@ import { showToast } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import {
   computeRecap,
+  fmtDuration,
   longDate,
   recapHeroPeriod,
   shortDate,
   type Insights,
+  type LastNight,
   type Metric,
   type RecapFrequency,
   type Who,
 } from '@/lib/wearables/insights';
+import type { LastSleepDetails } from '@/lib/wearables/insights/load';
 import type { LoadedInsights } from '@/lib/wearables/insights/load';
 import { listOpenTopics, pinTopic, unpinTopic, type RecapRow } from '@/lib/wearables/insights/queries';
 import { BarChart, ChartLegend } from './BarChart';
@@ -82,6 +85,8 @@ export function OverviewTab({
 
   return (
     <>
+      <LastNightBlock night={insights.lastNight} sleep={input.lastSleep} who={who} />
+
       <section aria-labelledby="hero-t" className="flex flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl border border-[#2F5A50] bg-[#16201F] p-[22px]">
         <div className="flex min-w-0 flex-[1_1_420px] flex-col gap-2.5">
           <span className="text-xs font-semibold uppercase tracking-[0.04em] text-sage">{hero.period}</span>
@@ -193,5 +198,58 @@ export function Empty({ title, text }: { title: string; text: string }) {
       <span className="text-[15px] font-medium">{title}</span>
       <span className="text-[13px] leading-normal text-stone">{text}</span>
     </div>
+  );
+}
+
+// ─── Dernière nuit ─────────────────
+
+const PARIS_TIME = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+const fmtTime = (iso: string) => PARIS_TIME.format(new Date(iso)).replace(':', ' h ');
+
+function nightTitle(night: Extract<LastNight, { status: 'ok' }>): string {
+  if (night.ageNights === 0) return 'La nuit dernière';
+  if (night.ageNights === 1) return 'L’avant-dernière nuit';
+  return `Dernière nuit mesurée : ${longDate(night.day)}`;
+}
+
+/** Bloc en tête de l'onglet : la nuit la plus récente, comparée à l'habituel, puis son détail. */
+function LastNightBlock({ night, sleep, who }: { night: LastNight; sleep: LastSleepDetails | null; who: Who }) {
+  if (night.status !== 'ok') {
+    return (
+      <section aria-labelledby="night-t" className="flex flex-col gap-3" data-testid="last-night">
+        <h3 id="night-t" className="text-base font-semibold">Dernière nuit</h3>
+        <Empty title="Aucune nuit mesurée ces 7 derniers jours." text={`${who.first} n’a pas porté l’objet connecté, ou les données ne sont pas encore arrivées.`} />
+      </section>
+    );
+  }
+  const detail = sleep && sleep.day === night.day ? sleep : null;
+  const parts: string[] = [];
+  if (detail?.sleepStartAt && detail.sleepEndAt) parts.push(`Couché à ${fmtTime(detail.sleepStartAt)}, levé à ${fmtTime(detail.sleepEndAt)}`);
+  if (detail?.deepMin !== null && detail?.deepMin !== undefined) parts.push(`profond ${fmtDuration(detail.deepMin)}`);
+  if (detail?.remMin !== null && detail?.remMin !== undefined) parts.push(`paradoxal ${fmtDuration(detail.remMin)}`);
+  if (detail?.interruptionMin) parts.push(`éveillé ${detail.interruptionMin} min`);
+  if (detail?.score !== null && detail?.score !== undefined) parts.push(`score Polar ${detail.score}/100`);
+  if (night.stepsBefore) parts.push(`la veille : ${night.stepsBefore}`);
+
+  return (
+    <section aria-labelledby="night-t" className="flex flex-col gap-3" data-testid="last-night">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 id="night-t" className="text-base font-semibold">{nightTitle(night)}</h3>
+        <span className="text-xs text-stone">
+          {night.ageNights <= 1 ? `Réveil du ${longDate(night.day)}` : `Il y a ${night.ageNights} nuits`}
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {night.tiles.map((k) => (
+          <div key={k.metric} className="flex flex-col gap-1.5 rounded-[14px] border border-divider bg-surface px-4 py-3.5" data-testid={`last-night-${k.metric}`}>
+            <span className="text-[13px] text-stone">{k.label}</span>
+            <span className="font-serif text-[26px] leading-tight tabular-nums">{k.value}</span>
+            {k.delta ? <span className={`text-[13px] font-semibold tabular-nums ${TONE[k.tone]}`}>{k.delta}</span> : null}
+            <span className="text-xs text-stone tabular-nums">D’habitude : {k.usual}</span>
+          </div>
+        ))}
+      </div>
+      {parts.length ? <p className="text-[13px] text-stone">{parts.join(' · ')}</p> : null}
+    </section>
   );
 }

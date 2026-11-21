@@ -20,10 +20,24 @@ export class InsightsLoadError extends Error {
   }
 }
 
+export type LastSleepDetails = {
+  /** Jour du réveil. */
+  day: string;
+  sleepStartAt: string | null;
+  sleepEndAt: string | null;
+  deepMin: number | null;
+  remMin: number | null;
+  lightMin: number | null;
+  interruptionMin: number | null;
+  score: number | null;
+};
+
 export type LoadedInsights = InsightsInput & {
   consultantId: string;
   lastSyncAt: string | null;
   lastJournalDate: string | null;
+  /** Détail de la nuit la plus récente (heures, phases, score), pour le bloc « Dernière nuit ». */
+  lastSleep: LastSleepDetails | null;
 };
 
 function genderOf(raw: string | null | undefined): 'female' | 'male' | null {
@@ -42,7 +56,7 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
   const from = addDays(today, -HISTORY_DAYS);
   const nowIso = now.toISOString();
 
-  const [summary, consultant, past, next, plans, items, logs, consent, conn, journal, cycleProfile, cycleEntries] = await Promise.all([
+  const [summary, consultant, past, next, plans, items, logs, consent, conn, journal, cycleProfile, cycleEntries, lastSleepRow] = await Promise.all([
     client.rpc('wearable_daily_summary', { p_consultant_id: consultantId, p_days: HISTORY_DAYS, p_today: today }),
     client.from('consultants').select('*').eq('id', consultantId).maybeSingle(),
     // Dernière séance = rendez-vous passé non annulé le plus récent.
@@ -56,6 +70,15 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
     client.from('journal_entries').select('date, energy_level, text').eq('consultant_id', consultantId).gte('date', from).lte('date', today).order('date'),
     client.from('cycle_profiles').select('*').eq('consultant_id', consultantId).maybeSingle(),
     client.from('cycle_entries').select('*').eq('consultant_id', consultantId).order('date', { ascending: false }).limit(180),
+    client
+      .from('sleep_sessions')
+      .select('night_date, sleep_start_at, sleep_end_at, deep_sleep_s, rem_sleep_s, light_sleep_s, interruption_s, sleep_score')
+      .eq('consultant_id', consultantId)
+      .eq('provider', 'polar')
+      .lte('night_date', today)
+      .order('night_date', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   if (summary.error) throw new InsightsLoadError('mesures', summary.error);
@@ -124,6 +147,34 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
     phases,
     lastSyncAt: (conn.data as { last_sync_at?: string | null } | null)?.last_sync_at ?? null,
     lastJournalDate: journalRows.length ? journalRows[journalRows.length - 1].date : null,
+    lastSleep: toLastSleep(lastSleepRow.data as SleepRow | null),
+  };
+}
+
+type SleepRow = {
+  night_date: string;
+  sleep_start_at: string | null;
+  sleep_end_at: string | null;
+  deep_sleep_s: number | null;
+  rem_sleep_s: number | null;
+  light_sleep_s: number | null;
+  interruption_s: number | null;
+  sleep_score: number | null;
+};
+
+const toMin = (s: number | null) => (s === null ? null : Math.round(s / 60));
+
+function toLastSleep(row: SleepRow | null): LastSleepDetails | null {
+  if (!row) return null;
+  return {
+    day: row.night_date.slice(0, 10),
+    sleepStartAt: row.sleep_start_at,
+    sleepEndAt: row.sleep_end_at,
+    deepMin: toMin(row.deep_sleep_s),
+    remMin: toMin(row.rem_sleep_s),
+    lightMin: toMin(row.light_sleep_s),
+    interruptionMin: toMin(row.interruption_s),
+    score: row.sleep_score,
   };
 }
 

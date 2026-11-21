@@ -52,7 +52,7 @@ function amina(): LoadedInsights {
     items: [],
     logs: [],
   };
-  return { ...input, consultantId: 'c1', lastSyncAt: null, lastJournalDate: null };
+  return { ...input, consultantId: 'c1', lastSyncAt: null, lastJournalDate: null, lastSleep: null };
 }
 
 afterEach(cleanup);

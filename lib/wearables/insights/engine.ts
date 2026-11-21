@@ -18,6 +18,7 @@ import {
   addDays,
   dayDate,
   dayRange,
+  diffDays,
   fmtDuration,
   fmtGap,
   fmtSigned,
@@ -116,6 +117,52 @@ export function baseline(series: Series, metric: Metric, refDay: string): Stat |
 }
 
 const yesterdayOf = (today: string) => addDays(today, -1);
+
+// ─── Dernière nuit ─────────────────
+
+export type LastNightTile = { metric: Metric; label: string; value: string; usual: string; delta: string; tone: 'good' | 'watch' | 'flat' };
+
+export type LastNight =
+  | { status: 'none' }
+  | {
+      status: 'ok';
+      /** Jour du réveil (la nuit est rattachée au réveil). */
+      day: string;
+      /** Nuits écoulées depuis : 0 = la nuit dernière, 1 = l'avant-dernière… */
+      ageNights: number;
+      tiles: LastNightTile[];
+      /** Pas de la veille de ce réveil (journée complète), formatés, ou null. */
+      stepsBefore: string | null;
+    };
+
+/**
+ * La nuit la plus récente mesurée (au plus 7 nuits en arrière), comparée à l'habituel :
+ * sommeil, VFC et FC de nuit. Une nuit trop courte (< 3 h) ou non portée est ignorée.
+ */
+export function lastNight(series: Series, refDay: string): LastNight {
+  const candidates = dayRange(addDays(series.today, -7), series.today).reverse();
+  const day = candidates.find((d) => series.nightValid(d));
+  if (!day) return { status: 'none' };
+  const tiles: LastNightTile[] = NIGHT_METRICS.map((metric) => {
+    const v = series.value(metric, day);
+    const base = baseline(series, metric, refDay);
+    if (v === null || !base) {
+      return { metric, label: METRIC_SHORT[metric], value: v === null ? '—' : fmtValue(metric, v), usual: base ? fmtValue(metric, base.mean) : '—', delta: '', tone: 'flat' };
+    }
+    const d = v - base.mean;
+    const same = Math.abs(d) < Math.max(base.sd * 0.5, THRESHOLDS[metric]);
+    return {
+      metric,
+      label: METRIC_SHORT[metric],
+      value: fmtValue(metric, v),
+      usual: fmtValue(metric, base.mean),
+      delta: same ? '= Comme d’habitude' : `${d > 0 ? '▲' : '▼'} ${fmtGap(metric, d)} ${d > 0 ? 'de plus' : 'de moins'}`,
+      tone: same ? 'flat' : d * BETTER[metric] > 0 ? 'good' : 'watch',
+    };
+  });
+  const steps = series.value('steps', addDays(day, -1));
+  return { status: 'ok', day, ageNights: diffDays(series.today, day), tiles, stepsBefore: steps === null ? null : fmtValue('steps', steps) };
+}
 
 // ─── Cette semaine, comparée à d'habitude (4 tuiles) ─────────────────
 
