@@ -87,3 +87,18 @@ describe('respiration × VFC', () => {
     expect(r.rows.find((x) => x.itemId === 'eau')!.expected).toBeUndefined();
   });
 });
+
+describe('« Mes nuits » (patient)', () => {
+  it('trois thèmes, valeurs et écart en mots, sans point à aborder', async () => {
+    const { patientThemes } = await import('../../lib/wearables/patient-overview');
+    const ins = computeInsights(input(makeDays(40, (_i, d) => ({ sleepMin: d === TODAY ? 300 : 400 })), { lastSessionDate: addDays(TODAY, -10) }));
+    const themes = patientThemes(ins);
+    expect(themes.map((t) => t.key)).toEqual(['sleep', 'recovery', 'activity']);
+    expect(themes[0].value).toBe('5 h 00');
+    expect(themes[0].note).toBe('100 min de moins que d’habitude.');
+    expect(themes[0].tone).toBe('watch');
+    expect(themes[1].note).toBe('Comme d’habitude.');
+    expect(themes[1].secondary?.label).toBe('Cœur la nuit');
+    expect(JSON.stringify(themes)).not.toMatch(/aborder|point/i);
+  });
+});

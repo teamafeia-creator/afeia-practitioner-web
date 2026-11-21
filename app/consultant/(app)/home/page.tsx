@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Toaster } from '@/components/ui'
 import { WearableConnectionSection } from '@/components/wearables/WearableConnectionSection'
 import { SleepFeelingCard } from '@/components/consultant/SleepFeelingCard'
+import { MyNightsCard } from '@/components/consultant/MyNightsCard'
 
 type ConsultantData = {
   id: string
@@ -294,6 +295,7 @@ export default function ConsultantHomePage() {
         <Suspense fallback={null}>
           <WearableConnectionSection />
         </Suspense>
+        <MyNightsCard />
 
         {/* Plans Section */}
         {plans.length > 0 && (
