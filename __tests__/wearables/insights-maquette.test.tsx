@@ -112,7 +112,7 @@ describe('maquette : cas d’Amina', () => {
     const input = amina();
     const w = who('Amina', 'female');
     render(<OverviewTab input={input} insights={r} who={w} consultantId="c1" metric="sleep" onMetric={() => {}} draft={null} sent={false} onOpenRecap={() => {}} onOpenRdv={() => {}} />);
-    expect(screen.getByText('Le récap d’Amina')).toBeTruthy();
+    expect(screen.getByText('Le récap d’Amina, à relire avant l’envoi')).toBeTruthy();
     expect(screen.getByText('Depuis la séance du 19 octobre')).toBeTruthy();
     expect(screen.getByText('Relire et envoyer à Amina')).toBeTruthy();
     cleanup();
