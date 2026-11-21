@@ -192,6 +192,21 @@ describe('récap', () => {
   });
 });
 
+describe('phrase sous les tuiles', () => {
+  it('compte les nuits hors habituel et dit où elles tombent', () => {
+    // 4 nuits courtes en semaine sur les 7 dernières (TODAY = jeudi 12 nov. 2026 ; hier = mercredi).
+    const shortDays = new Set([-1, -2, -3, -6].map((k) => addDays(TODAY, k))); // mer, mar, lun, ven
+    const days = makeDays(40, (_i, date) => ({ sleepMin: shortDays.has(date) ? 300 : 420 + ((date.charCodeAt(9) % 3) - 1) * 10 }));
+    const t = computeInsights(input(days, { lastSessionDate: addDays(TODAY, -10) })).tiles.find((x) => x.metric === 'sleep')!;
+    expect(t.sentence).toMatch(/^Nuits plus courtes que d’habitude 4 fois sur 7, surtout en semaine\./);
+  });
+  it('dans l’habituel : le dit simplement', () => {
+    const days = makeDays(40, (_i, date) => ({ hrvMs: 40 + ((date.charCodeAt(9) % 3) - 1) }));
+    const t = computeInsights(input(days, { lastSessionDate: addDays(TODAY, -10) })).tiles.find((x) => x.metric === 'hrv')!;
+    expect(t.sentence).toBe('Dans son habituel sur 7 nuits.');
+  });
+});
+
 describe('dernière nuit', () => {
   const ref = addDays(TODAY, -7);
 

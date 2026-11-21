@@ -13,14 +13,10 @@ import { BeforeAfterTab } from './insights/BeforeAfterTab';
 import { HabitsTab } from './insights/HabitsTab';
 import { FeelTab } from './insights/FeelTab';
 import { RecapModal } from './insights/RecapModal';
+import { RhythmChart, RhythmLegend } from './insights/RhythmChart';
+import { WearableStory, type StoryScreen } from './insights/WearableStory';
+import { essentialFeel, essentialHelps, essentialNight, essentialRhythm, essentialSession, essentialWeek } from '@/lib/wearables/insights/story';
 
-type Tab = 'vue' | 'avant' | 'hab' | 'res';
-const TABS: [Tab, string][] = [
-  ['vue', 'Vue d’ensemble'],
-  ['avant', 'Avant / après le conseillancier'],
-  ['hab', 'Conseils suivis × mesures'],
-  ['res', 'Ressenti & cycle'],
-];
 
 export type DossierLinks = {
   /** Ouvre un autre onglet du dossier (Rendez-vous, Conseillancier, Cycle, Profil). */
@@ -50,7 +46,6 @@ export function WearableInsightsPanel({
   const [practitioner, setPractitioner] = useState({ first: '', full: '' });
   const [settings, setSettings] = useState<RecapSettings | null>(null);
   const [draft, setDraft] = useState<RecapRow | null>(null);
-  const [tab, setTab] = useState<Tab>('vue');
   const [metric, setMetric] = useState<Metric>('sleep');
   const [recapOpen, setRecapOpen] = useState(openRecapOnLoad);
   const [sent, setSent] = useState(false);
@@ -123,6 +118,62 @@ export function WearableInsightsPanel({
   const w = who(input.firstName, input.gender);
   const syncLabel = syncing ? 'Synchronisation avec Polar en cours…' : input.lastSyncAt ? `Synchronisé ${formatRelative(input.lastSyncAt)}` : 'Pas encore synchronisé';
 
+  const overview = (part: 'night' | 'session' | 'week') => (
+    <OverviewTab
+      input={input}
+      insights={insights}
+      who={w}
+      consultantId={consultantId}
+      metric={metric}
+      onMetric={setMetric}
+      draft={draft}
+      sent={sent}
+      onOpenRecap={() => setRecapOpen(true)}
+      onOpenRdv={() => links.openTab('Rendez-vous')}
+      part={part}
+    />
+  );
+  const eNight = essentialNight(insights);
+  const eWeek = essentialWeek(insights);
+  const eRhythm = essentialRhythm(insights);
+  const eSession = essentialSession(insights);
+  const eFeel = essentialFeel(insights);
+  const eHelps = essentialHelps(insights);
+  const screens: StoryScreen[] = [
+    { key: 'nuit', label: 'La nuit dernière', title: 'La nuit dernière', subtitle: `Ce que l’objet a mesuré, comparé à son habituel.`, essential: eNight.text, tone: eNight.tone, content: overview('night') },
+    { key: 'semaine', label: 'Cette semaine', title: 'Cette semaine, comparée à d’habitude', subtitle: 'Les 7 dernières nuits, mesure par mesure, et les 28 nuits en graphique.', essential: eWeek.text, tone: eWeek.tone, content: overview('week') },
+    {
+      key: 'rythme',
+      label: 'Le rythme',
+      title: 'Coucher et lever sur 14 nuits',
+      subtitle: 'La régularité en dit souvent plus que la durée.',
+      essential: eRhythm.text,
+      tone: eRhythm.tone,
+      content: (
+        <section className="flex flex-col gap-3.5 rounded-2xl border border-divider bg-surface p-5">
+          <RhythmChart r={insights.rhythm} />
+          <RhythmLegend r={insights.rhythm} />
+        </section>
+      ),
+    },
+    { key: 'seance', label: 'Depuis la séance', title: input.lastSessionDate ? `Depuis la séance du ${longDate(input.lastSessionDate)}` : 'Depuis la dernière séance', subtitle: 'Les points à aborder, et le récap à relire avant de l’envoyer.', essential: eSession.text, tone: eSession.tone, content: overview('session') },
+    { key: 'ressenti', label: 'Le ressenti', title: `Ce ${w.que} ressent, ce que l’objet mesure`, subtitle: 'Journal et mesures, face à face. Des écarts, pas des causes.', essential: eFeel.text, tone: eFeel.tone, content: <FeelTab input={input} insights={insights} who={w} onOpenCycle={() => links.openTab('Cycle')} /> },
+    {
+      key: 'aide',
+      label: 'Ce qui aide',
+      title: 'Ce qui aide, ce qui reste à voir',
+      subtitle: 'Avant / après le conseillancier, et les conseils suivis face aux nuits.',
+      essential: eHelps.text,
+      tone: eHelps.tone,
+      content: (
+        <>
+          <BeforeAfterTab insights={insights} onOpenPlan={() => links.openTab('Conseillancier')} />
+          <HabitsTab input={input} insights={insights} who={w} onChanged={() => setReload((k) => k + 1)} onOpenGoals={() => links.openTab('Profil')} />
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-5" data-testid="wearable-insights">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -144,45 +195,12 @@ export function WearableInsightsPanel({
         </button>
       </div>
 
-      <div role="tablist" aria-label="Objet connecté" className="flex flex-wrap gap-x-6 border-b border-divider">
-        {TABS.map(([id, l]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={tab === id}
-            onClick={() => setTab(id)}
-            className={`-mb-px border-b-2 py-2.5 text-sm ${tab === id ? 'border-sage font-semibold text-charcoal' : 'border-transparent font-medium text-stone hover:text-charcoal'}`}
-          >
-            {l}
-          </button>
-        ))}
-      </div>
+      <WearableStory screens={screens} />
 
-      {tab === 'vue' ? (
-        <OverviewTab
-          input={input}
-          insights={insights}
-          who={w}
-          consultantId={consultantId}
-          metric={metric}
-          onMetric={setMetric}
-          draft={draft}
-          sent={sent}
-          onOpenRecap={() => setRecapOpen(true)}
-          onOpenRdv={() => links.openTab('Rendez-vous')}
-        />
-      ) : null}
-      {tab === 'avant' ? <BeforeAfterTab insights={insights} onOpenPlan={() => links.openTab('Conseillancier')} /> : null}
-      {tab === 'hab' ? <HabitsTab input={input} insights={insights} who={w} onChanged={() => setReload((k) => k + 1)} onOpenGoals={() => links.openTab('Profil')} /> : null}
-      {tab === 'res' ? <FeelTab input={input} insights={insights} who={w} onOpenCycle={() => links.openTab('Cycle')} /> : null}
-
-      {tab === 'vue' ? (
-        <p className="text-xs text-stone">
-          Repères de bien-être comparés à ses propres habitudes, pas un diagnostic
-          {input.consentDate ? ` · Accord de partage donné par ${w.first} le ${shortDate(input.consentDate)}`.replace(/\.$/, '') + '.' : '.'}
-        </p>
-      ) : null}
+      <p className="text-xs text-stone">
+        Repères de bien-être comparés à ses propres habitudes, pas un diagnostic
+        {input.consentDate ? ` · Accord de partage donné par ${w.first} le ${shortDate(input.consentDate)}`.replace(/\.$/, '') + '.' : '.'}
+      </p>
 
       {recapOpen ? (
         <RecapModal

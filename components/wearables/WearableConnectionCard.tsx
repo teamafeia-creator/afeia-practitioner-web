@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import { Watch } from 'lucide-react';
+import Link from 'next/link';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Spinner } from '@/components/ui';
 import {
   formatDay,
   formatRelative,
   isBackfillInProgress,
   readableSyncError,
+  wearState,
+  type WearNights,
   type WearableConnectionOverview,
 } from '@/lib/wearables/display';
 import { DisconnectWearableDialog } from './DisconnectWearableDialog';
@@ -28,6 +31,8 @@ type Props = {
   /** Synchronisation à la demande (récupère les derniers jours chez Polar). */
   onSync?: () => Promise<void> | void;
   syncing?: boolean;
+  /** Nuits mesurées sur la fenêtre d'habituel : alimente le message d'état (calibration, non porté…). */
+  nights?: WearNights | null;
   /** Injectable pour les tests. */
   now?: Date;
 };
@@ -48,9 +53,11 @@ export function WearableConnectionCard({
   disconnecting = false,
   onSync,
   syncing = false,
+  nights,
   now,
 }: Props) {
   const state = !connection || connection.status === 'revoked' ? 'disconnected' : connection.status;
+  const wear = state === 'active' ? wearState(nights, isBackfillInProgress(connection)) : null;
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
@@ -102,6 +109,18 @@ export function WearableConnectionCard({
           </>
         )}
 
+        {wear && !(wear.kind === 'waiting_first' && isBackfillInProgress(connection)) ? (
+          <div
+            className={`rounded-lg px-3 py-2.5 text-[13px] ${wear.kind === 'not_worn' ? 'border border-[#E8A87C]/50 bg-[#2A2320]' : 'bg-sage-light/40'}`}
+            role="status"
+            data-testid="wearable-wear-state"
+            data-kind={wear.kind}
+          >
+            <p className="font-semibold text-charcoal">{wear.title}</p>
+            <p className="text-stone">{wear.text}</p>
+          </div>
+        ) : null}
+
         {/* div et non p : Spinner rend une div, interdite dans un p (erreur d'hydratation). */}
         {state === 'active' && isBackfillInProgress(connection) && (
           <div className="flex items-center gap-2 text-[13px] text-stone" role="status" data-testid="wearable-backfill">
@@ -131,7 +150,14 @@ export function WearableConnectionCard({
           </div>
         ) : null}
 
-        <p className="text-xs text-stone">Compatible : Polar</p>
+        <p className="flex flex-wrap items-center gap-x-3 text-xs text-stone">
+          <span>Compatible : Polar</span>
+          {state !== 'disconnected' ? (
+            <Link href="/consultant/objet-connecte/aide" className="text-sage hover:underline">
+              Un problème ? Pas de données, synchronisation…
+            </Link>
+          ) : null}
+        </p>
       </CardContent>
       {onDisconnect ? (
         <DisconnectWearableDialog

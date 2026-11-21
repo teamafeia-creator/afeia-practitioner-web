@@ -71,9 +71,11 @@ export type InsightsInput = {
   items: InsightItem[];
   logs: InsightLog[];
   /** Journal : énergie, qualité du sommeil ressentie et stress notés (1 à 10), note libre, par jour. */
-  journal?: { date: string; energy: number | null; quality?: number | null; stress?: number | null; note: string | null }[];
+  journal?: { date: string; energy: number | null; quality?: number | null; stress?: number | null; note: string | null; causes?: string[] }[];
   /** Détail des nuits (jour du réveil) : score Polar et temps éveillé, pour la règle A. */
   nights?: Record<string, { score: number | null; interruptionMin: number | null }>;
+  /** Nuits récentes avec heures de coucher / lever, pour l'écran « Rythme ». */
+  recentNights?: { day: string; startAt: string | null; endAt: string | null; totalMin: number | null }[];
   /** Phase du cycle par jour (si le cycle est suivi). */
   phases?: Record<string, Phase>;
 };
@@ -126,6 +128,98 @@ export function baseline(series: Series, metric: Metric, refDay: string): Stat |
 }
 
 const yesterdayOf = (today: string) => addDays(today, -1);
+
+// ─── Rythme : heures de coucher et de lever ─────────────────
+
+export type RhythmNight = {
+  day: string;
+  /** Minutes depuis 20 h (Europe/Paris) ; null si inconnu. Un coucher à 23 h 30 → 210. */
+  startMin: number | null;
+  endMin: number | null;
+  totalMin: number | null;
+  weekend: boolean;
+};
+
+export type Rhythm = {
+  nights: RhythmNight[];
+  /** Coucher médian (minutes depuis 20 h) et libellé « 23 h 12 ». */
+  medianStart: number | null;
+  medianStartLabel: string | null;
+  medianEnd: number | null;
+  medianEndLabel: string | null;
+  /** Nuits dont le coucher est à ± 30 min du médian, sur les nuits connues. */
+  regular: number;
+  known: number;
+  sentence: string;
+};
+
+const PARIS_HM = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Paris' });
+
+/** Minutes depuis 20 h, heure de Paris, sur une fenêtre 20 h → 20 h (un coucher à 1 h → 300). */
+export function minutesFrom20h(iso: string): number {
+  const [h, m] = PARIS_HM.format(new Date(iso)).split(':').map(Number);
+  return ((h * 60 + m - 20 * 60) + 24 * 60) % (24 * 60);
+}
+
+export function fmtClockFrom20h(min: number): string {
+  const total = (min + 20 * 60) % (24 * 60);
+  return `${Math.floor(total / 60)} h ${String(total % 60).padStart(2, '0')}`;
+}
+
+function median(xs: number[]): number | null {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+export const REGULAR_BEDTIME_MIN = 30;
+
+export function rhythm(recent: { day: string; startAt: string | null; endAt: string | null; totalMin: number | null }[], today: string, days = 14): Rhythm {
+  const y = yesterdayOf(today);
+  const window = dayRange(addDays(y, -(days - 1)), y);
+  const byDay = new Map(recent.map((n) => [n.day, n]));
+  const nights: RhythmNight[] = window.map((day) => {
+    const n = byDay.get(day);
+    const d = new Date(`${day}T00:00:00Z`).getUTCDay();
+    return {
+      day,
+      startMin: n?.startAt ? minutesFrom20h(n.startAt) : null,
+      endMin: n?.endAt ? minutesFrom20h(n.endAt) : null,
+      totalMin: n?.totalMin ?? null,
+      weekend: d === 0 || d === 6,
+    };
+  });
+  const starts = nights.map((n) => n.startMin).filter((v): v is number => v !== null);
+  const ends = nights.map((n) => n.endMin).filter((v): v is number => v !== null);
+  const medianStart = median(starts);
+  const medianEnd = median(ends);
+  const regular = medianStart === null ? 0 : starts.filter((v) => Math.abs(v - medianStart) <= REGULAR_BEDTIME_MIN).length;
+  const known = starts.length;
+  let sentence: string;
+  if (known < 3) sentence = known ? `${plural(known, 'nuit connue', 'nuits connues')} sur ${days} : pas encore de rythme à lire.` : `Aucune heure de coucher connue sur ${days} nuits.`;
+  else {
+    const ratio = regular / known;
+    const we = nights.filter((n) => n.weekend && n.startMin !== null && medianStart !== null && n.startMin - medianStart > REGULAR_BEDTIME_MIN).length;
+    const tail = we >= 2 ? ' Les couchers tardifs tombent surtout le week-end.' : '';
+    sentence =
+      ratio >= 0.75
+        ? `Coucher régulier, vers ${fmtClockFrom20h(medianStart!)} : ${regular} nuits sur ${known} à ± ${REGULAR_BEDTIME_MIN} min.${tail}`
+        : ratio >= 0.5
+          ? `Coucher assez variable autour de ${fmtClockFrom20h(medianStart!)} : ${regular} nuits sur ${known} à ± ${REGULAR_BEDTIME_MIN} min.${tail}`
+          : `Coucher irrégulier : seulement ${regular} nuits sur ${known} à ± ${REGULAR_BEDTIME_MIN} min de ${fmtClockFrom20h(medianStart!)}.${tail}`;
+  }
+  return {
+    nights,
+    medianStart,
+    medianStartLabel: medianStart === null ? null : fmtClockFrom20h(medianStart),
+    medianEnd,
+    medianEndLabel: medianEnd === null ? null : fmtClockFrom20h(medianEnd),
+    regular,
+    known,
+    sentence,
+  };
+}
 
 // ─── Dernière nuit ─────────────────
 
@@ -184,7 +278,42 @@ export type WeekTile = {
   usual: string;
   delta: string;
   tone: 'good' | 'watch' | 'flat';
+  /** Une phrase en langage simple sous la tuile (jamais de cause). */
+  sentence: string;
 };
+
+const WEEKDAY_FR = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+const isWeekend = (day: string) => {
+  const d = new Date(`${day}T00:00:00Z`).getUTCDay();
+  return d === 0 || d === 6;
+};
+
+/**
+ * Phrase de la tuile : compte des nuits hors de l'habituel sur 7, où elles tombent (semaine / week-end),
+ * et nuits manquantes. Style « Nuits plus courtes que d'habitude 4 fois sur 7, surtout en semaine. »
+ */
+export function tileSentence(series: Series, metric: Metric, week: string[], base: Stat | null): string {
+  const measured = week.filter((d) => series.value(metric, d) !== null);
+  const missing = week.length - measured.length;
+  const missingTxt = missing ? ` ${plural(missing, 'nuit non mesurée', 'nuits non mesurées')}.` : '';
+  if (!base) return measured.length ? `${plural(measured.length, 'nuit mesurée', 'nuits mesurées')} cette semaine, pas encore d’habituel pour comparer.` : 'Aucune nuit mesurée cette semaine.';
+  if (!measured.length) return 'Aucune nuit mesurée cette semaine.';
+  // Hors habituel : au-delà d'un écart-type, et au moins du seuil de la mesure (évite le bruit quand l'habituel est très stable).
+  const band = Math.max(base.sd, THRESHOLDS[metric]);
+  const below = measured.filter((d) => series.value(metric, d)! < base.mean - band);
+  const above = measured.filter((d) => series.value(metric, d)! > base.mean + band);
+  const side = below.length >= above.length ? below : above;
+  if (side.length < 2) return `Dans son habituel sur ${plural(measured.length, 'nuit', 'nuits')}.${missingTxt}`.replace(/\.\./g, '.');
+  const dir = side === below ? (metric === 'hr' ? 'plus basse' : metric === 'sleep' ? 'plus courtes' : metric === 'steps' ? 'moins de pas' : 'plus basse') : metric === 'hr' ? 'plus haute' : metric === 'sleep' ? 'plus longues' : metric === 'steps' ? 'plus de pas' : 'plus haute';
+  const subject = metric === 'sleep' ? 'Nuits' : metric === 'hrv' ? 'VFC' : metric === 'hr' ? 'FC de nuit' : '';
+  const we = side.filter(isWeekend).length;
+  const wd = side.length - we;
+  const where = side.length >= 3 ? (we >= 2 && we > wd ? ', surtout le week-end' : wd >= 3 && wd > we ? ', surtout en semaine' : '') : '';
+  const days = side.length <= 2 ? ` (${side.map((d) => WEEKDAY_FR[new Date(`${d}T00:00:00Z`).getUTCDay()]).join(', ')})` : '';
+  const head = subject ? `${subject} ${dir} que d’habitude` : `${dir.charAt(0).toUpperCase() + dir.slice(1)} que d’habitude`;
+  return `${head} ${side.length} ${side.length > 1 ? 'fois' : 'fois'} sur ${measured.length}${where}${days}.${missingTxt}`;
+}
+
 
 export function weekTiles(series: Series, refDay: string): WeekTile[] {
   const y = yesterdayOf(series.today);
@@ -192,8 +321,9 @@ export function weekTiles(series: Series, refDay: string): WeekTile[] {
   return METRICS.map((metric) => {
     const vals = series.values(metric, week);
     const base = baseline(series, metric, refDay);
+    const sentence = tileSentence(series, metric, week, base);
     if (!vals.length || !base) {
-      return { metric, label: METRIC_LABEL[metric], value: vals.length ? fmtValue(metric, mean(vals)!) : '—', usual: base ? fmtValue(metric, base.mean) : '—', delta: '', tone: 'flat' };
+      return { metric, label: METRIC_LABEL[metric], value: vals.length ? fmtValue(metric, mean(vals)!) : '—', usual: base ? fmtValue(metric, base.mean) : '—', delta: '', tone: 'flat', sentence };
     }
     const last = mean(vals)!;
     const d = last - base.mean;
@@ -206,6 +336,7 @@ export function weekTiles(series: Series, refDay: string): WeekTile[] {
       usual: fmtValue(metric, base.mean),
       delta: same ? '= Comme d’habitude' : d > 0 ? `▲ ${txt} de plus` : `▼ ${txt} de moins`,
       tone: same ? 'flat' : d * BETTER[metric] > 0 ? 'good' : 'watch',
+      sentence,
     };
   });
 }
@@ -538,7 +669,14 @@ export type HabitRow = {
   how: string;
   metric: Metric | null;
   delta: number | null;
+  /** Respiration : effet attendu (« ↓ FC · ↑ VFC la nuit ») et effet observé sur la VFC, même sous le seuil. */
+  expected?: string;
+  observed?: string;
 };
+
+/** Catégories d'items dont l'effet attendu est connu : respiration → cœur plus calme, VFC plus haute la nuit suivante. */
+export const BREATHING_CATEGORY = 'respiration';
+export const BREATHING_EXPECTED = 'Effet attendu : cœur plus calme et VFC plus haute la nuit qui suit.';
 
 /** Seuls les items quotidiens ou « plusieurs fois par semaine » sont comparés (règle 2). */
 export function habitEligible(freq: TrackFrequency): boolean {
@@ -596,7 +734,21 @@ export function habitsVsMeasures(input: InsightsInput, series: Series): { counte
         : anyOk
           ? 'Écart sous les seuils (20 min, 3 ms, 3 bpm).'
           : `Il faut au moins ${HABIT_MIN_SIDE} jours faits et ${HABIT_MIN_SIDE} non faits (actuellement ${minSide === 99 ? 0 : minSide}).`;
-      return { itemId: it.id, label: it.label, done: done.length, counted: counted.length, doneLabel: `${done.length} jours sur ${counted.length}`, effect, how, metric: best?.metric ?? null, delta: best?.d ?? null };
+      const row: HabitRow = { itemId: it.id, label: it.label, done: done.length, counted: counted.length, doneLabel: `${done.length} jours sur ${counted.length}`, effect, how, metric: best?.metric ?? null, delta: best?.d ?? null };
+      // Respiration : on annonce l'effet attendu et on montre l'effet observé sur la VFC, même petit.
+      if (it.category === BREATHING_CATEGORY) {
+        row.expected = BREATHING_EXPECTED;
+        const at = (d: string) => series.value('hrv', addDays(d, 1));
+        const yes = done.map(at).filter((v): v is number => v !== null);
+        const no = notDone.map(at).filter((v): v is number => v !== null);
+        if (yes.length >= HABIT_MIN_SIDE && no.length >= HABIT_MIN_SIDE) {
+          const d = mean(yes)! - mean(no)!;
+          row.observed = `Observé sur ${yes.length + no.length} nuits : VFC ${fmtSigned('hrv', d)} les nuits qui suivent un jour pratiqué${Math.abs(d) >= THRESHOLDS.hrv ? '' : ' (sous le seuil de 3 ms)'}.`;
+        } else {
+          row.observed = `Observé : pas encore assez de jours pratiqués et non pratiqués (${HABIT_MIN_SIDE} de chaque côté).`;
+        }
+      }
+      return row;
     });
   return { counted: counted.length, window, rows };
 }
@@ -621,6 +773,20 @@ export const GOOD_SCORE = 70;
 export const ENERGY_GAP = 1.5;
 /** Nombre d'écarts du même sens sur 14 jours pour proposer un point « À aborder » (règle A). */
 export const QUALITY_GAP_REPEAT = 3;
+
+/** Libellés des causes probables (question du matin), dupliqués ici pour garder l'engine sans dépendance UI. */
+const SLEEP_CAUSE_LABEL_FR: Record<string, string> = {
+  stress: 'stress',
+  late_meal: 'repas tardif',
+  caffeine: 'café ou thé tardif',
+  alcohol: 'alcool',
+  screens: 'écrans tard le soir',
+  pain: 'douleur',
+  noise: 'bruit, chaleur ou lumière',
+  child: 'réveil extérieur',
+  late_bedtime: 'couché tard',
+  other: 'autre',
+};
 
 export type JournalGapA = { day: string; date: string; kind: 'tired_good_night' | 'rested_short_night'; text: string; sub: string };
 
@@ -665,7 +831,9 @@ export function journalVsMeasures(input: InsightsInput, series: Series): Journal
       if (q === null || q === undefined || sl === null) continue;
       const score = input.nights?.[day]?.score ?? null;
       const note = journal.get(day)?.note?.trim();
-      const sub = note ? `Sa note : « ${note} »` : 'Pas de note ce jour-là.';
+      const causes = journal.get(day)?.causes ?? [];
+      const causeText = causes.length ? `Cause indiquée : ${listFr(causes.map((c) => SLEEP_CAUSE_LABEL_FR[c] ?? c))}.` : '';
+      const sub = [causeText, note ? `Sa note : « ${note} »` : ''].filter(Boolean).join(' ') || 'Pas de note ce jour-là.';
       const goodNight = sl >= sleepBase.mean - THRESHOLDS.sleep && (score === null || score >= GOOD_SCORE);
       const shortNight = sl <= sleepBase.mean - SHORT_NIGHT_MIN;
       if (q <= QUALITY_LOW && goodNight) {

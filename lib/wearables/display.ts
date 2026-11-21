@@ -47,3 +47,65 @@ export function readableSyncError(lastError: string | null): string {
   }
   return "La dernière synchronisation de votre objet connecté a échoué. Reconnectez-le si le problème persiste.";
 }
+
+// ─── État des nuits (carte consultant) ─────────────────
+
+/** Fenêtre de l'habituel : 28 nuits. */
+export const CALIBRATION_WINDOW_DAYS = 28;
+/** Nuits nécessaires pour les premières comparaisons (MIN_NIGHTS de l'engine). */
+export const CALIBRATION_MIN_NIGHTS = 7;
+
+export type WearNights = {
+  /** Nuits mesurées dans la fenêtre. */
+  validInWindow: number;
+  windowDays: number;
+  /** Jour du réveil de la dernière nuit mesurée, ou null. */
+  lastNight: string | null;
+  /** Jours écoulés depuis (0 = la nuit dernière), ou null. */
+  daysSinceLast: number | null;
+};
+
+export type WearStateKind = 'waiting_first' | 'calibrating' | 'building' | 'ready' | 'not_worn';
+
+export type WearState = { kind: WearStateKind; title: string; text: string };
+
+/**
+ * Message d'état de la carte « Objet connecté » (connexion active), inspiré des apps qui assument
+ * leur période de calibration : le patient sait où il en est et ce qu'il doit faire.
+ */
+export function wearState(n: WearNights | null | undefined, backfilling: boolean): WearState | null {
+  if (!n) return null;
+  if (n.daysSinceLast !== null && n.daysSinceLast >= 2) {
+    const d = n.daysSinceLast;
+    return {
+      kind: 'not_worn',
+      title: `Pas de nuit mesurée depuis ${d} jours`,
+      text: 'Vérifiez que le bracelet est porté la nuit, chargé, et synchronisé avec l’application Polar Flow.',
+    };
+  }
+  if (n.validInWindow === 0) {
+    return {
+      kind: 'waiting_first',
+      title: backfilling ? 'Import de votre historique en cours' : 'En attente de votre première nuit',
+      text: backfilling
+        ? 'Vos nuits précédentes arrivent dans quelques minutes.'
+        : 'Portez le bracelet cette nuit : les données arrivent le matin, après la synchronisation avec Polar Flow.',
+    };
+  }
+  if (n.validInWindow < CALIBRATION_MIN_NIGHTS) {
+    const left = CALIBRATION_MIN_NIGHTS - n.validInWindow;
+    return {
+      kind: 'calibrating',
+      title: `AFEIA apprend vos nuits · encore ${left} ${left > 1 ? 'nuits' : 'nuit'}`,
+      text: `${n.validInWindow} ${n.validInWindow > 1 ? 'nuits mesurées' : 'nuit mesurée'} sur ${CALIBRATION_MIN_NIGHTS} nécessaires avant les premières comparaisons avec votre praticien.`,
+    };
+  }
+  if (n.validInWindow < n.windowDays) {
+    return {
+      kind: 'building',
+      title: 'Votre habituel se construit',
+      text: `${n.validInWindow} nuits sur ${n.windowDays} : plus il y a de nuits, plus les comparaisons sont fiables.`,
+    };
+  }
+  return { kind: 'ready', title: 'Habituel établi', text: `${n.windowDays} nuits mesurées sur ${n.windowDays} : vos comparaisons sont complètes.` };
+}

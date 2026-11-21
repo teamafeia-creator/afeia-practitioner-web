@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { MessageSquare } from 'lucide-react';
 import { showToast } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import {
@@ -34,6 +35,7 @@ export function OverviewTab({
   sent,
   onOpenRecap,
   onOpenRdv,
+  part,
 }: {
   input: LoadedInsights;
   insights: Insights;
@@ -45,6 +47,8 @@ export function OverviewTab({
   sent: boolean;
   onOpenRecap: () => void;
   onOpenRdv: () => void;
+  /** Lecture guidée : n'afficher qu'une partie de l'ancienne vue d'ensemble. */
+  part?: 'night' | 'session' | 'week';
 }) {
   const p = insights.points;
   const [pinned, setPinned] = useState<Set<string>>(new Set());
@@ -83,19 +87,28 @@ export function OverviewTab({
 
   const pinCount = p.status === 'ok' ? p.points.filter((pt) => pinned.has(`${p.sessionDate}:${pt.id}`)).length : 0;
 
+  const show = (p: 'night' | 'session' | 'week') => !part || part === p;
   return (
     <>
-      <LastNightBlock night={insights.lastNight} sleep={input.lastSleep} who={who} />
+      {show('night') ? <LastNightBlock night={insights.lastNight} sleep={input.lastSleep} who={who} /> : null}
 
-      <section aria-labelledby="hero-t" className="flex flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl border border-[#2F5A50] bg-[#16201F] p-[22px]">
-        <div className="flex min-w-0 flex-[1_1_420px] flex-col gap-2.5">
-          <span className="text-xs font-semibold uppercase tracking-[0.04em] text-sage">{hero.period}</span>
-          <h3 id="hero-t" className="font-serif text-[22px] font-medium leading-tight">
-            Le récap {who.first.match(/^[aeiouyhàâéèêîïôû]/i) ? 'd’' : 'de '}
-            {who.first}
-          </h3>
-          {hero.none ? <span className="text-sm text-stone">{hero.none}</span> : null}
-          <ul className="flex flex-col gap-2">
+      {show('session') ? <section aria-labelledby="hero-t" className="flex flex-col gap-4 rounded-2xl border border-[#2F5A50] bg-[#16201F] p-[22px]">
+        <div className="flex items-start gap-3">
+          <span aria-hidden className="mt-0.5 inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-sage/15 text-sage">
+            <MessageSquare className="h-4.5 w-4.5" />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-xs font-semibold uppercase tracking-[0.04em] text-sage">Message à {who.first} · {hero.period.toLowerCase()}</span>
+            <h3 id="hero-t" className="font-serif text-[22px] font-medium leading-tight">
+              {hero.items.length ? `Le récap ${who.first.match(/^[aeiouyhàâéèêîïôû]/i) ? 'd’' : 'de '}${who.first}, à relire avant l’envoi` : `Un mot pour ${who.first} ?`}
+            </h3>
+            <p className="text-[13px] text-stone">
+              AFEIA prépare un récap des points positifs à partir de ses nuits. Vous le relisez, l’ajustez ou écrivez le vôtre, puis il part dans sa messagerie AFEIA. Rien n’est envoyé sans vous.
+            </p>
+          </div>
+        </div>
+        {hero.items.length ? (
+          <ul className="flex flex-col gap-2 pl-12">
             {hero.items.map((h) => (
               <li key={h.id} className="flex gap-2.5 text-[15px] leading-snug">
                 <span aria-hidden className="mt-[7px] h-2 w-2 flex-none rounded-full bg-sage" />
@@ -103,15 +116,18 @@ export function OverviewTab({
               </li>
             ))}
           </ul>
-        </div>
-        <div className="flex flex-[0_1_260px] flex-col gap-2">
+        ) : hero.none ? (
+          <p className="pl-12 text-sm text-stone">{hero.none.replace(/ Vous pouvez écrire un message libre\.?$/, '')}</p>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-3 pl-12">
           <button type="button" onClick={onOpenRecap} className="h-11 rounded-[10px] bg-sage px-4 text-sm font-semibold text-ink">
-            {sent ? `✓ Récap envoyé à ${who.first}` : `Relire et envoyer à ${who.first}`}
+            {sent ? `✓ Envoyé à ${who.first}` : hero.items.length ? `Relire et envoyer à ${who.first}` : `Écrire un message à ${who.first}`}
           </button>
+          <span className="text-xs text-stone">{sent ? 'Visible dans sa messagerie et dans « Mes nuits ».' : 'Vous pourrez modifier le texte avant l’envoi.'}</span>
         </div>
-      </section>
+      </section> : null}
 
-      <section aria-labelledby="pts-t" className="flex flex-col gap-3">
+      {show('session') ? <section aria-labelledby="pts-t" className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h3 id="pts-t" className="text-base font-semibold">
             {p.status === 'no_session' ? 'Points à aborder' : `Depuis la séance du ${longDate(p.sessionDate)}`}
@@ -156,9 +172,10 @@ export function OverviewTab({
             </button>
           </p>
         ) : null}
-      </section>
+      </section> : null}
 
-      <h3 className="-mb-1.5 mt-1 text-base font-semibold">Cette semaine, comparée à d’habitude</h3>
+      {show('week') ? <>
+      {!part ? <h3 className="-mb-1.5 mt-1 text-base font-semibold">Cette semaine, comparée à d’habitude</h3> : null}
       <div role="tablist" aria-label="Mesure affichée dans le graphique" className="grid grid-cols-2 gap-3">
         {insights.tiles.map((k) => {
           const on = k.metric === metric;
@@ -175,6 +192,7 @@ export function OverviewTab({
               <span className="font-serif text-[26px] leading-tight tabular-nums">{k.value}</span>
               {k.delta ? <span className={`text-[13px] font-semibold tabular-nums ${TONE[k.tone]}`}>{k.delta}</span> : null}
               <span className="text-xs text-stone tabular-nums">D’habitude : {k.usual}</span>
+              {k.sentence ? <span className="mt-0.5 text-xs leading-snug text-[#B8C1CF]">{k.sentence}</span> : null}
             </button>
           );
         })}
@@ -188,6 +206,7 @@ export function OverviewTab({
         <ChartLegend data={insights.chart} />
         <BarChart metric={metric} data={insights.chart} />
       </section>
+      </> : null}
     </>
   );
 }
@@ -213,7 +232,7 @@ function nightTitle(night: Extract<LastNight, { status: 'ok' }>): string {
 }
 
 /** Bloc en tête de l'onglet : la nuit la plus récente, comparée à l'habituel, puis son détail. */
-function LastNightBlock({ night, sleep, who }: { night: LastNight; sleep: LastSleepDetails | null; who: Who }) {
+export function LastNightBlock({ night, sleep, who }: { night: LastNight; sleep: LastSleepDetails | null; who: Who }) {
   if (night.status !== 'ok') {
     return (
       <section aria-labelledby="night-t" className="flex flex-col gap-3" data-testid="last-night">

@@ -5,6 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 
 // Client Supabase factice : toute requête renvoie une liste vide.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: () => {}, push: () => {} }),
+  usePathname: () => '/consultants/c1',
+  useSearchParams: () => new URLSearchParams(''),
+}));
 vi.mock('@/lib/supabase', () => {
   const result = { data: [], error: null };
   const chain: Record<string, unknown> = {};
@@ -52,7 +57,7 @@ function amina(): LoadedInsights {
     items: [],
     logs: [],
   };
-  return { ...input, consultantId: 'c1', lastSyncAt: null, lastJournalDate: null, lastSleep: null };
+  return { ...input, consultantId: 'c1', lastSyncAt: null, lastJournalDate: null, lastSleep: null, recentNights: [] };
 }
 
 afterEach(cleanup);
@@ -107,7 +112,7 @@ describe('maquette : cas d’Amina', () => {
     const input = amina();
     const w = who('Amina', 'female');
     render(<OverviewTab input={input} insights={r} who={w} consultantId="c1" metric="sleep" onMetric={() => {}} draft={null} sent={false} onOpenRecap={() => {}} onOpenRdv={() => {}} />);
-    expect(screen.getByText('Le récap d’Amina')).toBeTruthy();
+    expect(screen.getByText('Le récap d’Amina, à relire avant l’envoi')).toBeTruthy();
     expect(screen.getByText('Depuis la séance du 19 octobre')).toBeTruthy();
     expect(screen.getByText('Relire et envoyer à Amina')).toBeTruthy();
     cleanup();
@@ -123,5 +128,25 @@ describe('maquette : cas d’Amina', () => {
     render(<RecapModal consultantId="c1" input={input} who={w} practitioner={{ first: 'Claire', full: 'Claire Martin' }} settings={null} draft={null} onSettings={() => {}} onClose={() => {}} onSent={() => {}} />);
     expect(screen.getByText('Récap de la semaine pour Amina')).toBeTruthy();
     expect(screen.getByText('Me le proposer régulièrement (je valide avant l’envoi)')).toBeTruthy();
+    cleanup();
+    // Lecture guidée : 6 écrans, un seul affiché, navigation numérotée, « Tout afficher » les empile.
+    const { WearableStory } = await import('@/components/wearables/practitioner/insights/WearableStory');
+    const { RhythmChart } = await import('@/components/wearables/practitioner/insights/RhythmChart');
+    const { essentialNight, essentialRhythm } = await import('@/lib/wearables/insights/story');
+    const screens = [
+      { key: 'nuit', label: 'La nuit dernière', title: 'La nuit dernière', essential: essentialNight(r).text, tone: essentialNight(r).tone, content: <p>écran nuit</p> },
+      { key: 'rythme', label: 'Le rythme', title: 'Coucher et lever', essential: essentialRhythm(r).text, tone: essentialRhythm(r).tone, content: <RhythmChart r={r.rhythm} /> },
+      { key: 'seance', label: 'Depuis la séance', title: 'Depuis la séance', essential: null, content: <p>écran séance</p> },
+    ];
+    const { fireEvent } = await import('@testing-library/react');
+    render(<WearableStory screens={screens} />);
+    expect(screen.getByText('écran nuit')).toBeTruthy();
+    expect(screen.queryByText('écran séance')).toBeNull();
+    expect(screen.getAllByText('1 / 3').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByText('Suivant'));
+    expect(screen.getByTestId('rhythm-chart')).toBeTruthy();
+    fireEvent.click(screen.getByText('Tout afficher'));
+    expect(screen.getByText('écran nuit')).toBeTruthy();
+    expect(screen.getByText('écran séance')).toBeTruthy();
   });
 });

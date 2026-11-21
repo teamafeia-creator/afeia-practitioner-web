@@ -72,9 +72,17 @@ export function HabitsTab({ input, insights, who, onChanged, onOpenGoals }: { in
                     <span className="block h-full rounded-[3px] bg-sage" style={{ width: `${Math.round((r.done / Math.max(1, r.counted)) * 100)}%` }} />
                   </span>
                 </span>
-                <span className={`flex flex-[2_1_280px] items-start gap-2 text-sm leading-snug ${r.metric ? 'text-charcoal' : 'text-stone'}`}>
-                  <span aria-hidden className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: r.metric ? '#6DD4B8' : '#5C6573' }} />
-                  <span title={r.how}>{r.effect}</span>
+                <span className={`flex flex-[2_1_280px] flex-col gap-1 text-sm leading-snug ${r.metric ? 'text-charcoal' : 'text-stone'}`}>
+                  <span className="flex items-start gap-2">
+                    <span aria-hidden className="mt-1.5 h-2 w-2 flex-none rounded-full" style={{ background: r.metric ? '#6DD4B8' : '#5C6573' }} />
+                    <span title={r.how}>{r.effect}</span>
+                  </span>
+                  {r.expected ? (
+                    <span className="ml-4 flex flex-col gap-0.5 text-xs text-stone" data-testid="habit-breathing">
+                      <span>{r.expected}</span>
+                      {r.observed ? <span className="text-[#B8C1CF]">{r.observed}</span> : null}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="flex flex-[0_0_150px] items-center justify-end gap-2">
                   {rule ? (

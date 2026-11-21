@@ -38,7 +38,11 @@ export type LoadedInsights = InsightsInput & {
   lastJournalDate: string | null;
   /** Détail de la nuit la plus récente (heures, phases, score), pour le bloc « Dernière nuit ». */
   lastSleep: LastSleepDetails | null;
+  /** Nuits récentes avec heures de coucher / lever (jour du réveil), pour l'écran « Rythme ». */
+  recentNights: RecentNight[];
 };
+
+export type RecentNight = { day: string; startAt: string | null; endAt: string | null; totalMin: number | null; score: number | null };
 
 function genderOf(raw: string | null | undefined): 'female' | 'male' | null {
   const g = (raw ?? '').toLowerCase();
@@ -67,7 +71,7 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
     client.from('plan_observance_logs').select('observance_item_id, date, done').eq('consultant_id', consultantId).gte('date', from).lte('date', today),
     client.from('wearable_consents').select('accepted_at').eq('consultant_id', consultantId).is('withdrawn_at', null).order('accepted_at', { ascending: true }).limit(1),
     client.from('wearable_connection_overview').select('last_sync_at').eq('consultant_id', consultantId).eq('provider', 'polar').maybeSingle(),
-    client.from('journal_entries').select('date, energy_level, sleep_quality, stress_level, text').eq('consultant_id', consultantId).gte('date', from).lte('date', today).order('date'),
+    client.from('journal_entries').select('date, energy_level, sleep_quality, stress_level, text, custom_indicators').eq('consultant_id', consultantId).gte('date', from).lte('date', today).order('date'),
     client.from('cycle_profiles').select('*').eq('consultant_id', consultantId).maybeSingle(),
     client.from('cycle_entries').select('*').eq('consultant_id', consultantId).order('date', { ascending: false }).limit(180),
     client
@@ -79,7 +83,7 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
       .order('night_date', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    client.from('sleep_sessions').select('night_date, sleep_score, interruption_s').eq('consultant_id', consultantId).eq('provider', 'polar').gte('night_date', from).lte('night_date', today),
+    client.from('sleep_sessions').select('night_date, sleep_score, interruption_s, sleep_start_at, sleep_end_at, total_sleep_s').eq('consultant_id', consultantId).eq('provider', 'polar').gte('night_date', from).lte('night_date', today),
   ]);
 
   if (summary.error) throw new InsightsLoadError('mesures', summary.error);
@@ -113,17 +117,28 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
     date: l.date.slice(0, 10),
     done: l.done,
   }));
-  const journalRows = ((journal.data ?? []) as { date: string; energy_level: number | null; sleep_quality: number | null; stress_level: number | null; text: string | null }[]).map((j) => ({
-    date: j.date.slice(0, 10),
-    energy: j.energy_level ?? null,
-    quality: j.sleep_quality ?? null,
-    stress: j.stress_level ?? null,
-    note: j.text ?? null,
-  }));
+  const journalRows = (
+    (journal.data ?? []) as { date: string; energy_level: number | null; sleep_quality: number | null; stress_level: number | null; text: string | null; custom_indicators: unknown }[]
+  ).map((j) => {
+    const ci = j.custom_indicators && typeof j.custom_indicators === 'object' && !Array.isArray(j.custom_indicators) ? (j.custom_indicators as Record<string, unknown>) : {};
+    const causes = Array.isArray(ci.sleep_causes) ? (ci.sleep_causes as unknown[]).filter((c): c is string => typeof c === 'string') : [];
+    return {
+      date: j.date.slice(0, 10),
+      energy: j.energy_level ?? null,
+      quality: j.sleep_quality ?? null,
+      stress: j.stress_level ?? null,
+      note: j.text ?? null,
+      causes,
+    };
+  });
   const nights: Record<string, { score: number | null; interruptionMin: number | null }> = {};
-  for (const n of (nightRows.data ?? []) as { night_date: string; sleep_score: number | null; interruption_s: number | null }[]) {
-    nights[n.night_date.slice(0, 10)] = { score: n.sleep_score, interruptionMin: toMin(n.interruption_s) };
+  const recentNights: RecentNight[] = [];
+  for (const n of (nightRows.data ?? []) as { night_date: string; sleep_score: number | null; interruption_s: number | null; sleep_start_at: string | null; sleep_end_at: string | null; total_sleep_s: number | null }[]) {
+    const day = n.night_date.slice(0, 10);
+    nights[day] = { score: n.sleep_score, interruptionMin: toMin(n.interruption_s) };
+    recentNights.push({ day, startAt: n.sleep_start_at, endAt: n.sleep_end_at, totalMin: toMin(n.total_sleep_s), score: n.sleep_score });
   }
+  recentNights.sort((a, b) => a.day.localeCompare(b.day));
 
   let phases: Record<string, Phase> | undefined;
   const profile = cycleProfile.data as CycleProfile | null;
@@ -156,6 +171,7 @@ export async function loadInsightsInput(client: SupabaseClient, consultantId: st
     lastSyncAt: (conn.data as { last_sync_at?: string | null } | null)?.last_sync_at ?? null,
     lastJournalDate: journalRows.length ? journalRows[journalRows.length - 1].date : null,
     lastSleep: toLastSleep(lastSleepRow.data as SleepRow | null),
+    recentNights,
   };
 }
 
