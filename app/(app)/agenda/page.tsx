@@ -18,6 +18,7 @@ import { AppointmentForm } from './components/AppointmentForm';
 import { AppointmentDetail } from './components/AppointmentDetail';
 import { GroupSessionForm } from './components/GroupSessionForm';
 import { GroupSessionDetail } from './components/GroupSessionDetail';
+import { AgendaPageSkeleton } from '@/components/ui/PageSkeletons';
 
 const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const MS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
@@ -446,7 +447,7 @@ function AgendaPageInner() {
   }
 
   if (authLoading) {
-    return <div className="rounded-2xl border border-divider bg-surface p-8 text-center text-stone">Chargement…</div>;
+    return <AgendaPageSkeleton />;
   }
   if (!isAuthenticated) return null;
 

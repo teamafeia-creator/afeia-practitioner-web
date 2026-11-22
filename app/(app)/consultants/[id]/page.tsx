@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { useDeleteConsultant } from '@/hooks/useConsultants';
 import type { ConsultantWithDetails } from '@/lib/types';
 import { Trash2 } from 'lucide-react';
+import { RecordPageSkeleton } from '@/components/ui/PageSkeletons';
 
 export default function ConsultantDetailPage() {
   const params = useParams<{ id: string }>();
@@ -326,11 +327,7 @@ export default function ConsultantDetailPage() {
   }, [consultant?.activated, consultantId]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-stone">
-        Chargement du dossier consultant…
-      </div>
-    );
+    return <RecordPageSkeleton />;
   }
 
   if (error) {

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Calendar, Plus, Video } from 'lucide-react';
 import { Toaster, showToast } from '@/components/ui/Toaster';
-import { SkeletonDashboard } from '@/components/ui/Skeleton';
 import { getTodayAppointments } from '@/lib/queries/appointments';
 import { supabase } from '@/lib/supabase';
 import { useRequireAuth } from '@/hooks/useAuth';
@@ -20,6 +19,7 @@ import { StatsCarousel, ICONS, type StatCategory, type PeriodOption } from '@/co
 import type { Appointment } from '@/lib/types';
 import { JoinVisioButton } from '@/components/video/JoinVisioButton';
 import { InstantVisioModal } from '@/components/video/InstantVisioModal';
+import { DashboardPageSkeleton } from '@/components/ui/PageSkeletons';
 
 type ConsultantRow = { id: string; activated?: boolean | null };
 
@@ -228,7 +228,7 @@ export default function DashboardPage() {
     ];
   }, [stats, extra]);
 
-  if (authLoading || loading) return <SkeletonDashboard />;
+  if (authLoading || loading) return <DashboardPageSkeleton />;
   if (!isAuthenticated) return null;
 
   const todayLabel = capitalize(dateFmt.format(new Date()));

@@ -13,6 +13,7 @@ import { showToast, Toaster } from '@/components/ui/Toaster';
 import { mentionsMedication } from '@/lib/messages/medication';
 import { FACE_COLORS, initialsOf } from '@/lib/morning-review/queue';
 import type { Message } from '@/lib/types';
+import { MessagesPageSkeleton } from '@/components/ui/PageSkeletons';
 
 interface Conversation {
   consultant_id: string;
@@ -173,11 +174,7 @@ function MessagesInner() {
   }, [messages]);
 
   if (authLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <MessagesPageSkeleton />;
   }
   if (!isAuthenticated) return null;
 

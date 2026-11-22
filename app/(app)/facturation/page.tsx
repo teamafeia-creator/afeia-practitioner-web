@@ -4,7 +4,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
-import { Spinner } from '@/components/ui/Spinner';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -31,6 +30,7 @@ import {
 } from '@/lib/invoicing/display';
 import { FACE_COLORS, initialsOf } from '@/lib/morning-review/queue';
 import type { ConsultationInvoice, InvoiceDocumentType, InvoiceStatus, PaymentMethod, PractitionerBillingSettings } from '@/lib/invoicing/types';
+import { ListPageSkeleton } from '@/components/ui/PageSkeletons';
 
 type Tab = 'all' | InvoiceStatus;
 type SortKey = 'date_desc' | 'date_asc' | 'amount_desc' | 'amount_asc' | 'unpaid_first' | 'who' | 'num';
@@ -341,11 +341,7 @@ function FacturationInner() {
   }, [invoices, year, thisYear, now, inYear]);
 
   if (authLoading || loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <ListPageSkeleton title="Facturation" />;
   }
   if (!isAuthenticated || !user) return null;
 

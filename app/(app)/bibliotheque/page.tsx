@@ -3,7 +3,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, X } from 'lucide-react';
-import { Spinner } from '@/components/ui/Spinner';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -29,6 +28,7 @@ import { SendFicheModal } from '@/components/library/SendFicheModal';
 import { BlocModal } from '@/components/library/BlocModal';
 import { ResourceModal } from '@/components/library/ResourceModal';
 import type { EducationalResource } from '@/lib/types';
+import { ListPageSkeleton } from '@/components/ui/PageSkeletons';
 
 type Tab = 'fiches' | 'blocs' | 'ressources';
 type Fiche = EducationalResource & { theme_label?: string | null };
@@ -271,11 +271,7 @@ function LibraryInner() {
       : [['all', 'Tout'], ['afeia', 'AFEIA'], ['moi', 'Mes fiches']];
 
   if (authLoading || loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <ListPageSkeleton title="Bibliothèque" />;
   }
   if (!isAuthenticated || !user) return null;
 
