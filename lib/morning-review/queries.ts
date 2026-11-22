@@ -6,6 +6,9 @@ import type { ConsultantForReview, ConsultantSummary, MorningReviewData } from '
 import { calculateAttentionScore, getAttentionCategory } from './scoring';
 import { calculateLastWeekStats, calculateBagueConnecteeStats } from './trends';
 import { identifyPrimarySignal, generateSuggestedActions } from './signals';
+import { listReasons } from './reasons';
+import { PENDING_STATUSES, type RecapRow } from '../wearables/insights/queries';
+import { parisDay } from '../wearables/insights/series';
 
 export async function fetchMorningReviewData(): Promise<MorningReviewData> {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -60,6 +63,7 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
     consultationsResult,
     appointmentsResult,
     practitionerNotesResult,
+    pendingRecapsResult,
   ] = await Promise.all([
     // Journal entries (30 derniers jours)
     supabase
@@ -122,6 +126,15 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
       .select('*')
       .in('consultant_id', consultantIds)
       .order('updated_at', { ascending: false }),
+
+    // Récaps objet connecté préparés les jours prévus par le praticien, encore valides
+    supabase
+      .from('wearable_recaps')
+      .select('*')
+      .in('consultant_id', consultantIds)
+      .in('status', [...PENDING_STATUSES])
+      .gte('valid_until', parisDay(new Date()))
+      .order('prepared_for', { ascending: false }),
   ]);
 
   // Regrouper les donnees par consultant
@@ -129,6 +142,7 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
   const messagesByConsultant = groupBy(messagesResult.data ?? [], 'consultant_id');
   const wearableByConsultant = groupBy(wearableSummariesResult.data ?? [], 'consultant_id');
   const insightsByConsultant = groupBy(wearableInsightsResult.data ?? [], 'consultant_id');
+  const recapsByConsultant = groupBy((pendingRecapsResult.data ?? []) as RecapRow[], 'consultant_id');
   const plansByConsultant = groupBy(consultantPlansResult.data ?? [], 'consultant_id');
   const consultationsByConsultant = groupBy(consultationsResult.data ?? [], 'consultant_id');
   const appointmentsByConsultant = groupBy(appointmentsResult.data ?? [], 'consultant_id');
@@ -165,6 +179,7 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
       journalEntries: journalByConsultant[c.id] ?? [],
       wearableSummaries: wearables,
       wearableInsights: insightsByConsultant[c.id] ?? [],
+      pendingRecap: recapsByConsultant[c.id]?.[0] ?? null,
       consultantPlans: plansByConsultant[c.id] ?? [],
       messages,
       unreadMessagesCount: unreadMessages.length,
@@ -192,11 +207,12 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
       : getAttentionCategory(attentionScore);
 
     const lastWeekStats = calculateLastWeekStats(consultant.journalEntries);
-    const bagueConnecteeStats = consultant.is_premium && consultant.hasBagueConnectee
+    const bagueConnecteeStats = consultant.hasBagueConnectee
       ? calculateBagueConnecteeStats(consultant.wearableSummaries, consultant.wearableInsights)
       : undefined;
 
     const primarySignal = identifyPrimarySignal(consultant, lastWeekStats, bagueConnecteeStats);
+    const reasons = listReasons(consultant).map(({ category, severity, message, iconName }) => ({ category, severity, message, iconName }));
     const suggestedActions = generateSuggestedActions(consultant, primarySignal);
 
     return {
@@ -206,6 +222,7 @@ export async function fetchMorningReviewData(): Promise<MorningReviewData> {
       lastWeekStats,
       bagueConnecteeStats,
       primarySignal,
+      reasons,
       suggestedActions,
     };
   });

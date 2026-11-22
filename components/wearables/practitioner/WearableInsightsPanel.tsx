@@ -13,6 +13,7 @@ import { BeforeAfterTab } from './insights/BeforeAfterTab';
 import { HabitsTab } from './insights/HabitsTab';
 import { FeelTab } from './insights/FeelTab';
 import { RecapModal } from './insights/RecapModal';
+import { RecapHeroCard } from './insights/RecapHeroCard';
 import { RhythmChart, RhythmLegend } from './insights/RhythmChart';
 import { WearableStory, type StoryScreen } from './insights/WearableStory';
 import { essentialFeel, essentialHelps, essentialNight, essentialRhythm, essentialSession, essentialWeek } from '@/lib/wearables/insights/story';
@@ -126,9 +127,6 @@ export function WearableInsightsPanel({
       consultantId={consultantId}
       metric={metric}
       onMetric={setMetric}
-      draft={draft}
-      sent={sent}
-      onOpenRecap={() => setRecapOpen(true)}
       onOpenRdv={() => links.openTab('Rendez-vous')}
       part={part}
     />
@@ -156,7 +154,7 @@ export function WearableInsightsPanel({
         </section>
       ),
     },
-    { key: 'seance', label: 'Depuis la séance', title: input.lastSessionDate ? `Depuis la séance du ${longDate(input.lastSessionDate)}` : 'Depuis la dernière séance', subtitle: 'Les points à aborder, et le récap à relire avant de l’envoyer.', essential: eSession.text, tone: eSession.tone, content: overview('session') },
+    { key: 'seance', label: 'Depuis la séance', title: input.lastSessionDate ? `Depuis la séance du ${longDate(input.lastSessionDate)}` : 'Depuis la dernière séance', subtitle: 'Les points à aborder en séance, à épingler pour ne pas les oublier.', essential: eSession.text, tone: eSession.tone, content: overview('session') },
     { key: 'ressenti', label: 'Le ressenti', title: `Ce ${w.que} ressent, ce que l’objet mesure`, subtitle: 'Journal et mesures, face à face. Des écarts, pas des causes.', essential: eFeel.text, tone: eFeel.tone, content: <FeelTab input={input} insights={insights} who={w} onOpenCycle={() => links.openTab('Cycle')} /> },
     {
       key: 'aide',
@@ -194,6 +192,9 @@ export function WearableInsightsPanel({
           {syncing ? 'Synchronisation…' : 'Synchroniser'}
         </button>
       </div>
+
+      {/* Toujours visible : le message à relire/envoyer, avec le résumé des points importants. */}
+      <RecapHeroCard input={input} insights={insights} who={w} draft={draft} sent={sent} onOpenRecap={() => setRecapOpen(true)} />
 
       <WearableStory screens={screens} />
 

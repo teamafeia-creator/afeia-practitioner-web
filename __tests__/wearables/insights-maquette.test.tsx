@@ -104,6 +104,7 @@ describe('maquette : cas d’Amina', () => {
 
   it('les onglets s’affichent sans erreur', async () => {
     const { OverviewTab } = await import('@/components/wearables/practitioner/insights/OverviewTab');
+    const { RecapHeroCard } = await import('@/components/wearables/practitioner/insights/RecapHeroCard');
     const { BeforeAfterTab } = await import('@/components/wearables/practitioner/insights/BeforeAfterTab');
     const { FeelTab } = await import('@/components/wearables/practitioner/insights/FeelTab');
     const { HabitsTab } = await import('@/components/wearables/practitioner/insights/HabitsTab');
@@ -111,10 +112,14 @@ describe('maquette : cas d’Amina', () => {
     const { who } = await import('@/lib/wearables/insights');
     const input = amina();
     const w = who('Amina', 'female');
-    render(<OverviewTab input={input} insights={r} who={w} consultantId="c1" metric="sleep" onMetric={() => {}} draft={null} sent={false} onOpenRecap={() => {}} onOpenRdv={() => {}} />);
+    // L'encart « Message à … » vit hors des écrans : toujours visible en tête de l'onglet.
+    render(<RecapHeroCard input={input} insights={r} who={w} draft={null} sent={false} onOpenRecap={() => {}} />);
     expect(screen.getByText('Le récap d’Amina, à relire avant l’envoi')).toBeTruthy();
-    expect(screen.getByText('Depuis la séance du 19 octobre')).toBeTruthy();
     expect(screen.getByText('Relire et envoyer à Amina')).toBeTruthy();
+    cleanup();
+    render(<OverviewTab input={input} insights={r} who={w} consultantId="c1" metric="sleep" onMetric={() => {}} onOpenRdv={() => {}} />);
+    expect(screen.getByText('Depuis la séance du 19 octobre')).toBeTruthy();
+    expect(screen.queryByText('Relire et envoyer à Amina')).toBeNull();
     cleanup();
     render(<BeforeAfterTab insights={r} onOpenPlan={() => {}} />);
     expect(screen.getByText('Avant et depuis le 19 oct.')).toBeTruthy();

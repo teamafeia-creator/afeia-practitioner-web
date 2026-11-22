@@ -41,22 +41,30 @@ export const SIGNAL_TAGS: Record<SignalCategory, Tag> = {
   sleep: { label: 'Sommeil', bg: '#23383B', fg: '#6DD4B8' },
   recovery: { label: 'Variabilité cardiaque', bg: '#1F2640', fg: '#A9B8EC' },
   presence: { label: 'Journal silencieux', bg: '#373131', fg: '#E8A87C' },
-  adherence: { label: 'Habitudes', bg: '#373131', fg: '#E8A87C' },
+  adherence: { label: 'Checklist', bg: '#373131', fg: '#E8A87C' },
   emotional: { label: 'Humeur', bg: '#3A2733', fg: '#F0C2D8' },
   energy: { label: 'Énergie', bg: '#1F2640', fg: '#A9B8EC' },
   progress: { label: 'Progression', bg: '#23383B', fg: '#6DD4B8' },
   balance: { label: 'Équilibre', bg: '#23383B', fg: '#6DD4B8' },
+  wearable: { label: 'Objet connecté', bg: '#1F2640', fg: '#A9B8EC' },
+  appointment: { label: 'Rendez-vous à préparer', bg: '#2E2A1F', fg: '#E8C97C' },
+  followup: { label: 'Suivi', bg: '#373131', fg: '#E8A87C' },
+  admin: { label: 'Dossier', bg: '#2A2A2A', fg: '#C9CFDA' },
 };
 
 const SENTENCE_PARTS: Record<SignalCategory, [string, string]> = {
   sleep: ['nuits plus courtes', 'nuits plus courtes'],
   recovery: ['besoin de récupération', 'besoins de récupération'],
   presence: ['journal en pause', 'journaux en pause'],
-  adherence: ['difficulté avec les habitudes', 'difficultés avec les habitudes'],
+  adherence: ['checklist en difficulté', 'checklists en difficulté'],
   emotional: ['humeur difficile', 'humeurs difficiles'],
   energy: ['énergie en retrait', 'énergies en retrait'],
   progress: ['belle progression', 'belles progressions'],
   balance: ['bel équilibre', 'beaux équilibres'],
+  wearable: ['signal de l’objet connecté', 'signaux de l’objet connecté'],
+  appointment: ['rendez-vous à préparer', 'rendez-vous à préparer'],
+  followup: ['suivi à reprendre', 'suivis à reprendre'],
+  admin: ['dossier à finaliser', 'dossiers à finaliser'],
 };
 
 /** « Ce matin, 4 consultants ont besoin d'un coup d'œil : 2 nuits plus courtes, 1 journal en pause. » */

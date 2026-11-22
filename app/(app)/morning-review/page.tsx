@@ -370,6 +370,11 @@ function ReviewCard(props: {
   const first = firstNameOf(s);
   const signal = s.primarySignal;
   const tag = signal ? SIGNAL_TAGS[signal.category] : null;
+  // Autres raisons de présence (une pastille par catégorie, sans répéter la principale).
+  const others = (s.reasons ?? [])
+    .filter((r) => r.message !== signal?.message)
+    .filter((r, i, arr) => r.category !== signal?.category && arr.findIndex((x) => x.category === r.category) === i)
+    .slice(0, 3);
   const spark = sparkFor(s);
   const context = contextFor(s);
   const hint = s.suggestedActions.find((a) => a.type !== 'open_dossier')?.description;
@@ -406,6 +411,19 @@ function ReviewCard(props: {
             </span>
           </div>
           {signal && <span className="text-[15px] text-charcoal">{signal.message}.</span>}
+          {others.length > 0 && (
+            <ul className="flex flex-wrap gap-1.5" aria-label="Autres raisons">
+              {others.map((r) => {
+                const t = SIGNAL_TAGS[r.category];
+                return (
+                  <li key={r.message} title={r.message} className="inline-flex items-center gap-1 rounded-full border border-divider px-2 py-[2px] text-xs text-stone">
+                    <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: t.fg }} />
+                    {t.label}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
           {context && <span className="text-[13px] text-stone">{context}</span>}
         </div>
         {spark && (

@@ -3,6 +3,7 @@
 
 import type { ConsultantForReview, Signal, SuggestedAction, LastWeekStats, BagueConnecteeStats } from './types';
 import { daysSince } from './trends';
+import { listReasons, primaryReason } from './reasons';
 
 export function identifyPrimarySignal(
   consultant: ConsultantForReview,
@@ -105,6 +106,14 @@ export function identifyPrimarySignal(
     };
   }
 
+  // Priorite 10 : toute autre règle du score (objet connecté, rendez-vous à préparer,
+  // suivi, conseillancier…). Un consultant dans la file a toujours une raison lisible.
+  const strongest = primaryReason(listReasons(consultant));
+  if (strongest) {
+    const { category, severity, message, iconName } = strongest;
+    return { category, severity, message, iconName };
+  }
+
   return undefined;
 }
 
@@ -174,6 +183,50 @@ export function generateSuggestedActions(
           description: 'Partager des conseils adaptés',
           templateMessage: `Bonjour${name ? ' ' + name : ''}, j’ai remarqué que vos nuits semblent plus agitées ces derniers jours. Prenez-vous le temps de vous reposer ? N’hésitez pas si vous souhaitez qu'on en discute.`,
           iconName: 'MessageSquare',
+        });
+        break;
+
+      case 'wearable':
+        actions.push({
+          type: 'note_observation',
+          label: 'Noter l’observation',
+          description: 'Garder une trace pour la prochaine séance',
+          iconName: 'FileEdit',
+        });
+        actions.push({
+          type: 'send_message',
+          label: 'Un mot sur ses nuits',
+          description: 'Partager ce que l’objet connecté montre',
+          templateMessage: `Bonjour${name ? ' ' + name : ''}, j’ai jeté un œil à vos dernières nuits. Comment vous sentez-vous en ce moment ? On peut en parler quand vous voulez.`,
+          iconName: 'MessageSquare',
+        });
+        break;
+
+      case 'appointment':
+        actions.push({
+          type: 'open_dossier',
+          label: 'Préparer le rendez-vous',
+          description: 'Relire le dossier et les points à aborder',
+          iconName: 'CalendarCheck',
+        });
+        break;
+
+      case 'followup':
+        actions.push({
+          type: 'send_message',
+          label: 'Reprendre contact',
+          description: 'Proposer un point ou une prochaine séance',
+          templateMessage: `Bonjour${name ? ' ' + name : ''}, cela fait un moment que nous n’avons pas échangé. Comment allez-vous ? Souhaitez-vous que l’on prévoie un point ensemble ?`,
+          iconName: 'MessageSquare',
+        });
+        break;
+
+      case 'admin':
+        actions.push({
+          type: 'adjust_conseillancier',
+          label: 'Finaliser le conseillancier',
+          description: 'Terminer le brouillon ou la note de séance',
+          iconName: 'ClipboardList',
         });
         break;
 
