@@ -63,6 +63,7 @@ export function sparkFor(s: ConsultantSummary): Spark | null {
   const c = s.consultant;
   switch (s.primarySignal?.category) {
     case 'sleep':
+    case 'wearable':
       return sleepSpark(c.wearableSummaries);
     case 'recovery':
       return hrvSpark(c.wearableSummaries);

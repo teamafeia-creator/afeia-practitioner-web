@@ -37,7 +37,11 @@ export type SignalCategory =
   | 'sleep'
   | 'recovery'
   | 'progress'
-  | 'balance';
+  | 'balance'
+  | 'wearable'
+  | 'appointment'
+  | 'followup'
+  | 'admin';
 
 export type SignalSeverity = 'urgent' | 'attention' | 'info' | 'positive';
 
@@ -95,6 +99,8 @@ export interface ConsultantSummary {
   lastWeekStats: LastWeekStats;
   bagueConnecteeStats?: BagueConnecteeStats;
   primarySignal?: Signal;
+  /** Toutes les raisons de présence (règles déclenchées), de la plus forte à la plus faible. */
+  reasons?: Signal[];
   suggestedActions: SuggestedAction[];
 }
 
@@ -103,6 +109,8 @@ export interface ConsultantForReview extends Consultant {
   journalEntries: JournalEntry[];
   wearableSummaries: WearableSummary[];
   wearableInsights: WearableInsight[];
+  /** Récap objet connecté préparé pour ce consultant (jour prévu par le praticien), à relire avant l'envoi. */
+  pendingRecap?: import('../wearables/insights/queries').RecapRow | null;
   consultantPlans: ConsultantPlan[];
   messages: Message[];
   unreadMessagesCount: number;
