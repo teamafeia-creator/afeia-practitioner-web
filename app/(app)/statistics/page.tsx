@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Spinner } from '@/components/ui/Spinner';
 import { Toaster } from '@/components/ui/Toaster';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { usePractitionerStats } from '@/hooks/usePractitionerStats';
@@ -12,6 +11,7 @@ import { ConsultantActivityView, type ActivityTab } from '@/components/statistic
 import { supabase } from '@/lib/supabase';
 import { eur, urssafQuarter } from '@/lib/invoicing/display';
 import type { ConsultationInvoice } from '@/lib/invoicing/types';
+import { StatsPageSkeleton } from '@/components/ui/PageSkeletons';
 
 type Period = 'semaine' | 'mois' | 'trimestre' | 'annee';
 const PERIODS: [Period, string][] = [
@@ -150,11 +150,7 @@ function StatisticsInner() {
   const urssaf = urssafQuarter(invoices, now);
 
   if (authLoading || !isAuthenticated) {
-    return (
-      <div className="flex justify-center py-20">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <StatsPageSkeleton />;
   }
 
   const periodPicker = (

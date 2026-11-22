@@ -8,7 +8,6 @@ import { useRequireAuth } from '@/hooks/useAuth';
 import { useMorningReview } from '@/hooks/useMorningReview';
 import { useReviewActivity } from '@/hooks/useReviewActivity';
 import { Toaster, showToast } from '@/components/ui/Toaster';
-import { SkeletonDashboard } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import {
   sendMessageFromReview,
@@ -31,6 +30,7 @@ import {
 import { contextFor, sparkFor } from '@/lib/morning-review/presentation';
 import type { ConsultantSummary } from '@/lib/morning-review/types';
 import { PendingRecapsCard } from '@/components/wearables/practitioner/PendingRecapsCard';
+import { QueuePageSkeleton } from '@/components/ui/PageSkeletons';
 
 const FIRST_SEEN_KEY = 'afeia.review.firstSeen';
 
@@ -184,7 +184,7 @@ export default function MorningReviewPage() {
   }, [summaries]);
 
   if (authLoading || review.isLoading || activity.isLoading) {
-    return <SkeletonDashboard />;
+    return <QueuePageSkeleton />;
   }
   if (!isAuthenticated) return null;
   if (review.error) {

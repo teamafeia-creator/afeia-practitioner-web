@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui'
 import { WearableConnectionSection } from '@/components/wearables/WearableConnectionSection'
 import { SleepFeelingCard } from '@/components/consultant/SleepFeelingCard'
 import { MyNightsCard } from '@/components/consultant/MyNightsCard'
+import { ConsultantHomeSkeleton } from '@/components/ui/PageSkeletons'
 
 type ConsultantData = {
   id: string
@@ -178,11 +179,8 @@ export default function ConsultantHomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0A0E14] to-[#151A23] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#6DD4B8] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#8B95A5]">Chargement de votre espace...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-[#0A0E14] to-[#151A23]">
+        <ConsultantHomeSkeleton />
       </div>
     )
   }

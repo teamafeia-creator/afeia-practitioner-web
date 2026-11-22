@@ -19,6 +19,7 @@ import {
   restorePreliminaryQuestionnaire,
 } from '@/services/preliminary-questionnaire';
 import type { PreliminaryQuestionnaire } from '@/lib/types';
+import { ListPageSkeleton } from '@/components/ui/PageSkeletons';
 
 type Tab = 'pending' | 'linked_to_consultant' | 'archived' | 'all';
 type ConsultantLite = { id: string; name: string; email: string | null; created_at: string };
@@ -242,11 +243,7 @@ function QuestionnairesInner() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <ListPageSkeleton title="Questionnaires" />;
   }
   if (!isAuthenticated) return null;
 

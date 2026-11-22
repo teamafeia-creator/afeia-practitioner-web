@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ChevronDown, Plus, Search, Send } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
-import { SkeletonList } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toaster, showToast } from '@/components/ui/Toaster';
 import { useRequireAuth } from '@/hooks/useAuth';
@@ -13,6 +12,7 @@ import { getMyConsultantsAndInvitations } from '@/services/practitioner.service'
 import { invitationService } from '@/services/invitation.service';
 import { supabase } from '@/lib/supabase';
 import { FACE_COLORS, initialsOf } from '@/lib/morning-review/queue';
+import { ListPageSkeleton } from '@/components/ui/PageSkeletons';
 
 type ConsultantRow = {
   id: string;
@@ -318,12 +318,7 @@ function ConsultantsInner() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="flex max-w-[1180px] flex-col gap-5">
-        <h1 className="font-serif text-[36px] font-medium leading-tight text-charcoal">Consultants</h1>
-        <SkeletonList items={6} />
-      </div>
-    );
+    return <ListPageSkeleton title="Consultants" />;
   }
   if (!isAuthenticated) return null;
 

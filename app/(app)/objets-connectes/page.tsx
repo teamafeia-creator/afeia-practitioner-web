@@ -6,11 +6,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useWearableSignals, type ConsultantSignalRow } from '@/hooks/useWearableSignals';
 import { Toaster, showToast } from '@/components/ui/Toaster';
-import { SkeletonDashboard } from '@/components/ui/Skeleton';
 import { supabase } from '@/lib/supabase';
 import { SIGNAL_CTA, SIGNAL_LABEL, signalMessage, type SignalKind } from '@/lib/wearables/insights';
 import { loadPractitionerName } from '@/lib/wearables/insights/load';
 import { reviewSignal, sendPractitionerMessage } from '@/lib/wearables/insights/queries';
+import { DashboardPageSkeleton } from '@/components/ui/PageSkeletons';
 
 const COL: Record<SignalKind, string> = { gap: '#E8A87C', wear: '#8B95A5', good: '#6DD4B8', ok: '#5C6573' };
 type Filter = 'all' | 'gap' | 'wear' | 'good';
@@ -74,7 +74,7 @@ export default function ObjetsConnectesPage() {
     loadPractitionerName(supabase).then((p) => setPractitioner(p.first)).catch(() => undefined);
   }, []);
 
-  if (authLoading || isLoading) return <SkeletonDashboard />;
+  if (authLoading || isLoading) return <DashboardPageSkeleton title="Objets connectés" />;
   if (!isAuthenticated) return null;
 
   const C = data ?? [];
