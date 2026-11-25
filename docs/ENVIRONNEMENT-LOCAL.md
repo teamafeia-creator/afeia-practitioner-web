@@ -41,6 +41,14 @@ Adresses utiles pendant que ça tourne :
 
 Quand tu modifies le code, la page se met à jour toute seule, sans relancer quoi que ce soit.
 
+### Mise à jour automatique depuis GitHub
+
+`lancer-afeia.cmd` ouvre aussi une petite fenêtre réduite **« AFEIA - synchro GitHub »**. Toutes les 30 secondes, elle regarde si la branche en cours a reçu de nouveaux changements sur GitHub (par exemple poussés par Claude) et les récupère : la page se recharge toute seule. Laisse-la ouverte.
+
+- Nouvelle structure de base (migration) : appliquée automatiquement à la base locale, sans effacer les données de test.
+- Nouvelles dépendances : la fenêtre te demande de relancer `lancer-afeia.cmd`.
+- Si tu as modifié des fichiers toi-même, la synchro se met en pause pour ne rien écraser.
+
 Si les données de test sont abîmées, `reinitialiser-donnees.cmd` repart de zéro avec les données de démo.
 
 ## Du local à la production

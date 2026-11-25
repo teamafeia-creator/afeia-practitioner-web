@@ -30,7 +30,7 @@ goto attente_docker
 
 echo.
 echo [1/4] Installation des dependances (quelques minutes la premiere fois)...
-call npm install || goto erreur
+call npm ci || goto erreur
 
 echo.
 echo [2/4] Structure de la base...

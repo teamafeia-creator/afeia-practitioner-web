@@ -21,7 +21,8 @@
     "questionnaire:smoke": "node scripts/questionnaire-code-smoke-test.mjs",
     "screenshots": "node scripts/screenshot-dashboard.mjs",
     "e2e": "playwright test",
-    "e2e:report": "playwright show-report e2e/.report/html"
+    "e2e:report": "playwright show-report e2e/.report/html",
+    "local:sync": "node scripts/local-sync.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",
