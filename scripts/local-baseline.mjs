@@ -22,14 +22,21 @@ if (existsSync(DOSSIER) && readdirSync(DOSSIER).some((f) => f.endsWith('_baselin
 }
 mkdirSync(DOSSIER, { recursive: true });
 
-console.log('🔑 Connexion à ton compte Supabase : autorise l\'accès dans le navigateur qui s\'ouvre.');
-if (!supabase('login')) {
+const dejaConnecte = spawnSync(process.execPath, [CLI, 'projects', 'list'], { stdio: 'ignore' }).status === 0;
+if (!dejaConnecte) console.log('🔑 Connexion à ton compte Supabase : autorise l\'accès dans le navigateur qui s\'ouvre.');
+if (!dejaConnecte && !supabase('login')) {
   console.error('❌ Connexion à Supabase impossible.');
   process.exit(1);
 }
 
+// Le lien passe par le « pooler » Supabase (IPv4) : la connexion directe est IPv6 seulement.
+if (!supabase('link', '--project-ref', PROJET)) {
+  console.error('❌ Impossible de relier le projet Supabase de production.');
+  process.exit(1);
+}
+
 console.log('⏳ Copie du schéma de production (1 à 2 minutes)…');
-if (!supabase('db', 'dump', `--remote=${PROJET}`, '-f', FICHIER)) {
+if (!supabase('db', 'dump', '--remote', '-f', FICHIER)) {
   console.error('❌ La copie a échoué. Vérifie que Rancher Desktop tourne, puis relance.');
   process.exit(1);
 }
