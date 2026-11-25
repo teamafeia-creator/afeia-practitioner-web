@@ -14,9 +14,19 @@ cd afeia-practitioner-web
 if not exist "supabase\config.jsonc" git checkout chore/environnement-local
 echo Mise a jour du code...
 git pull --ff-only
+if /i not "%~dp0"=="%CD%\outils-windows\" (call "outils-windows\2-installer-afeia.cmd" & exit /b)
 :projet
 where node >nul 2>&1 || (echo Node.js est introuvable : lance d'abord 1-installer-les-outils.cmd puis redemarre le PC. & goto erreur)
-docker info >nul 2>&1 || (echo Rancher Desktop n'est pas demarre : ouvre-le, attends qu'il soit pret, puis relance ce fichier. & goto erreur)
+where docker >nul 2>&1 || (echo Docker introuvable : Rancher Desktop est-il bien installe ? & goto erreur)
+set /a ESSAIS=0
+:attente_docker
+docker info >nul 2>&1 && goto docker_ok
+set /a ESSAIS+=1
+if %ESSAIS% geq 18 (echo. & echo Rancher Desktop ne repond pas. Detail : & docker info & goto erreur)
+echo Attente de Rancher Desktop... (%ESSAIS%/18)
+timeout /t 10 >nul
+goto attente_docker
+:docker_ok
 
 echo.
 echo [1/4] Installation des dependances (quelques minutes la premiere fois)...
