@@ -18,7 +18,8 @@
 - **Styling** : Tailwind CSS
 - **Base de données** : Supabase (PostgreSQL)
 - **Auth** : Supabase Auth
-- **Déploiement** : Vercel
+- **Déploiement** : Vercel (branche `master` uniquement)
+- **Local** : Supabase CLI + Rancher Desktop
 
 ## 🎨 Direction artistique (2024)
 
@@ -27,33 +28,13 @@
 - Illustrations abstraites nature en fond pour l’ambiance wellness premium.
 - Favicon blanc décliné en `.svg` et routes dynamiques (PNG/ICO) via `app/icon.tsx` et `app/favicon.ico/route.tsx`.
 
-## 🚀 Installation
+## 🚀 Installation locale
 
-### Prérequis
+Tout est décrit pas à pas, pour Windows, dans [docs/ENVIRONNEMENT-LOCAL.md](docs/ENVIRONNEMENT-LOCAL.md) : Git, Node.js, Rancher Desktop et Supabase en local (gratuits et open source), comptes de test et données de démo.
 
-- Node.js 18+
-- npm ou yarn
-- Compte Supabase (gratuit)
+En bref : `npm install`, `npm run db:start`, `npm run local:env`, `npm run dev`, puis [http://localhost:3000](http://localhost:3000).
 
-### Étapes
-
-```bash
-# 1. Cloner le repo
-git clone https://github.com/VOTRE-USERNAME/afeia-practitioner-web.git
-cd afeia-practitioner-web
-
-# 2. Installer les dépendances
-npm install
-
-# 3. Configurer l'environnement
-cp .env.example .env.local
-# Puis éditer .env.local avec vos clés Supabase
-
-# 4. Lancer en développement
-npm run dev
-```
-
-L'application sera accessible sur [http://localhost:3000](http://localhost:3000)
+Vercel ne met en ligne que la branche `master`. On teste en local avant de fusionner.
 
 ## 📁 Structure du projet
 

@@ -12,7 +12,7 @@ Ajoutez les variables suivantes a votre `.env.local` (ou a votre gestionnaire de
 
 ## Tester localement
 
-1. Appliquer la migration SQL admin (dans `supabase/migrations`).
+1. Appliquer la migration SQL admin (dans `supabase/migrations_historique`, déjà en place en local).
 2. Ajouter votre email dans `admin_allowlist` (ou utiliser `team.afeia@gmail.com`).
 3. Lancer l'app Next.js puis connecter un compte admin.
 4. Acceder a `http://localhost:3000/admin`.
