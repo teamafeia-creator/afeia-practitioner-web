@@ -9,6 +9,9 @@ echo    - Git            (recuperer et enregistrer le code)
 echo    - Node.js LTS    (faire tourner l'application)
 echo    - WSL + Rancher Desktop (faire tourner la base Supabase locale)
 echo.
+echo Activation de la virtualisation Windows (necessaire a WSL et Rancher Desktop)...
+dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+dism /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
 winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements
 winget install -e --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements
 winget install -e --id Microsoft.WSL --accept-source-agreements --accept-package-agreements
