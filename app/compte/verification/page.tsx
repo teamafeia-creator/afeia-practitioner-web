@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Clock, FileText, Contact2, Leaf, MailCheck, XCircle } from 'lucide-react';
+import { Clock, FileText, Contact2, MailCheck, XCircle } from 'lucide-react';
+import { AfeiaMark } from '@/components/brand/AfeiaMark';
 import { supabase } from '@/lib/supabase';
 import { Spinner } from '@/components/ui/Spinner';
 import type { AccountStatus } from '@/lib/verification/types';
@@ -95,7 +96,7 @@ export default function VerificationStatusPage() {
     <div className="flex min-h-screen flex-col bg-cream px-4 py-10 text-charcoal sm:px-8">
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-light">
-          <Leaf className="h-[22px] w-[22px] text-sage" aria-hidden="true" />
+          <AfeiaMark className="h-[22px] w-[20px] text-sage" />
         </span>
         <span className="font-serif text-[22px] font-medium">Afeia</span>
         <span className="flex-1" />

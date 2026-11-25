@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabaseConsultant as supabase } from '@/lib/supabase-consultant'
-import { Leaf } from 'lucide-react'
+import { AfeiaMark } from '@/components/brand/AfeiaMark'
 
 export default function ActivatePage() {
   const router = useRouter()
@@ -247,7 +247,7 @@ export default function ActivatePage() {
       <div className="bg-surface rounded-3xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-[#6DD4B8] to-[#2D7A6E] rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Leaf className="w-8 h-8 text-white" />
+            <AfeiaMark className="h-8 w-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-[#E8EDF4] mb-2">
             Bienvenue sur AFEIA

@@ -26,11 +26,11 @@ import {
   BarChart3,
   HelpCircle,
   Library,
-  Leaf,
   Sun,
   Watch,
-  Activity
+  Activity,
 } from 'lucide-react';
+import { AfeiaMark } from '@/components/brand/AfeiaMark';
 import { useMessageNotifications } from '@/hooks/useMessageNotifications';
 import { useReviewActivity } from '@/hooks/useReviewActivity';
 import { getReviewQueue } from '@/lib/morning-review/queue';
@@ -478,7 +478,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onClick={onNavigate}
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-light" aria-hidden="true">
-          <Leaf className="h-5 w-5 text-sage" />
+          <AfeiaMark className="h-5 w-[18px] text-sage" />
         </div>
         <div>
           <div className="font-serif text-xl leading-tight text-charcoal">Afeia</div>
@@ -587,7 +587,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {/* Mobile logo */}
           <Link href="/dashboard" className="lg:hidden flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage-light" aria-hidden="true">
-              <Leaf className="h-4 w-4 text-sage" />
+              <AfeiaMark className="h-4 w-[14px] text-sage" />
             </div>
             <span className="font-serif text-lg text-charcoal">Afeia</span>
           </Link>
