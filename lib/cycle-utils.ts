@@ -9,9 +9,16 @@ import type { CycleEntry, CyclePhase, CyclePhaseRange } from './types';
 // DATE HELPERS
 // ============================================
 
-/** Strip time component — work with date-only strings (YYYY-MM-DD) */
+/**
+ * Dates « jour seul » représentées à minuit UTC, pour que `toISOString().slice(0, 10)`
+ * redonne toujours le bon jour quel que soit le fuseau (à Paris, un minuit local devenait la veille en UTC).
+ * Une Date qui n'est pas à minuit UTC (ex. `new Date()`) est lue dans le fuseau local.
+ */
 function toDateOnly(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const utcMidnight = d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0 && d.getUTCMilliseconds() === 0;
+  return utcMidnight
+    ? new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+    : new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
 }
 
 function daysBetween(a: Date, b: Date): number {
@@ -22,14 +29,14 @@ function daysBetween(a: Date, b: Date): number {
 
 function addDays(d: Date, n: number): Date {
   const r = toDateOnly(d);
-  r.setDate(r.getDate() + n);
+  r.setUTCDate(r.getUTCDate() + n);
   return r;
 }
 
 function parseDate(s: string): Date {
-  // "YYYY-MM-DD" → local date (no timezone shift)
+  // "YYYY-MM-DD" → minuit UTC (pas de décalage de fuseau)
   const [y, m, d] = s.split('-').map(Number);
-  return new Date(y, m - 1, d);
+  return new Date(Date.UTC(y, m - 1, d));
 }
 
 // ============================================

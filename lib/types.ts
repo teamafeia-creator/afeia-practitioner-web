@@ -746,7 +746,9 @@ export type ConsultantIrisPhoto = {
 
 export type CyclePhase = 'menstrual' | 'follicular' | 'ovulation' | 'luteal_early' | 'luteal_late';
 
-export type FlowIntensity = 'spotting' | 'light' | 'medium' | 'heavy';
+export type FlowIntensity = 'spotting' | 'light' | 'medium' | 'heavy' | 'other';
+export type CycleContraception = 'aucune' | 'pilule' | 'sterilet' | 'implant' | 'autre';
+export type CycleSituation = 'aucune' | 'grossesse' | 'allaitement' | 'perimenopause' | 'autre';
 export type CervicalMucus = 'dry' | 'sticky' | 'creamy' | 'egg_white' | 'watery';
 export type CycleRegularity = 'regular' | 'somewhat_irregular' | 'irregular' | 'absent';
 
@@ -779,8 +781,20 @@ export type CycleProfile = {
   average_cycle_length: number;
   average_period_length: number;
   cycle_regularity: CycleRegularity;
-  contraception: string | null;
+  contraception: CycleContraception | string | null;
+  contraception_details?: string | null;
   notes: string | null;
+  /** Suivi : activé (par qui, quand), mis en pause (par qui, quand), invitation envoyée. */
+  tracking_activated_at?: string | null;
+  tracking_activated_by?: 'consultant' | 'practitioner' | null;
+  tracking_paused_at?: string | null;
+  tracking_paused_by?: 'consultant' | 'practitioner' | null;
+  invite_sent_at?: string | null;
+  /** Durées : calculées sur les derniers cycles (false) ou saisies à la main (true). */
+  cycle_length_manual?: boolean;
+  period_length_manual?: boolean;
+  situation?: CycleSituation;
+  situation_details?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -808,6 +822,12 @@ export type CycleEntry = {
   symptom_cervical_mucus: CervicalMucus | null;
   temperature: number | null;
   notes: string | null;
+  /** Abondance « autre », précisée en texte. */
+  flow_details?: string | null;
+  /** Autres critères notés par le praticien (Caillots, Couleur, critère libre…). */
+  extra_criteria?: Record<string, string> | null;
+  /** Note du praticien, visible par lui seul. */
+  practitioner_note?: string | null;
   source: 'consultant' | 'practitioner';
   created_at: string;
 };

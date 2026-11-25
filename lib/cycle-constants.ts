@@ -102,6 +102,7 @@ export const FLOW_LABELS: Record<FlowIntensity, string> = {
   light: 'Léger',
   medium: 'Moyen',
   heavy: 'Abondant',
+  other: 'Autre',
 };
 
 // ============================================
