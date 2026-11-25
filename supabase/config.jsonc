@@ -1,0 +1,85 @@
+{
+  "$schema": "https://supabase.com/schemas/config/v1.json",
+  // Supabase LOCAL d'AFEIA (sur ton PC, via `npx supabase start`).
+  // Ce fichier ne change rien en production : il ne sert qu'à l'environnement local.
+  // Réglages allégés pour un PC à 8 Go de RAM : les services inutiles en local sont coupés.
+  // Référence : https://supabase.com/docs/guides/local-development/cli/config
+  "project_id": "afeia",
+
+  "api": {
+    "enabled": true,
+    "port": 54321,
+    "schemas": ["public", "graphql_public"],
+    "extra_search_path": ["public", "extensions"],
+    "max_rows": 1000
+  },
+
+  "db": {
+    "port": 54322,
+    "shadow_port": 54320,
+    "health_timeout": "3m",
+    "major_version": 17,
+    "pooler": { "enabled": false },
+    "migrations": {
+      // supabase/migrations contient la photo de départ (baseline) du schéma de production,
+      // puis les nouvelles migrations. L'ancien historique est dans supabase/migrations_historique.
+      "enabled": true
+    },
+    "seed": {
+      // Comptes de test + données de démo, rechargés à chaque `npm run db:reset`.
+      "enabled": true,
+      "sql_paths": ["./seed.sql"]
+    }
+  },
+
+  "realtime": { "enabled": true },
+
+  // Interface pour voir et modifier les données : http://localhost:54323
+  "studio": {
+    "enabled": true,
+    "port": 54323,
+    "api_url": "http://127.0.0.1"
+  },
+
+  // Boîte mail de test : les e-mails d'authentification arrivent ici, rien n'est envoyé pour de vrai.
+  // http://localhost:54324
+  "local_smtp": {
+    "enabled": true,
+    "port": 54324
+  },
+
+  "storage": {
+    "enabled": true,
+    "file_size_limit": "50MiB",
+    "s3_protocol": { "enabled": false },
+    "analytics": { "enabled": false },
+    "vector": { "enabled": false }
+  },
+
+  "auth": {
+    "enabled": true,
+    "site_url": "http://localhost:3000",
+    "additional_redirect_urls": ["http://localhost:3000/**", "http://127.0.0.1:3000/**"],
+    "jwt_expiry": 3600,
+    "enable_refresh_token_rotation": true,
+    "refresh_token_reuse_interval": 10,
+    "enable_signup": true,
+    "enable_anonymous_sign_ins": false,
+    "minimum_password_length": 6,
+    "rate_limit": {
+      "email_sent": 100,
+      "sign_in_sign_ups": 100,
+      "token_verifications": 100
+    },
+    "email": {
+      "enabled": true,
+      "double_confirm_changes": false,
+      "enable_confirmations": false,
+      "max_frequency": "1s"
+    }
+  },
+
+  // Fonctions Edge et journaux : coupés en local pour économiser la mémoire.
+  "edge_runtime": { "enabled": false },
+  "analytics": { "enabled": false }
+}
