@@ -46,7 +46,7 @@ export default function DecouvrirPage() {
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-light">
             <AfeiaMark className="h-[22px] w-[20px] text-sage" />
           </span>
-          <span className="font-serif text-[22px] font-medium">Afeia</span>
+          <span className="font-serif text-[22px] font-medium">AFEIA</span>
         </div>
         <span className="flex-1" />
         <Link href="/login" className="inline-flex h-11 items-center px-3.5 text-sm text-charcoal hover:text-sage">Se connecter</Link>

@@ -173,7 +173,7 @@ export default function SignUpPage() {
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-light">
             <AfeiaMark className="h-[22px] w-[20px] text-sage" />
           </span>
-          <span className="font-serif text-[22px] font-medium">Afeia</span>
+          <span className="font-serif text-[22px] font-medium">AFEIA</span>
           <span className="flex-1" />
           <span className="text-sm text-stone">
             Déjà inscrit ?{' '}

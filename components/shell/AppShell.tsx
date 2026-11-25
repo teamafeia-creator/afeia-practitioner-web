@@ -481,7 +481,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <AfeiaMark className="h-5 w-[18px] text-sage" />
         </div>
         <div>
-          <div className="font-serif text-xl leading-tight text-charcoal">Afeia</div>
+          <div className="font-serif text-xl leading-tight text-charcoal">AFEIA</div>
           <div className="text-xs text-stone">Espace praticien</div>
         </div>
       </Link>
@@ -589,7 +589,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sage-light" aria-hidden="true">
               <AfeiaMark className="h-4 w-[14px] text-sage" />
             </div>
-            <span className="font-serif text-lg text-charcoal">Afeia</span>
+            <span className="font-serif text-lg text-charcoal">AFEIA</span>
           </Link>
 
           <HeaderSearch />

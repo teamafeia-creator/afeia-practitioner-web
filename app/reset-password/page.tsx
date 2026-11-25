@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
         <div className="flex items-center justify-center gap-3 mb-6">
           <Image src="/afeia_symbol.svg" alt="AFEIA" width={36} height={36} />
           <div>
-            <div className="text-2xl font-semibold tracking-tight">Afeia</div>
+            <div className="text-2xl font-semibold tracking-tight">AFEIA</div>
             <div className="text-sm text-stone">Mot de passe oublié</div>
           </div>
         </div>
