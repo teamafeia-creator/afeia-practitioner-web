@@ -1,17 +1,17 @@
 @echo off
 chcp 65001 >nul
 title AFEIA - Installation des outils
+rem Rancher Desktop a besoin de WSL, qui s'installe en administrateur : on se relance en admin si besoin.
+net session >nul 2>&1 || (powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -Verb RunAs" & exit /b)
 echo.
 echo  Installation des outils gratuits et open source pour AFEIA :
 echo    - Git            (recuperer et enregistrer le code)
 echo    - Node.js LTS    (faire tourner l'application)
-echo    - Rancher Desktop (faire tourner la base Supabase locale)
+echo    - WSL + Rancher Desktop (faire tourner la base Supabase locale)
 echo.
-echo  Windows peut te demander d'autoriser chaque installation : reponds Oui.
-echo.
-pause
 winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements
 winget install -e --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements
+winget install -e --id Microsoft.WSL --accept-source-agreements --accept-package-agreements
 winget install -e --id SUSE.RancherDesktop --accept-source-agreements --accept-package-agreements
 echo.
 echo  ============================================================
