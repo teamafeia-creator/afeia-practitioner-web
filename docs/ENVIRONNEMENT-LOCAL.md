@@ -21,7 +21,7 @@ Les services payants (Stripe, Resend, Anthropic, Daily, Polar) sont **désactiv�
    - choisis le moteur **dockerd (moby)** ;
    - attends que Rancher indique que tout est prêt.
 3. Double-clique sur **`2-installer-afeia.cmd`**. Il télécharge le code, installe ce qu'il faut, prépare la base locale, puis lance l'application.
-   - S'il te demande l'**adresse « Session pooler »** : dans Supabase, ouvre ton projet, clique sur **Connect** puis **Session pooler**, copie l'adresse et remplace `[YOUR-PASSWORD]` par le mot de passe de la base. Seule la *structure* de la base (tables, règles) est copiée, aucune donnée réelle. Cette étape n'arrive qu'une fois.
+   - La première fois, le navigateur s'ouvre sur Supabase : clique **Authorize** (si un code s'affiche, recopie-le dans la fenêtre noire). Seule la *structure* de la base de production (tables, règles) est copiée, aucune donnée réelle. Aucun mot de passe à saisir.
    - Le premier démarrage de Supabase télécharge environ 2 Go : compte 10 à 20 minutes.
 
 ## Tous les jours
