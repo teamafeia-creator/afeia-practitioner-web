@@ -45,6 +45,8 @@ Quand tu modifies le code, la page se met à jour toute seule, sans relancer quo
 
 Pendant qu'AFEIA tourne, double-clique sur `outils-windows\partager-sur-telephone.cmd`. Il affiche un lien `https://….trycloudflare.com` (tunnel Cloudflare gratuit, sans compte) : ouvre-le sur ton téléphone, en 4G ou en Wi-Fi. Le lien change à chaque fois et fonctionne tant que la fenêtre est ouverte. Il est accessible à quiconque le connaît : ne le partage pas, et ferme la fenêtre quand tu as fini. Les mises à jour en direct (notifications instantanées) ne passent pas par ce lien : recharge la page pour les voir.
 
+**Lien fixe (toujours la même adresse)** : double-clique une seule fois sur `outils-windows\lien-fixe-telephone.cmd` (Tailscale Funnel, gratuit et open source, compte Tailscale gratuit). Il affiche une adresse `https://<nom-du-pc>.<…>.ts.net` qui reste la même, même après un redémarrage, et répond dès qu'AFEIA tourne. Pour la couper : `couper-lien-telephone.cmd`.
+
 ### Mise à jour automatique depuis GitHub
 
 `lancer-afeia.cmd` ouvre aussi une petite fenêtre réduite **« AFEIA - synchro GitHub »**. Toutes les 30 secondes, elle regarde si la branche en cours a reçu de nouveaux changements sur GitHub (par exemple poussés par Claude) et les récupère : la page se recharge toute seule. Laisse-la ouverte.
