@@ -7,6 +7,9 @@
 --   admin@afeia.local  (afeia-admin)  accès à l'interface /admin
 -- ==========================================================================
 
+-- La photo du schéma vide le search_path : on le rétablit pour les noms non préfixés.
+SET search_path TO public, extensions;
+
 -- 1. Création automatique de la fiche praticien à l'inscription
 --    (le déclencheur vit dans le schéma auth, absent de la photo du schéma public).
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
