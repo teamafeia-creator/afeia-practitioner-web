@@ -23,6 +23,12 @@ const nextConfig = {
     }
     return config;
   },
+  // Local uniquement (NEXT_PUBLIC_SUPABASE_VIA_APP=1) : relaie Supabase sous /supabase pour
+  // tester l'app depuis un téléphone via un tunnel. Sans effet en production.
+  async rewrites() {
+    if (process.env.NEXT_PUBLIC_SUPABASE_VIA_APP !== '1' || !process.env.NEXT_PUBLIC_SUPABASE_URL) return [];
+    return [{ source: '/supabase/:path*', destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/:path*` }];
+  },
   async headers() {
     return [
       {

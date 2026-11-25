@@ -8,8 +8,9 @@
 // À utiliser dans tout ce qui tourne côté consultant : app/consultant/**, onboarding
 // consultant, cartes de l'accueil consultant (objet connecté…).
 import { createClient } from '@supabase/supabase-js';
+import { getBrowserSupabaseUrl } from './supabase-browser-url';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrl = getBrowserSupabaseUrl();
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {

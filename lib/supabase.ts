@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
+import { getBrowserSupabaseUrl } from './supabase-browser-url';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseUrl = getBrowserSupabaseUrl();
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Debug: Log configuration status (partial keys for security) — dev uniquement

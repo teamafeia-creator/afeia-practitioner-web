@@ -49,6 +49,8 @@ SUPABASE_SERVICE_ROLE_KEY=${service}
 
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+# Le navigateur joint Supabase via l'app (/supabase) : marche aussi depuis un téléphone (tunnel).
+NEXT_PUBLIC_SUPABASE_VIA_APP=1
 
 JWT_SECRET=${secret()}
 QUESTIONNAIRE_CODE_PEPPER=${secret()}
