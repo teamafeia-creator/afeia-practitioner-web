@@ -1,5 +1,7 @@
 @echo off
 chcp 65001 >nul
+rem Outils de Rancher Desktop (docker), au cas ou Windows n'a pas encore mis a jour le PATH.
+set "PATH=%USERPROFILE%\.rd\bin;%ProgramFiles%\Rancher Desktop\resources\resources\win32\bin;%ProgramFiles%\nodejs;%ProgramFiles%\Git\cmd;%PATH%"
 title AFEIA - local (ferme cette fenetre pour arreter l'application)
 cd /d "%~dp0.."
 docker info >nul 2>&1 || (echo Rancher Desktop n'est pas demarre : ouvre-le, attends qu'il soit pret, puis relance ce fichier. & pause & exit /b 1)

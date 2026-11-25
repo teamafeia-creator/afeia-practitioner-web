@@ -1,5 +1,7 @@
 @echo off
 chcp 65001 >nul
+rem Outils de Rancher Desktop (docker), au cas ou Windows n'a pas encore mis a jour le PATH.
+set "PATH=%USERPROFILE%\.rd\bin;%ProgramFiles%\Rancher Desktop\resources\resources\win32\bin;%ProgramFiles%\nodejs;%ProgramFiles%\Git\cmd;%PATH%"
 title AFEIA - Premiere installation
 cd /d "%~dp0"
 rem Ce script peut etre lance depuis le dossier AFEIA (a cote du projet) ou depuis outils-windows.
@@ -10,6 +12,8 @@ if not exist "afeia-practitioner-web" (
 )
 cd afeia-practitioner-web
 if not exist "supabase\config.jsonc" git checkout chore/environnement-local
+echo Mise a jour du code...
+git pull --ff-only
 :projet
 where node >nul 2>&1 || (echo Node.js est introuvable : lance d'abord 1-installer-les-outils.cmd puis redemarre le PC. & goto erreur)
 docker info >nul 2>&1 || (echo Rancher Desktop n'est pas demarre : ouvre-le, attends qu'il soit pret, puis relance ce fichier. & goto erreur)
