@@ -18,7 +18,7 @@
 - **Styling** : Tailwind CSS
 - **Base de données** : Supabase (PostgreSQL)
 - **Auth** : Supabase Auth
-- **Déploiement** : Vercel (branche `main` uniquement)
+- **Déploiement** : Vercel (branche `master` uniquement)
 - **Local** : Supabase CLI + Rancher Desktop
 
 ## 🎨 Direction artistique (2024)
@@ -34,7 +34,7 @@ Tout est décrit pas à pas, pour Windows, dans [docs/ENVIRONNEMENT-LOCAL.md](do
 
 En bref : `npm install`, `npm run db:start`, `npm run local:env`, `npm run dev`, puis [http://localhost:3000](http://localhost:3000).
 
-Vercel ne met en ligne que la branche `main`. On teste en local avant de fusionner.
+Vercel ne met en ligne que la branche `master`. On teste en local avant de fusionner.
 
 ## 📁 Structure du projet
 

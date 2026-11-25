@@ -45,9 +45,9 @@ Si les données de test sont abîmées, `reinitialiser-donnees.cmd` repart de z�
 
 ## Du local à la production
 
-1. Les modifications se font sur une **branche** (jamais directement sur `main`).
+1. Les modifications se font sur une **branche** (jamais directement sur `master`).
 2. Tu les testes en local jusqu'à être satisfaite.
-3. Tu fusionnes la branche dans `main` (bouton **Merge** de la pull request sur GitHub). **C'est le seul moment où Vercel met en ligne.**
+3. Tu fusionnes la branche dans `master` (bouton **Merge** de la pull request sur GitHub). **C'est le seul moment où Vercel met en ligne.**
 
 Vercel ne déploie plus les autres branches (réglage `git.deploymentEnabled` dans `vercel.json`) : l'aperçu se fait sur ton PC.
 
