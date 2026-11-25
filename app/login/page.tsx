@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic';
 import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Leaf } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { AfeiaMark } from '@/components/brand/AfeiaMark';
 import { supabase } from '@/lib/supabase';
 import { Spinner } from '@/components/ui/Spinner';
 
@@ -140,7 +141,7 @@ export default function LoginPage() {
       <div className="flex min-w-0 flex-[1_1_480px] flex-col justify-between px-8 py-10">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-light">
-            <Leaf className="h-[22px] w-[22px] text-sage" strokeWidth={1.8} />
+            <AfeiaMark className="h-[22px] w-[20px] text-sage" />
           </span>
           <span className="font-serif text-[22px] font-medium">Afeia</span>
         </div>

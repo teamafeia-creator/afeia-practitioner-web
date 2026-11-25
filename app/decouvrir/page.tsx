@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Leaf } from 'lucide-react';
+import { AfeiaMark } from '@/components/brand/AfeiaMark';
 import { PresentationVideo } from './PresentationVideo';
 import { PreviewImage } from './PreviewImage';
 
@@ -44,7 +44,7 @@ export default function DecouvrirPage() {
       <header className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-3 px-6 py-5">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-light">
-            <Leaf className="h-[22px] w-[22px] text-sage" strokeWidth={1.8} />
+            <AfeiaMark className="h-[22px] w-[20px] text-sage" />
           </span>
           <span className="font-serif text-[22px] font-medium">Afeia</span>
         </div>

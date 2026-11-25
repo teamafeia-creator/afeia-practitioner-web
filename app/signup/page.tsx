@@ -2,7 +2,8 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { Clock, Eye, EyeOff, FileText, Contact2, Leaf, Lock } from 'lucide-react';
+import { Clock, Eye, EyeOff, FileText, Contact2, Lock } from 'lucide-react';
+import { AfeiaMark } from '@/components/brand/AfeiaMark';
 import { PASSWORD_RULES, formatSiret, passwordOk, siretDigits, siretValid, ACCEPTED_DOC_TYPES, MAX_DOC_BYTES } from '@/lib/verification/types';
 
 type Step = 1 | 2 | 3;
@@ -170,7 +171,7 @@ export default function SignUpPage() {
       <main className="flex min-w-0 flex-[3_1_520px] flex-col gap-8 px-4 py-10 sm:px-8">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sage-light">
-            <Leaf className="h-[22px] w-[22px] text-sage" aria-hidden="true" />
+            <AfeiaMark className="h-[22px] w-[20px] text-sage" />
           </span>
           <span className="font-serif text-[22px] font-medium">Afeia</span>
           <span className="flex-1" />
