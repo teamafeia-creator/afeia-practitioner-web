@@ -63,9 +63,20 @@ export async function PUT(request: NextRequest) {
 
     if (body.averagePeriodLength != null) {
       const val = parseInt(body.averagePeriodLength, 10);
-      if (val >= 2 && val <= 8) {
+      if (val >= 2 && val <= 10) {
         updateData.average_period_length = val;
       }
+    }
+
+    // Activer / désactiver le suivi depuis l'app (données conservées à la désactivation).
+    if (typeof body.isTracking === 'boolean') {
+      const now = new Date().toISOString();
+      Object.assign(
+        updateData,
+        body.isTracking
+          ? { is_tracking: true, tracking_activated_at: now, tracking_activated_by: 'consultant', tracking_paused_at: null, tracking_paused_by: null }
+          : { is_tracking: false, tracking_paused_at: now, tracking_paused_by: 'consultant' }
+      );
     }
 
     // Check if profile exists
