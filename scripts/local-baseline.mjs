@@ -7,10 +7,9 @@
 // connexion à ton compte Supabase (bouton « Authorize »).
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-// Projet Supabase de production d'AFEIA (sous-domaine de NEXT_PUBLIC_SUPABASE_URL).
-const PROJET = process.env.AFEIA_SUPABASE_PROJECT_REF || 'cveopgnckcawxcvgehxj';
 const DOSSIER = 'supabase/migrations';
 const FICHIER = `${DOSSIER}/20261125000000_baseline_production.sql`;
 const CLI = fileURLToPath(new URL('../node_modules/supabase/dist/supabase.js', import.meta.url));
@@ -29,15 +28,56 @@ if (!dejaConnecte && !supabase('login')) {
   process.exit(1);
 }
 
-// Le lien passe par le « pooler » Supabase (IPv4) : la connexion directe est IPv6 seulement.
-if (!supabase('link', '--project-ref', PROJET)) {
-  console.error('❌ Impossible de relier le projet Supabase de production.');
+// Choix du projet de production parmi ceux du compte.
+const liste = spawnSync(process.execPath, [CLI, 'projects', 'list', '-o', 'json'], { encoding: 'utf8' });
+let projets = [];
+try {
+  const brut = JSON.parse(liste.stdout);
+  projets = (Array.isArray(brut) ? brut : brut.projects || []).map((p) => ({
+    ref: p.ref || p.id, nom: p.name, statut: p.status,
+  }));
+} catch {
+  console.error('❌ Impossible de lister tes projets Supabase.');
   process.exit(1);
+}
+const actifs = projets.filter((p) => !p.statut || /ACTIVE/i.test(p.statut));
+let PROJET = process.env.AFEIA_SUPABASE_PROJECT_REF;
+if (!PROJET) {
+  if (actifs.length === 1) PROJET = actifs[0].ref;
+  else {
+    console.log('Projets Supabase de ton compte :');
+    actifs.forEach((p, i) => console.log(`  ${i + 1}. ${p.nom} (${p.ref})`));
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    const n = Number((await rl.question('Tape le numéro du projet de PRODUCTION d\'AFEIA, puis Entrée : ')).trim());
+    rl.close();
+    PROJET = actifs[n - 1]?.ref;
+  }
+}
+if (!PROJET) {
+  console.error('❌ Aucun projet Supabase actif trouvé.');
+  process.exit(1);
+}
+console.log(`Projet choisi : ${PROJET}`);
+
+// Le lien passe par le « pooler » Supabase (IPv4) : la connexion directe est IPv6 seulement.
+let cible = '--remote';
+if (!supabase('link', '--project-ref', PROJET)) {
+  // Dernier recours : l'adresse « Session pooler » (Supabase > Connect), mot de passe compris.
+  console.log('\nLe lien automatique a échoué. Dans Supabase, ouvre le projet, bouton « Connect » > « Session pooler »,');
+  console.log('copie l\'adresse (remplace [YOUR-PASSWORD] par le mot de passe de la base), colle-la ici (clic droit) puis Entrée.');
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  const url = (await rl.question('> ')).trim();
+  rl.close();
+  if (!url.startsWith('postgres')) {
+    console.error('❌ Adresse invalide.');
+    process.exit(1);
+  }
+  cible = `--remote=${url}`;
 }
 
 console.log('⏳ Copie du schéma de production (1 à 2 minutes)…');
-if (!supabase('db', 'dump', '--remote', '-f', FICHIER)) {
-  console.error('❌ La copie a échoué. Vérifie que Rancher Desktop tourne, puis relance.');
+if (!supabase('db', 'dump', cible, '-f', FICHIER)) {
+  console.error('❌ La copie a échoué (voir le message ci-dessus).');
   process.exit(1);
 }
 console.log(`✅ Schéma copié dans ${FICHIER}`);
