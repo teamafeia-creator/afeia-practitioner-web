@@ -6,7 +6,7 @@ rem Lien FIXE via Tailscale Funnel (gratuit, open source). A faire une seule foi
 rem le lien reste actif ensuite, meme apres un redemarrage, tant qu'AFEIA tourne.
 where tailscale >nul 2>&1 || (
   echo Installation de Tailscale ^(une seule fois, Windows va demander l'autorisation^)...
-  winget install -e --id tailscale.tailscale --accept-source-agreements --accept-package-agreements
+  winget install -e --id Tailscale.Tailscale --accept-source-agreements --accept-package-agreements
 )
 where tailscale >nul 2>&1 || (echo Tailscale introuvable : ferme cette fenetre et relance ce fichier. & pause & exit /b 1)
 echo.
